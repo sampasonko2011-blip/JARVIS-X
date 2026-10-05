@@ -1,8 +1,5 @@
 {
-  "name": "jarvis-x",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {"build": "tsc --noEmit", "test": "node --test"},
-  "devDependencies": {"typescript": "^5.8.0"}
+  "name":"jarvis-x","version":"0.1.0","private":true,"type":"module",
+  "scripts":{"build":"tsc --noEmit","test":"node --test","benchmark":"node benchmarks/benchmark.mjs"},
+  "devDependencies":{"typescript":"^5.8.0"}
 }
