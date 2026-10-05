@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { delimiter, existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import type { BridgePolicy, BridgeRequest, BridgeResponse, NativeSessionProvider } from "./types.js";
+import type { BridgeMode, BridgePolicy, BridgeRequest, BridgeResponse, NativeSessionProvider } from "./types.js";
 
 const DEFAULT_POLICY: BridgePolicy = {
   maxRounds: 3,
@@ -38,7 +38,7 @@ export class FrenemySessionProvider implements NativeSessionProvider {
   constructor(private readonly policy: BridgePolicy = DEFAULT_POLICY) {}
 
   async execute(request: BridgeRequest): Promise<BridgeResponse> {
-    const mode = request.mode ?? "read";
+    const mode: BridgeMode = request.mode ?? "read";
     const started = performance.now();
 
     if (!request.prompt.trim()) return this.fail(mode, started, "Prompt is empty.");
@@ -76,16 +76,18 @@ export class FrenemySessionProvider implements NativeSessionProvider {
 
       child.stdout.setEncoding("utf8");
       child.stderr.setEncoding("utf8");
-      child.stdout.on("data", chunk => {
+      child.stdout.on("data", (chunk: string) => {
         stdout += chunk;
         if (stdout.length > this.policy.maxOutputChars) {
           child.kill("SIGKILL");
           finish(this.fail(mode, started, "Claude output exceeded JARVIS-X bridge cap."));
         }
       });
-      child.stderr.on("data", chunk => { if (stderr.length < this.policy.maxOutputChars) stderr += chunk; });
-      child.on("error", error => finish(this.fail(mode, started, `Failed to launch Claude: ${error.message}`)));
-      child.on("close", code => {
+      child.stderr.on("data", (chunk: string) => {
+        if (stderr.length < this.policy.maxOutputChars) stderr += chunk;
+      });
+      child.on("error", (error: Error) => finish(this.fail(mode, started, `Failed to launch Claude: ${error.message}`)));
+      child.on("close", (code: number | null) => {
         try {
           const parsed = JSON.parse(stdout);
           if (parsed.is_error) finish(this.fail(mode, started, parsed.result || `Claude exited with error code ${code}.`));
