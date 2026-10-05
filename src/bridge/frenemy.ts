@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
-import { delimiter, existsSync } from "node:fs";
-import { isAbsolute, join } from "node:path";
+import { existsSync } from "node:fs";
+import { delimiter, isAbsolute, join } from "node:path";
 import type { BridgeMode, BridgePolicy, BridgeRequest, BridgeResponse, NativeSessionProvider } from "./types.js";
 
 const DEFAULT_POLICY: BridgePolicy = {
@@ -51,9 +51,7 @@ export class FrenemySessionProvider implements NativeSessionProvider {
     }
 
     const args = ["-p", "--output-format", "json"];
-    if (mode === "write") {
-      args.push("--permission-mode", "acceptEdits", "--setting-sources", "user");
-    }
+    if (mode === "write") args.push("--permission-mode", "acceptEdits", "--setting-sources", "user");
 
     const cwd = request.cwd ?? process.cwd();
     return new Promise((resolve) => {
