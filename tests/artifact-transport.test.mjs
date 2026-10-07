@@ -11,7 +11,7 @@ const base = {
   parentShas: ["633d42f000000000000000000000000000000000", "c30d8fe000000000000000000000000000000000"],
   createdAt: "2026-10-07T00:00:00Z",
   sizeBytes: 4,
-  sha256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cdd15d6c15b0f00a"
+  sha256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a"
 };
 
 test("valid manifest", () => assert.equal(verifyManifest(base).valid, true));
