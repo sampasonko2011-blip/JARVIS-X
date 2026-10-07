@@ -5,4 +5,6 @@ export * from "./core/verification.js";
 export * from "./core/ledger.js";
 export * from "./core/memory.js";
 export * from "./core/orchestrator.js";
+export * from "./core/capability-fusion.js";
+export * from "./transport/artifact.js";
 export { mockProvider } from "./providers/mock.js";
