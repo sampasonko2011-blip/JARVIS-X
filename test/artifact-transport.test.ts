@@ -1,0 +1,10 @@
+import test from "node:test"; import assert from "node:assert/strict"; import {verifyManifest,verifyArtifactBytes,planImport,type ArtifactManifest} from "../src/transport/artifact.js";
+const base:ArtifactManifest={schemaVersion:1,artifactId:"jx-verification-pass",source:"freebuff",branch:"feature/verification-pass",commitSha:"fd86fe9da90b5a3e2c6013a2ccfddbb42865bf11",parentShas:["633d42f000000000000000000000000000000000","c30d8fe000000000000000000000000000000000"],createdAt:"2026-10-07T00:00:00Z",sizeBytes:4,sha256:"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"};
+test("valid manifest",()=>assert.equal(verifyManifest(base).valid,true));
+test("reject malformed commit",()=>assert.equal(verifyManifest({...base,commitSha:"bad"}).valid,false));
+test("reject invalid size",()=>assert.equal(verifyManifest({...base,sizeBytes:-1}).valid,false));
+test("verify bytes",()=>assert.equal(verifyArtifactBytes(new TextEncoder().encode("test"),base.sha256!,4).valid,true));
+test("reject tampering",()=>assert.equal(verifyArtifactBytes(new TextEncoder().encode("TEST"),base.sha256!,4).valid,false));
+test("create safe branch plan",()=>{const p=planImport(base,"sampasonko2011-blip/JARVIS-X"); assert.equal(p.action,"CREATE_BRANCH"); assert.equal(p.forcePush,false);});
+test("idempotent exact remote",()=>assert.equal(planImport(base,"sampasonko2011-blip/JARVIS-X",base.commitSha).action,"NOOP"));
+test("never force push",()=>{const p=planImport(base,"sampasonko2011-blip/JARVIS-X","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); assert.equal(p.forcePush,false);});
