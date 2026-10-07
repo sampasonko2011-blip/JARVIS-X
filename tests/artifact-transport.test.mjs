@@ -16,7 +16,7 @@ const base = {
 
 test("valid manifest", () => assert.equal(verifyManifest(base).valid, true));
 test("reject malformed commit", () => assert.equal(verifyManifest({...base, commitSha:"bad"}).valid, false));
-test("verify bytes", () => assert.equal(verifyArtifactBytes(new TextEncoder().encode("test"), base.sha256, 4).valid, false));
+test("verify bytes", () => assert.equal(verifyArtifactBytes(new TextEncoder().encode("test"), base.sha256, 4).valid, true));
 test("reject tampered bytes", () => assert.equal(verifyArtifactBytes(new TextEncoder().encode("TEST"), base.sha256, 4).valid, false));
 test("safe branch plan", () => assert.equal(planImport(base, "sampasonko2011-blip/JARVIS-X").action, "CREATE_BRANCH"));
 test("never force push", () => assert.equal(planImport(base, "sampasonko2011-blip/JARVIS-X", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").forcePush, false));
