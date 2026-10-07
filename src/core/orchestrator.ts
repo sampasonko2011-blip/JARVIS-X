@@ -3,7 +3,7 @@ import { CapabilityRegistry } from "./registry.js";
 import { CapabilityRouter } from "./router.js";
 import { EvidenceLedger } from "./ledger.js";
 import { verifyResponse } from "./verification.js";
-import { buildFusionPlan, type CapabilityRequirement, type OrgCandidate } from "./capability-fusion.js";
+import { buildFusionPlan, type CapabilityRequirement, type OrganCandidate } from "./capability-fusion.js";
 
 export class Orchestrator {
   readonly router: CapabilityRouter;
@@ -41,7 +41,7 @@ export class Orchestrator {
   async runFusion(
     task: Task,
     requirements: CapabilityRequirement[],
-    candidates: OrgCandidate[],
+    candidates: OrganCandidate[],
   ): Promise<AgentResponse[]> {
     const plan = buildFusionPlan(requirements, candidates);
     if (plan.unresolved.length) {
