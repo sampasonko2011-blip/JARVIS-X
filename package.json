@@ -1,0 +1,15 @@
+{
+  "name": "jarvis-x",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test",
+    "benchmark": "node benchmarks/benchmark.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.8.0"
+  }
+}
