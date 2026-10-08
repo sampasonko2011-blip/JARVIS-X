@@ -4,25 +4,23 @@ import type { AgentResponse, Provider, Task } from "./types.js";
  * Orbit-backed provider adapter.
  *
  * GitHub remains the source-of-truth/deployment backbone.
- * Orbit supplies the concrete model selected by JARVIS-X.
- *
- * Orbit's current OpenAI-compatible base URL is:
- *   https://api.tryorbit.cloud/api/v1
- *
- * Runtime configuration:
- *   ORBIT_BASE_URL - defaults to Orbit's current API base URL
- *   ORBIT_API_KEY  - Orbit API key
- *   ORBIT_MODEL    - concrete model selected by the dominance router
+ * Orbit is deliberately injected through configuration so JARVIS-X never
+ * hard-codes a vendor or assumes which model currently owns a capability.
  */
 export class OrbitProvider implements Provider {
+  public readonly capabilities: string[];
+
   constructor(
     public readonly id: string,
     private readonly config: {
       baseUrl: string;
       apiKey: string;
       model: string;
+      capabilities?: string[];
     }
-  ) {}
+  ) {
+    this.capabilities = config.capabilities ?? ["reasoning", "coding", "generation"];
+  }
 
   async execute(input: {
     task: Task;
@@ -41,7 +39,7 @@ export class OrbitProvider implements Provider {
           {
             role: "system",
             content:
-              "You are an organ inside JARVIS-X. Stay in your assigned role, provide inspectable artifacts, and never claim another organ's work as your own."
+              "You are an organ inside JARVIS-X. Stay in your assigned role, provide inspectable reasoning artifacts, and never claim another organ's work as your own."
           },
           {
             role: "user",
@@ -81,14 +79,12 @@ export class OrbitProvider implements Provider {
 }
 
 export function orbitProviderFromEnv(id: string): OrbitProvider {
-  const baseUrl =
-    process.env.ORBIT_BASE_URL ?? "https://api.tryorbit.cloud/api/v1";
+  const baseUrl = process.env.ORBIT_BASE_URL;
   const apiKey = process.env.ORBIT_API_KEY;
   const model = process.env.ORBIT_MODEL;
-
-  if (!apiKey || !model) {
-    throw new Error("Missing ORBIT_API_KEY or ORBIT_MODEL.");
+  const capabilities = process.env.ORBIT_CAPABILITIES?.split(",").map(s => s.trim()).filter(Boolean);
+  if (!baseUrl || !apiKey || !model) {
+    throw new Error("Missing ORBIT_BASE_URL, ORBIT_API_KEY, or ORBIT_MODEL.");
   }
-
-  return new OrbitProvider(id, { baseUrl, apiKey, model });
+  return new OrbitProvider(id, { baseUrl, apiKey, model, capabilities });
 }
