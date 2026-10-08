@@ -19,9 +19,15 @@ export class OrbitProvider implements Provider {
       capabilities?: Capability[];
     }
   ) {
-    this.capabilities = config.capabilities ?? ["reasoning", "coding", "execution"].map(
-      kind => ({ id: `orbit:${id}:${kind}`, kind, strengths: [kind] })
-    );
+    this.capabilities =
+      config.capabilities ??
+      (["reasoning", "coding", "execution"] as const).map(
+        (kind): Capability => ({
+          id: `orbit:${id}:${kind}`,
+          kind,
+          strengths: [kind],
+        })
+      );
   }
 
   async execute(input: {
@@ -33,7 +39,7 @@ export class OrbitProvider implements Provider {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${this.config.apiKey}`
+        authorization: `Bearer ${this.config.apiKey}`,
       },
       body: JSON.stringify({
         model: this.config.model,
@@ -41,7 +47,7 @@ export class OrbitProvider implements Provider {
           {
             role: "system",
             content:
-              "You are an organ inside JARVIS-X. Stay in your assigned role, provide inspectable reasoning artifacts, and never claim another organ's work as your own."
+              "You are an organ inside JARVIS-X. Stay in your assigned role, provide inspectable reasoning artifacts, and never claim another organ's work as your own.",
           },
           {
             role: "user",
@@ -49,11 +55,11 @@ export class OrbitProvider implements Provider {
               objective: input.task.objective,
               constraints: input.task.constraints,
               role: input.role,
-              context: input.context
-            })
-          }
-        ]
-      })
+              context: input.context,
+            }),
+          },
+        ],
+      }),
     });
 
     if (!response.ok) {
@@ -73,9 +79,9 @@ export class OrbitProvider implements Provider {
         {
           source: `orbit:${this.config.model}`,
           claim: "Model execution returned through the configured Orbit gateway.",
-          status: "OBSERVED"
-        }
-      ]
+          status: "OBSERVED",
+        },
+      ],
     };
   }
 }
