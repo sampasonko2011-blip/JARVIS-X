@@ -1,4 +1,4 @@
-import type { AgentResponse, Provider, Task } from "./types.js";
+import type { AgentResponse, Capability, Provider, Task } from "./types.js";
 
 /**
  * Orbit-backed provider adapter.
@@ -8,7 +8,7 @@ import type { AgentResponse, Provider, Task } from "./types.js";
  * hard-codes a vendor or assumes which model currently owns a capability.
  */
 export class OrbitProvider implements Provider {
-  public readonly capabilities: string[];
+  public readonly capabilities: Capability[];
 
   constructor(
     public readonly id: string,
@@ -16,10 +16,12 @@ export class OrbitProvider implements Provider {
       baseUrl: string;
       apiKey: string;
       model: string;
-      capabilities?: string[];
+      capabilities?: Capability[];
     }
   ) {
-    this.capabilities = config.capabilities ?? ["reasoning", "coding", "generation"];
+    this.capabilities = config.capabilities ?? ["reasoning", "coding", "execution"].map(
+      kind => ({ id: `orbit:${id}:${kind}`, kind, strengths: [kind] })
+    );
   }
 
   async execute(input: {
@@ -82,9 +84,8 @@ export function orbitProviderFromEnv(id: string): OrbitProvider {
   const baseUrl = process.env.ORBIT_BASE_URL;
   const apiKey = process.env.ORBIT_API_KEY;
   const model = process.env.ORBIT_MODEL;
-  const capabilities = process.env.ORBIT_CAPABILITIES?.split(",").map(s => s.trim()).filter(Boolean);
   if (!baseUrl || !apiKey || !model) {
     throw new Error("Missing ORBIT_BASE_URL, ORBIT_API_KEY, or ORBIT_MODEL.");
   }
-  return new OrbitProvider(id, { baseUrl, apiKey, model, capabilities });
+  return new OrbitProvider(id, { baseUrl, apiKey, model });
 }
