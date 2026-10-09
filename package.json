@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "node --test",
-    "benchmark": "node benchmarks/benchmark.mjs"
+    "benchmark": "node benchmarks/benchmark.mjs",
+    "benchmark:runtime": "node benchmarks/runtime-comparison.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
