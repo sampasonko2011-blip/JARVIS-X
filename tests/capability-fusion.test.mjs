@@ -31,4 +31,22 @@ assert.deepEqual(
   [["dribbling", "perplexity"], ["finishing", "gpt"], ["vision", "claude"]],
 );
 assert.equal(plan.unresolved.length, 0);
+
+const forgedProvenance = buildFusionPlan(
+  [{ capability: "research", weight: 1, required: true }],
+  [{
+    providerId: "candidate-a",
+    capabilities: new Set(["research"]),
+    evidence: [{
+      providerId: "candidate-b",
+      capability: "research",
+      score: 100,
+      status: "VALIDATED",
+      sampleSize: 1000,
+    }],
+  }],
+);
+assert.equal(forgedProvenance.selections.length, 0);
+assert.equal(forgedProvenance.unresolved.length, 1);
+
 console.log("capability fusion tests passed");

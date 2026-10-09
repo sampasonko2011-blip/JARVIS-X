@@ -17,7 +17,11 @@ function statusRank(status: EvidenceStatus): number {
   }
 }
 
-/** Evidence quality is a hard ordering dimension: validated evidence outranks weaker evidence even when the weaker candidate has a higher raw score. */
+/**
+ * Evidence quality is a hard ordering dimension: validated evidence outranks weaker
+ * evidence even when the weaker candidate has a higher raw score. Evidence must also
+ * belong to the candidate that is claiming it; mismatched provider provenance is ignored.
+ */
 export function buildFusionPlan(requirements: CapabilityRequirement[], candidates: OrganCandidate[]): FusionPlan {
   const selections: FusionSelection[] = [];
   const unresolved: CapabilityRequirement[] = [];
@@ -26,7 +30,12 @@ export function buildFusionPlan(requirements: CapabilityRequirement[], candidate
     const options = candidates
       .filter(candidate => candidate.capabilities.has(requirement.capability))
       .flatMap(candidate => candidate.evidence
-        .filter(e => e.capability === requirement.capability && e.status !== "REJECTED" && e.status !== "SUPERSEDED")
+        .filter(e =>
+          e.providerId === candidate.providerId &&
+          e.capability === requirement.capability &&
+          e.status !== "REJECTED" &&
+          e.status !== "SUPERSEDED"
+        )
         .map(e => ({ providerId: candidate.providerId, evidence: e })))
       .sort((a, b) => {
         const statusDelta = statusRank(b.evidence.status) - statusRank(a.evidence.status);
