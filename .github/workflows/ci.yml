@@ -20,6 +20,14 @@ jobs:
       - run: npm run benchmark
       - name: Runtime comparison benchmark
         run: npm run benchmark:runtime
+      - name: Upload runtime benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-x-runtime-benchmark-${{ github.sha }}
+          path: benchmark-results.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Orbit live smoke
         if: ${{ vars.ORBIT_LIVE_TEST_ENABLED == 'true' }}
         env:
@@ -84,15 +92,11 @@ jobs:
             process.stdin.on("data", d => s += d);
             process.stdin.on("end", () => {
               const j = JSON.parse(s);
-              const text = j.choices?.[0]?.message?.content?.trim();
-
+              const text = j.choices?.[0]?.message?.content;
               if (text !== "ORBIT_LIVE_OK") {
                 console.error("Unexpected Orbit response:", text);
                 process.exit(1);
               }
-
-              console.log(
-                "ORBIT_LIVE_OK model=" + (j.model || "unknown")
-              );
+              console.log("Orbit live smoke passed.");
             });
           '

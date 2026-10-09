@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { CapabilityRegistry } from "../dist/core/registry.js";
 import { Orchestrator } from "../dist/core/orchestrator.js";
@@ -96,8 +97,7 @@ async function measure(label, run, verifier) {
     const start = performance.now();
     try {
       const output = await run();
-      const elapsed = performance.now() - start;
-      samples.push(elapsed);
+      samples.push(performance.now() - start);
       if (verifier(output)) passed++;
     } catch {
       errors++;
@@ -105,7 +105,9 @@ async function measure(label, run, verifier) {
     }
   }
   const validTimes = samples.filter(x => x !== null).sort((a, b) => a - b);
-  const percentile = p => validTimes.length ? Number(validTimes[Math.min(validTimes.length - 1, Math.ceil(p * validTimes.length) - 1)].toFixed(3)) : null;
+  const percentile = p => validTimes.length
+    ? Number(validTimes[Math.min(validTimes.length - 1, Math.ceil(p * validTimes.length) - 1)].toFixed(3))
+    : null;
   return {
     name: label,
     iterations: ITERATIONS,
@@ -122,41 +124,35 @@ async function measure(label, run, verifier) {
 }
 
 const baselineRuntime = createRuntimes();
-const baseline = await measure(
-  "single-organ-runtime",
-  async () => {
-    const response = await baselineRuntime.baseline.run(task, "reasoning", checkDeliverable);
-    return response.output;
-  },
-  checkDeliverable,
-);
+const baseline = await measure("single-organ-runtime", async () => {
+  const response = await baselineRuntime.baseline.run(task, "reasoning", checkDeliverable);
+  return response.output;
+}, checkDeliverable);
 
 const compositeRuntime = createRuntimes();
-const composite = await measure(
-  "multi-organ-synthesis-runtime",
-  async () => {
-    const result = await compositeRuntime.composite.synthesizeFusion(
-      task,
-      requirements,
-      candidates,
-      output => output != null,
-      "synthesis-organ",
-      checkDeliverable,
-    );
-    return { output: result.synthesis.output, verification: result.verification };
-  },
-  result => result?.verification === "VALIDATED" && checkDeliverable(result.output),
-);
+const composite = await measure("multi-organ-synthesis-runtime", async () => {
+  const result = await compositeRuntime.composite.synthesizeFusion(
+    task, requirements, candidates, output => output != null, "synthesis-organ", checkDeliverable,
+  );
+  return { output: result.synthesis.output, verification: result.verification };
+}, result => result?.verification === "VALIDATED" && checkDeliverable(result.output));
 
 const report = {
   benchmark: "JARVIS-X deterministic runtime comparison",
-  version: 2,
-  environment: "mock providers; no network; no paid model calls",
+  version: 3,
+  environment: {
+    mode: "mock providers; no network; no paid model calls",
+    node: process.version,
+    platform: process.platform,
+    architecture: process.arch,
+    commitSha: process.env.GITHUB_SHA ?? null,
+  },
   objective: "Compare runtime correctness and overhead on the same fixed task contract",
   limitations: [
     "This measures orchestration mechanics, not model intelligence or real-provider quality.",
     "The fixtures are deterministic and the verifier is authored alongside the fixtures.",
     "Latency reflects local runtime overhead only; it is not a forecast of real API latency or cost.",
+    "A passing fixture benchmark is a regression guard, not evidence that fusion improves task quality.",
   ],
   settings: { iterations: ITERATIONS, warmup: WARMUP },
   results: [baseline, composite],
@@ -170,7 +166,10 @@ const report = {
       : Number((composite.latencyMs.p95 - baseline.latencyMs.p95).toFixed(3)),
   },
 };
+const outputPath = process.env.JX_BENCH_OUTPUT ?? "benchmark-results.json";
+writeFileSync(outputPath, JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));
+console.log("Benchmark report written to " + outputPath);
 if (baseline.passRate !== 1 || composite.passRate !== 1 || baseline.errorRate !== 0 || composite.errorRate !== 0) {
   process.exitCode = 1;
 }
