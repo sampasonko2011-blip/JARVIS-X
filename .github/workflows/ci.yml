@@ -18,6 +18,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run benchmark
+      - name: Runtime comparison benchmark
+        run: npm run benchmark:runtime
       - name: Orbit live smoke
         if: ${{ vars.ORBIT_LIVE_TEST_ENABLED == 'true' }}
         env:
