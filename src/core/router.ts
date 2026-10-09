@@ -8,8 +8,8 @@ export class CapabilityRouter {
   route(task: Task, preferredKind: Capability["kind"]): Route[] {
     return this.registry.find(preferredKind)
       .map(capability => {
-        const provider = [...new Set([capability.id.split(":")[0]])]
-          .map(id => this.registry.getProvider(id)).find(Boolean);
+        // Capability IDs are opaque identifiers; do not infer provider IDs from their format.
+        const provider = this.registry.getProviderForCapability(capability.id);
         if (!provider) return undefined;
         const score = capability.strengths.some(s => task.objective.toLowerCase().includes(s.toLowerCase())) ? 2 : 1;
         return { provider, capability, score, reasons: ["kind match", score === 2 ? "objective-strength match" : "generic capability match"] };

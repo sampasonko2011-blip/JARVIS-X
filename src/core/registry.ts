@@ -5,5 +5,10 @@ export class CapabilityRegistry {
   register(provider: Provider): void { this.providers.set(provider.id, provider); }
   list(): Capability[] { return [...this.providers.values()].flatMap(p => p.capabilities); }
   getProvider(providerId: string): Provider | undefined { return this.providers.get(providerId); }
+  getProviderForCapability(capabilityId: string): Provider | undefined {
+    return [...this.providers.values()].find(provider =>
+      provider.capabilities.some(capability => capability.id === capabilityId)
+    );
+  }
   find(kind: Capability["kind"]): Capability[] { return this.list().filter(c => c.kind === kind); }
 }
