@@ -19,6 +19,7 @@ jobs:
       - run: npm test
       - run: npm run benchmark
       - name: Orbit live smoke
+        if: ${{ vars.ORBIT_LIVE_TEST_ENABLED == 'true' }}
         env:
           ORBIT_BASE_URL: ${{ secrets.ORBIT_BASE_URL }}
           ORBIT_API_KEY: ${{ secrets.ORBIT_API_KEY }}
