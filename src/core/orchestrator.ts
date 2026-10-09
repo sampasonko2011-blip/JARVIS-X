@@ -28,12 +28,9 @@ export class Orchestrator {
     const route = routes[0];
     const response = await route.provider.execute({
       task,
-      // Capability IDs are opaque. The declared capability kind is the stable role contract.
       role: route.capability.kind,
       context: { routes },
     });
-    // An output existing is not proof that it satisfies the task. Without a task-specific
-    // verifier, preserve uncertainty rather than upgrading generated output to VALIDATED.
     const verified = verifyResponse(response, output =>
       typeof verification === "function" ? verification(output) : false,
     );
@@ -61,7 +58,7 @@ export class Orchestrator {
     const plan = buildFusionPlan(requirements, candidates);
     const unresolvedRequired = plan.unresolved.filter(requirement => requirement.required !== false);
     if (unresolvedRequired.length) {
-      throw new Error("Unresolved required capabilities: " + unresolvedRequired.map(r => r.capability).join(", "));
+      throw new Error("Unresolved capabilities: " + unresolvedRequired.map(r => r.capability).join(", "));
     }
     const responses: AgentResponse[] = [];
 
@@ -108,11 +105,6 @@ export class Orchestrator {
     return responses;
   }
 
-  /**
-   * Execute evidence-selected organs, then hand their verified outputs to a distinct
-   * synthesis provider. The final synthesis is independently verified before being
-   * reported as VALIDATED.
-   */
   async synthesizeFusion(
     task: Task,
     requirements: CapabilityRequirement[],
@@ -124,7 +116,7 @@ export class Orchestrator {
     const plan = buildFusionPlan(requirements, candidates);
     const unresolvedRequired = plan.unresolved.filter(requirement => requirement.required !== false);
     if (unresolvedRequired.length) {
-      throw new Error("Unresolved required capabilities: " + unresolvedRequired.map(r => r.capability).join(", "));
+      throw new Error("Unresolved capabilities: " + unresolvedRequired.map(r => r.capability).join(", "));
     }
 
     const selectedProviderIds = new Set(plan.selections.map(selection => selection.providerId));
