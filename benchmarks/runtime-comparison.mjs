@@ -43,6 +43,9 @@ function createRuntimes() {
     answer: "grounded plan",
     sources: ["fact-a", "fact-b"],
     implementation: "fixture implementation",
+    sourceTrail: ["fixture-source-a", "fixture-source-b"],
+    testsIncluded: true,
+    organCount: 2,
   })));
   const baseline = new Orchestrator(baselineRegistry);
 
@@ -72,15 +75,12 @@ function createRuntimes() {
   return { baseline, composite };
 }
 
-function checkBaseline(output) {
+function checkDeliverable(output) {
   return output?.answer === "grounded plan" &&
     Array.isArray(output.sources) &&
     output.sources.length === 2 &&
     typeof output.implementation === "string" &&
-    output.implementation.length > 0;
-}
-function checkComposite(output) {
-  return checkBaseline(output) &&
+    output.implementation.length > 0 &&
     output.testsIncluded === true &&
     output.organCount === 2 &&
     Array.isArray(output.sourceTrail) &&
@@ -125,10 +125,10 @@ const baselineRuntime = createRuntimes();
 const baseline = await measure(
   "single-organ-runtime",
   async () => {
-    const response = await baselineRuntime.baseline.run(task, "reasoning", checkBaseline);
+    const response = await baselineRuntime.baseline.run(task, "reasoning", checkDeliverable);
     return response.output;
   },
-  checkBaseline,
+  checkDeliverable,
 );
 
 const compositeRuntime = createRuntimes();
@@ -145,7 +145,7 @@ const composite = await measure(
     );
     return { output: result.synthesis.output, verification: result.verification };
   },
-  result => result?.verification === "VALIDATED" && checkComposite(result.output),
+  result => result?.verification === "VALIDATED" && checkDeliverable(result.output),
 );
 
 const report = {
