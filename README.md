@@ -1,6 +1,6 @@
 # JARVIS-X
 
-Human × AI Performance Operating System.
+Human Ã AI Performance Operating System.
 
 > Models are organs. JARVIS-X is the organism.
 
@@ -18,3 +18,7 @@ JARVIS-X composes reasoning, coding, research, memory, verification, and executi
 ## Architecture
 
 See `docs/architecture.md` and `docs/self-audit.md`.
+
+## Benchmarks
+
+See [docs/benchmarking.md](docs/benchmarking.md) for reproducible runtime benchmark instructions, CI artifact details, and the distinction between deterministic fixture checks and real model-quality evaluation.
