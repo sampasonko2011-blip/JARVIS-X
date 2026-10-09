@@ -25,6 +25,7 @@ export interface CompositeResult {
 type MemberExecution = {
   member: CompositeMember;
   provider: Provider;
+  role: string;
 };
 
 export class CompositeEngine {
@@ -66,18 +67,22 @@ export class CompositeEngine {
         "Composite roster must contain " + this.policy.minMembers + "-" + this.policy.maxMembers + " members.",
       );
     }
+    const uniqueProviderIds = new Set(roster.map(member => member.providerId));
+    if (uniqueProviderIds.size !== roster.length) {
+      throw new Error("Composite roster must use distinct providers; duplicate provider IDs are not independent organs.");
+    }
 
     const byId = new Map(this.providers.map(provider => [provider.id, provider]));
     const active: MemberExecution[] = roster.map(member => {
       const provider = byId.get(member.providerId);
       if (!provider) throw new Error("Selected provider is not registered: " + member.providerId);
-      return { member, provider };
+      return { member, provider, role: member.capabilities[0] ?? "reasoning" };
     });
 
-    const invoke = ({ member, provider }: MemberExecution) =>
+    const invoke = ({ member, provider, role }: MemberExecution) =>
       provider.execute({
         task,
-        role: member.capabilities[0] ?? "reasoning",
+        role,
         context: { composite: true, roster: roster.map(item => item.providerId) },
       });
 
@@ -98,7 +103,7 @@ export class CompositeEngine {
     }
 
     const records = outcomes.map((outcome, index) => {
-      const { member, provider } = active[index];
+      const { member, provider, role } = active[index];
       if (outcome.status === "rejected") {
         const message = outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason);
         const response: AgentResponse = {
@@ -110,7 +115,7 @@ export class CompositeEngine {
             status: "REJECTED",
           }],
         };
-        return { member, response, passed: false, failureReason: provider.id + ": " + message };
+        return { member, provider, role, response, passed: false, failureReason: provider.id + ": " + message };
       }
 
       let passed = false;
@@ -122,7 +127,7 @@ export class CompositeEngine {
         failureReason = "Verifier failed for " + provider.id + ": " +
           (reason instanceof Error ? reason.message : String(reason));
       }
-      return { member, response: outcome.value, passed, failureReason };
+      return { member, provider, role, response: outcome.value, passed, failureReason };
     });
 
     const proposals = records.map(record => record.response);
@@ -143,8 +148,10 @@ export class CompositeEngine {
       };
     }
 
+    // A roster label alone is insufficient: the actual executed role must be critic-like,
+    // and that specific organ's output must pass the verifier.
     const criticVerified = records.some(record =>
-      record.passed && record.member.capabilities.some(capability => /critic|critique|review/i.test(capability)),
+      record.passed && /critic|critique|review/i.test(record.role),
     );
     if (this.policy.requireIndependentCritic && !criticVerified) {
       return {

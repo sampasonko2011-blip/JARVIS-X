@@ -12,11 +12,12 @@ function provider(id, { output = "ok", throws = false, capabilities = ["reasonin
       kind: kind === "critique" ? "critique" : "reasoning",
       strengths: [kind],
     })),
-    async execute() {
+    async execute(request) {
       if (throws) throw new Error("simulated provider outage");
       return {
         capabilityId: id + ":executed",
         output,
+        role: request.role,
         evidence: [{ source: id, claim: "fixture output", status: "OBSERVED" }],
       };
     },
@@ -27,18 +28,19 @@ function member(id, capabilities = ["reasoning"]) {
   return { providerId: id, capabilities, utilityScore: 10, status: "VALIDATED" };
 }
 
+const policy = {
+  minMembers: 3,
+  maxMembers: 3,
+  requireIndependentCritic: true,
+  parallelize: true,
+};
+
 test("composite isolates one provider outage and retains verified survivor outputs", async () => {
-  const providers = [
+  const engine = new CompositeEngine([
     provider("a"),
     provider("b", { throws: true }),
     provider("critic", { capabilities: ["critique"] }),
-  ];
-  const engine = new CompositeEngine(providers, {
-    minMembers: 3,
-    maxMembers: 3,
-    requireIndependentCritic: true,
-    parallelize: true,
-  });
+  ], policy);
   const result = await engine.run(
     task,
     [member("a"), member("b"), member("critic", ["critique"])],
@@ -57,12 +59,7 @@ test("composite invokes each verifier exactly once per proposal", async () => {
     provider("a"),
     provider("b"),
     provider("critic", { capabilities: ["critique"] }),
-  ], {
-    minMembers: 3,
-    maxMembers: 3,
-    requireIndependentCritic: true,
-    parallelize: true,
-  });
+  ], policy);
   let calls = 0;
   const result = await engine.run(
     task,
@@ -79,12 +76,7 @@ test("composite fails closed when the critic output does not survive verificatio
     provider("a"),
     provider("b"),
     provider("critic", { capabilities: ["critique"] }),
-  ], {
-    minMembers: 3,
-    maxMembers: 3,
-    requireIndependentCritic: true,
-    parallelize: true,
-  });
+  ], policy);
   const result = await engine.run(
     task,
     [member("a"), member("b"), member("critic", ["critique"])],
@@ -93,4 +85,28 @@ test("composite fails closed when the critic output does not survive verificatio
 
   assert.equal(result.verification, "UNPROVEN");
   assert.match(result.rationale.join(" "), /no critic output survived/);
+});
+
+test("a multi-capability member is not treated as a critic unless critique is the executed role", async () => {
+  const engine = new CompositeEngine([
+    provider("a"),
+    provider("b"),
+    provider("multi", { capabilities: ["reasoning", "critique"] }),
+  ], policy);
+  const result = await engine.run(
+    task,
+    [member("a"), member("b"), member("multi", ["reasoning", "critique"])],
+    () => true,
+  );
+
+  assert.equal(result.verification, "UNPROVEN");
+  assert.match(result.rationale.join(" "), /no critic output survived/);
+});
+
+test("composite rejects duplicate provider IDs instead of counting one organ twice", async () => {
+  const engine = new CompositeEngine([provider("a"), provider("b")], policy);
+  await assert.rejects(
+    engine.run(task, [member("a"), member("a"), member("b")], () => true),
+    /distinct providers/,
+  );
 });
