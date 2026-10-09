@@ -45,11 +45,15 @@ export class CompositeEngine {
       .sort((a, b) => b.utilityScore - a.utilityScore);
     const selected: CompositeMember[] = [];
     const seenCapabilities = new Set<string>();
+    const seenProviders = new Set<string>();
 
     for (const member of eligible) {
+      // A single provider must never occupy multiple roster slots.
+      if (seenProviders.has(member.providerId)) continue;
       const unique = member.capabilities.some(capability => !seenCapabilities.has(capability));
       if (unique || selected.length < this.policy.minMembers) {
         selected.push(member);
+        seenProviders.add(member.providerId);
         member.capabilities.forEach(capability => seenCapabilities.add(capability));
       }
       if (selected.length >= this.policy.maxMembers) break;
@@ -86,8 +90,6 @@ export class CompositeEngine {
         context: { composite: true, roster: roster.map(item => item.providerId) },
       });
 
-    // Isolate individual provider failures. One unavailable organ must not erase
-    // successful outputs from the rest of the composite.
     let outcomes: PromiseSettledResult<AgentResponse>[];
     if (this.policy.parallelize) {
       outcomes = await Promise.allSettled(active.map(invoke));
@@ -121,7 +123,6 @@ export class CompositeEngine {
       let passed = false;
       let failureReason: string | undefined;
       try {
-        // Evaluate each proposal exactly once; validators may be stateful or expensive.
         passed = verify(outcome.value);
       } catch (reason) {
         failureReason = "Verifier failed for " + provider.id + ": " +
@@ -148,8 +149,6 @@ export class CompositeEngine {
       };
     }
 
-    // A roster label alone is insufficient: the actual executed role must be critic-like,
-    // and that specific organ's output must pass the verifier.
     const criticVerified = records.some(record =>
       record.passed && /critic|critique|review/i.test(record.role),
     );

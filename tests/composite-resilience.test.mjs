@@ -24,8 +24,8 @@ function provider(id, { output = "ok", throws = false, capabilities = ["reasonin
   };
 }
 
-function member(id, capabilities = ["reasoning"]) {
-  return { providerId: id, capabilities, utilityScore: 10, status: "VALIDATED" };
+function member(id, capabilities = ["reasoning"], utilityScore = 10) {
+  return { providerId: id, capabilities, utilityScore, status: "VALIDATED" };
 }
 
 const policy = {
@@ -109,4 +109,15 @@ test("composite rejects duplicate provider IDs instead of counting one organ twi
     engine.run(task, [member("a"), member("a"), member("b")], () => true),
     /distinct providers/,
   );
+});
+
+test("roster selection deduplicates providers before applying capability diversity", () => {
+  const engine = new CompositeEngine([], { ...policy, minMembers: 2, maxMembers: 3 });
+  const selected = engine.selectRoster([
+    member("same", ["reasoning"], 100),
+    member("same", ["critique"], 90),
+    member("other", ["coding"], 80),
+  ]);
+
+  assert.deepEqual(selected.map(item => item.providerId), ["same", "other"]);
 });
