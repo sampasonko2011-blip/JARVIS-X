@@ -141,7 +141,7 @@ const composite = await measure(
       candidates,
       output => output != null,
       "synthesis-organ",
-      checkComposite,
+      checkDeliverable,
     );
     return { output: result.synthesis.output, verification: result.verification };
   },
