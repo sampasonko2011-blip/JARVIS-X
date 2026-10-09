@@ -20,11 +20,13 @@ jobs:
       - run: npm run benchmark
       - name: Runtime comparison benchmark
         run: npm run benchmark:runtime
+        env:
+          JX_BENCH_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Upload runtime benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jarvis-x-runtime-benchmark-${{ github.sha }}
+          name: jarvis-x-runtime-benchmark-${{ github.event.pull_request.head.sha || github.sha }}
           path: benchmark-results.json
           if-no-files-found: warn
           retention-days: 14
