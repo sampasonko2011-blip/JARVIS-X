@@ -1,6 +1,6 @@
 # JARVIS-X
 
-Human Ã AI Performance Operating System.
+Human × AI Performance Operating System.
 
 > Models are organs. JARVIS-X is the organism.
 
