@@ -161,7 +161,10 @@ export class Orchestrator {
       },
     });
     const synthesis = verifyResponse(synthesisResponse, verifySynthesis);
-    const status = synthesis.evidence?.at(-1)?.status ?? "UNPROVEN";
+    const rawStatus = synthesis.evidence?.at(-1)?.status ?? "UNPROVEN";
+    const status: SynthesisRunResult["verification"] =
+      rawStatus === "VALIDATED" ? "VALIDATED" :
+      rawStatus === "REJECTED" ? "REJECTED" : "UNPROVEN";
     const decision = status === "VALIDATED" ? "VALIDATED" : status === "REJECTED" ? "REJECTED" : "UNPROVEN";
 
     this.ledger.record({
