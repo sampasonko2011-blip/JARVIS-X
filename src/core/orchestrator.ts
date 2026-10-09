@@ -30,16 +30,17 @@ export class Orchestrator {
     const verified = verifyResponse(response, output =>
       typeof verification === "function" ? verification(output) : false,
     );
+    const status = verified.evidence?.at(-1)?.status ?? "UNPROVEN";
     this.ledger.record({
       objective: task.objective,
       constraints: task.constraints ?? [],
       capabilitiesAvailable: this.registry.list().map(c => c.id),
       capabilitiesInvoked: [route.capability.id],
       capabilitiesExecuted: [response.capabilityId],
-      verification: verified.evidence?.at(-1)?.status ?? "UNPROVEN",
+      verification: status,
       errors: [],
       confidence: verified.confidence,
-      decision: "UNPROVEN until task-specific verification",
+      decision: status === "VALIDATED" ? "VALIDATED" : "UNPROVEN until task-specific verification",
     });
     return verified;
   }

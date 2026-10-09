@@ -45,7 +45,7 @@ test("Orbit provider sends the expected request and parses a successful response
   assert.equal(body.messages[1].role, "user");
   assert.match(body.messages[1].content, /verify mocked Orbit request/);
   assert.equal(result.output, "mocked answer");
-  assert.equal(result.capabilityId, "orbit-test:reasoning");
+  assert.equal(result.capabilityId, "orbit:orbit-test:reasoning");
   assert.equal(result.evidence[0].status, "OBSERVED");
 });
 

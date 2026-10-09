@@ -3,9 +3,9 @@ import type { AgentResponse, Capability, Provider, Task } from "./types.js";
 /**
  * Orbit-backed provider adapter.
  *
- * GitHub remains the source-of-truth/deployment backbone.
- * Orbit is deliberately injected through configuration so JARVIS-X never
- * hard-codes a vendor or assumes which model currently owns a capability.
+ * GitHub remains the source-of-truth/deployment backbone. Orbit is deliberately
+ * injected through configuration so JARVIS-X never hard-codes a vendor or
+ * assumes which model currently owns a capability.
  */
 export class OrbitProvider implements Provider {
   public readonly capabilities: Capability[];
@@ -72,8 +72,13 @@ export class OrbitProvider implements Provider {
     const output = payload.choices?.[0]?.message?.content;
     if (!output) throw new Error("Orbit inference returned no model output.");
 
+    // Keep execution evidence aligned with the exact capability advertised in the registry.
+    const executedCapability = this.capabilities.find(
+      capability => capability.kind === input.role || capability.id === input.role
+    );
+
     return {
-      capabilityId: `${this.id}:${input.role}`,
+      capabilityId: executedCapability?.id ?? `${this.id}:${input.role}`,
       output,
       evidence: [
         {
