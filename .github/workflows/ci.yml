@@ -18,6 +18,18 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run benchmark
+      - name: Runtime comparison benchmark
+        run: npm run benchmark:runtime
+        env:
+          JX_BENCH_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Upload runtime benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-x-runtime-benchmark-${{ github.event.pull_request.head.sha || github.sha }}
+          path: benchmark-results.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Orbit live smoke
         if: ${{ vars.ORBIT_LIVE_TEST_ENABLED == 'true' }}
         env:
@@ -29,7 +41,7 @@ jobs:
           test -n "$ORBIT_BASE_URL"
           test -n "$ORBIT_API_KEY"
 
-          MODELS_JSON="$(curl -fsS --retry 2 --max-time 30 \
+          MODELS_JSON="$(curl -fsS --max-time 30 \
             -H "Authorization: Bearer $ORBIT_API_KEY" \
             "$ORBIT_BASE_URL/models")"
 
@@ -38,28 +50,20 @@ jobs:
             process.stdin.on("data", d => s += d);
             process.stdin.on("end", () => {
               const j = JSON.parse(s);
-              const ids = (j.data || []).map(x => x.id);
-
-              const preferred = [
-                /claude.*opus/i,
-                /gpt-5/i,
-                /claude.*sonnet/i
-              ];
-
-              let model = ids.find(id =>
-                preferred.some(re => re.test(id))
-              );
-
-              if (!model) model = ids[0];
-              if (!model) process.exit(2);
-
+              const ids = (j.data || []).map(x => x.id).filter(id => typeof id === "string");
+              const preferred = [/haiku/i, /flash/i, /mini/i, /small/i];
+              const model = ids.find(id => preferred.some(re => re.test(id)));
+              if (!model) {
+                console.error("No explicitly low-cost model found; refusing to guess.");
+                process.exit(2);
+              }
               process.stdout.write(model);
             });
           ')"
 
           echo "Orbit model selected: $MODEL"
 
-          RESPONSE="$(curl -fsS --retry 2 --max-time 60 \
+          RESPONSE="$(curl -fsS --max-time 60 \
             -H "Authorization: Bearer $ORBIT_API_KEY" \
             -H "Content-Type: application/json" \
             "$ORBIT_BASE_URL/chat/completions" \
@@ -73,7 +77,7 @@ jobs:
                   }
                 ],
                 temperature: 0,
-                max_tokens: 20
+                max_tokens: 8
               }))
             ' "$MODEL")")"
 
@@ -82,15 +86,11 @@ jobs:
             process.stdin.on("data", d => s += d);
             process.stdin.on("end", () => {
               const j = JSON.parse(s);
-              const text = j.choices?.[0]?.message?.content?.trim();
-
+              const text = j.choices?.[0]?.message?.content;
               if (text !== "ORBIT_LIVE_OK") {
                 console.error("Unexpected Orbit response:", text);
                 process.exit(1);
               }
-
-              console.log(
-                "ORBIT_LIVE_OK model=" + (j.model || "unknown")
-              );
+              console.log("Orbit live smoke passed.");
             });
           '
