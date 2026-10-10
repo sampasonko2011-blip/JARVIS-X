@@ -10,7 +10,15 @@ export interface MemoryRecord {
 }
 export interface MemorySearchOptions { limit?: number; project?: string; kinds?: MemoryKind[]; includeSuperseded?: boolean; now?: Date; }
 export interface ScoredMemory { record: MemoryRecord; score: number; freshness: "fresh" | "stale" | "unknown"; }
-
+export interface WorkingCheckpoint {
+  project: string;
+  task: string;
+  nextAction: string;
+  blockers?: string[];
+  contextRefs?: string[];
+  updatedAt: string;
+  expiresAt?: string;
+}
 const VALID_STATUSES = new Set<MemoryStatus>(["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN", "REJECTED", "SUPERSEDED"]);
 const VALID_KINDS = new Set<MemoryKind>(["working", "episodic", "semantic", "procedural", "evidence"]);
 const TOKEN = /[\p{L}\p{N}_-]{2,}/gu;
@@ -45,6 +53,26 @@ export class MemoryOS {
   }
 
   get(id: string): MemoryRecord | undefined { return this.store.get<MemoryRecord>(this.key(id)); }
+
+  saveCheckpoint(input: Omit<WorkingCheckpoint, "updatedAt"> & Partial<Pick<WorkingCheckpoint, "updatedAt">>, now = new Date()): WorkingCheckpoint {
+    if (!input.project.trim() || !input.task.trim() || !input.nextAction.trim()) {
+      throw new Error("Checkpoint project, task, and nextAction must be non-empty.");
+    }
+    const updatedAt = input.updatedAt ?? now.toISOString();
+    validDate(updatedAt, "checkpoint.updatedAt");
+    if (input.expiresAt) validDate(input.expiresAt, "checkpoint.expiresAt");
+    const checkpoint: WorkingCheckpoint = { ...input, updatedAt };
+    this.store.set(this.checkpointKey(input.project), checkpoint);
+    return checkpoint;
+  }
+
+  loadCheckpoint(project: string, now = new Date()): WorkingCheckpoint | undefined {
+    if (!project.trim()) throw new Error("Checkpoint project must be non-empty.");
+    const checkpoint = this.store.get<WorkingCheckpoint>(this.checkpointKey(project));
+    if (!checkpoint) return undefined;
+    if (checkpoint.expiresAt && Date.parse(checkpoint.expiresAt) <= now.getTime()) return undefined;
+    return checkpoint;
+  }
 
   supersede(id: string, replacementId: string, now = new Date()): MemoryRecord {
     const previous = this.get(id);
@@ -83,4 +111,5 @@ export class MemoryOS {
 
   private key(id: string): string { return this.namespace + "record:" + id; }
   private indexKey(): string { return this.namespace + "__index"; }
+  private checkpointKey(project: string): string { return this.namespace + "checkpoint:" + project; }
 }
