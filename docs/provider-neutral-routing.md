@@ -10,20 +10,26 @@ Example TypeScript:
 
 ```ts
 import { OpenAICompatibleProvider } from "./providers/openai-compatible.js";
+import { FallbackProvider } from "./providers/fallback-provider.js";
 
-const freePool = new OpenAICompatibleProvider("freellmpool", {
+const gateway = new OpenAICompatibleProvider("freellmpool", {
   baseUrl: process.env.JX_LLM_BASE_URL ?? "http://127.0.0.1:8080/v1",
   model: process.env.JX_LLM_MODEL ?? "auto",
-  apiKey: process.env.JX_LLM_API_KEY, // omit for a local proxy that does not require auth
+  apiKey: process.env.JX_LLM_API_KEY,
   costClass: "verified-zero-cost",
 });
+const failover = new FallbackProvider("free-model-chain", [
+  { provider: gateway, costClass: "verified-zero-cost" },
+  // Add a local OpenAI-compatible runtime here as another candidate.
+]);
 ```
 
-Register it with the existing `CapabilityRegistry` just like any other `Provider`. This adapter does not install, launch, or authenticate to FreeLLMpool automatically.
+Register the selected provider with the existing `CapabilityRegistry`. This adapter does not install, launch, or authenticate to FreeLLMpool automatically.
 
 ## Zero-cost policy and important limits
 
-- The adapter blocks `paid`, `trial`, and `unknown` cost classes by default. The `verified-zero-cost` value is an operator assertion, **not live price verification**. Before setting it, verify the exact upstream route and its current terms in the gateway's capacity/catalog output and provider terms.
+- The adapter blocks `paid`, `trial`, and `unknown` cost classes by default. The `verified-zero-cost` value is an operator assertion, **not live price verification**. Verify the exact upstream route and recurring terms before using that label.
+- `FallbackProvider` attempts only enabled candidates explicitly classified as `verified-zero-cost` by default. It never silently falls back to a paid, trial, or unknown candidate. This is a software policy guard, not a billing guarantee.
 - FreeLLMpool pools upstream routes; it does not make every catalog entry free, permanently available, private, or frontier-quality. A keyless route can disappear or impose limits. Do not treat model catalog size as proof of healthy usable models.
 - Prompts go to the selected upstream provider. Do not send secrets, school records, private source code, or other sensitive content unless the provider's current data policy permits it.
 - Keep the proxy bound to loopback unless you configure authentication and understand the network exposure. Never commit provider credentials. Use environment variables or a secret manager.
