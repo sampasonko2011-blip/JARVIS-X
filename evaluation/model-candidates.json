@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "selection_policy": {
     "optimize_for": [
       "measured_task_quality",
@@ -13,84 +13,484 @@
       "quality_from_brand",
       "free_from_catalog_presence",
       "open_weights_from_public_code",
-      "permanent_availability_from_current_access"
+      "permanent_availability_from_current_access",
+      "a model's weights are installed merely because it is listed"
     ],
-    "promotion_gate": "A model is promoted only after a fixed task-set run, route identity capture, recurring zero-price verification, blind rubric scoring, and a comparable retest."
+    "promotion_gate": "Promote only after fixed task-set evaluation, exact route/checkpoint capture, recurring price and license verification, blind rubric scoring, and a comparable holdout retest.",
+    "status_vocabulary": [
+      "OBSERVED",
+      "VALIDATED",
+      "PROPOSED",
+      "UNPROVEN",
+      "REJECTED",
+      "SUPERSEDED"
+    ],
+    "rules": [
+      "Include all requested model families and specialist tools in the registry, but do not call every entry a general-purpose model.",
+      "Only promote a model after a fixed benchmark, exact endpoint/checkpoint capture, recurring cost and privacy review, blind scoring, and holdout retest.",
+      "Free-tier access is quota- and terms-dependent; never treat a free tier as unlimited or private by default.",
+      "Current ChatGPT session is a baseline, not an API endpoint that repository code can call."
+    ]
   },
   "candidates": [
     {
-      "id": "claude-code-workflow-patterns",
-      "kind": "public-engineering-patterns",
-      "role": [
+      "id": "gpt-6-chatgpt-current-session",
+      "kind": "hosted-assistant-baseline",
+      "roles": [
+        "orchestration",
+        "synthesis",
+        "instruction-following",
+        "general-reasoning"
+      ],
+      "access": "current ChatGPT session; repository code cannot independently call this session as an API",
+      "zero_cost_runtime": "account-plan-and-product-context-dependent",
+      "status": "baseline-only-not-an-independent-provider",
+      "note": "User-referenced 'ChatGPT 6 Astra' is treated as the current-session baseline label, not as a separately addressable model endpoint. Do not claim API availability or benchmark results without an actual supported route."
+    },
+    {
+      "id": "qwen3-coder-next",
+      "kind": "open-weight-model-candidate",
+      "roles": [
         "coding",
+        "repository-maintenance",
+        "agentic-coding"
+      ],
+      "access": "exact checkpoint, license, hardware fit, and runtime must be verified",
+      "zero_cost_runtime": "potentially-no-per-request-fee-with-local-inference",
+      "status": "priority-candidate-not-benchmarked",
+      "note": "Strong coding-oriented candidate to test first; not a measured winner and not installed by this registry entry."
+    },
+    {
+      "id": "qwen3-coder-30b-a3b-instruct",
+      "kind": "open-weight-model-candidate",
+      "roles": [
+        "coding",
+        "tool-use",
+        "code-editing"
+      ],
+      "access": "exact model card, license, quantization, and hardware fit must be verified",
+      "zero_cost_runtime": "potentially-no-per-request-fee-with-local-inference",
+      "status": "candidate-not-ranked",
+      "note": "Compare against Qwen3-Coder-Next on identical repository tasks; avoid inferring superiority from model name or size."
+    },
+    {
+      "id": "deepseek-r1-family",
+      "kind": "open-weight-model-family",
+      "roles": [
+        "reasoning",
+        "critique",
+        "multi-step-analysis"
+      ],
+      "access": "checkpoint-specific license and deployment requirements",
+      "zero_cost_runtime": "potentially-no-per-request-fee-with-local-inference",
+      "status": "candidate-family-exact-checkpoint-required",
+      "note": "Choose a specific checkpoint before evaluation. Reasoning traces are not evidence by themselves; score final answers against tests and references."
+    },
+    {
+      "id": "kimi-k2-family",
+      "kind": "model-family-candidate",
+      "roles": [
+        "agentic-workflows",
+        "coding",
+        "long-context-synthesis"
+      ],
+      "access": "separate hosted and weight-release terms; verify exact variant and route",
+      "zero_cost_runtime": "unknown-until-exact-route-verified",
+      "status": "candidate-not-ranked",
+      "note": "Include only if the selected variant can be run within the chosen budget, license, and privacy constraints."
+    },
+    {
+      "id": "glm-4.5-family",
+      "kind": "model-family-candidate",
+      "roles": [
+        "agentic-tool-use",
+        "coding",
+        "reasoning"
+      ],
+      "access": "verify exact checkpoint, license, serving requirements, and route",
+      "zero_cost_runtime": "unknown-until-exact-route-verified",
+      "status": "candidate-not-ranked",
+      "note": "Test structured tool-use and failure recovery rather than relying on vendor claims."
+    },
+    {
+      "id": "devstral-family",
+      "kind": "open-weight-coding-candidate",
+      "roles": [
+        "software-engineering",
+        "repository-agents",
+        "code-review"
+      ],
+      "access": "verify exact release license and hardware requirements",
+      "zero_cost_runtime": "potentially-no-per-request-fee-with-local-inference",
+      "status": "candidate-not-ranked",
+      "note": "Evaluate on issue-to-patch, test repair, and regression detection tasks."
+    },
+    {
+      "id": "claude-code-public-workflow-patterns",
+      "kind": "public-engineering-patterns",
+      "roles": [
+        "coding-workflows",
         "tool-use",
         "verification"
       ],
-      "access": "public_docs_and_examples; hosted_api_or_subscription_required_for_model_execution",
+      "access": "public docs and examples; actual model execution needs authorized access or separately verified route",
       "zero_cost_runtime": false,
       "status": "study-patterns-only",
-      "note": "Claude Code public docs and workflow patterns can be studied. Actual Claude model inference generally requires authorized Anthropic access or a separately verified eligible route; public docs do not mean free weights or unrestricted free inference."
-    },
-    {
-      "id": "qwen-open-weight-family",
-      "kind": "open-weights-candidate",
-      "role": [
-        "coding",
-        "reasoning",
-        "multilingual"
-      ],
-      "access": "model-specific",
-      "zero_cost_runtime": "local-inference-no-api-charge",
-      "status": "candidate-not-ranked",
-      "note": "Choose exact checkpoint and license per model card; measure hardware fit and benchmark locally before promoting."
-    },
-    {
-      "id": "deepseek-open-weight-family",
-      "kind": "open-weights-candidate",
-      "role": [
-        "reasoning",
-        "coding"
-      ],
-      "access": "model-specific",
-      "zero_cost_runtime": "local-inference-no-api-charge",
-      "status": "candidate-not-ranked",
-      "note": "Do not conflate open-weight releases with free hosted inference. Verify exact checkpoint license, hardware requirements, and safety behavior."
+      "note": "Public workflows can inspire independent implementations; they do not provide Claude weights or unrestricted free inference."
     },
     {
       "id": "google-gemma-family",
-      "kind": "open-weight-candidate",
-      "role": [
+      "kind": "open-weight-model-family",
+      "roles": [
         "reasoning",
+        "multilingual",
         "multimodal-where-supported"
       ],
-      "access": "model-specific",
-      "zero_cost_runtime": "local-inference-no-api-charge",
+      "access": "exact release terms and model card must be reviewed",
+      "zero_cost_runtime": "potentially-no-per-request-fee-with-local-inference",
       "status": "candidate-not-ranked",
-      "note": "Review the exact Gemma terms before redistribution or commercial use; do not label it OSI-open-source without qualification."
+      "note": "Do not describe all Gemma releases as OSI-open-source; comply with the exact model terms."
     },
     {
       "id": "ollama-local-runtime",
       "kind": "local-runtime",
-      "role": [
-        "fallback",
-        "privacy-sensitive-work"
+      "roles": [
+        "private-work",
+        "offline-fallback",
+        "repeatable-evaluation"
       ],
-      "access": "local",
-      "zero_cost_runtime": "no-per-request-api-fee",
+      "access": "local machine and selected compatible checkpoint",
+      "zero_cost_runtime": "no-per-request-api-fee-but-hardware-and-electricity-costs-remain",
       "status": "runtime-candidate-not-model-ranking",
-      "note": "Compute, electricity, storage, and hardware opportunity cost still exist. Quality depends on the selected checkpoint."
+      "note": "Runtime is not a model. Actual capability depends on checkpoint, quantization, hardware, and configuration."
     },
     {
-      "id": "freellmpool-gateway",
+      "id": "freellmpool-openai-compatible-gateway",
       "kind": "replaceable-gateway",
-      "role": [
-        "routing",
-        "provider-diversity"
+      "roles": [
+        "provider-diversity",
+        "routing"
       ],
-      "access": "self-hosted-gateway",
-      "zero_cost_runtime": "gateway-software-free; upstream-routes-vary",
-      "status": "adapter-supported-live-route-unproven",
-      "note": "A gateway is not itself a model and does not make all upstream routes free, safe, available, or equally strong."
+      "access": "operator-configured endpoint and explicit upstream route",
+      "zero_cost_runtime": "unknown-until-exact-upstream-and-recurring-price-verified",
+      "status": "adapter-path-does-not-prove-live-route",
+      "note": "A gateway is not a model. Unknown, trial, paid, or unstable upstream routes are ineligible for strict zero-cost routing."
+    },
+    {
+      "id": "google-gemini-3.8-flash",
+      "kind": "hosted-model",
+      "roles": [
+        "coding"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Current Gemini API challenger; verify exact route, quotas and data terms."
+    },
+    {
+      "id": "google-gemini-3.1-pro",
+      "kind": "hosted-model",
+      "roles": [
+        "reasoning"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Pro-class challenger; current availability must be confirmed on chosen platform."
+    },
+    {
+      "id": "google-gemini-3.6-flash",
+      "kind": "hosted-model",
+      "roles": [
+        "fast-general"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Prior-generation Flash comparison; retain only while supported."
+    },
+    {
+      "id": "google-gemini-3.5-flash-lite",
+      "kind": "hosted-model",
+      "roles": [
+        "low-latency-routing"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Fast/low-cost candidate; confirm current API model ID."
+    },
+    {
+      "id": "google-gemini-3.8-live",
+      "kind": "audio-model",
+      "roles": [
+        "real-time-voice"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Audio-specific evaluation; do not compare against coding tasks."
+    },
+    {
+      "id": "google-gemini-3.8-flash-tts",
+      "kind": "audio-model",
+      "roles": [
+        "speech-synthesis"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "TTS specialist, not a general chat model."
+    },
+    {
+      "id": "google-gemma-4-family",
+      "kind": "open-weight-model-family",
+      "roles": [
+        "local-general"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Test hardware fit, license and checkpoint-specific quality."
+    },
+    {
+      "id": "google-claude-fable-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "long-horizon-reasoning"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Treat as an evaluation candidate only after verifying platform/model ID."
+    },
+    {
+      "id": "google-gemini-deep-research",
+      "kind": "hosted-agent-product",
+      "roles": [
+        "web-research"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Agent/product layer, not a standalone model checkpoint."
+    },
+    {
+      "id": "google-gemini-cli",
+      "kind": "agent-tooling",
+      "roles": [
+        "terminal-agent"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Tooling is distinct from model access and inference billing."
+    },
+    {
+      "id": "openai-gpt-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "general-reasoning"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Only via an authorized supported route; no assumption of API availability."
+    },
+    {
+      "id": "openai-codex-cli",
+      "kind": "agent-tooling",
+      "roles": [
+        "repository-coding"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Public CLI tooling; model access and subscription terms are separate."
+    },
+    {
+      "id": "anthropic-claude-haiku-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "fast-routing"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Exact current model ID and access route must be captured."
+    },
+    {
+      "id": "anthropic-claude-sonnet-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "coding"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Exact current model ID and access route must be captured."
+    },
+    {
+      "id": "anthropic-claude-opus-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "deep-reasoning"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Exact current model ID and access route must be captured."
+    },
+    {
+      "id": "mistral-large-family",
+      "kind": "hosted-model-family",
+      "roles": [
+        "general-reasoning"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Version-specific access, price and terms must be verified."
+    },
+    {
+      "id": "llama-family",
+      "kind": "open-weight-model-family",
+      "roles": [
+        "local-general"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Checkpoint license and hardware fit must be verified."
+    },
+    {
+      "id": "phi-family",
+      "kind": "open-weight-model-family",
+      "roles": [
+        "local-fast"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Checkpoint license and hardware fit must be verified."
+    },
+    {
+      "id": "jina-embeddings-family",
+      "kind": "embedding-family",
+      "roles": [
+        "retrieval"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Score retrieval separately from generation."
+    },
+    {
+      "id": "bge-reranker-family",
+      "kind": "reranker-family",
+      "roles": [
+        "retrieval"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Measure ranking quality separately from chat models."
+    },
+    {
+      "id": "whisper-family",
+      "kind": "speech-recognition-family",
+      "roles": [
+        "transcription"
+      ],
+      "access": "Verify exact current route/checkpoint, license and terms before use.",
+      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
+      "status": "PROPOSED_NOT_BENCHMARKED",
+      "note": "Evaluate word error rate, language and latency separately."
     }
-  ]
+  ],
+  "evaluation_plan": {
+    "roles": {
+      "coding": [
+        "qwen3-coder-next",
+        "qwen3-coder-30b-a3b-instruct",
+        "devstral-family"
+      ],
+      "reasoning_and_critique": [
+        "deepseek-r1-family",
+        "glm-4.5-family",
+        "gpt-6-chatgpt-current-session"
+      ],
+      "agentic_tool_use": [
+        "glm-4.5-family",
+        "kimi-k2-family",
+        "devstral-family"
+      ],
+      "synthesis_and_instruction_following": [
+        "gpt-6-chatgpt-current-session",
+        "qwen3-coder-next",
+        "deepseek-r1-family"
+      ],
+      "private_or_offline_fallback": [
+        "ollama-local-runtime"
+      ]
+    },
+    "selection_rule": "These are test assignments, not rankings. Choose the winner per role only after blind scoring and comparable retest.",
+    "required_metrics": [
+      "task_pass_rate",
+      "correctness",
+      "regressions",
+      "instruction_compliance",
+      "evidence_quality",
+      "latency",
+      "failure_rate",
+      "recurring_price",
+      "license_fit",
+      "privacy_fit"
+    ],
+    "promotion_rule": "No automatic winner. Keep candidate status UNPROVEN until runs and retests exist."
+  },
+  "role_layers": {
+    "coding": [
+      "qwen3-coder-next",
+      "qwen3-coder-30b-a3b-instruct",
+      "devstral-family",
+      "anthropic-claude-sonnet-family",
+      "anthropic-claude-opus-family",
+      "google-gemini-3.8-flash",
+      "google-gemini-3.1-pro",
+      "openai-codex-cli"
+    ],
+    "reasoning": [
+      "deepseek-r1-family",
+      "google-gemini-3.1-pro",
+      "anthropic-claude-opus-family",
+      "google-claude-fable-family",
+      "glm-4.5-family"
+    ],
+    "fast_routing": [
+      "google-gemini-3.5-flash-lite",
+      "anthropic-claude-haiku-family",
+      "phi-family"
+    ],
+    "research": [
+      "google-gemini-deep-research",
+      "claude-code-public-workflow-patterns"
+    ],
+    "local": [
+      "qwen3-coder-30b-a3b-instruct",
+      "google-gemma-4-family",
+      "llama-family",
+      "phi-family",
+      "ollama-local-runtime"
+    ],
+    "retrieval": [
+      "jina-embeddings-family",
+      "bge-reranker-family"
+    ],
+    "audio": [
+      "whisper-family",
+      "google-gemini-3.8-live",
+      "google-gemini-3.8-flash-tts"
+    ]
+  }
 }
