@@ -34,9 +34,15 @@ const taskHash = createHash("sha256").update(JSON.stringify(tasks)).digest("hex"
 const started = new Date().toISOString();
 let spentEstimate = 0;
 const results = [];
+let callsMade = 0;
 
 async function call(prompt, role) {
-  if (results.length >= maxCalls) throw new Error("Call budget exhausted.");
+  if (callsMade >= maxCalls) throw new Error("Call budget exhausted.");
+  const estimatedInputTokens = Math.ceil((prompt.length + role.length) / 4);
+  const worstCaseCost = estimatedInputTokens * inputCostPerMillion / 1e6 + maxTokens * outputCostPerMillion / 1e6;
+  if (!freeLocal && spentEstimate + worstCaseCost > budgetUsd) throw new Error("Preflight budget guard stopped the call before sending it; lower token limits or set a higher approved budget.");
+  callsMade += 1;
+  const callStarted = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -59,7 +65,7 @@ async function call(prompt, role) {
     const cost = inputTokens * inputCostPerMillion / 1e6 + outputTokens * outputCostPerMillion / 1e6;
     if (!freeLocal && spentEstimate + cost > budgetUsd) throw new Error("Estimated spend ceiling reached; result discarded.");
     spentEstimate += cost;
-    results.push({ role, latencyMs: null, inputTokens, outputTokens, estimatedCostUsd: cost, text });
+    results.push({ role, latencyMs: Date.now() - callStarted, inputTokens, outputTokens, estimatedCostUsd: cost, text });
     return { text, usage, cost };
   } finally { clearTimeout(timer); }
 }
@@ -69,8 +75,6 @@ for (const task of tasks) {
   const baseline = await call(task.prompt, "Answer the task directly. Use only supplied evidence. State uncertainty and obey the requested output format.");
   const fusionPrompt = "Perform a synthesis pass: identify assumptions, check constraints, seek contradictions, and produce a concise answer grounded only in the supplied task and draft.\n\nTASK:\n" + task.prompt + "\n\nDRAFT TO AUDIT:\n" + baseline.text;
   const fusion = await call(fusionPrompt, "You are the independent synthesis and verification stage of JARVIS-X. Do not invent evidence. Explicitly correct unsupported claims.");
-  results[results.length-2].latencyMs = baseline.usage?.total_time_ms ?? null;
-  results[results.length-1].latencyMs = fusion.usage?.total_time_ms ?? null;
   console.log(`Completed paired task ${task.id ?? results.length / 2}`);
 }
 const report = {
