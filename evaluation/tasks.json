@@ -1,0 +1,6 @@
+[
+  {"id":"evidence-synthesis-01","prompt":"Using only this evidence: The release candidate passed unit tests. Live provider calls were skipped. Does the evidence establish real-provider superiority? Give a verdict and explain."},
+  {"id":"constraint-planning-02","prompt":"Plan a safe provider test with a maximum of 4 calls, maximum output 32 tokens per call, no secrets in logs, and no claim of quality improvement without a holdout. State gates and stop conditions."},
+  {"id":"contradiction-detection-03","prompt":"A benchmark shows local orchestration is faster, therefore the fusion model is more accurate than a single model. Identify the logical flaw and what evidence would be required."},
+  {"id":"coding-safety-04","prompt":"A client-side estimate says spend is below budget, but the provider may charge differently and token usage may be missing. What should the client do before continuing paid requests?"}
+]
