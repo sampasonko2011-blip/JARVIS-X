@@ -17,6 +17,8 @@ export class OrbitProvider implements Provider {
       apiKey: string;
       model: string;
       capabilities?: Capability[];
+      timeoutMs?: number;
+      maxOutputTokens?: number;
     }
   ) {
     this.capabilities =
@@ -35,7 +37,20 @@ export class OrbitProvider implements Provider {
     role: string;
     context: Record<string, unknown>;
   }): Promise<AgentResponse> {
-    const response = await fetch(`${this.config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+    const endpoint = new URL(`${this.config.baseUrl.replace(/\/$/, "")}/chat/completions`);
+    if (endpoint.protocol !== "https:" && endpoint.hostname !== "localhost" && endpoint.hostname !== "127.0.0.1") {
+      throw new Error("Orbit base URL must use HTTPS (localhost is allowed for tests).");
+    }
+    const controller = new AbortController();
+    const timeoutMs = this.config.timeoutMs ?? 30_000;
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 1 || timeoutMs > 120_000) {
+      throw new Error("Orbit timeoutMs must be between 1 and 120000.");
+    }
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+      signal: controller.signal,
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -43,6 +58,7 @@ export class OrbitProvider implements Provider {
       },
       body: JSON.stringify({
         model: this.config.model,
+        max_tokens: this.config.maxOutputTokens ?? 512,
         messages: [
           {
             role: "system",
@@ -60,7 +76,13 @@ export class OrbitProvider implements Provider {
           },
         ],
       }),
-    });
+      });
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error("Orbit inference timed out.");
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (!response.ok) {
       throw new Error(`Orbit inference failed: HTTP ${response.status}`);
@@ -70,7 +92,7 @@ export class OrbitProvider implements Provider {
       choices?: Array<{ message?: { content?: string } }>;
     };
     const output = payload.choices?.[0]?.message?.content;
-    if (!output) throw new Error("Orbit inference returned no model output.");
+    if (typeof output !== "string" || output.trim().length === 0) throw new Error("Orbit inference returned no model output.");
 
     // Keep execution evidence aligned with the exact capability advertised in the registry.
     const executedCapability = this.capabilities.find(
