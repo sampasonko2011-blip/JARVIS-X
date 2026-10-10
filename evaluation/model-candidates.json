@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "selection_policy": {
+    "optimize_for": [
+      "measured_task_quality",
+      "reliability",
+      "latency",
+      "context_fit",
+      "repeatable_zero_cost_access",
+      "license_and_privacy_fit"
+    ],
+    "never_infer": [
+      "quality_from_brand",
+      "free_from_catalog_presence",
+      "open_weights_from_public_code",
+      "permanent_availability_from_current_access"
+    ],
+    "promotion_gate": "A model is promoted only after a fixed task-set run, route identity capture, recurring zero-price verification, blind rubric scoring, and a comparable retest."
+  },
+  "candidates": [
+    {
+      "id": "claude-code-workflow-patterns",
+      "kind": "public-engineering-patterns",
+      "role": [
+        "coding",
+        "tool-use",
+        "verification"
+      ],
+      "access": "public_docs_and_examples; hosted_api_or_subscription_required_for_model_execution",
+      "zero_cost_runtime": false,
+      "status": "study-patterns-only",
+      "note": "Claude Code public docs and workflow patterns can be studied. Actual Claude model inference generally requires authorized Anthropic access or a separately verified eligible route; public docs do not mean free weights or unrestricted free inference."
+    },
+    {
+      "id": "qwen-open-weight-family",
+      "kind": "open-weights-candidate",
+      "role": [
+        "coding",
+        "reasoning",
+        "multilingual"
+      ],
+      "access": "model-specific",
+      "zero_cost_runtime": "local-inference-no-api-charge",
+      "status": "candidate-not-ranked",
+      "note": "Choose exact checkpoint and license per model card; measure hardware fit and benchmark locally before promoting."
+    },
+    {
+      "id": "deepseek-open-weight-family",
+      "kind": "open-weights-candidate",
+      "role": [
+        "reasoning",
+        "coding"
+      ],
+      "access": "model-specific",
+      "zero_cost_runtime": "local-inference-no-api-charge",
+      "status": "candidate-not-ranked",
+      "note": "Do not conflate open-weight releases with free hosted inference. Verify exact checkpoint license, hardware requirements, and safety behavior."
+    },
+    {
+      "id": "google-gemma-family",
+      "kind": "open-weight-candidate",
+      "role": [
+        "reasoning",
+        "multimodal-where-supported"
+      ],
+      "access": "model-specific",
+      "zero_cost_runtime": "local-inference-no-api-charge",
+      "status": "candidate-not-ranked",
+      "note": "Review the exact Gemma terms before redistribution or commercial use; do not label it OSI-open-source without qualification."
+    },
+    {
+      "id": "ollama-local-runtime",
+      "kind": "local-runtime",
+      "role": [
+        "fallback",
+        "privacy-sensitive-work"
+      ],
+      "access": "local",
+      "zero_cost_runtime": "no-per-request-api-fee",
+      "status": "runtime-candidate-not-model-ranking",
+      "note": "Compute, electricity, storage, and hardware opportunity cost still exist. Quality depends on the selected checkpoint."
+    },
+    {
+      "id": "freellmpool-gateway",
+      "kind": "replaceable-gateway",
+      "role": [
+        "routing",
+        "provider-diversity"
+      ],
+      "access": "self-hosted-gateway",
+      "zero_cost_runtime": "gateway-software-free; upstream-routes-vary",
+      "status": "adapter-supported-live-route-unproven",
+      "note": "A gateway is not itself a model and does not make all upstream routes free, safe, available, or equally strong."
+    }
+  ]
+}
