@@ -8,7 +8,8 @@
     "test": "node --test",
     "benchmark": "node benchmarks/benchmark.mjs",
     "benchmark:runtime": "node benchmarks/runtime-comparison.mjs",
-    "evaluate:orbit": "node scripts/orbit-evaluate.mjs"
+    "evaluate:orbit": "node scripts/orbit-evaluate.mjs",
+    "scout:models": "node scripts/model-scout.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
