@@ -10,6 +10,24 @@
 - Record provider/model identifiers and relevant configuration without credentials. Respect provider terms, rate limits, privacy rules, and data-retention requirements.
 - Use synthetic or public tasks first; do not send private user data to external providers.
 
+## Zero-API-cost local route (recommended first)
+
+The evaluator defaults to local mode and sends requests only to `http://127.0.0.1:11434/v1/chat/completions` (Ollama's OpenAI-compatible endpoint). This route does not require TryOrbit, an API key, or paid inference. Install Ollama, pull a model available on your hardware (for example `ollama pull llama3.2:3b`), then run:
+
+```sh
+JARVIS_EVAL_PROVIDER=local ORBIT_MODEL=llama3.2:3b npm run evaluate:orbit
+```
+
+Set `ORBIT_BASE_URL` only if your local OpenAI-compatible server uses another localhost port/path; the current runner appends `/chat/completions` to the base URL. The runner refuses non-local hosts in free mode. Model download and electricity can have costs, but there are no per-request API charges. A local model may be weaker or slower than a hosted model; this is a free baseline, not proof of superiority.
+
+Paid TryOrbit mode is explicitly opt-in:
+
+```sh
+JARVIS_EVAL_PROVIDER=orbit ORBIT_BASE_URL=... ORBIT_API_KEY=... ORBIT_MODEL=... ORBIT_INPUT_USD_PER_MILLION=... ORBIT_OUTPUT_USD_PER_MILLION=... npm run evaluate:orbit
+```
+
+Never paste credentials into source control or chat. Configure verified rates and a provider-side spending cap before paid calls. The script's local cost estimate is not a hard billing guarantee.
+
 ## Experimental design
 
 1. **Freeze the task set before running.** Use at least 20 tasks across factual synthesis from supplied evidence, code/debugging, planning under constraints, and contradiction detection. Define expected properties and a scoring rubric, not just reference wording.
