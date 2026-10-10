@@ -131,6 +131,75 @@
       "zero_cost_runtime": "gateway-software-free; upstream-routes-vary",
       "status": "adapter-supported-live-route-unproven",
       "note": "A gateway is not itself a model and does not make all upstream routes free, safe, available, or equally strong."
+    },
+    {
+      "id": "deepseek-r1-distill-qwen-14b",
+      "kind": "open-weights-model",
+      "role": [
+        "reasoning",
+        "critique",
+        "coding-assistance"
+      ],
+      "access": "Model-card-specific license; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+      "note": "More practical local reasoning candidate than full DeepSeek-R1 for some hardware profiles. Verify current model-card license, memory requirements, and actual hardware before deployment."
+    },
+    {
+      "id": "microsoft-phi-4",
+      "kind": "open-weights-model",
+      "role": [
+        "reasoning",
+        "structured-problem-solving"
+      ],
+      "access": "MIT model card; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/microsoft/phi-4",
+      "note": "Compact reasoning candidate to benchmark against larger models on math, structured tasks, and instruction following. Confirm memory fit and test actual workload."
+    },
+    {
+      "id": "mistral-small-3-1-24b-instruct",
+      "kind": "open-weights-model",
+      "role": [
+        "multilingual",
+        "reasoning",
+        "vision-where-supported"
+      ],
+      "access": "Apache-2.0 model card; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503",
+      "note": "Multilingual and multimodal-capable candidate; verify vision path, hardware fit, and task-specific quality before promotion."
+    },
+    {
+      "id": "meta-llama-3-3-70b-instruct",
+      "kind": "open-weight-model",
+      "role": [
+        "reasoning",
+        "multilingual",
+        "synthesis"
+      ],
+      "access": "Llama 3.3 Community License; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+      "note": "Potential synthesis candidate, but the custom community license is not Apache/MIT; review eligibility and redistribution terms. Large local hardware footprint."
+    },
+    {
+      "id": "google-gemma-3-12b-it",
+      "kind": "open-weight-model",
+      "role": [
+        "multilingual",
+        "vision-where-supported",
+        "reasoning"
+      ],
+      "access": "Gemma Terms of Use; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/google/gemma-3-12b-it",
+      "note": "Potential multimodal candidate. Gemma-specific terms apply; do not describe as unrestricted OSI open-source. Verify exact hardware and image-task needs."
     }
   ]
 }
