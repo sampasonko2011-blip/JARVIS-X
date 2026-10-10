@@ -38,7 +38,8 @@ export class OrbitProvider implements Provider {
     context: Record<string, unknown>;
   }): Promise<AgentResponse> {
     const endpoint = new URL(`${this.config.baseUrl.replace(/\/$/, "")}/chat/completions`);
-    if (endpoint.protocol !== "https:" && endpoint.hostname !== "localhost" && endpoint.hostname !== "127.0.0.1") {
+    const isLocalHttp = endpoint.protocol === "http:" && (endpoint.hostname === "localhost" || endpoint.hostname === "127.0.0.1");
+    if (endpoint.protocol !== "https:" && !isLocalHttp) {
       throw new Error("Orbit base URL must use HTTPS (localhost is allowed for tests).");
     }
     const controller = new AbortController();

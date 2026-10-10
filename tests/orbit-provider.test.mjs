@@ -93,3 +93,18 @@ test("Orbit provider aborts requests at the configured timeout", async (t) => {
   });
   await assert.rejects(new OrbitProvider("orbit-test", { baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: "fixture", timeoutMs: 5 }).execute(input), /Orbit inference timed out/);
 });
+
+test("Orbit provider rejects non-HTTPS even on localhost unless it is HTTP", async () => {
+  const provider = new OrbitProvider("orbit-test", { baseUrl: "ftp://localhost/v1", apiKey: "test-only", model: "fixture" });
+  await assert.rejects(provider.execute(input), /must use HTTPS/);
+});
+
+test("Orbit provider rejects non-string model output", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({ choices: [{ message: { content: { text: "not a string" } } }] }),
+    { status: 200, headers: { "content-type": "application/json" } },
+  );
+  await assert.rejects(makeProvider().execute(input), /Orbit inference returned no model output/);
+});
