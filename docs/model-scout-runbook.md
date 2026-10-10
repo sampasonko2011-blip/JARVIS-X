@@ -23,7 +23,7 @@ Create `evaluation/scout-candidates.local.json` locally:
 
 The zero-cost class is an operator assertion. A local runtime has no per-request API charge but uses compute/electricity. For hosted routes, verify recurring pricing and exact upstream route first; if the gateway cannot prove the route and price, do not use it in free-only mode.
 
-Run with `npm run scout:models`. Defaults: maximum 15 calls, 160 output tokens per call, 30-second timeout, free-only mode. Tune only within the hard limits in the script. Set `JX_SCOUT_FREE_ONLY=0` only if intentionally comparing paid/unknown routes and have independently approved spend controls. The report includes raw model outputs, so keep it local and private; it is written with owner-only permissions where supported.
+Run with `npm run scout:models`. Defaults: maximum 15 calls, 160 output tokens per call, 30-second timeout, free-only mode. Tune only within the hard limits in the script. Set `JX_SCOUT_FREE_ONLY=0` only if intentionally comparing paid/unknown routes and have independently approved spend controls. The report includes raw model outputs, so keep it local and private; it is written with owner-only permissions where supported. The randomized blind-ID mapping is saved separately to .model-scout-mapping.json (override with JX_SCOUT_MAPPING) and must not be shared with blind evaluators until scores are locked.
 
 ## Blind scoring
 
