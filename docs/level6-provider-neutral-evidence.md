@@ -12,7 +12,7 @@ JARVIS-X's core remains provider-neutral: model vendors and gateways are replace
 | Generic OpenAI-compatible adapter | VALIDATED (software) | Added to `src/providers/openai-compatible.ts`; deterministic CI tests exercise request shape and response handling. |
 | Paid/trial/unknown route guard | VALIDATED (software) | Adapter rejects these cost classes by default; classification itself is an operator assertion. |
 | Allowlisted zero-cost failover | VALIDATED (software) | `FallbackProvider` filters candidates by explicit zero-cost classification and has deterministic tests. |
-| Public model-scouting policy | PROPOSED until CI | `docs/model-scouting-and-composite-selection.md` distinguishes public workflow patterns, open weights, hosted APIs, and gateways. |
+| Public model-scouting policy | VALIDATED (documentation/policy) | `docs/model-scouting-and-composite-selection.md` distinguishes public workflow patterns, open weights, hosted APIs, and gateways. |
 | Model shortlist | CANDIDATES, NOT RANKED | `evaluation/model-candidates.json` intentionally makes no unsupported performance claims. |
 | FreeLLMpool live integration | UNPROVEN | No live upstream call or route-level price verification was performed by CI. |
 | Local fallback | PARTIAL | The failover chain can include a loopback-compatible local runtime, but the runtime must be installed/configured and its availability verified by the operator. |
