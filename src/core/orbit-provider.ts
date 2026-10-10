@@ -46,6 +46,13 @@ export class OrbitProvider implements Provider {
     if (!Number.isFinite(timeoutMs) || timeoutMs < 1 || timeoutMs > 120_000) {
       throw new Error("Orbit timeoutMs must be between 1 and 120000.");
     }
+    const maxOutputTokens = this.config.maxOutputTokens ?? 512;
+    if (!Number.isInteger(maxOutputTokens) || maxOutputTokens < 1 || maxOutputTokens > 4096) {
+      throw new Error("Orbit maxOutputTokens must be an integer between 1 and 4096.");
+    }
+    if (!this.config.apiKey.trim() || !this.config.model.trim()) {
+      throw new Error("Orbit apiKey and model must be non-empty.");
+    }
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response: Response;
     try {
@@ -58,7 +65,7 @@ export class OrbitProvider implements Provider {
       },
       body: JSON.stringify({
         model: this.config.model,
-        max_tokens: this.config.maxOutputTokens ?? 512,
+        max_tokens: maxOutputTokens,
         messages: [
           {
             role: "system",

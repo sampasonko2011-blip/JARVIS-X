@@ -68,3 +68,28 @@ test("Orbit provider rejects a successful response with no model output", async 
   );
   await assert.rejects(makeProvider().execute(input), /Orbit inference returned no model output/);
 });
+
+test("Orbit provider rejects unsafe URLs before making a request", async () => {
+  const provider = new OrbitProvider("orbit-test", { baseUrl: "http://example.com/v1", apiKey: "test-only", model: "fixture" });
+  await assert.rejects(provider.execute(input), /must use HTTPS/);
+});
+
+test("Orbit provider validates timeout and output token bounds before fetch", async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => { called = true; throw new Error("should not fetch"); };
+  try {
+    await assert.rejects(new OrbitProvider("orbit-test", { baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: "fixture", timeoutMs: 0 }).execute(input), /timeoutMs must be between/);
+    await assert.rejects(new OrbitProvider("orbit-test", { baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: "fixture", maxOutputTokens: 5000 }).execute(input), /maxOutputTokens must be an integer/);
+    assert.equal(called, false);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("Orbit provider aborts requests at the configured timeout", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = (_url, options) => new Promise((_resolve, reject) => {
+    options.signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+  });
+  await assert.rejects(new OrbitProvider("orbit-test", { baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: "fixture", timeoutMs: 5 }).execute(input), /Orbit inference timed out/);
+});
