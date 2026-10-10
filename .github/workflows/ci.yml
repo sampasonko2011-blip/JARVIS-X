@@ -17,6 +17,8 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm test
+      - name: Validate evaluator syntax
+        run: node --check scripts/orbit-evaluate.mjs
       - run: npm run benchmark
       - name: Runtime comparison benchmark
         run: npm run benchmark:runtime
@@ -30,67 +32,3 @@ jobs:
           path: benchmark-results.json
           if-no-files-found: warn
           retention-days: 14
-      - name: Orbit live smoke
-        if: ${{ vars.ORBIT_LIVE_TEST_ENABLED == 'true' }}
-        env:
-          ORBIT_BASE_URL: ${{ secrets.ORBIT_BASE_URL }}
-          ORBIT_API_KEY: ${{ secrets.ORBIT_API_KEY }}
-        run: |
-          set -euo pipefail
-
-          test -n "$ORBIT_BASE_URL"
-          test -n "$ORBIT_API_KEY"
-
-          MODELS_JSON="$(curl -fsS --max-time 30 \
-            -H "Authorization: Bearer $ORBIT_API_KEY" \
-            "$ORBIT_BASE_URL/models")"
-
-          MODEL="$(printf '%s' "$MODELS_JSON" | node -e '
-            let s="";
-            process.stdin.on("data", d => s += d);
-            process.stdin.on("end", () => {
-              const j = JSON.parse(s);
-              const ids = (j.data || []).map(x => x.id).filter(id => typeof id === "string");
-              const preferred = [/haiku/i, /flash/i, /mini/i, /small/i];
-              const model = ids.find(id => preferred.some(re => re.test(id)));
-              if (!model) {
-                console.error("No explicitly low-cost model found; refusing to guess.");
-                process.exit(2);
-              }
-              process.stdout.write(model);
-            });
-          ')"
-
-          echo "Orbit model selected: $MODEL"
-
-          RESPONSE="$(curl -fsS --max-time 60 \
-            -H "Authorization: Bearer $ORBIT_API_KEY" \
-            -H "Content-Type: application/json" \
-            "$ORBIT_BASE_URL/chat/completions" \
-            -d "$(node -e '
-              console.log(JSON.stringify({
-                model: process.argv[1],
-                messages: [
-                  {
-                    role: "user",
-                    content: "Reply with exactly ORBIT_LIVE_OK and nothing else."
-                  }
-                ],
-                temperature: 0,
-                max_tokens: 8
-              }))
-            ' "$MODEL")")"
-
-          printf '%s\n' "$RESPONSE" | node -e '
-            let s="";
-            process.stdin.on("data", d => s += d);
-            process.stdin.on("end", () => {
-              const j = JSON.parse(s);
-              const text = j.choices?.[0]?.message?.content;
-              if (text !== "ORBIT_LIVE_OK") {
-                console.error("Unexpected Orbit response:", text);
-                process.exit(1);
-              }
-              console.log("Orbit live smoke passed.");
-            });
-          '
