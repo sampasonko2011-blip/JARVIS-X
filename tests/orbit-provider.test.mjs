@@ -108,3 +108,34 @@ test("Orbit provider rejects non-string model output", async (t) => {
   );
   await assert.rejects(makeProvider().execute(input), /Orbit inference returned no model output/);
 });
+
+test("Orbit provider sends the configured output-token ceiling", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  let requestBody;
+  globalThis.fetch = async (_url, options) => {
+    requestBody = JSON.parse(options.body);
+    return new Response(JSON.stringify({ choices: [{ message: { content: "bounded answer" } }] }), {
+      status: 200, headers: { "content-type": "application/json" },
+    });
+  };
+  await new OrbitProvider("orbit-test", {
+    baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: "fixture", maxOutputTokens: 64,
+  }).execute(input);
+  assert.equal(requestBody.max_tokens, 64);
+});
+
+test("Orbit provider rejects empty credentials and model before network access", async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => { called = true; throw new Error("unexpected network"); };
+  try {
+    await assert.rejects(new OrbitProvider("orbit-test", {
+      baseUrl: "https://orbit.invalid/v1", apiKey: " ", model: "fixture",
+    }).execute(input), /apiKey and model must be non-empty/);
+    await assert.rejects(new OrbitProvider("orbit-test", {
+      baseUrl: "https://orbit.invalid/v1", apiKey: "test-only", model: " ",
+    }).execute(input), /apiKey and model must be non-empty/);
+    assert.equal(called, false);
+  } finally { globalThis.fetch = originalFetch; }
+});
