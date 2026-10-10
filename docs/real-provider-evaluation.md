@@ -53,3 +53,8 @@ A passing CI build, mock benchmark, successful API response, or single impressiv
 ## Reproduction
 
 Run this protocol manually with explicit approval and credentials. Keep real-provider execution opt-in; do not add paid calls to ordinary CI. The existing `npm run benchmark:runtime` remains the offline regression benchmark and should continue to run without secrets or network access.
+
+
+## TryOrbit cost-conscious smoke policy
+
+The opt-in live smoke check is a connectivity/protocol check, not a quality benchmark. Keep `ORBIT_LIVE_TEST_ENABLED` disabled by default. The workflow selects only a model whose returned ID explicitly matches a lower-cost class (Haiku, Flash, Mini, or Small) and refuses if none is present. It caps the generated response at 8 tokens and does not retry the billed completion POST. The model name heuristic is only a safety filter, not authoritative price verification; this workflow does not guarantee a hard dollar spend ceiling. Confirm current pricing before enabling it. Model listing GET requests may retry because they do not generate billed output.

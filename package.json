@@ -7,10 +7,7 @@
     "build": "tsc",
     "test": "node --test",
     "benchmark": "node benchmarks/benchmark.mjs",
-    "benchmark:runtime": "node benchmarks/runtime-comparison.mjs",
-    "evaluate:score": "node evaluation/score.mjs",
-    "evaluate:offline": "node evaluation/run-offline.mjs",
-    "evaluate:providers": "node evaluation/providers.mjs"
+    "benchmark:runtime": "node benchmarks/runtime-comparison.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
