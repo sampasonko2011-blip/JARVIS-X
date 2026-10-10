@@ -17,7 +17,7 @@ JARVIS-X composes reasoning, coding, research, memory, verification, and executi
 
 ## Architecture
 
-See `docs/architecture.md` and `docs/self-audit.md`.
+See `docs/architecture.md`, `docs/self-audit.md`, and [`docs/operating-protocol-level6.md`](docs/operating-protocol-level6.md) for the adaptive Level 6 execution, memory, capability-scouting, and evidence contract.
 
 ## Benchmarks
 
