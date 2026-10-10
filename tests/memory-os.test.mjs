@@ -21,9 +21,10 @@ test("MemoryOS excludes expired and superseded records by default", () => {
   const memory = new MemoryOS(new InMemoryStore());
   const now = new Date("2026-10-10T12:00:00.000Z");
   memory.save({ id: "old", title: "Season plan", content: "old plan", kind: "semantic", status: "VALIDATED", expiresAt: "2026-10-10T11:00:00.000Z" }, now);
-  memory.save({ id: "new", title: "Season plan updated", content: "current plan", kind: "semantic", status: "VALIDATED" }, now);
-  memory.supersede("new", "new", now);
-  assert.equal(memory.search("season plan", { now }).length, 0);
+  memory.save({ id: "replaced", title: "Season plan", content: "outdated plan", kind: "semantic", status: "OBSERVED" }, now);
+  memory.save({ id: "current", title: "Season plan updated", content: "current plan", kind: "semantic", status: "VALIDATED" }, now);
+  memory.supersede("replaced", "current", now);
+  assert.deepEqual(memory.search("season plan", { now }).map(item => item.record.id), ["current"]);
 });
 
 test("MemoryOS retrieval index survives JsonFileMemoryStore restart", () => {
