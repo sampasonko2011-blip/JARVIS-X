@@ -9,10 +9,11 @@ JARVIS-X's core remains provider-neutral: model vendors and gateways are replace
 | Item | Status | Evidence / limit |
 |---|---|---|
 | Existing core separates Provider from orchestration | OBSERVED | `src/core/types.ts` defines `Provider`; `CapabilityRegistry` registers providers by ID. |
-| Generic OpenAI-compatible adapter added | PROPOSED until CI | `src/providers/openai-compatible.ts` supports configurable endpoint/model, timeout, output bound, and explicit cost class. |
-| Paid/trial/unknown route guard | PROPOSED until CI | Unit tests assert default fail-closed behavior. |
+| Generic OpenAI-compatible adapter | VALIDATED (software) | Added to `src/providers/openai-compatible.ts`; deterministic CI tests exercise request shape and response handling. |
+| Paid/trial/unknown route guard | VALIDATED (software) | Adapter rejects these cost classes by default; classification itself is an operator assertion. |
+| Allowlisted zero-cost failover | PROPOSED until CI | `FallbackProvider` only routes enabled candidates marked verified-zero-cost by default; tests cover failover and exclusion. |
 | FreeLLMpool live integration | UNPROVEN | No live upstream call or route-level price verification was performed by CI. |
-| Local fallback | PARTIAL | Adapter can point at a loopback-compatible local runtime; automatic health-aware fallback policy is not implemented by this adapter. |
+| Local fallback | PARTIAL | The failover chain can include a loopback-compatible local runtime, but the runtime must be installed/configured and its availability verified by the operator. |
 | Composite quality improvement | UNPROVEN | Requires fixed benchmark set, eligible live models, blind scoring, and comparable retest. |
 
 ## Completion gate
