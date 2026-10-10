@@ -6,6 +6,7 @@ const fail = (message) => { console.error(message); process.exit(2); };
 const candidateFile = process.env.JX_SCOUT_CANDIDATES ?? "evaluation/scout-candidates.local.json";
 const taskFile = process.env.JX_SCOUT_TASKS ?? "evaluation/composite-benchmark.json";
 const outputFile = process.env.JX_SCOUT_REPORT ?? "model-scout-report.json";
+const mappingFile = process.env.JX_SCOUT_MAPPING ?? ".model-scout-mapping.json";
 const maxCalls = Number(process.env.JX_SCOUT_MAX_CALLS ?? "15");
 const maxTokens = Number(process.env.JX_SCOUT_MAX_OUTPUT_TOKENS ?? "160");
 const timeoutMs = Number(process.env.JX_SCOUT_TIMEOUT_MS ?? "30000");
@@ -77,7 +78,7 @@ const report = {
   callCount: results.length,
   freeOnly,
   note: "Blinded raw outputs are not a model ranking. Verify actual upstream route, recurring price, terms, and fallback behavior independently. Score blindly using the benchmark rubric; do not put secrets or sensitive prompts in the benchmark.",
-  blindScoring: { seed, mapping: Object.fromEntries(blindIds), rubric: benchmark.scoring_rubric },
+  blindScoring: { rubric: benchmark.scoring_rubric },
   results
 };
 await writeFile(outputFile, JSON.stringify(report, null, 2) + "\n", { mode: 0o600 });
