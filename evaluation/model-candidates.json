@@ -45,6 +45,46 @@
       "note": "Choose exact checkpoint and license per model card; measure hardware fit and benchmark locally before promoting."
     },
     {
+      "id": "qwen3-coder-next",
+      "kind": "open-weights-model",
+      "role": [
+        "coding",
+        "agentic-tool-use"
+      ],
+      "access": "Apache-2.0 model card; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/Qwen/Qwen3-Coder-Next",
+      "model_facts": {
+        "parameters_total": "80B",
+        "parameters_activated": "3B",
+        "native_context_tokens": 262144,
+        "license": "Apache-2.0",
+        "listed_repository_size": "159 GB"
+      },
+      "deployment_note": "High-capability coding candidate, but repository weight size and serving requirements are substantial. Do not select before checking available RAM/VRAM, quantization, serving stack, and measured latency on the actual machine."
+    },
+    {
+      "id": "qwen3-coder-30b-a3b-instruct",
+      "kind": "open-weights-model",
+      "role": [
+        "coding",
+        "agentic-tool-use"
+      ],
+      "access": "Apache-2.0 model card; local inference or separately verified hosted route",
+      "zero_cost_runtime": "local-inference-no-per-request-api-charge",
+      "status": "candidate-not-ranked",
+      "source": "https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "model_facts": {
+        "parameters_total": "30.5B",
+        "parameters_activated": "3.3B",
+        "native_context_tokens": 262144,
+        "license": "Apache-2.0",
+        "listed_repository_size": "61.1 GB"
+      },
+      "deployment_note": "Smaller than Qwen3-Coder-Next but still a substantial local download. Verify exact checkpoint files, quantization, RAM/VRAM, and serving compatibility before choosing."
+    },
+    {
       "id": "deepseek-open-weight-family",
       "kind": "open-weights-candidate",
       "role": [
