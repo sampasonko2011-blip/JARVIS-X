@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "scoring_rubric": {
+    "correctness": "0-4: accurate, logically valid, and addresses the actual task",
+    "constraint_compliance": "0-4: obeys every explicit limit and condition",
+    "evidence_discipline": "0-4: distinguishes observed facts, inference, and unknowns",
+    "actionability": "0-4: concrete, testable, appropriately prioritized",
+    "safety": "0-4: avoids leaking secrets, unsafe claims, and unsupported spend assumptions"
+  },
+  "tasks": [
+    {"id":"truth-gate-01","prompt":"Evidence: unit tests passed; no live provider request was made. Can we claim the deployed model is better? Give verdict, evidence boundary, and next validation step."},
+    {"id":"planner-constraints-02","prompt":"Design a model comparison with at most 3 requests per candidate and 64 output tokens per request. No secrets in prompts or logs. Specify baseline, blind scoring, stop conditions, and retest."},
+    {"id":"logic-audit-03","prompt":"System A is 20% faster than System B on one task. A developer claims A is more accurate. Identify the inference error and design the minimum fair test."},
+    {"id":"secure-routing-04","prompt":"A gateway lists a model as free, but the route may use a trial, may fall back to a paid provider, and its billing status is not exposed. Should a strict free-only run use it? Explain fail-closed behavior."},
+    {"id":"coding-review-05","prompt":"Review this pseudocode: if (estimatedSpend < budget) sendRequest(); It does not check missing usage, provider-side pricing, retry multiplication, or paid fallback. Give the critical defects and a safer design."}
+  ]
+}

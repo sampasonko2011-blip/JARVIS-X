@@ -19,6 +19,8 @@ jobs:
       - run: npm test
       - name: Validate evaluator syntax
         run: node --check scripts/orbit-evaluate.mjs
+      - name: Validate model scout syntax
+        run: node --check scripts/model-scout.mjs
       - run: npm run benchmark
       - name: Runtime comparison benchmark
         run: npm run benchmark:runtime
