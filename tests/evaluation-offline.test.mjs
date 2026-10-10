@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 test("offline harness runs without credentials and labels itself as plumbing-only", () => {
   const result = spawnSync(process.execPath, ["evaluation/run-offline.mjs"], {
@@ -16,15 +19,12 @@ test("offline harness runs without credentials and labels itself as plumbing-onl
 });
 
 test("offline harness refuses to overwrite an existing report", () => {
-  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
-  const { tmpdir } = await import("node:os");
-  const { join } = await import("node:path");
   const dir = mkdtempSync(join(tmpdir(), "jx-eval-"));
   try {
     const output = join(dir, "report.json");
     writeFileSync(output, "keep");
     const result = spawnSync(process.execPath, ["evaluation/run-offline.mjs", output], { encoding: "utf8" });
     assert.notEqual(result.status, 0);
-    assert.equal((await import("node:fs")).readFileSync(output, "utf8"), "keep");
+    assert.equal(readFileSync(output, "utf8"), "keep");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
