@@ -26,7 +26,8 @@ if (!Array.isArray(config.candidates) || !Array.isArray(benchmark.tasks)) fail("
 const candidates = config.candidates.filter(c => c.enabled === true);
 if (!candidates.length) fail("No enabled candidates. Create a local candidate file; no endpoints are contacted by default.");
 if (freeOnly && candidates.some(c => c.costClass !== "verified-zero-cost")) fail("Free-only run blocked: every enabled candidate must explicitly use costClass=verified-zero-cost.");
-if (candidates.some(c => !c.id || !c.baseUrl || !c.model || !c.apiKeyEnv)) fail("Every candidate needs id, baseUrl, model, and apiKeyEnv (use an empty env var name only for local unauthenticated endpoints).");
+if (candidates.some(c => typeof c.id !== "string" || !c.id.trim() || typeof c.baseUrl !== "string" || !c.baseUrl.trim() || typeof c.model !== "string" || !c.model.trim() || typeof c.apiKeyEnv !== "string")) fail("Every candidate needs non-empty id, baseUrl, and model strings plus an apiKeyEnv string (empty is valid for unauthenticated local endpoints).");
+if (new Set(candidates.map(c => c.id)).size !== candidates.length) fail("Enabled candidate IDs must be unique.");
 if (candidates.length * benchmark.tasks.length > maxCalls) fail(`Call cap exceeded: ${candidates.length * benchmark.tasks.length} planned calls, max ${maxCalls}.`);
 
 const seed = randomBytes(8).toString("hex");
@@ -81,5 +82,19 @@ const report = {
   blindScoring: { rubric: benchmark.scoring_rubric },
   results
 };
+const identityMap = {
+  schemaVersion: 1,
+  createdAt: report.createdAt,
+  taskSetSha256: report.taskSetSha256,
+  candidateFileSha256: report.candidateFileSha256,
+  candidates: candidates.map(candidate => ({
+    blindId: blindIds.get(candidate.id),
+    id: candidate.id,
+    model: candidate.model,
+    baseUrl: candidate.baseUrl,
+    costClass: candidate.costClass
+  }))
+};
 await writeFile(outputFile, JSON.stringify(report, null, 2) + "\n", { mode: 0o600 });
-console.log(`Wrote ${outputFile}: ${results.filter(r => r.status === "success").length}/${results.length} requests succeeded. No quality winner is declared automatically.`);
+await writeFile(mappingFile, JSON.stringify(identityMap, null, 2) + "\n", { mode: 0o600 });
+console.log(`Wrote blinded report ${outputFile} and private identity map ${mappingFile}: ${results.filter(r => r.status === "success").length}/${results.length} requests succeeded. Keep the map separate until blind scoring is complete; no quality winner is declared automatically.`);
