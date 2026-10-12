@@ -453,8 +453,9 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "PROPOSED",
-      "note": "Stable Flash candidate; evaluate on fixed coding and tool-use tasks, not inferred from release claims."
+      "status": "SUPERSEDED",
+      "note": "Historical compatibility record only: official Google documentation says this ID is deprecated and automatically routed to Gemini 3.8 Flash. Do not use as a distinct benchmark target.",
+      "lifecycle_status": "deprecated-auto-routed"
     },
     {
       "id": "google-gemini-3.5-flash",
@@ -467,8 +468,9 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "PROPOSED",
-      "note": "Baseline/throughput challenger; retain only if availability and benchmark value justify it."
+      "status": "SUPERSEDED",
+      "note": "Historical compatibility record only: official Google documentation says this ID is deprecated and automatically routed to Gemini 3.6 Flash. Do not use as a distinct benchmark target.",
+      "lifecycle_status": "deprecated-auto-routed"
     },
     {
       "id": "google-gemini-3-pro-image",
@@ -559,6 +561,36 @@
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "status": "PROPOSED",
       "note": "Fast-tier candidate; test routing/classification with latency and accuracy guardrails."
+    },
+    {
+      "id": "google-gemini-3.1-flash-lite",
+      "kind": "hosted-model",
+      "provider": "Google",
+      "model_id": "gemini-3.1-flash-lite",
+      "roles": [
+        "fast-routing",
+        "classification",
+        "high-throughput"
+      ],
+      "access": "Official Gemini API model ID; verify project access, quota, billing and data terms at runtime.",
+      "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
+      "status": "PROPOSED",
+      "note": "Current low-latency/throughput candidate; evaluate cost and accuracy together."
+    },
+    {
+      "id": "google-gemini-3.1-flash-image",
+      "kind": "image-generation-model",
+      "provider": "Google",
+      "model_id": "gemini-3.1-flash-image",
+      "roles": [
+        "image-generation",
+        "image-editing",
+        "multimodal"
+      ],
+      "access": "Official Gemini API model ID; verify project access, quota, billing and data terms at runtime.",
+      "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
+      "status": "PROPOSED",
+      "note": "Image-specialist track; evaluate separately from text-only models."
     }
   ],
   "evaluation_plan": {
@@ -572,7 +604,8 @@
         "anthropic-claude-opus-5",
         "anthropic-claude-opus-4-8",
         "anthropic-claude-sonnet-5",
-        "anthropic-claude-sonnet-4-6"
+        "anthropic-claude-sonnet-4-6",
+        "google-gemini-3.8-flash"
       ],
       "reasoning_and_critique": [
         "deepseek-r1-family",
@@ -597,10 +630,13 @@
       ],
       "fast_routing": [
         "google-gemini-3.5-flash",
-        "anthropic-claude-haiku-4-5"
+        "anthropic-claude-haiku-4-5",
+        "google-gemini-3.8-flash",
+        "google-gemini-3.1-flash-lite"
       ],
       "image_generation": [
-        "google-gemini-3-pro-image"
+        "google-gemini-3-pro-image",
+        "google-gemini-3.1-flash-image"
       ]
     },
     "selection_rule": "These are test assignments, not rankings. Choose the winner per role only after blind scoring and comparable retest.",
@@ -654,7 +690,9 @@
       "phi-family",
       "google-gemini-3.5-flash",
       "google-gemini-3.7-flash",
-      "anthropic-claude-haiku-4-5"
+      "anthropic-claude-haiku-4-5",
+      "google-gemini-3.8-flash",
+      "google-gemini-3.1-flash-lite"
     ],
     "research": [
       "google-gemini-deep-research",
@@ -677,7 +715,8 @@
       "google-gemini-3.8-flash-tts"
     ],
     "image_generation": [
-      "google-gemini-3-pro-image"
+      "google-gemini-3-pro-image",
+      "google-gemini-3.1-flash-image"
     ]
   }
 }
