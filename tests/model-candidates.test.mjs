@@ -30,3 +30,13 @@ test("exact provider candidates have provider and model IDs without implying acc
     assert.ok(candidate.zero_cost_runtime, `missing cost caveat for ${candidate.id}`);
   }
 });
+
+test("superseded candidates are excluded from active role assignments", () => {
+  const superseded = new Set(registry.candidates.filter(candidate => candidate.status === "SUPERSEDED").map(candidate => candidate.id));
+  for (const [role, refs] of Object.entries(registry.role_layers)) {
+    for (const id of refs) assert.ok(!superseded.has(id), `superseded candidate remains active in role_layers.${role}: ${id}`);
+  }
+  for (const [role, refs] of Object.entries(registry.evaluation_plan.roles)) {
+    for (const id of refs) assert.ok(!superseded.has(id), `superseded candidate remains active in evaluation_plan.roles.${role}: ${id}`);
+  }
+});
