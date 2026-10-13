@@ -32,6 +32,7 @@
       "Current ChatGPT session is a baseline, not an API endpoint that repository code can call.",
       "Candidate evidence status must use status_vocabulary; preserve nonstandard lifecycle detail separately in lifecycle_status or status_detail.",
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
+      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles.",
       "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles."
     ]
   },
@@ -200,7 +201,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "Current Gemini API challenger; verify exact route, quotas and data terms.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.8-flash",
+      "provider": "Google"
     },
     {
       "id": "google-gemini-3.1-pro",
@@ -212,7 +215,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "Pro-class challenger; current availability must be confirmed on chosen platform.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.1-pro-preview",
+      "provider": "Google"
     },
     {
       "id": "google-gemini-3.6-flash",
@@ -224,7 +229,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "Prior-generation Flash comparison; retain only while supported.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.6-flash",
+      "provider": "Google"
     },
     {
       "id": "google-gemini-3.5-flash-lite",
@@ -236,7 +243,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "Fast/low-cost candidate; confirm current API model ID.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.5-flash-lite",
+      "provider": "Google"
     },
     {
       "id": "google-gemini-3.8-live",
@@ -248,7 +257,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "Audio-specific evaluation; do not compare against coding tasks.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.8-live",
+      "provider": "Google"
     },
     {
       "id": "google-gemini-3.8-flash-tts",
@@ -260,7 +271,9 @@
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
       "status": "PROPOSED",
       "note": "TTS specialist, not a general chat model.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "model_id": "gemini-3.8-flash-tts",
+      "provider": "Google"
     },
     {
       "id": "google-gemma-4-family",
@@ -454,9 +467,9 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "SUPERSEDED",
-      "note": "Historical compatibility record only: official Google documentation says this ID is deprecated and automatically routed to Gemini 3.8 Flash. Do not use as a distinct benchmark target.",
-      "lifecycle_status": "deprecated-auto-routed"
+      "status": "PROPOSED",
+      "note": "Official Gemini API model catalog lists this endpoint as Gemini 3.7 Flash; retain as a distinct comparison candidate. Verify account access and benchmark before ranking.",
+      "lifecycle_status": "current-stable"
     },
     {
       "id": "google-gemini-3.5-flash",
@@ -469,9 +482,9 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "SUPERSEDED",
-      "note": "Historical compatibility record only: official Google documentation says this ID is deprecated and automatically routed to Gemini 3.6 Flash. Do not use as a distinct benchmark target.",
-      "lifecycle_status": "deprecated-auto-routed"
+      "status": "PROPOSED",
+      "note": "Official Gemini API model catalog lists this endpoint as Gemini 3.5 Flash; retain as a legacy comparison candidate while supported. Verify access and benchmark before ranking.",
+      "lifecycle_status": "legacy-stable"
     },
     {
       "id": "google-gemini-3-pro-image",
@@ -604,7 +617,9 @@
         "anthropic-claude-opus-4-8",
         "anthropic-claude-sonnet-5",
         "anthropic-claude-sonnet-4-6",
-        "google-gemini-3.8-flash"
+        "google-gemini-3.8-flash",
+        "google-gemini-3.7-flash",
+        "google-gemini-3.5-flash"
       ],
       "reasoning_and_critique": [
         "deepseek-r1-family",
@@ -630,7 +645,9 @@
       "fast_routing": [
         "anthropic-claude-haiku-4-5",
         "google-gemini-3.8-flash",
-        "google-gemini-3.1-flash-lite"
+        "google-gemini-3.1-flash-lite",
+        "google-gemini-3.7-flash",
+        "google-gemini-3.5-flash"
       ],
       "image_generation": [
         "google-gemini-3-pro-image",
@@ -667,7 +684,9 @@
       "anthropic-claude-opus-4-8",
       "anthropic-claude-sonnet-5",
       "anthropic-claude-sonnet-4-6",
-      "anthropic-claude-haiku-4-5"
+      "anthropic-claude-haiku-4-5",
+      "google-gemini-3.7-flash",
+      "google-gemini-3.5-flash"
     ],
     "reasoning": [
       "deepseek-r1-family",
@@ -686,7 +705,9 @@
       "phi-family",
       "anthropic-claude-haiku-4-5",
       "google-gemini-3.8-flash",
-      "google-gemini-3.1-flash-lite"
+      "google-gemini-3.1-flash-lite",
+      "google-gemini-3.7-flash",
+      "google-gemini-3.5-flash"
     ],
     "research": [
       "google-gemini-deep-research",
