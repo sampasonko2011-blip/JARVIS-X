@@ -201,9 +201,9 @@
       ],
       "access": "Verify exact current route/checkpoint, license and terms before use.",
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
-      "status": "PROPOSED",
-      "note": "Current Gemini API challenger; verify exact route, quotas and data terms.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "status": "OBSERVED",
+      "note": "Exact model ID returned by live Gemini API catalog and successfully answered a real inference probe. Access observed; quality and price remain unbenchmarked/unverified.",
+      "lifecycle_status": "live-inference-verified-not-benchmarked",
       "model_id": "gemini-3.8-flash",
       "provider": "Google"
     },
@@ -243,9 +243,9 @@
       ],
       "access": "Verify exact current route/checkpoint, license and terms before use.",
       "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
-      "status": "PROPOSED",
-      "note": "Fast/low-cost candidate; confirm current API model ID.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED",
+      "status": "OBSERVED",
+      "note": "Exact model ID returned by live Gemini API catalog and successfully answered a real inference probe. Access observed; quality and price remain unbenchmarked/unverified.",
+      "lifecycle_status": "live-inference-verified-not-benchmarked",
       "model_id": "gemini-3.5-flash-lite",
       "provider": "Google"
     },
@@ -659,24 +659,6 @@
       "lifecycle_status": "connection-required"
     },
     {
-      "id": "google-gemini-4-argon",
-      "provider": "Google",
-      "model_id": "gemini-4-argon",
-      "status": "PROPOSED",
-      "kind": "hosted-model",
-      "roles": [
-        "coding",
-        "reasoning",
-        "agent_orchestration",
-        "research",
-        "synthesis"
-      ],
-      "access": "Model ID confirmed in current first-party documentation; actual account authorization, endpoint, billing, quota, and data terms remain to be verified at runtime.",
-      "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "note": "Google's current flagship reasoning model, documented Oct 2026; selected as a priority hosted benchmark candidate, not a proven winner.",
-      "lifecycle_status": "documented-current-model-not-benchmarked"
-    },
-    {
       "id": "google-gemini-3.1-pro-preview",
       "provider": "Google",
       "model_id": "gemini-3.1-pro-preview",
@@ -689,7 +671,7 @@
       ],
       "access": "Model ID returned by the active Gemini API model-list endpoint; inference succeeded in this session. Account-level quota, billing and long-term availability still require confirmation.",
       "zero_cost_runtime": "Not assumed free; check billing/quota before production use.",
-      "note": "Listed by the active Gemini API model catalog and completed a real inference probe; not yet ranked on task-quality benchmarks.",
+      "note": "Exact model ID returned by live Gemini API catalog and successfully answered a real inference probe. Access observed; quality and price remain unbenchmarked/unverified.",
       "lifecycle_status": "live-inference-verified-not-benchmarked"
     }
   ],
@@ -701,8 +683,7 @@
         "devstral-family",
         "anthropic-claude-opus-4-8",
         "anthropic-claude-sonnet-4-6",
-        "google-gemini-3.8-flash",
-        "google-gemini-4-argon"
+        "google-gemini-3.8-flash"
       ],
       "reasoning_and_critique": [
         "deepseek-r1-family",
@@ -712,21 +693,18 @@
         "deepseek-api-reasoner",
         "mistral-model-family",
         "qwen-model-family",
-        "xai-grok-family",
-        "google-gemini-4-argon"
+        "xai-grok-family"
       ],
       "agentic_tool_use": [
         "glm-4.5-family",
         "kimi-k2-family",
         "devstral-family",
-        "composio-orchestration-layer",
-        "google-gemini-4-argon"
+        "composio-orchestration-layer"
       ],
       "synthesis_and_instruction_following": [
         "gpt-6-chatgpt-current-session",
         "qwen3-coder-next",
-        "deepseek-r1-family",
-        "google-gemini-4-argon"
+        "deepseek-r1-family"
       ],
       "private_or_offline_fallback": [
         "ollama-local-runtime",
@@ -773,8 +751,7 @@
       "anthropic-claude-haiku-4-5",
       "mistral-model-family",
       "qwen-model-family",
-      "xai-grok-family",
-      "google-gemini-4-argon"
+      "xai-grok-family"
     ],
     "reasoning": [
       "deepseek-r1-family",
@@ -786,8 +763,7 @@
       "deepseek-api-reasoner",
       "mistral-model-family",
       "qwen-model-family",
-      "xai-grok-family",
-      "google-gemini-4-argon"
+      "xai-grok-family"
     ],
     "fast_routing": [
       "google-gemini-3.5-flash-lite",
@@ -801,8 +777,7 @@
       "google-gemini-deep-research",
       "claude-code-public-workflow-patterns",
       "exa-research-search",
-      "firecrawl-extraction",
-      "google-gemini-4-argon"
+      "firecrawl-extraction"
     ],
     "local": [
       "qwen3-coder-30b-a3b-instruct",
