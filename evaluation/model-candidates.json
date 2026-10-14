@@ -30,7 +30,7 @@
       "Only promote a model after a fixed benchmark, exact endpoint/checkpoint capture, recurring cost and privacy review, blind scoring, and holdout retest.",
       "Free-tier access is quota- and terms-dependent; never treat a free tier as unlimited or private by default.",
       "Current ChatGPT session is a baseline, not an API endpoint that repository code can call.",
-      "Candidate evidence status must use status_vocabulary; preserve nonstandard lifecycle detail separately in lifecycle_status or status_detail.",
+      "status is evidence status and must use status_vocabulary; lifecycle_status is reserved for provider/model lifecycle; use status_detail for evaluation progress such as not-benchmarked or candidate-not-ranked.",
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
       "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles."
     ]
