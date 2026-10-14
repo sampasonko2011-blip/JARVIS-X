@@ -35,3 +35,26 @@ The current `evaluate:orbit` script is a paired single-model-versus-same-model-s
 - Verified the updated registry parses as JSON, contains 50 candidates, and does not contain the rejected OpenRouter gateway ID.
 - Still **UNPROVEN**: whether the linked user account can call each API, whether quota is free, live outputs/latency/cost, and comparative model quality. Registry inclusion is not endpoint verification.
 - The local-runtime route is still blocked operationally: Desktop Commander currently reports no connected devices. The next concrete route is to connect a computer and verify Ollama/model hardware fit, or configure a separately authorized first-party endpoint with budget controls.
+
+## Live provider probe and small same-prompt comparison (2026-10-14)
+
+### Access verification
+- The connected Gemini toolkit reported no authentication requirement and returned a live catalog of 63 models.
+- Real inference succeeded for exact model IDs `gemini-3.8-flash`, `gemini-3.5-flash-lite`, and `gemini-3.1-pro-preview`.
+- This verifies the current tool route can invoke these models; it does not establish the user's own API key access, stable long-term availability, free use, or production budget.
+- Anthropic model listing was attempted but failed in the connector's response encoding (`latin-1` could not encode a character). Therefore the four unverified Claude entries were removed from active candidate lists instead of being guessed or treated as verified.
+- DeepSeek discovery reports no active connection. No DeepSeek inference was attempted.
+
+### Probe design
+- Same three prompts were sent to each of the three callable Gemini model IDs: (A) interpret deterministic mock CI evidence; (B) plan under no connected computer and no approved paid budget; (C) explain same-model baseline/synthesis versus cross-model evaluation.
+- Total: 9 successful inference calls (3 models × 3 prompts). This is a small exploratory probe, not a statistically reliable benchmark. We did not establish blinded grading or cost per request.
+- Task A: all three correctly rejected mock test/latency metrics as proof of model-quality improvement and recommended held-out evaluation.
+- Task B: `gemini-3.8-flash` and `gemini-3.1-pro-preview` explicitly respected the no-computer/no-paid-budget constraints. `gemini-3.5-flash-lite` proposed manual/offline steps that are less operationally useful for repository verification.
+- Task C: all three distinguished same-model prompt/synthesis ablation from cross-model capability comparison and recommended different model IDs for a valid multi-model test.
+- Provisional interpretation: Flash and Pro were more operationally complete on this tiny prompt set; Flash-Lite is a plausible low-latency candidate. **No winner is validated**: sample size is three prompts, model outputs were not blind-scored, and actual latency/cost was not consistently captured.
+
+### Intervention and gate
+- Exact Gemini IDs that responded are marked OBSERVED (access verified, not quality-validated).
+- Removed unverified Claude IDs and a speculative Gemini flagship ID from the registry.
+- OpenRouter remains excluded.
+- Next valid benchmark: freeze 20–30 representative tasks plus held-out cases, add a task-specific scoring rubric, run repeat trials, capture elapsed time and provider-reported usage, and independently score outputs before routing decisions.
