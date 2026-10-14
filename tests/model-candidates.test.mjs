@@ -60,3 +60,15 @@ test("user-rejected OpenRouter gateway is absent from candidates and active rout
     assert.equal(refs.includes(rejectedId), false, `OpenRouter must not be active in evaluation_plan.roles.${role}`);
   }
 });
+
+test("only live-probed Gemini model IDs are marked OBSERVED in this audit", () => {
+  const expectedObserved = ["google-gemini-3.8-flash", "google-gemini-3.5-flash-lite", "google-gemini-3.1-pro-preview"];
+  for (const id of expectedObserved) {
+    const candidate = registry.candidates.find(item => item.id === id);
+    assert.ok(candidate, `missing live-probed model candidate: ${id}`);
+    assert.equal(candidate.status, "OBSERVED", `live-probed model must be marked OBSERVED: ${id}`);
+  }
+  for (const id of ["anthropic-claude-opus-5-5", "anthropic-claude-sonnet-5-5", "anthropic-claude-fable-5-1", "anthropic-claude-haiku-5-5", "google-gemini-4-argon"]) {
+    assert.equal(registry.candidates.some(item => item.id === id), false, `unverified candidate must not be presented as verified: ${id}`);
+  }
+});
