@@ -32,7 +32,6 @@
       "Current ChatGPT session is a baseline, not an API endpoint that repository code can call.",
       "Candidate evidence status must use status_vocabulary; preserve nonstandard lifecycle detail separately in lifecycle_status or status_detail.",
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
-      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles.",
       "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles."
     ]
   },
@@ -468,8 +467,9 @@
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "status": "PROPOSED",
-      "note": "Official Gemini API model catalog lists this endpoint as Gemini 3.7 Flash; retain as a distinct comparison candidate. Verify account access and benchmark before ranking.",
-      "lifecycle_status": "current-stable"
+      "note": "Treat as a distinct comparison candidate; provider catalog presence does not imply newest generation, account access, or benchmark rank.",
+      "lifecycle_status": "previous-generation-stable",
+      "status_detail": "candidate-not-benchmarked"
     },
     {
       "id": "google-gemini-3.5-flash",
@@ -605,6 +605,144 @@
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "status": "PROPOSED",
       "note": "Image-specialist track; evaluate separately from text-only models."
+    },
+    {
+      "id": "deepseek-api-reasoner",
+      "kind": "hosted-model",
+      "provider": "DeepSeek",
+      "model_id": "deepseek-reasoner",
+      "roles": [
+        "reasoning",
+        "critique",
+        "multi-step-analysis"
+      ],
+      "access": "Composio directory exposes DeepSeek tools, but toolkit connection is not active; authorize connection and verify current model/API semantics before use.",
+      "zero_cost_runtime": "No free runtime assumed; verify account quota, price and terms.",
+      "status": "PROPOSED",
+      "note": "Hosted reasoning candidate for blind comparison against current baseline and open-weight DeepSeek checkpoints.",
+      "lifecycle_status": "exact-route-and-access-unverified"
+    },
+    {
+      "id": "mistral-model-family",
+      "kind": "model-family-candidate",
+      "provider": "Mistral AI",
+      "roles": [
+        "coding",
+        "multilingual",
+        "efficient-reasoning"
+      ],
+      "access": "Mistral toolkit discovered but no active connection; choose exact model, API route, license and account authorization.",
+      "zero_cost_runtime": "Unknown until exact route and quota verified.",
+      "status": "PROPOSED",
+      "note": "Evaluate current coding and multilingual variants on identical tasks; no quality ranking implied.",
+      "lifecycle_status": "exact-model-and-access-unverified"
+    },
+    {
+      "id": "qwen-model-family",
+      "kind": "model-family-candidate",
+      "provider": "Alibaba Qwen",
+      "roles": [
+        "coding",
+        "reasoning",
+        "multimodal",
+        "local"
+      ],
+      "access": "Gateway catalog returned Qwen entries including Qwen 3.8 variants; exact route, checkpoint license and serving path must be verified.",
+      "zero_cost_runtime": "Hosted pricing or local hardware cost must be verified per route.",
+      "status": "OBSERVED",
+      "note": "Catalog discovery supports broad evaluation across coding, reasoning and multimodal variants; no benchmark superiority implied.",
+      "lifecycle_status": "catalog-observed-route-specific-access-unverified"
+    },
+    {
+      "id": "xai-grok-family",
+      "kind": "model-family-candidate",
+      "provider": "xAI",
+      "roles": [
+        "reasoning",
+        "coding",
+        "multimodal"
+      ],
+      "access": "Exact model ID, supported provider route, account access and current lifecycle require verification.",
+      "zero_cost_runtime": "Unknown until exact route and quota verified.",
+      "status": "PROPOSED",
+      "note": "Include as a non-Google/non-Anthropic challenger after verifying a callable endpoint.",
+      "lifecycle_status": "catalog-and-access-unverified"
+    },
+    {
+      "id": "cohere-rerank-family",
+      "kind": "specialist-model-family",
+      "provider": "Cohere",
+      "roles": [
+        "retrieval",
+        "reranking",
+        "search-quality"
+      ],
+      "access": "Cohere toolkit discovered but no active connection; exact reranker model, API access and data terms require verification.",
+      "zero_cost_runtime": "Unknown until route and quota verified.",
+      "status": "PROPOSED",
+      "note": "Evaluate on ranking metrics such as nDCG/MRR and judged relevance; do not score as a general chat model.",
+      "lifecycle_status": "connection-and-exact-model-unverified"
+    },
+    {
+      "id": "openrouter-multi-provider-gateway",
+      "kind": "model-routing-service",
+      "provider": "OpenRouter",
+      "roles": [
+        "model-routing",
+        "provider-fallback",
+        "model-discovery"
+      ],
+      "access": "Toolkit discovered but no active connection; account authorization and provider-specific endpoint availability must be verified.",
+      "zero_cost_runtime": "Gateway and upstream model pricing vary; never infer free access from catalog presence.",
+      "status": "PROPOSED",
+      "note": "Potential multi-provider route for DeepSeek, Qwen, Mistral, Llama and other providers; benchmark routing reliability, cost and privacy.",
+      "lifecycle_status": "connection-unavailable-unverified"
+    },
+    {
+      "id": "composio-orchestration-layer",
+      "kind": "tool-orchestration-platform",
+      "provider": "Composio",
+      "roles": [
+        "tool-discovery",
+        "tool-execution",
+        "integration-orchestration",
+        "workflow-recovery"
+      ],
+      "access": "Composio tool directory and execution calls were used in this workflow; each toolkit still requires its own connection and authorized scopes.",
+      "zero_cost_runtime": "Plan, usage and connected-service costs must be verified; do not assume free.",
+      "status": "OBSERVED",
+      "note": "Orchestration layer complements rather than replaces model candidates. Track discovery, connection, execution and verified outcome separately.",
+      "lifecycle_status": "tool-directory-observed-per-toolkit-connection-specific"
+    },
+    {
+      "id": "exa-research-search",
+      "kind": "research-tool",
+      "provider": "Exa",
+      "roles": [
+        "web-research",
+        "semantic-search",
+        "source-discovery"
+      ],
+      "access": "Toolkit discovered but no active connection; authorize before executing Exa tools.",
+      "zero_cost_runtime": "Unknown until account quota and pricing verified.",
+      "status": "PROPOSED",
+      "note": "Compare retrieval coverage, source relevance and citation support against other research routes.",
+      "lifecycle_status": "connection-required"
+    },
+    {
+      "id": "firecrawl-extraction",
+      "kind": "web-data-tool",
+      "provider": "Firecrawl",
+      "roles": [
+        "web-extraction",
+        "crawling",
+        "structured-source-capture"
+      ],
+      "access": "Toolkit discovered but no active connection; authorize before executing Firecrawl tools.",
+      "zero_cost_runtime": "Unknown until account quota and pricing verified.",
+      "status": "PROPOSED",
+      "note": "Evaluate extraction fidelity, coverage, freshness and failure recovery; not a language-model competitor.",
+      "lifecycle_status": "connection-required"
     }
   ],
   "evaluation_plan": {
@@ -627,12 +765,18 @@
         "gpt-6-chatgpt-current-session",
         "anthropic-claude-opus-5",
         "anthropic-claude-opus-4-8",
-        "anthropic-claude-sonnet-5"
+        "anthropic-claude-sonnet-5",
+        "deepseek-api-reasoner",
+        "mistral-model-family",
+        "qwen-model-family",
+        "xai-grok-family"
       ],
       "agentic_tool_use": [
         "glm-4.5-family",
         "kimi-k2-family",
-        "devstral-family"
+        "devstral-family",
+        "composio-orchestration-layer",
+        "openrouter-multi-provider-gateway"
       ],
       "synthesis_and_instruction_following": [
         "gpt-6-chatgpt-current-session",
@@ -640,7 +784,8 @@
         "deepseek-r1-family"
       ],
       "private_or_offline_fallback": [
-        "ollama-local-runtime"
+        "ollama-local-runtime",
+        "qwen-model-family"
       ],
       "fast_routing": [
         "anthropic-claude-haiku-4-5",
@@ -686,7 +831,10 @@
       "anthropic-claude-sonnet-4-6",
       "anthropic-claude-haiku-4-5",
       "google-gemini-3.7-flash",
-      "google-gemini-3.5-flash"
+      "google-gemini-3.5-flash",
+      "mistral-model-family",
+      "qwen-model-family",
+      "xai-grok-family"
     ],
     "reasoning": [
       "deepseek-r1-family",
@@ -697,7 +845,11 @@
       "anthropic-claude-opus-5",
       "anthropic-claude-opus-4-8",
       "anthropic-claude-sonnet-5",
-      "anthropic-claude-sonnet-4-6"
+      "anthropic-claude-sonnet-4-6",
+      "deepseek-api-reasoner",
+      "mistral-model-family",
+      "qwen-model-family",
+      "xai-grok-family"
     ],
     "fast_routing": [
       "google-gemini-3.5-flash-lite",
@@ -711,7 +863,9 @@
     ],
     "research": [
       "google-gemini-deep-research",
-      "claude-code-public-workflow-patterns"
+      "claude-code-public-workflow-patterns",
+      "exa-research-search",
+      "firecrawl-extraction"
     ],
     "local": [
       "qwen3-coder-30b-a3b-instruct",
@@ -722,7 +876,9 @@
     ],
     "retrieval": [
       "jina-embeddings-family",
-      "bge-reranker-family"
+      "bge-reranker-family",
+      "cohere-rerank-family",
+      "exa-research-search"
     ],
     "audio": [
       "whisper-family",
@@ -732,6 +888,10 @@
     "image_generation": [
       "google-gemini-3-pro-image",
       "google-gemini-3.1-flash-image"
+    ],
+    "agent_orchestration": [
+      "composio-orchestration-layer",
+      "openrouter-multi-provider-gateway"
     ]
   }
 }
