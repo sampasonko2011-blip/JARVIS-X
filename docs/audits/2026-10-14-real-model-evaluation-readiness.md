@@ -27,3 +27,11 @@ Baseline PR: #15, head `9a3cc74788bd6d354e8fe437af367f52b9ff39b0`
 ## Important distinction
 
 The current `evaluate:orbit` script is a paired single-model-versus-same-model-synthesis probe, not a multi-model tournament. It can inspect the value of a second-pass prompt on one configured endpoint; it cannot establish which provider/model wins or prove a multi-model composite is better.
+
+## Follow-up candidate audit (2026-10-14)
+
+- Refreshed the candidate registry using first-party model-catalog documentation for Google Gemini and Anthropic Claude.
+- Removed five stale or incorrectly labeled candidate entries from the candidate list and active routing plans; added current documented Gemini/Claude candidate IDs as **PROPOSED, not benchmark winners**.
+- Verified the updated registry parses as JSON, contains 50 candidates, and does not contain the rejected OpenRouter gateway ID.
+- Still **UNPROVEN**: whether the linked user account can call each API, whether quota is free, live outputs/latency/cost, and comparative model quality. Registry inclusion is not endpoint verification.
+- The local-runtime route is still blocked operationally: Desktop Commander currently reports no connected devices. The next concrete route is to connect a computer and verify Ollama/model hardware fit, or configure a separately authorized first-party endpoint with budget controls.
