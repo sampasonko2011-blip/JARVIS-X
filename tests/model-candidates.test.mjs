@@ -49,3 +49,14 @@ test("production validator rejects unresolved references and duplicate IDs", () 
     "unresolved role_layers.reasoning reference: missing"
   ]);
 });
+
+test("user-rejected OpenRouter gateway is absent from candidates and active routing plans", () => {
+  const rejectedId = "openrouter-multi-provider-gateway";
+  assert.equal(registry.candidates.some(candidate => candidate.id === rejectedId), false);
+  for (const [role, refs] of Object.entries(registry.role_layers ?? {})) {
+    assert.equal(refs.includes(rejectedId), false, `OpenRouter must not be active in role_layers.${role}`);
+  }
+  for (const [role, refs] of Object.entries(registry.evaluation_plan?.roles ?? {})) {
+    assert.equal(refs.includes(rejectedId), false, `OpenRouter must not be active in evaluation_plan.roles.${role}`);
+  }
+});
