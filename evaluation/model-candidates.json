@@ -32,7 +32,8 @@
       "Current ChatGPT session is a baseline, not an API endpoint that repository code can call.",
       "status is evidence status and must use status_vocabulary; lifecycle_status is reserved for provider/model lifecycle; use status_detail for evaluation progress such as not-benchmarked or candidate-not-ranked.",
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
-      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles."
+      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles.",
+      "OpenRouter is excluded from the active JARVIS-X approach by user decision; do not reintroduce it without explicit approval."
     ]
   },
   "candidates": [
@@ -684,21 +685,6 @@
       "lifecycle_status": "connection-and-exact-model-unverified"
     },
     {
-      "id": "openrouter-multi-provider-gateway",
-      "kind": "model-routing-service",
-      "provider": "OpenRouter",
-      "roles": [
-        "model-routing",
-        "provider-fallback",
-        "model-discovery"
-      ],
-      "access": "Toolkit discovered but no active connection; account authorization and provider-specific endpoint availability must be verified.",
-      "zero_cost_runtime": "Gateway and upstream model pricing vary; never infer free access from catalog presence.",
-      "status": "PROPOSED",
-      "note": "Potential multi-provider route for DeepSeek, Qwen, Mistral, Llama and other providers; benchmark routing reliability, cost and privacy.",
-      "lifecycle_status": "connection-unavailable-unverified"
-    },
-    {
       "id": "composio-orchestration-layer",
       "kind": "tool-orchestration-platform",
       "provider": "Composio",
@@ -775,8 +761,7 @@
         "glm-4.5-family",
         "kimi-k2-family",
         "devstral-family",
-        "composio-orchestration-layer",
-        "openrouter-multi-provider-gateway"
+        "composio-orchestration-layer"
       ],
       "synthesis_and_instruction_following": [
         "gpt-6-chatgpt-current-session",
@@ -890,8 +875,7 @@
       "google-gemini-3.1-flash-image"
     ],
     "agent_orchestration": [
-      "composio-orchestration-layer",
-      "openrouter-multi-provider-gateway"
+      "composio-orchestration-layer"
     ]
   }
 }
