@@ -40,3 +40,20 @@ test("superseded candidates are excluded from active role assignments", () => {
     for (const id of refs) assert.ok(!superseded.has(id), `superseded candidate remains active in evaluation_plan.roles.${role}: ${id}`);
   }
 });
+
+test("superseded candidates are rejected when assigned to active roles (negative fixture)", () => {
+  const fixture = {
+    candidates: [{ id: "old-model", status: "SUPERSEDED" }],
+    role_layers: { reasoning: ["old-model"] },
+    evaluation_plan: { roles: {} }
+  };
+  const superseded = new Set(fixture.candidates.filter(candidate => candidate.status === "SUPERSEDED").map(candidate => candidate.id));
+  const violations = [];
+  for (const [role, refs] of Object.entries(fixture.role_layers)) {
+    for (const id of refs) if (superseded.has(id)) violations.push(`role_layers.${role}:${id}`);
+  }
+  for (const [role, refs] of Object.entries(fixture.evaluation_plan.roles)) {
+    for (const id of refs) if (superseded.has(id)) violations.push(`evaluation_plan.roles.${role}:${id}`);
+  }
+  assert.deepEqual(violations, ["role_layers.reasoning:old-model"]);
+});
