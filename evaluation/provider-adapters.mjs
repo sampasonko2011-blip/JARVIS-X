@@ -7,7 +7,8 @@ function cleanBaseUrl(value, fallback) {
 function extractText(provider, payload) {
   if (provider === "google") {
     return (payload?.candidates?.[0]?.content?.parts ?? [])
-      .map(part => typeof part?.text === "string" ? part.text : "")
+      .filter(part => part?.thought !== true && typeof part?.text === "string")
+      .map(part => part.text)
       .filter(Boolean).join("\n").trim();
   }
   if (provider === "anthropic") {
