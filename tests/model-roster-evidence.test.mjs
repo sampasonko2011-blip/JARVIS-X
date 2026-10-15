@@ -6,12 +6,14 @@ const registry = JSON.parse(readFileSync(new URL("../evaluation/model-candidates
 const byId = id => registry.candidates.find(candidate => candidate.id === id);
 
 test("Gemini smoke records use observed response model versions", () => {
-  for (const id of ["google-gemini-3.8-flash", "google-gemini-3.6-flash", "google-gemini-3.1-pro", "google-gemini-3.1-flash-lite", "google-gemini-3.5-flash-lite"]) {
+  for (const id of ["google-gemini-3.8-flash", "google-gemini-3.6-flash", "google-gemini-3.1-pro", "google-gemini-3.1-flash-lite", "google-gemini-3.5-flash-lite", "google-gemma-4-26b-a4b-it", "google-gemma-4-31b-it"]) {
     const record = byId(id)?.runtime_smoke_test;
     assert.ok(record, `missing smoke record: ${id}`);
     assert.equal(record.exact_model_identity_verified, true, id);
     assert.equal(record.requested_model_id, record.observed_model_id, id);
   }
+  assert.equal(byId("google-gemma-4-26b-a4b-it").runtime_smoke_test.code_generation.passed_cases, 4);
+  assert.equal(byId("google-gemma-4-31b-it").runtime_smoke_test.code_generation.status, "UNPROVEN_QUOTA_LIMIT");
 });
 
 test("Gemini connector aliases are explicitly not counted as exact-model passes", () => {
@@ -34,13 +36,15 @@ test("truncated responses are recorded as partial, not complete passes", () => {
   assert.equal(record.reasoning_retest.complete, true);
 });
 
-test("new catalog-confirmed Gemma 4 model IDs remain unbenchmarked until called", () => {
+test("catalog-confirmed Gemma 4 candidates distinguish completed tests from quota-limited tests", () => {
   for (const [id, modelId] of [["google-gemma-4-26b-a4b-it", "gemma-4-26b-a4b-it"], ["google-gemma-4-31b-it", "gemma-4-31b-it"]]) {
     const candidate = byId(id);
     assert.ok(candidate, `missing candidate: ${id}`);
     assert.equal(candidate.model_id, modelId);
     assert.equal(candidate.status, "OBSERVED");
     assert.equal(candidate.lifecycle_status, "catalog-listed-not-benchmarked");
-    assert.equal(candidate.runtime_smoke_test, undefined);
+    assert.equal(candidate.runtime_smoke_test.exact_model_identity_verified, true);
+    assert.equal(candidate.runtime_smoke_test.complete_cases_passed, 3);
+    assert.equal(candidate.runtime_smoke_test.cases.length, 3);
   }
 });
