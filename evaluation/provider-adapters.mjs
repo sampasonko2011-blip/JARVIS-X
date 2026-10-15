@@ -106,8 +106,8 @@ export function createProviderAdapters({
     if ((provider === "google" || provider === "gemini") && credentials.google) {
       adapter = async ({ task, role }) => postJson({
         provider: "google",
-        url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate.model_id)}:generateContent?key=${encodeURIComponent(credentials.google)}`,
-        headers: {},
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate.model_id)}:generateContent`,
+        headers: { "x-goog-api-key": credentials.google },
         body: {
           systemInstruction: { parts: [{ text: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` }] },
           contents: [{ role: "user", parts: [{ text: task }] }],
