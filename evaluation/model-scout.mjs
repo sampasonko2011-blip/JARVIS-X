@@ -34,6 +34,7 @@ export function scoutModelUpdates({ registry, snapshots, excludedProviders = ["O
     rejected_sources: [],
     discoveries: [],
     lifecycle_changes: [],
+    catalog_absence_reviews: [],
     excluded_candidates: []
   };
 
@@ -87,10 +88,27 @@ export function scoutModelUpdates({ registry, snapshots, excludedProviders = ["O
         });
       }
     }
+
+    const observedIds = new Set(snapshot.models.filter(model => typeof model?.model_id === "string").map(model => model.model_id));
+    for (const candidate of registry?.candidates ?? []) {
+      if (!candidate?.provider || candidate.provider.toLowerCase() !== provider.toLowerCase() || !candidate.model_id) continue;
+      if (candidate.status === "SUPERSEDED" || observedIds.has(candidate.model_id)) continue;
+      report.catalog_absence_reviews.push({
+        candidate_id: candidate.id,
+        provider,
+        model_id: candidate.model_id,
+        source_url: sourceUrl,
+        source_checked_at: snapshot.checked_at,
+        evidence_status: "UNPROVEN",
+        action: "PROPOSE_CATALOG_ABSENCE_REVIEW",
+        note: "The ID was not observed in this fetched page. Page extraction may be incomplete; absence alone never proves deprecation or retirement."
+      });
+    }
   }
 
   const sortBy = (a, b) => `${a.provider}:${a.model_id}`.localeCompare(`${b.provider}:${b.model_id}`);
   report.discoveries.sort(sortBy);
   report.lifecycle_changes.sort(sortBy);
+  report.catalog_absence_reviews.sort(sortBy);
   return report;
 }
