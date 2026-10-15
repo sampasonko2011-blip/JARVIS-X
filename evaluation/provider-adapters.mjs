@@ -51,7 +51,13 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
       error.status = response.status;
       throw error;
     }
-    return { text, latency_ms: Date.now() - started, provider, raw_usage: payload?.usage ?? payload?.usageMetadata ?? null };
+    return {
+      text,
+      latency_ms: Date.now() - started,
+      provider,
+      observed_model_id: provider === "google" ? payload?.modelVersion ?? null : payload?.model ?? null,
+      raw_usage: payload?.usage ?? payload?.usageMetadata ?? null
+    };
   } catch (error) {
     if (error?.name === "AbortError") {
       const timeoutError = new Error(`${provider} request timed out after ${timeoutMs}ms`);
@@ -160,7 +166,14 @@ export function createProviderAdapters({
       adapters[candidate.id] = async ({ task, role = "general-reasoning" }) => {
         if (typeof task !== "string" || !task.trim()) throw new TypeError("task must be a non-empty string");
         const result = await adapter({ task, role });
-        return { text: result.text, latency_ms: result.latency_ms, provider: result.provider, raw_usage: result.raw_usage };
+        return {
+          text: result.text,
+          latency_ms: result.latency_ms,
+          provider: result.provider,
+          requested_model_id: candidate.model_id,
+          observed_model_id: result.observed_model_id,
+          raw_usage: result.raw_usage
+        };
       };
     }
   }
