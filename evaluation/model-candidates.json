@@ -828,8 +828,7 @@
       "provider": "Google",
       "model_id": "gemini-3.8-live-extended-thinking",
       "roles": [
-        "real-time-voice",
-        "reasoning"
+        "real-time-voice"
       ],
       "access": "Official catalog ID confirmed; account/API access has not been tested.",
       "zero_cost_runtime": "Not assumed free; verify current quota and price.",
