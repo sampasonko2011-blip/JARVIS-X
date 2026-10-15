@@ -138,3 +138,15 @@ test("request timeout is bounded and surfaced as a timeout error", async () => {
   });
   await assert.rejects(result.adapters.deepseek({ task: "test" }), error => error.code === "PROVIDER_TIMEOUT");
 });
+
+test("Google adapter excludes provider-marked thought parts from user-facing text", async () => {
+  const result = createProviderAdapters({
+    registry, env: { GEMINI_API_KEY: "g-test" },
+    fetchImpl: async () => response({ modelVersion: "gemini-test", candidates: [{ content: { parts: [
+      { text: "private reasoning-like part", thought: true },
+      { text: "final answer", thought: false }
+    ] } }] })
+  });
+  const output = await result.adapters.gemini({ task: "solve" });
+  assert.equal(output.text, "final answer");
+});
