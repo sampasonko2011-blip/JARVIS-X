@@ -33,11 +33,13 @@ test("Google adapter sends task and parses candidate text", async () => {
     registry, env: { GOOGLE_API_KEY: "secret" },
     fetchImpl: async (url, options) => {
       request = { url, options };
-      return response({ candidates: [{ content: { parts: [{ text: "  verified answer  " }] } }] });
+      return response({ modelVersion: "gemini-test", candidates: [{ content: { parts: [{ text: "  verified answer  " }] } }] });
     }
   });
   const output = await result.adapters.gemini({ task: "solve", role: "reasoning" });
   assert.equal(output.text, "verified answer");
+  assert.equal(output.requested_model_id, "gemini-test");
+  assert.equal(output.observed_model_id, "gemini-test");
   assert.match(request.url, /models%2F|models\/gemini-test/);
   assert.equal(request.options.headers["x-goog-api-key"], "secret");
   assert.doesNotMatch(request.url, /secret/);
@@ -51,10 +53,13 @@ test("Anthropic adapter uses Messages API schema", async () => {
     registry, env: { ANTHROPIC_API_KEY: "secret" },
     fetchImpl: async (url, options) => {
       request = { url, options };
-      return response({ content: [{ type: "text", text: "claude answer" }] });
+      return response({ model: "claude-test", content: [{ type: "text", text: "claude answer" }] });
     }
   });
-  assert.equal((await result.adapters.claude({ task: "review", role: "coding" })).text, "claude answer");
+  const output = await result.adapters.claude({ task: "review", role: "coding" });
+  assert.equal(output.text, "claude answer");
+  assert.equal(output.requested_model_id, "claude-test");
+  assert.equal(output.observed_model_id, "claude-test");
   assert.equal(request.url, "https://api.anthropic.com/v1/messages");
   assert.equal(request.options.headers["anthropic-version"], "2023-06-01");
   assert.equal(JSON.parse(request.options.body).messages[0].content, "review");
@@ -74,11 +79,13 @@ test("OpenAI-compatible adapters use bearer auth and parse content", async () =>
       registry, env,
       fetchImpl: async (url, options) => {
         request = { url, options };
-        return response({ choices: [{ message: { content: "compatible answer" } }], usage: { total_tokens: 3 } });
+        return response({ model: "compatible-test", choices: [{ message: { content: "compatible answer" } }], usage: { total_tokens: 3 } });
       }
     });
     const output = await result.adapters[id]({ task: "test", role: "coding" });
     assert.equal(output.text, "compatible answer", id);
+    assert.equal(output.requested_model_id, registry.candidates.find(candidate => candidate.id === id).model_id, id);
+    assert.equal(output.observed_model_id, "compatible-test", id);
     assert.equal(request.url, expectedUrl, id);
     assert.equal(request.options.headers.authorization, "Bearer s", id);
     assert.equal(output.raw_usage.total_tokens, 3, id);
