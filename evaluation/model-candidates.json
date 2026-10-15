@@ -32,7 +32,11 @@
       "Current ChatGPT session is a baseline, not an API endpoint that repository code can call.",
       "status is evidence status and must use status_vocabulary; lifecycle_status is reserved for provider/model lifecycle; use status_detail for evaluation progress such as not-benchmarked or candidate-not-ranked.",
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
-      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles."
+      "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles.",
+      "OpenRouter is excluded by explicit user constraint and must not appear in candidates, role_layers, or evaluation_plan.roles.",
+      "Model Scout is evidence-first and proposal-only: it never calls an unconfigured provider, promotes a candidate, or changes routing automatically.",
+      "A model's exact provider ID and current lifecycle must be checked against dated official documentation before it can be considered an active candidate.",
+      "Role compatibility is validated by model kind; image-generation models must not be assigned to coding or reasoning roles."
     ]
   },
   "candidates": [
@@ -287,16 +291,20 @@
       "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
     },
     {
-      "id": "google-claude-fable-family",
-      "kind": "hosted-model-family",
+      "id": "anthropic-claude-fable-5-1",
+      "kind": "hosted-model",
       "roles": [
         "long-horizon-reasoning"
       ],
-      "access": "Verify exact current route/checkpoint, license and terms before use.",
-      "zero_cost_runtime": "Not assumed free; confirm recurring limits and costs.",
-      "status": "PROPOSED",
-      "note": "Treat as an evaluation candidate only after verifying platform/model ID.",
-      "lifecycle_status": "PROPOSED_NOT_BENCHMARKED"
+      "access": "Official Anthropic API model ID confirmed; account access and endpoint execution remain untested in this environment.",
+      "zero_cost_runtime": "Not free by default; official pricing is $10/M input and $50/M output tokens; verify current account terms.",
+      "status": "OBSERVED",
+      "note": "Official Anthropic documentation lists claude-fable-5-1 as active. This confirms identity and lifecycle, not benchmark superiority or API access.",
+      "lifecycle_status": "active-latest-2026-09-01",
+      "provider": "Anthropic",
+      "model_id": "claude-fable-5-1",
+      "source_url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+      "source_checked_at": "2026-10-15"
     },
     {
       "id": "google-gemini-deep-research",
@@ -466,10 +474,12 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "PROPOSED",
-      "note": "Treat as a distinct comparison candidate; provider catalog presence does not imply newest generation, account access, or benchmark rank.",
-      "lifecycle_status": "previous-generation-stable",
-      "status_detail": "candidate-not-benchmarked"
+      "status": "SUPERSEDED",
+      "note": "Official Google release notes say this model is deprecated and API requests route to gemini-3.8-flash; retained as a historical record only.",
+      "lifecycle_status": "deprecated-2026-10-08-routes-to-gemini-3.8-flash",
+      "status_detail": "historical-only",
+      "source_url": "https://ai.google.dev/gemini-api/docs/changelog?release=09-18-2026",
+      "source_checked_at": "2026-10-15"
     },
     {
       "id": "google-gemini-3.5-flash",
@@ -482,9 +492,12 @@
       ],
       "access": "Official Gemini API model ID; route, quota, billing and data terms must be verified at runtime.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
-      "status": "PROPOSED",
-      "note": "Official Gemini API model catalog lists this endpoint as Gemini 3.5 Flash; retain as a legacy comparison candidate while supported. Verify access and benchmark before ranking.",
-      "lifecycle_status": "legacy-stable"
+      "status": "SUPERSEDED",
+      "note": "Official Google release notes say this model is deprecated and API requests route to gemini-3.6-flash; retained as a historical record only.",
+      "lifecycle_status": "deprecated-2026-10-08-routes-to-gemini-3.6-flash",
+      "status_detail": "historical-only",
+      "source_url": "https://ai.google.dev/gemini-api/docs/changelog?release=09-18-2026",
+      "source_checked_at": "2026-10-15"
     },
     {
       "id": "google-gemini-3-pro-image",
@@ -610,17 +623,19 @@
       "id": "deepseek-api-reasoner",
       "kind": "hosted-model",
       "provider": "DeepSeek",
-      "model_id": "deepseek-reasoner",
+      "model_id": "deepseek-flash",
       "roles": [
         "reasoning",
         "critique",
         "multi-step-analysis"
       ],
-      "access": "Composio directory exposes DeepSeek tools, but toolkit connection is not active; authorize connection and verify current model/API semantics before use.",
-      "zero_cost_runtime": "No free runtime assumed; verify account quota, price and terms.",
-      "status": "PROPOSED",
-      "note": "Hosted reasoning candidate for blind comparison against current baseline and open-weight DeepSeek checkpoints.",
-      "lifecycle_status": "exact-route-and-access-unverified"
+      "access": "Official DeepSeek API model ID confirmed; no authenticated DeepSeek API request has been run from this environment.",
+      "zero_cost_runtime": "Not assumed free; official API pricing varies by peak/off-peak and cache status; verify current account quota and cost.",
+      "status": "OBSERVED",
+      "note": "Official DeepSeek documentation says to set model to deepseek-flash; legacy deepseek-reasoner is not the current V4.1-Flash route.",
+      "lifecycle_status": "active-deepseek-v4-1-flash-2026-09-10",
+      "source_url": "https://api-docs.deepseek.com/news/news260910/",
+      "source_checked_at": "2026-10-15"
     },
     {
       "id": "mistral-model-family",
@@ -684,21 +699,6 @@
       "lifecycle_status": "connection-and-exact-model-unverified"
     },
     {
-      "id": "openrouter-multi-provider-gateway",
-      "kind": "model-routing-service",
-      "provider": "OpenRouter",
-      "roles": [
-        "model-routing",
-        "provider-fallback",
-        "model-discovery"
-      ],
-      "access": "Toolkit discovered but no active connection; account authorization and provider-specific endpoint availability must be verified.",
-      "zero_cost_runtime": "Gateway and upstream model pricing vary; never infer free access from catalog presence.",
-      "status": "PROPOSED",
-      "note": "Potential multi-provider route for DeepSeek, Qwen, Mistral, Llama and other providers; benchmark routing reliability, cost and privacy.",
-      "lifecycle_status": "connection-unavailable-unverified"
-    },
-    {
       "id": "composio-orchestration-layer",
       "kind": "tool-orchestration-platform",
       "provider": "Composio",
@@ -743,6 +743,86 @@
       "status": "PROPOSED",
       "note": "Evaluate extraction fidelity, coverage, freshness and failure recovery; not a language-model competitor.",
       "lifecycle_status": "connection-required"
+    },
+    {
+      "id": "google-gemini-4-argon",
+      "kind": "hosted-model",
+      "provider": "Google",
+      "model_id": "gemini-4-argon",
+      "roles": [
+        "coding",
+        "reasoning",
+        "agentic-tool-use",
+        "mathematics",
+        "science"
+      ],
+      "access": "Official Google API ID confirmed; this environment has not authenticated or executed a Gemini API request.",
+      "zero_cost_runtime": "Not free by default; introductory pricing is $2/M input and $10/M output through Nov 30, 2026, then $4/M input and $20/M output.",
+      "status": "OBSERVED",
+      "lifecycle_status": "active-ga-2026-10-13",
+      "status_detail": "candidate-not-benchmarked",
+      "source_url": "https://ai.google.dev/gemini-api/docs/latest-model",
+      "source_checked_at": "2026-10-15",
+      "note": "New frontier challenger. Official identity and availability confirmed; quality relative to JARVIS-X baseline remains unmeasured."
+    },
+    {
+      "id": "anthropic-claude-opus-5-5",
+      "kind": "hosted-model",
+      "provider": "Anthropic",
+      "model_id": "claude-opus-5-5",
+      "roles": [
+        "coding",
+        "deep-reasoning",
+        "synthesis",
+        "agentic-tool-use"
+      ],
+      "access": "Official Anthropic API ID confirmed; account access and execution are not configured in this environment.",
+      "zero_cost_runtime": "Not free by default; official listed pricing is $4/M input and $20/M output; verify current terms.",
+      "status": "OBSERVED",
+      "lifecycle_status": "active-latest-2026-06",
+      "status_detail": "candidate-not-benchmarked",
+      "source_url": "https://platform.claude.com/docs/en/models/opus-5-5/whats-new-opus-5-5",
+      "source_checked_at": "2026-10-15",
+      "note": "Official active model ID. Added for fixed-task comparison, not assumed superior."
+    },
+    {
+      "id": "anthropic-claude-sonnet-5-5",
+      "kind": "hosted-model",
+      "provider": "Anthropic",
+      "model_id": "claude-sonnet-5-5",
+      "roles": [
+        "coding",
+        "general-reasoning",
+        "synthesis",
+        "fast-routing"
+      ],
+      "access": "Official Anthropic model ID confirmed; account access and execution are not configured in this environment.",
+      "zero_cost_runtime": "Not free by default; verify current pricing, quota and terms before use.",
+      "status": "OBSERVED",
+      "lifecycle_status": "active-latest-2026-06",
+      "status_detail": "candidate-not-benchmarked",
+      "source_url": "https://platform.claude.com/docs/en/models/overview",
+      "source_checked_at": "2026-10-15",
+      "note": "Official active model ID. Added for fixed-task comparison, not assumed superior."
+    },
+    {
+      "id": "anthropic-claude-haiku-5-5",
+      "kind": "hosted-model",
+      "provider": "Anthropic",
+      "model_id": "claude-haiku-5-5",
+      "roles": [
+        "fast-routing",
+        "classification",
+        "low-latency"
+      ],
+      "access": "Official Anthropic model ID confirmed; account access and execution are not configured in this environment.",
+      "zero_cost_runtime": "Not free by default; verify current pricing, quota and terms before use.",
+      "status": "OBSERVED",
+      "lifecycle_status": "active-latest-2026-06",
+      "status_detail": "candidate-not-benchmarked",
+      "source_url": "https://platform.claude.com/docs/en/models/overview",
+      "source_checked_at": "2026-10-15",
+      "note": "Official active model ID. Added for fixed-task comparison, not assumed superior."
     }
   ],
   "evaluation_plan": {
@@ -756,8 +836,9 @@
         "anthropic-claude-sonnet-5",
         "anthropic-claude-sonnet-4-6",
         "google-gemini-3.8-flash",
-        "google-gemini-3.7-flash",
-        "google-gemini-3.5-flash"
+        "google-gemini-4-argon",
+        "anthropic-claude-opus-5-5",
+        "anthropic-claude-sonnet-5-5"
       ],
       "reasoning_and_critique": [
         "deepseek-r1-family",
@@ -769,14 +850,19 @@
         "deepseek-api-reasoner",
         "mistral-model-family",
         "qwen-model-family",
-        "xai-grok-family"
+        "xai-grok-family",
+        "google-gemini-4-argon",
+        "anthropic-claude-fable-5-1",
+        "anthropic-claude-opus-5-5",
+        "anthropic-claude-sonnet-5-5"
       ],
       "agentic_tool_use": [
         "glm-4.5-family",
         "kimi-k2-family",
         "devstral-family",
         "composio-orchestration-layer",
-        "openrouter-multi-provider-gateway"
+        "google-gemini-4-argon",
+        "anthropic-claude-opus-5-5"
       ],
       "synthesis_and_instruction_following": [
         "gpt-6-chatgpt-current-session",
@@ -791,8 +877,7 @@
         "anthropic-claude-haiku-4-5",
         "google-gemini-3.8-flash",
         "google-gemini-3.1-flash-lite",
-        "google-gemini-3.7-flash",
-        "google-gemini-3.5-flash"
+        "anthropic-claude-haiku-5-5"
       ],
       "image_generation": [
         "google-gemini-3-pro-image",
@@ -824,17 +909,17 @@
       "google-gemini-3.8-flash",
       "google-gemini-3.1-pro",
       "openai-codex-cli",
-      "google-gemini-3-pro-image",
       "anthropic-claude-opus-5",
       "anthropic-claude-opus-4-8",
       "anthropic-claude-sonnet-5",
       "anthropic-claude-sonnet-4-6",
       "anthropic-claude-haiku-4-5",
-      "google-gemini-3.7-flash",
-      "google-gemini-3.5-flash",
       "mistral-model-family",
       "qwen-model-family",
-      "xai-grok-family"
+      "xai-grok-family",
+      "google-gemini-4-argon",
+      "anthropic-claude-opus-5-5",
+      "anthropic-claude-sonnet-5-5"
     ],
     "reasoning": [
       "deepseek-r1-family",
@@ -849,7 +934,11 @@
       "deepseek-api-reasoner",
       "mistral-model-family",
       "qwen-model-family",
-      "xai-grok-family"
+      "xai-grok-family",
+      "google-gemini-4-argon",
+      "anthropic-claude-fable-5-1",
+      "anthropic-claude-opus-5-5",
+      "anthropic-claude-sonnet-5-5"
     ],
     "fast_routing": [
       "google-gemini-3.5-flash-lite",
@@ -858,8 +947,7 @@
       "anthropic-claude-haiku-4-5",
       "google-gemini-3.8-flash",
       "google-gemini-3.1-flash-lite",
-      "google-gemini-3.7-flash",
-      "google-gemini-3.5-flash"
+      "anthropic-claude-haiku-5-5"
     ],
     "research": [
       "google-gemini-deep-research",
@@ -891,7 +979,8 @@
     ],
     "agent_orchestration": [
       "composio-orchestration-layer",
-      "openrouter-multi-provider-gateway"
+      "google-gemini-4-argon",
+      "anthropic-claude-opus-5-5"
     ]
   }
 }
