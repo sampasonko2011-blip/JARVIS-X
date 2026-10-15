@@ -1376,7 +1376,7 @@
         "fast-general"
       ],
       "status": "OBSERVED",
-      "lifecycle_status": "catalog-listed-not-benchmarked",
+      "lifecycle_status": "catalog-listed-runtime-smoke-tested-not-ranked",
       "access": "Listed by the current Gemini API catalog with generateContent support; runtime access, quota, terms, and exact response identity still require verification.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
@@ -1453,7 +1453,7 @@
         "fast-general"
       ],
       "status": "OBSERVED",
-      "lifecycle_status": "catalog-listed-not-benchmarked",
+      "lifecycle_status": "catalog-listed-runtime-smoke-tested-not-ranked",
       "access": "Listed by the current Gemini API catalog with generateContent support; runtime access, quota, terms, and exact response identity still require verification.",
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
