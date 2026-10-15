@@ -41,6 +41,8 @@ jobs:
             node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.discoveries) console.log('- '+x.provider+': `'+x.model_id+'` — UNPROVEN; '+x.source_url);" >> "$GITHUB_STEP_SUMMARY"
             echo '### Lifecycle changes (manual review required)' >> "$GITHUB_STEP_SUMMARY"
             node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.lifecycle_changes) console.log('- '+x.provider+': `'+x.model_id+'` — '+x.previous_lifecycle_status+' → '+x.observed_lifecycle_status);" >> "$GITHUB_STEP_SUMMARY"
+            echo '### Candidate IDs absent from fetched catalog text (review only)' >> "$GITHUB_STEP_SUMMARY"
+            node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.catalog_absence_reviews) console.log('- '+x.provider+': `'+x.model_id+'` — not observed; UNPROVEN; verify manually; '+x.source_url);" >> "$GITHUB_STEP_SUMMARY"
             echo '### Source errors' >> "$GITHUB_STEP_SUMMARY"
             node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.fetch_errors) console.log('- '+x.provider+': '+x.error);" >> "$GITHUB_STEP_SUMMARY"
           else
