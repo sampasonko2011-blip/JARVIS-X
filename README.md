@@ -22,3 +22,5 @@ See `docs/architecture.md` and `docs/self-audit.md`.
 ## Benchmarks
 
 See [docs/benchmarking.md](docs/benchmarking.md) for reproducible runtime benchmark instructions, CI artifact details, and the distinction between deterministic fixture checks and real model-quality evaluation.
+
+See [docs/live-provider-adapters.md](docs/live-provider-adapters.md) for credential-gated adapters for real Google Gemini, Anthropic Claude, DeepSeek, OpenAI, Mistral, Groq, and xAI API routes. Adapter availability is not the same as a validated model; real provider calls require authorized credentials, current model IDs, and separate quality evaluation.
