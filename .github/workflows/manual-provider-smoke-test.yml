@@ -35,7 +35,9 @@ jobs:
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        run: node scripts/provider-smoke.mjs | tee provider-smoke-report.json
+        run: |
+          set -o pipefail
+          node scripts/provider-smoke.mjs | tee provider-smoke-report.json
 
       - name: Upload smoke-test report
         if: ${{ always() && inputs.confirm_paid_api_calls == true }}
