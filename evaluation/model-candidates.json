@@ -1032,7 +1032,7 @@
     "audio": [
       "whisper-family",
       "google-gemini-3.8-live",
-      "google-gemini-3.8-flash-tts",
+      "google-gemini-3.1-flash-tts",
       "google-gemini-3.8-live-extended-thinking",
       "google-gemini-3.1-flash-tts",
       "google-gemini-3.5-transcribe"
