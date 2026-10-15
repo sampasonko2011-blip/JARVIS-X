@@ -253,10 +253,19 @@
           "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
         },
         "code_review": {
-          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.8-flash",
-          "finish_reason": "MAX_TOKENS",
-          "note": "Response truncated before a complete code review could be evaluated."
+          "finish_reason": "STOP",
+          "note": "Response truncated before a complete code review could be evaluated.",
+          "complete_response_retest": {
+            "checked_at": "2026-10-15",
+            "output_token_limit": 2048,
+            "complete": true,
+            "caught_empty_array_reduce_failure": true,
+            "caught_string_coercion_risk": true,
+            "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
+            "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
+          }
         }
       }
     },
@@ -319,10 +328,19 @@
           "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
         },
         "code_review": {
-          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-pro-preview",
-          "finish_reason": "MAX_TOKENS",
-          "note": "Response truncated before a complete code review could be evaluated."
+          "finish_reason": "STOP",
+          "note": "Response truncated before a complete code review could be evaluated.",
+          "complete_response_retest": {
+            "checked_at": "2026-10-15",
+            "output_token_limit": 2048,
+            "complete": true,
+            "caught_empty_array_reduce_failure": true,
+            "caught_string_coercion_risk": true,
+            "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
+            "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
+          }
         }
       }
     },
@@ -385,10 +403,19 @@
           "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
         },
         "code_review": {
-          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.6-flash",
-          "finish_reason": "MAX_TOKENS",
-          "note": "Response truncated before a complete code review could be evaluated."
+          "finish_reason": "STOP",
+          "note": "Response truncated before a complete code review could be evaluated.",
+          "complete_response_retest": {
+            "checked_at": "2026-10-15",
+            "output_token_limit": 2048,
+            "complete": true,
+            "caught_empty_array_reduce_failure": true,
+            "caught_string_coercion_risk": true,
+            "fix_policy_diverges": "Returns 0 for empty input; this is a policy choice, not universally correct.",
+            "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
+          }
         }
       }
     },
@@ -866,7 +893,16 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-flash-lite",
           "finish_reason": "STOP",
-          "note": "Detected empty-array reduce failure and numeric input assumptions; proposed returning 0 for empty arrays, which is a policy choice requiring a task-specific specification."
+          "note": "Detected empty-array reduce failure and numeric input assumptions; proposed returning 0 for empty arrays, which is a policy choice requiring a task-specific specification.",
+          "complete_response_retest": {
+            "checked_at": "2026-10-15",
+            "output_token_limit": 2048,
+            "complete": true,
+            "caught_empty_array_reduce_failure": true,
+            "caught_string_coercion_risk": true,
+            "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
+            "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
+          }
         }
       }
     },
