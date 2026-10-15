@@ -6,7 +6,7 @@ const registry = JSON.parse(readFileSync(new URL("../evaluation/model-candidates
 const byId = id => registry.candidates.find(candidate => candidate.id === id);
 
 test("Gemini smoke records use observed response model versions", () => {
-  for (const id of ["google-gemini-3.8-flash", "google-gemini-3.6-flash", "google-gemini-3.1-pro", "google-gemini-3.1-flash-lite"]) {
+  for (const id of ["google-gemini-3.8-flash", "google-gemini-3.6-flash", "google-gemini-3.1-pro", "google-gemini-3.1-flash-lite", "google-gemini-3.5-flash-lite"]) {
     const record = byId(id)?.runtime_smoke_test;
     assert.ok(record, `missing smoke record: ${id}`);
     assert.equal(record.exact_model_identity_verified, true, id);
@@ -32,4 +32,15 @@ test("truncated responses are recorded as partial, not complete passes", () => {
   assert.deepEqual(record.finish_reasons, ["STOP", "STOP", "STOP"]);
   assert.equal(record.initial_attempt.partial_cases, 2);
   assert.equal(record.reasoning_retest.complete, true);
+});
+
+test("new catalog-confirmed Gemma 4 model IDs remain unbenchmarked until called", () => {
+  for (const [id, modelId] of [["google-gemma-4-26b-a4b-it", "gemma-4-26b-a4b-it"], ["google-gemma-4-31b-it", "gemma-4-31b-it"]]) {
+    const candidate = byId(id);
+    assert.ok(candidate, `missing candidate: ${id}`);
+    assert.equal(candidate.model_id, modelId);
+    assert.equal(candidate.status, "OBSERVED");
+    assert.equal(candidate.lifecycle_status, "catalog-listed-not-benchmarked");
+    assert.equal(candidate.runtime_smoke_test, undefined);
+  }
 });
