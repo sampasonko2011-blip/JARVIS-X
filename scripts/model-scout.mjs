@@ -1,12 +1,9 @@
 import { readFileSync } from "node:fs";
 import { scoutModelUpdates } from "../evaluation/model-scout.mjs";
+import { MODEL_CATALOG_SOURCES } from "../evaluation/model-catalog-sources.mjs";
 
 const registry = JSON.parse(readFileSync(new URL("../evaluation/model-candidates.json", import.meta.url), "utf8"));
-const sources = [
-  { provider: "Google", source_url: "https://ai.google.dev/gemini-api/docs/models", pattern: /gemini-[a-z0-9]+(?:[.-][a-z0-9]+)*/gi },
-  { provider: "Anthropic", source_url: "https://platform.claude.com/docs/en/models/overview", pattern: /claude-[a-z0-9]+(?:[.-][a-z0-9]+)*/gi },
-  { provider: "DeepSeek", source_url: "https://api-docs.deepseek.com/quick_start/pricing/", pattern: /deepseek-[a-z0-9]+(?:[.-][a-z0-9]+)*/gi }
-];
+const sources = MODEL_CATALOG_SOURCES;
 
 const snapshots = [];
 const fetchErrors = [];
