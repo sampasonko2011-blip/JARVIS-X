@@ -1,0 +1,47 @@
+name: Manual provider smoke test
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid_api_calls:
+        description: "I understand these live API requests may incur provider charges."
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit cost confirmation
+        if: ${{ inputs.confirm_paid_api_calls != true }}
+        run: |
+          echo "Not run: re-dispatch this workflow and confirm that live API calls may incur charges."
+          exit 1
+
+      - uses: actions/checkout@v4
+        if: ${{ inputs.confirm_paid_api_calls == true }}
+
+      - uses: actions/setup-node@v4
+        if: ${{ inputs.confirm_paid_api_calls == true }}
+        with:
+          node-version: 22
+
+      - name: Run one bounded request per provider
+        if: ${{ inputs.confirm_paid_api_calls == true }}
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: node scripts/provider-smoke-test.mjs | tee provider-smoke-report.json
+
+      - name: Upload smoke-test report
+        if: ${{ always() && inputs.confirm_paid_api_calls == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-x-provider-smoke-report
+          path: provider-smoke-report.json
+          if-no-files-found: warn
+          retention-days: 14
