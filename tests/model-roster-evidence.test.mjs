@@ -27,7 +27,9 @@ test("Gemini connector aliases are explicitly not counted as exact-model passes"
 
 test("truncated responses are recorded as partial, not complete passes", () => {
   const record = byId("google-gemini-3.1-pro")?.runtime_smoke_test;
-  assert.equal(record.complete_cases_passed, 1);
-  assert.equal(record.partial_cases, 2);
-  assert.ok(record.finish_reasons.includes("MAX_TOKENS"));
+  assert.equal(record.complete_cases_passed, 3);
+  assert.equal(record.partial_cases, 0);
+  assert.deepEqual(record.finish_reasons, ["STOP", "STOP", "STOP"]);
+  assert.equal(record.initial_attempt.partial_cases, 2);
+  assert.equal(record.reasoning_retest.complete, true);
 });
