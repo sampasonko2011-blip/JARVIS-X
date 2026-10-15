@@ -232,7 +232,32 @@
           "uncertainty calibration"
         ],
         "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority."
+        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "route": "Composio Gemini connector",
+          "observed_model_id": "gemini-3.8-flash",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated function independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        },
+        "code_review": {
+          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "observed_model_id": "gemini-3.8-flash",
+          "finish_reason": "MAX_TOKENS",
+          "note": "Response truncated before a complete code review could be evaluated."
+        }
       }
     },
     {
@@ -273,7 +298,32 @@
           "logical entailment",
           "uncertainty calibration"
         ],
-        "output_token_limit": 512
+        "output_token_limit": 512,
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "route": "Composio Gemini connector",
+          "observed_model_id": "gemini-3.1-pro-preview",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated function independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        },
+        "code_review": {
+          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "observed_model_id": "gemini-3.1-pro-preview",
+          "finish_reason": "MAX_TOKENS",
+          "note": "Response truncated before a complete code review could be evaluated."
+        }
       }
     },
     {
@@ -314,7 +364,32 @@
           "uncertainty calibration"
         ],
         "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority."
+        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "route": "Composio Gemini connector",
+          "observed_model_id": "gemini-3.6-flash",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated function independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        },
+        "code_review": {
+          "status": "PARTIAL_TRUNCATED_NOT_SCORED",
+          "observed_model_id": "gemini-3.6-flash",
+          "finish_reason": "MAX_TOKENS",
+          "note": "Response truncated before a complete code review could be evaluated."
+        }
       }
     },
     {
@@ -767,7 +842,32 @@
           "uncertainty calibration"
         ],
         "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority."
+        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "route": "Composio Gemini connector",
+          "observed_model_id": "gemini-3.1-flash-lite",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated function independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        },
+        "code_review": {
+          "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
+          "observed_model_id": "gemini-3.1-flash-lite",
+          "finish_reason": "STOP",
+          "note": "Detected empty-array reduce failure and numeric input assumptions; proposed returning 0 for empty arrays, which is a policy choice requiring a task-specific specification."
+        }
       }
     },
     {
