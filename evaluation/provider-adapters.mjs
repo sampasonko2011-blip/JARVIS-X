@@ -20,7 +20,7 @@ function extractText(provider, payload) {
 }
 
 function errorMessage(payload, status) {
-  return String(payload?.error?.message ?? payload?.message ?? payload?.error ?? \`HTTP \${status}\`).slice(0, 800);
+  return String(payload?.error?.message ?? payload?.message ?? payload?.error ?? `HTTP ${status}`).slice(0, 800);
 }
 
 async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) {
@@ -39,14 +39,14 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
     try { payload = raw ? JSON.parse(raw) : {}; }
     catch { payload = { message: raw.slice(0, 800) }; }
     if (!response.ok) {
-      const error = new Error(\`\${provider} request failed (\${response.status}): \${errorMessage(payload, response.status)}\`);
+      const error = new Error(`${provider} request failed (${response.status}): ${errorMessage(payload, response.status)}`);
       error.status = response.status;
       error.provider = provider;
       throw error;
     }
     const text = extractText(provider, payload);
     if (!text) {
-      const error = new Error(\`\${provider} returned no text content\`);
+      const error = new Error(`${provider} returned no text content`);
       error.provider = provider;
       error.status = response.status;
       throw error;
@@ -54,7 +54,7 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
     return { text, latency_ms: Date.now() - started, provider, raw_usage: payload?.usage ?? payload?.usageMetadata ?? null };
   } catch (error) {
     if (error?.name === "AbortError") {
-      const timeoutError = new Error(\`\${provider} request timed out after \${timeoutMs}ms\`);
+      const timeoutError = new Error(`${provider} request timed out after ${timeoutMs}ms`);
       timeoutError.code = "PROVIDER_TIMEOUT";
       timeoutError.provider = provider;
       throw timeoutError;
@@ -103,10 +103,10 @@ export function createProviderAdapters({
     if ((provider === "google" || provider === "gemini") && credentials.google) {
       adapter = async ({ task, role }) => postJson({
         provider: "google",
-        url: \`https://generativelanguage.googleapis.com/v1beta/models/\${encodeURIComponent(candidate.model_id)}:generateContent?key=\${encodeURIComponent(credentials.google)}\`,
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate.model_id)}:generateContent?key=${encodeURIComponent(credentials.google)}`,
         headers: {},
         body: {
-          systemInstruction: { parts: [{ text: \`You are a specialist in the \${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.\` }] },
+          systemInstruction: { parts: [{ text: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` }] },
           contents: [{ role: "user", parts: [{ text: task }] }],
           generationConfig: { temperature: 0 }
         },
@@ -120,7 +120,7 @@ export function createProviderAdapters({
         body: {
           model: candidate.model_id,
           max_tokens: 4096,
-          system: \`You are a specialist in the \${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.\`,
+          system: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.`,
           messages: [{ role: "user", content: task }]
         },
         fetchImpl, timeoutMs
@@ -137,12 +137,12 @@ export function createProviderAdapters({
       if (config?.key) {
         adapter = async ({ task, role }) => postJson({
           provider,
-          url: \`\${cleanBaseUrl(config.baseEnv ? env[config.baseEnv] : null, config.base)}/chat/completions\`,
-          headers: { authorization: \`Bearer \${config.key}\` },
+          url: `${cleanBaseUrl(config.baseEnv ? env[config.baseEnv] : null, config.base)}/chat/completions`,
+          headers: { authorization: `Bearer ${config.key}` },
           body: {
             model: candidate.model_id,
             messages: [
-              { role: "system", content: \`You are a specialist in the \${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.\` },
+              { role: "system", content: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` },
               { role: "user", content: task }
             ],
             temperature: 0
