@@ -910,7 +910,6 @@
       "mistral-model-family",
       "qwen-model-family",
       "xai-grok-family",
-      "anthropic-claude-fable-5-1",
       "anthropic-claude-opus-5-5",
       "anthropic-claude-sonnet-5-5"
     ],
