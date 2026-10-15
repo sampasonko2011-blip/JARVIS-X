@@ -13,8 +13,9 @@
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
 | xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
+| Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
 
-Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`. Never point these at an untrusted endpoint: the endpoint receives task text and an authorization header.
+Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. Never point these at an untrusted endpoint: the endpoint receives task text and an authorization header.
 
 ## Usage
 
