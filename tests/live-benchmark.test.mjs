@@ -1,0 +1,43 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { runLiveBenchmark } from "../evaluation/live-benchmark.mjs";
+
+const registry = { candidates: [
+  { id: "exact", provider: "Google", model_id: "gemini-exact", kind: "hosted-model" },
+  { id: "mismatch", provider: "Google", model_id: "gemini-requested", kind: "hosted-model" },
+  { id: "image", provider: "Google", model_id: "gemini-image", kind: "image-generation-model" }
+] };
+const answers = [
+  { text: "323", observed_model_id: "gemini-exact" },
+  { text: "NO. The sets may not overlap.", observed_model_id: "gemini-exact" },
+  { text: "UNKNOWN. No evidence was supplied.", observed_model_id: "gemini-exact" }
+];
+
+test("live benchmark scores exact identity and all three checks", async () => {
+  const report = await runLiveBenchmark({
+    registry, candidateIds: ["exact"], now: () => "fixed-time",
+    adapters: { exact: async () => answers.shift() }
+  });
+  assert.equal(report.results[0].status, "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION");
+  assert.equal(report.results[0].exact_model_identity_verified, true);
+  assert.equal(report.results[0].cases_passed, 3);
+});
+
+test("live benchmark never scores an alias response as the requested model", async () => {
+  const report = await runLiveBenchmark({
+    registry, candidateIds: ["mismatch"],
+    adapters: { mismatch: async () => ({ text: "323", observed_model_id: "gemini-other" }) }
+  });
+  assert.equal(report.results[0].status, "IDENTITY_UNVERIFIED_OR_MISMATCH");
+  assert.equal(report.results[0].exact_model_identity_verified, false);
+});
+
+test("live benchmark refuses modality-incompatible candidates", async () => {
+  let called = false;
+  const report = await runLiveBenchmark({
+    registry, candidateIds: ["image"],
+    adapters: { image: async () => { called = true; return { text: "323", observed_model_id: "gemini-image" }; } }
+  });
+  assert.equal(report.results[0].status, "MODALITY_NOT_SUPPORTED_BY_TEXT_BENCHMARK");
+  assert.equal(called, false);
+});
