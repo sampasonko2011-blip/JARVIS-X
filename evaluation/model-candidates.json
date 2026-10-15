@@ -1381,7 +1381,66 @@
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
       "source_checked_at": "2026-10-15",
-      "note": "Gemma 4 26B A4B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking."
+      "note": "Gemma 4 26B A4B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking.",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
+        "requested_model_id": "gemma-4-26b-a4b-it",
+        "observed_model_id": "gemma-4-26b-a4b-it",
+        "exact_model_identity_verified": true,
+        "provider_catalog_confirmed": true,
+        "trials": 3,
+        "complete_cases_passed": 3,
+        "partial_cases": 0,
+        "failed_cases": 0,
+        "finish_reasons": [
+          "STOP",
+          "STOP",
+          "STOP"
+        ],
+        "output_token_limit": 2048,
+        "cases": [
+          {
+            "name": "exact arithmetic",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
+        ],
+        "note": "Exact provider-returned modelVersion matched the official catalog ID. All three fixed checks passed using the final non-thought response part. Small mini-benchmark only; no broad quality or superiority claim.",
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "observed_model_id": "gemma-4-26b-a4b-it",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated final code independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        }
+      }
     },
     {
       "id": "google-gemma-4-31b-it",
@@ -1399,7 +1458,59 @@
       "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
       "source_checked_at": "2026-10-15",
-      "note": "Gemma 4 31B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking."
+      "note": "Gemma 4 31B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking.",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
+        "requested_model_id": "gemma-4-31b-it",
+        "observed_model_id": "gemma-4-31b-it",
+        "exact_model_identity_verified": true,
+        "provider_catalog_confirmed": true,
+        "trials": 3,
+        "complete_cases_passed": 3,
+        "partial_cases": 0,
+        "failed_cases": 0,
+        "finish_reasons": [
+          "STOP",
+          "STOP",
+          "STOP"
+        ],
+        "output_token_limit": 2048,
+        "cases": [
+          {
+            "name": "exact arithmetic",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
+        ],
+        "note": "Exact provider-returned modelVersion matched the official catalog ID. All three fixed checks passed using the final non-thought response part. Small mini-benchmark only; no broad quality or superiority claim.",
+        "code_generation": {
+          "status": "UNPROVEN_QUOTA_LIMIT",
+          "checked_at": "2026-10-15",
+          "requested_model_id": "gemma-4-31b-it",
+          "observed_model_id": null,
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 0,
+          "failed_cases": 0,
+          "note": "Code-generation retest was rejected by the Gemini connector with HTTP 429 RESOURCE_EXHAUSTED before a model response was returned. This is not a model failure and does not count as a test."
+        }
+      }
     }
   ],
   "evaluation_plan": {
