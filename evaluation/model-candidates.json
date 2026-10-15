@@ -285,19 +285,19 @@
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
       "source_checked_at": "2026-10-15",
       "runtime_smoke_test": {
-        "status": "PARTIAL_OUTPUT_TRUNCATION_NOT_BENCHMARK_PROMOTION",
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
         "requested_model_id": "gemini-3.1-pro-preview",
         "observed_model_id": "gemini-3.1-pro-preview",
         "exact_model_identity_verified": true,
-        "complete_cases_passed": 1,
-        "partial_cases": 2,
+        "complete_cases_passed": 3,
+        "partial_cases": 0,
         "failed_cases": 0,
         "finish_reasons": [
           "STOP",
-          "MAX_TOKENS",
-          "MAX_TOKENS"
+          "STOP",
+          "STOP"
         ],
-        "note": "Arithmetic completed. Logic and calibration answers began correctly but were truncated at the 512-token output cap, so they are partial and not full passes.",
+        "note": "Three fixed cases passed after increasing the output budget. The initial 512-token attempt truncated two answers; the retest completed them. This is a small mini-benchmark only, not evidence of broad superiority.",
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
         "benchmark_id": "JX-MINI-2026-10-15-v1",
@@ -341,6 +341,23 @@
             "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
             "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
           }
+        },
+        "reasoning_retest": {
+          "checked_at": "2026-10-15",
+          "output_token_limit": 1024,
+          "logic_case": "NO with complete explanation",
+          "calibration_case": "UNKNOWN with complete explanation",
+          "complete": true
+        },
+        "initial_attempt": {
+          "status": "PARTIAL_OUTPUT_TRUNCATION_NOT_BENCHMARK_PROMOTION",
+          "complete_cases_passed": 1,
+          "partial_cases": 2,
+          "finish_reasons": [
+            "STOP",
+            "MAX_TOKENS",
+            "MAX_TOKENS"
+          ]
         }
       }
     },
