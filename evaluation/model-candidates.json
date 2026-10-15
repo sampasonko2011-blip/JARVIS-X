@@ -34,8 +34,8 @@
       "Provider, exact model/API ID, hosting route, and product/tool identity are distinct; registry presence never implies executable access.",
       "Candidates with status SUPERSEDED are historical records only and must not appear in active role_layers or evaluation_plan.roles.",
       "OpenRouter is excluded by explicit user constraint and must not appear in candidates, role_layers, or evaluation_plan.roles.",
-      "Model Scout is evidence-first and proposal-only: it never calls an unconfigured provider, promotes a candidate, or changes routing automatically.",
-      "A model's exact provider ID and current lifecycle must be checked against dated official documentation before it can be considered an active candidate.",
+      "Model Scout is evidence-first and proposal-only: it never promotes a candidate, installs a model, or changes routing automatically.",
+      "Exact provider model IDs and lifecycle status require dated official documentation; unverified names remain UNPROVEN or PROPOSED.",
       "Role compatibility is validated by model kind; image-generation models must not be assigned to coding or reasoning roles."
     ]
   },
@@ -299,11 +299,11 @@
       "access": "Official Anthropic API model ID confirmed; account access and endpoint execution remain untested in this environment.",
       "zero_cost_runtime": "Not free by default; official pricing is $10/M input and $50/M output tokens; verify current account terms.",
       "status": "OBSERVED",
-      "note": "Official Anthropic documentation lists claude-fable-5-1 as active. This confirms identity and lifecycle, not benchmark superiority or API access.",
-      "lifecycle_status": "active-latest-2026-09-01",
+      "note": "Official Anthropic model overview confirms claude-fable-5-1 and its current availability. Benchmark superiority and API access remain unproven.",
+      "lifecycle_status": "active-latest-2026-10-15",
       "provider": "Anthropic",
       "model_id": "claude-fable-5-1",
-      "source_url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+      "source_url": "https://platform.claude.com/docs/en/models/overview",
       "source_checked_at": "2026-10-15"
     },
     {
@@ -629,10 +629,10 @@
         "critique",
         "multi-step-analysis"
       ],
-      "access": "Official DeepSeek API model ID confirmed; no authenticated DeepSeek API request has been run from this environment.",
-      "zero_cost_runtime": "Not assumed free; official API pricing varies by peak/off-peak and cache status; verify current account quota and cost.",
+      "access": "Official model ID verified; this environment has not authenticated a DeepSeek API endpoint.",
+      "zero_cost_runtime": "Not assumed free; confirm current quota and peak/off-peak pricing before use.",
       "status": "OBSERVED",
-      "note": "Official DeepSeek documentation says to set model to deepseek-flash; legacy deepseek-reasoner is not the current V4.1-Flash route.",
+      "note": "Official DeepSeek documentation confirms deepseek-flash as the current V4.1-Flash API model ID; API credentials and runtime access remain unverified.",
       "lifecycle_status": "active-deepseek-v4-1-flash-2026-09-10",
       "source_url": "https://api-docs.deepseek.com/news/news260910/",
       "source_checked_at": "2026-10-15"
@@ -745,27 +745,6 @@
       "lifecycle_status": "connection-required"
     },
     {
-      "id": "google-gemini-4-argon",
-      "kind": "hosted-model",
-      "provider": "Google",
-      "model_id": "gemini-4-argon",
-      "roles": [
-        "coding",
-        "reasoning",
-        "agentic-tool-use",
-        "mathematics",
-        "science"
-      ],
-      "access": "Official Google API ID confirmed; this environment has not authenticated or executed a Gemini API request.",
-      "zero_cost_runtime": "Not free by default; introductory pricing is $2/M input and $10/M output through Nov 30, 2026, then $4/M input and $20/M output.",
-      "status": "OBSERVED",
-      "lifecycle_status": "active-ga-2026-10-13",
-      "status_detail": "candidate-not-benchmarked",
-      "source_url": "https://ai.google.dev/gemini-api/docs/latest-model",
-      "source_checked_at": "2026-10-15",
-      "note": "New frontier challenger. Official identity and availability confirmed; quality relative to JARVIS-X baseline remains unmeasured."
-    },
-    {
       "id": "anthropic-claude-opus-5-5",
       "kind": "hosted-model",
       "provider": "Anthropic",
@@ -836,7 +815,6 @@
         "anthropic-claude-sonnet-5",
         "anthropic-claude-sonnet-4-6",
         "google-gemini-3.8-flash",
-        "google-gemini-4-argon",
         "anthropic-claude-opus-5-5",
         "anthropic-claude-sonnet-5-5"
       ],
@@ -851,7 +829,6 @@
         "mistral-model-family",
         "qwen-model-family",
         "xai-grok-family",
-        "google-gemini-4-argon",
         "anthropic-claude-fable-5-1",
         "anthropic-claude-opus-5-5",
         "anthropic-claude-sonnet-5-5"
@@ -861,7 +838,6 @@
         "kimi-k2-family",
         "devstral-family",
         "composio-orchestration-layer",
-        "google-gemini-4-argon",
         "anthropic-claude-opus-5-5"
       ],
       "synthesis_and_instruction_following": [
@@ -917,7 +893,6 @@
       "mistral-model-family",
       "qwen-model-family",
       "xai-grok-family",
-      "google-gemini-4-argon",
       "anthropic-claude-opus-5-5",
       "anthropic-claude-sonnet-5-5"
     ],
@@ -925,7 +900,7 @@
       "deepseek-r1-family",
       "google-gemini-3.1-pro",
       "anthropic-claude-opus-family",
-      "google-claude-fable-family",
+      "anthropic-claude-fable-5-1",
       "glm-4.5-family",
       "anthropic-claude-opus-5",
       "anthropic-claude-opus-4-8",
@@ -935,7 +910,6 @@
       "mistral-model-family",
       "qwen-model-family",
       "xai-grok-family",
-      "google-gemini-4-argon",
       "anthropic-claude-fable-5-1",
       "anthropic-claude-opus-5-5",
       "anthropic-claude-sonnet-5-5"
@@ -979,7 +953,6 @@
     ],
     "agent_orchestration": [
       "composio-orchestration-layer",
-      "google-gemini-4-argon",
       "anthropic-claude-opus-5-5"
     ]
   }
