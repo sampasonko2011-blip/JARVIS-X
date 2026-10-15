@@ -96,8 +96,10 @@ export function createProviderAdapters({
   const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]));
   const adapters = {};
 
+  const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
   for (const candidate of registry?.candidates ?? []) {
     if (!candidate?.id || !candidate?.model_id || candidate.status === "SUPERSEDED") continue;
+    if (candidate.kind && !textModelKinds.has(candidate.kind)) continue;
     const provider = String(candidate.provider ?? "").trim().toLowerCase();
     let adapter;
 
