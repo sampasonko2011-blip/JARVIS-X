@@ -224,15 +224,33 @@
         ],
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
         ],
-        "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "output_token_limit": 2048,
+        "note": "Three fixed checks passed for the exact returned model ID. Small mini-benchmark only; not evidence of broad superiority.",
         "code_generation": {
           "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
           "checked_at": "2026-10-15",
@@ -256,7 +274,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.8-flash",
           "finish_reason": "STOP",
-          "note": "Response truncated before a complete code review could be evaluated.",
+          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -266,7 +284,10 @@
             "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
             "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
           }
-        }
+        },
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session."
       }
     },
     {
@@ -297,17 +318,35 @@
           "STOP",
           "STOP"
         ],
-        "note": "Three fixed cases passed after increasing the output budget. The initial 512-token attempt truncated two answers; the retest completed them. This is a small mini-benchmark only, not evidence of broad superiority.",
+        "note": "Three fixed checks passed for the exact returned model ID. Small mini-benchmark only; not evidence of broad superiority.",
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
         ],
-        "output_token_limit": 512,
+        "output_token_limit": 2048,
         "code_generation": {
           "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
           "checked_at": "2026-10-15",
@@ -331,7 +370,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-pro-preview",
           "finish_reason": "STOP",
-          "note": "Response truncated before a complete code review could be evaluated.",
+          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -358,7 +397,10 @@
             "MAX_TOKENS",
             "MAX_TOKENS"
           ]
-        }
+        },
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session."
       }
     },
     {
@@ -391,15 +433,33 @@
         ],
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
         ],
-        "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "output_token_limit": 2048,
+        "note": "Three fixed checks passed for the exact returned model ID. Small mini-benchmark only; not evidence of broad superiority.",
         "code_generation": {
           "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
           "checked_at": "2026-10-15",
@@ -423,7 +483,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.6-flash",
           "finish_reason": "STOP",
-          "note": "Response truncated before a complete code review could be evaluated.",
+          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -433,7 +493,10 @@
             "fix_policy_diverges": "Returns 0 for empty input; this is a policy choice, not universally correct.",
             "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
           }
-        }
+        },
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session."
       }
     },
     {
@@ -450,7 +513,62 @@
       "model_id": "gemini-3.5-flash-lite",
       "provider": "Google",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
+        "requested_model_id": "gemini-3.5-flash-lite",
+        "observed_model_id": "gemini-3.5-flash-lite",
+        "exact_model_identity_verified": true,
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session.",
+        "trials": 3,
+        "cases": [
+          "exact arithmetic",
+          "logical entailment",
+          "uncertainty calibration"
+        ],
+        "complete_cases_passed": 3,
+        "partial_cases": 0,
+        "failed_cases": 0,
+        "finish_reasons": [
+          "STOP",
+          "STOP",
+          "STOP"
+        ],
+        "output_token_limit": 2048,
+        "note": "Exact current model ID returned by the provider and independently passed the fixed three-case reasoning/calibration mini-benchmark plus four executable algorithm edge cases. Not promoted to a general winner.",
+        "code_generation": {
+          "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+          "checked_at": "2026-10-15",
+          "benchmark_id": "JX-CODE-MINI-2026-10-15-v1",
+          "observed_model_id": "gemini-3.5-flash-lite",
+          "trials": 1,
+          "test_cases": 4,
+          "passed_cases": 4,
+          "failed_cases": 0,
+          "checks": [
+            "duplicate whose second occurrence appears earliest",
+            "no duplicate returns null",
+            "number 1 differs from string '1'",
+            "invalid non-array input returns null"
+          ],
+          "execution": "Generated function independently executed in isolated Node sandbox",
+          "note": "Small algorithmic test only; does not validate broad coding ability or model superiority."
+        },
+        "code_review": {
+          "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
+          "observed_model_id": "gemini-3.5-flash-lite",
+          "finish_reason": "STOP",
+          "complete": true,
+          "caught_empty_array_reduce_failure": true,
+          "caught_string_coercion_risk": true,
+          "note": "Review caught relevant bug classes; its proposed empty-array return policy is a specification choice and was not automatically accepted."
+        }
+      }
     },
     {
       "id": "google-gemini-3.8-live",
@@ -699,17 +817,39 @@
           "STOP",
           "STOP"
         ],
-        "note": "The connector returned Gemini 3.8 Flash for all three calls requested as Gemini 3.7 Flash. Output correctness is not evidence that Gemini 3.7 itself was tested.",
+        "note": "Provider catalog confirms the requested ID exists, but this connector call returned a different model version. Score is invalid for the requested ID and must not be counted.",
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": false
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": false
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": false
+          }
         ],
-        "output_token_limit": 512
+        "output_token_limit": 2048,
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session.",
+        "connector_issue": "Exact model ID is present in the official model catalog, but the connector served a newer sibling ID for all three requests. Retry through a direct authenticated provider endpoint or another non-OpenRouter route before scoring."
       }
     },
     {
@@ -742,17 +882,39 @@
           "STOP",
           "STOP"
         ],
-        "note": "The connector returned Gemini 3.6 Flash for all three calls requested as Gemini 3.5 Flash. Output correctness is not evidence that Gemini 3.5 itself was tested.",
+        "note": "Provider catalog confirms the requested ID exists, but this connector call returned a different model version. Score is invalid for the requested ID and must not be counted.",
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": false
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": false
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": false
+          }
         ],
-        "output_token_limit": 512
+        "output_token_limit": 2048,
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session.",
+        "connector_issue": "Exact model ID is present in the official model catalog, but the connector served a newer sibling ID for all three requests. Retry through a direct authenticated provider endpoint or another non-OpenRouter route before scoring."
       }
     },
     {
@@ -878,15 +1040,33 @@
         ],
         "checked_at": "2026-10-15",
         "route": "Composio Gemini connector",
-        "benchmark_id": "JX-MINI-2026-10-15-v1",
+        "benchmark_id": "JX-MINI-2026-10-15-v2",
         "trials": 3,
         "cases": [
-          "exact arithmetic 17*19",
-          "logical entailment",
-          "uncertainty calibration"
+          {
+            "name": "exact arithmetic",
+            "prompt": "17*19",
+            "expected": "323",
+            "observed": "323",
+            "passed": true
+          },
+          {
+            "name": "logical entailment",
+            "prompt": "All bloops are razzies; some razzies are lupps. Does some bloops are lupps follow?",
+            "expected": "NO",
+            "observed": "NO",
+            "passed": true
+          },
+          {
+            "name": "uncertainty calibration",
+            "prompt": "Unsubstantiated 99% benchmark win-rate claim",
+            "expected": "UNKNOWN",
+            "observed": "UNKNOWN",
+            "passed": true
+          }
         ],
-        "output_token_limit": 512,
-        "note": "Small deterministic mini-benchmark only; does not prove broad quality, cost, privacy, or superiority.",
+        "output_token_limit": 2048,
+        "note": "Three fixed checks passed for the exact returned model ID. Small mini-benchmark only; not evidence of broad superiority.",
         "code_generation": {
           "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
           "checked_at": "2026-10-15",
@@ -910,7 +1090,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-flash-lite",
           "finish_reason": "STOP",
-          "note": "Detected empty-array reduce failure and numeric input assumptions; proposed returning 0 for empty arrays, which is a policy choice requiring a task-specific specification.",
+          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -920,7 +1100,10 @@
             "fix_policy_diverges": "Returns NaN for empty input; this is a policy choice, not universally correct.",
             "note": "The response identified both seeded bug classes. Suggested fixes were not executed and no model is promoted from this review."
           }
-        }
+        },
+        "provider_catalog_confirmed": true,
+        "provider_catalog_snapshot_url": "https://ai.google.dev/gemini-api/docs/models",
+        "provider_catalog_observation": "GEMINI_LIST_MODELS returned this exact ID with generateContent support during the same session."
       }
     },
     {
