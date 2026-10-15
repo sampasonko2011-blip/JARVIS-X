@@ -1,0 +1,48 @@
+name: Model Scout
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-scout
+  cancel-in-progress: true
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Scan official model catalogs
+        id: scout
+        run: |
+          set -o pipefail
+          node scripts/model-scout.mjs | tee /tmp/model-scout-report.json
+      - name: Publish compact report in workflow summary
+        if: always()
+        run: |
+          echo "## JARVIS-X Model Scout" >> "$GITHUB_STEP_SUMMARY"
+          echo "This job scans official Google, Anthropic, and DeepSeek catalog pages. Discovery is proposal-only; no registry edits, installs, API calls, or routing changes occur." >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/model-scout-report.json ]; then
+            node -e "const r=require('/tmp/model-scout-report.json'); console.log('Sources fetched:', r.accepted_sources.length); console.log('New unclassified IDs:', r.discoveries.length); console.log('Lifecycle changes for review:', r.lifecycle_changes.length); console.log('Fetch errors:', r.fetch_errors.length);" >> "$GITHUB_STEP_SUMMARY"
+            echo '### Candidate discoveries (unclassified; manual review required)' >> "$GITHUB_STEP_SUMMARY"
+            node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.discoveries) console.log('- '+x.provider+': `'+x.model_id+'` — UNPROVEN; '+x.source_url);" >> "$GITHUB_STEP_SUMMARY"
+            echo '### Lifecycle changes (manual review required)' >> "$GITHUB_STEP_SUMMARY"
+            node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.lifecycle_changes) console.log('- '+x.provider+': `'+x.model_id+'` — '+x.previous_lifecycle_status+' → '+x.observed_lifecycle_status);" >> "$GITHUB_STEP_SUMMARY"
+            echo '### Source errors' >> "$GITHUB_STEP_SUMMARY"
+            node -e "const r=require('/tmp/model-scout-report.json'); for (const x of r.fetch_errors) console.log('- '+x.provider+': '+x.error);" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Scout did not produce a report; inspect job logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
