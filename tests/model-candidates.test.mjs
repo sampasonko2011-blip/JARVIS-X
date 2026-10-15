@@ -49,3 +49,31 @@ test("production validator rejects unresolved references and duplicate IDs", () 
     "unresolved role_layers.reasoning reference: missing"
   ]);
 });
+
+test("production validator rejects excluded providers and role-kind mismatches", () => {
+  const fixture = {
+    selection_policy: { status_vocabulary: ["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN", "REJECTED", "SUPERSEDED"] },
+    candidates: [
+      { id: "openrouter-route", provider: "OpenRouter", status: "PROPOSED", kind: "model-routing-service" },
+      { id: "image-maker", provider: "Google", model_id: "image-model", status: "PROPOSED", kind: "image-generation-model", access: "not tested", zero_cost_runtime: "not assumed free" }
+    ],
+    role_layers: { coding: ["image-maker"] },
+    evaluation_plan: { roles: {} }
+  };
+  assert.deepEqual(validateModelCandidates(fixture), [
+    "excluded provider candidate present: openrouter-route",
+    "incompatible candidate kind in role_layers.coding: image-maker (image-generation-model)"
+  ]);
+});
+
+test("observed exact model IDs require dated official-source evidence", () => {
+  const fixture = {
+    selection_policy: { status_vocabulary: ["OBSERVED"] },
+    candidates: [{ id: "model-x", provider: "Example", model_id: "model-x", status: "OBSERVED", access: "unverified", zero_cost_runtime: "unverified" }],
+    role_layers: {},
+    evaluation_plan: { roles: {} }
+  };
+  assert.deepEqual(validateModelCandidates(fixture), [
+    "observed exact model ID missing dated source: model-x"
+  ]);
+});
