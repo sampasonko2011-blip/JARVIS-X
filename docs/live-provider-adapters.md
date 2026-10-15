@@ -10,12 +10,13 @@
 | Anthropic Claude | `ANTHROPIC_API_KEY` | Messages API |
 | DeepSeek | `DEEPSEEK_API_KEY` | OpenAI-compatible chat completions |
 | OpenAI | `OPENAI_API_KEY` | OpenAI-compatible chat completions |
+| OpenRouter | `OPENROUTER_API_KEY` | OpenAI-compatible chat completions |
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
 | xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
 | Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
 
-Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. Never point these at an untrusted endpoint: the endpoint receives task text and an authorization header.
+Optional base URL overrides: `OPENAI_BASE_URL`, `OPENROUTER_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. Never point these at an untrusted endpoint: the endpoint receives task text and an authorization header.
 
 ## Usage
 
@@ -42,4 +43,4 @@ For a real smoke test, configure a secret in the trusted runtime, use a currentl
 - A generic adapter cannot infer model lifecycle, permissions, quota, pricing, or license. Verify those independently.
 - The current provider adapters return response text and basic usage metadata; provider-specific structured output, tool calls, image inputs, embeddings, reranking, audio, and video need their own typed adapters.
 - Anthropic API failures must be distinguished from failures in the connected integration layer. A Composio encoding failure does not establish that the direct Messages API is broken.
-- OpenRouter is intentionally not included.
+- OpenRouter uses `https://openrouter.ai/api/v1` by default; `OPENROUTER_BASE_URL` can override that base. Use model IDs supported by the account and API. Credential presence does not prove model access, zero cost, or successful evaluation.
