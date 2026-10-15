@@ -38,6 +38,7 @@ test("provider-specific patterns identify representative model ID families", () 
     ["Moonshot", "kimi-k2.5"],
     ["Z.ai", "glm-4.5"]
   ]) {
-    assert.match(id, source(provider).pattern, provider);
+    const pattern = source(provider).pattern;
+    assert.match(id, new RegExp(pattern.source, pattern.flags.replace("g", "")), provider);
   }
 });
