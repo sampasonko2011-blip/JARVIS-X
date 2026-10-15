@@ -20,7 +20,7 @@ for (const source of sources) {
       provider: source.provider,
       source_url: source.source_url,
       checked_at: new Date().toISOString().slice(0, 10),
-      models: ids.map(model_id => ({ model_id, lifecycle_status: "unverified-from-catalog-text", kind: "UNCLASSIFIED" }))
+      models: ids.map(model_id => ({ model_id, kind: "UNCLASSIFIED" }))
     });
   } catch (error) {
     fetchErrors.push({ provider: source.provider, source_url: source.source_url, error: String(error?.message ?? error) });
