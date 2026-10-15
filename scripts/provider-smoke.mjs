@@ -57,7 +57,7 @@ async function smokeTest(config) {
         status: "HTTP_ERROR",
         http_status: response.status,
         latency_ms: Date.now() - started,
-        error: String(payload?.error?.message ?? payload?.message ?? "Provider returned a non-JSON error").slice(0, 400)
+        error: String(payload?.error?.message ?? payload?.message ?? "Provider returned a non-JSON error").split(apiKey).join("[REDACTED]").slice(0, 400)
       };
     }
 
@@ -81,7 +81,7 @@ async function smokeTest(config) {
       requested_model_id: config.model,
       status: error?.name === "AbortError" ? "TIMEOUT" : "REQUEST_ERROR",
       latency_ms: Date.now() - started,
-      error: String(error?.message ?? error).slice(0, 400)
+      error: String(error?.message ?? error).split(apiKey).join("[REDACTED]").slice(0, 400)
     };
   } finally {
     clearTimeout(timeout);
