@@ -39,6 +39,8 @@ test("Google adapter sends task and parses candidate text", async () => {
   const output = await result.adapters.gemini({ task: "solve", role: "reasoning" });
   assert.equal(output.text, "verified answer");
   assert.match(request.url, /models%2F|models\/gemini-test/);
+  assert.equal(request.options.headers["x-goog-api-key"], "secret");
+  assert.doesNotMatch(request.url, /secret/);
   assert.equal(JSON.parse(request.options.body).contents[0].parts[0].text, "solve");
   assert.equal(request.options.headers["content-type"], "application/json");
 });
