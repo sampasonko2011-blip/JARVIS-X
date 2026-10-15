@@ -208,7 +208,20 @@
       "model_id": "gemini-3.8-flash",
       "provider": "Google",
       "source_url": "https://ai.google.dev/gemini-api/docs/latest-model",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.8-flash",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3.1-pro",
@@ -224,7 +237,20 @@
       "model_id": "gemini-3.1-pro-preview",
       "provider": "Google",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.1-pro-preview",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3.6-flash",
@@ -240,7 +266,20 @@
       "model_id": "gemini-3.6-flash",
       "provider": "Google",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.6-flash",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3.5-flash-lite",
@@ -491,7 +530,20 @@
       "lifecycle_status": "previous-generation-stable",
       "status_detail": "historical-only",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.7-flash",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3.5-flash",
@@ -509,7 +561,20 @@
       "lifecycle_status": "legacy-stable",
       "status_detail": "historical-only",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.5-flash",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3-pro-image",
@@ -618,7 +683,20 @@
       "status": "OBSERVED",
       "note": "Exact model ID confirmed in Google's current Gemini API model catalog. This does not prove credentials, quota, price tier, or benchmark superiority.",
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
-      "source_checked_at": "2026-10-15"
+      "source_checked_at": "2026-10-15",
+      "runtime_smoke_test": {
+        "status": "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION",
+        "checked_at": "2026-10-15",
+        "route": "Composio Gemini connector",
+        "model_id_used": "gemini-3.1-flash-lite",
+        "task": "Compute 17*19; output only the integer",
+        "expected_output": "323",
+        "observed_output": "323",
+        "passed": true,
+        "trials": 1,
+        "output_token_limit": 512,
+        "note": "A single live connector call verifies route reachability and this exact-answer case only. It does not validate quality, cost, privacy, direct repository adapter, or superiority."
+      }
     },
     {
       "id": "google-gemini-3.1-flash-image",
