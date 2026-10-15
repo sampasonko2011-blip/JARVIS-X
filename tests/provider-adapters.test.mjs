@@ -11,6 +11,7 @@ const registry = {
     { id: "mistral", provider: "Mistral AI", model_id: "mistral-test", status: "OBSERVED" },
     { id: "groq", provider: "Groq", model_id: "llama-test", status: "OBSERVED" },
     { id: "xai", provider: "xAI", model_id: "grok-test", status: "OBSERVED" },
+    { id: "qwen", provider: "Alibaba Qwen", model_id: "qwen-test", status: "OBSERVED" },
     { id: "historical", provider: "Google", model_id: "old-model", status: "SUPERSEDED" }
   ]
 };
@@ -63,7 +64,8 @@ test("OpenAI-compatible adapters use bearer auth and parse content", async () =>
     ["openai", { OPENAI_API_KEY: "s" }, "https://api.openai.com/v1/chat/completions"],
     ["mistral", { MISTRAL_API_KEY: "s" }, "https://api.mistral.ai/v1/chat/completions"],
     ["groq", { GROQ_API_KEY: "s" }, "https://api.groq.com/openai/v1/chat/completions"],
-    ["xai", { XAI_API_KEY: "s" }, "https://api.x.ai/v1/chat/completions"]
+    ["xai", { XAI_API_KEY: "s" }, "https://api.x.ai/v1/chat/completions"],
+    ["qwen", { QWEN_API_KEY: "s" }, "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"]
   ]) {
     let request;
     const result = createProviderAdapters({
