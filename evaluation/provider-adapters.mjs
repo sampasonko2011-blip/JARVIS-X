@@ -71,8 +71,8 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
  *
  * Supported environment variables:
  * GEMINI_API_KEY or GOOGLE_API_KEY, ANTHROPIC_API_KEY, DEEPSEEK_API_KEY,
- * OPENAI_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY.
- * Optional base URLs: OPENAI_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL.
+ * OPENAI_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY, QWEN_API_KEY.
+ * Optional base URLs: OPENAI_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL, QWEN_BASE_URL.
  */
 export function createProviderAdapters({
   registry,
@@ -90,7 +90,8 @@ export function createProviderAdapters({
     openai: env.OPENAI_API_KEY,
     mistral: env.MISTRAL_API_KEY,
     groq: env.GROQ_API_KEY,
-    xai: env.XAI_API_KEY
+    xai: env.XAI_API_KEY,
+    qwen: env.QWEN_API_KEY
   };
   const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]));
   const adapters = {};
@@ -131,7 +132,8 @@ export function createProviderAdapters({
         openai: { key: credentials.openai, base: "https://api.openai.com/v1", baseEnv: "OPENAI_BASE_URL" },
         "mistral ai": { key: credentials.mistral, base: "https://api.mistral.ai/v1", baseEnv: "MISTRAL_BASE_URL" },
         groq: { key: credentials.groq, base: "https://api.groq.com/openai/v1", baseEnv: "GROQ_BASE_URL" },
-        xai: { key: credentials.xai, base: "https://api.x.ai/v1", baseEnv: "XAI_BASE_URL" }
+        xai: { key: credentials.xai, base: "https://api.x.ai/v1", baseEnv: "XAI_BASE_URL" },
+        "alibaba qwen": { key: credentials.qwen, base: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", baseEnv: "QWEN_BASE_URL" }
       };
       const config = compatible[provider];
       if (config?.key) {
