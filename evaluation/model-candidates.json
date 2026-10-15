@@ -274,7 +274,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.8-flash",
           "finish_reason": "STOP",
-          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
+          "note": "The initial code-review attempt was truncated; the complete retest caught the seeded empty-array and string-coercion bug classes. Fix policy still requires an explicit specification.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -370,7 +370,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-pro-preview",
           "finish_reason": "STOP",
-          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
+          "note": "The initial code-review attempt was truncated; the complete retest caught the seeded empty-array and string-coercion bug classes. Fix policy still requires an explicit specification.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -483,7 +483,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.6-flash",
           "finish_reason": "STOP",
-          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
+          "note": "The initial code-review attempt was truncated; the complete retest caught the seeded empty-array and string-coercion bug classes. Fix policy still requires an explicit specification.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -566,7 +566,15 @@
           "complete": true,
           "caught_empty_array_reduce_failure": true,
           "caught_string_coercion_risk": true,
-          "note": "Review caught relevant bug classes; its proposed empty-array return policy is a specification choice and was not automatically accepted."
+          "note": "Review caught relevant bug classes; its proposed empty-array return policy is a specification choice and was not automatically accepted.",
+          "complete_response_retest": {
+            "checked_at": "2026-10-15",
+            "output_token_limit": 2048,
+            "complete": true,
+            "caught_empty_array_reduce_failure": true,
+            "caught_string_coercion_risk": true,
+            "note": "The review caught relevant bug classes. The proposed empty-array behavior is a specification choice and was not automatically accepted."
+          }
         }
       }
     },
@@ -1090,7 +1098,7 @@
           "status": "OBSERVED_COMPLETE_RESPONSE_REQUIRES_HUMAN_RUBRIC",
           "observed_model_id": "gemini-3.1-flash-lite",
           "finish_reason": "STOP",
-          "note": "Final code review was completed on retest; the initial attempt was truncated. See complete_response_retest for final result.",
+          "note": "The initial code-review attempt was truncated; the complete retest caught the seeded empty-array and string-coercion bug classes. Fix policy still requires an explicit specification.",
           "complete_response_retest": {
             "checked_at": "2026-10-15",
             "output_token_limit": 2048,
@@ -1356,6 +1364,42 @@
       "source_url": "https://ai.google.dev/gemini-api/docs/models",
       "source_checked_at": "2026-10-15",
       "note": "Official Google catalog lists Gemini Omni Flash for video generation/editing and native audio; no benchmark run."
+    },
+    {
+      "id": "google-gemma-4-26b-a4b-it",
+      "provider": "Google",
+      "model_id": "gemma-4-26b-a4b-it",
+      "kind": "hosted-model",
+      "roles": [
+        "coding",
+        "reasoning",
+        "fast-general"
+      ],
+      "status": "OBSERVED",
+      "lifecycle_status": "catalog-listed-not-benchmarked",
+      "access": "Listed by the current Gemini API catalog with generateContent support; runtime access, quota, terms, and exact response identity still require verification.",
+      "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
+      "source_url": "https://ai.google.dev/gemini-api/docs/models",
+      "source_checked_at": "2026-10-15",
+      "note": "Gemma 4 26B A4B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking."
+    },
+    {
+      "id": "google-gemma-4-31b-it",
+      "provider": "Google",
+      "model_id": "gemma-4-31b-it",
+      "kind": "hosted-model",
+      "roles": [
+        "coding",
+        "reasoning",
+        "fast-general"
+      ],
+      "status": "OBSERVED",
+      "lifecycle_status": "catalog-listed-not-benchmarked",
+      "access": "Listed by the current Gemini API catalog with generateContent support; runtime access, quota, terms, and exact response identity still require verification.",
+      "zero_cost_runtime": "Not assumed free; verify current quota and recurring price.",
+      "source_url": "https://ai.google.dev/gemini-api/docs/models",
+      "source_checked_at": "2026-10-15",
+      "note": "Gemma 4 31B IT appears in the official Gemini API model list and advertises generateContent. This is catalog evidence only; it is not a successful inference test or a quality ranking."
     }
   ],
   "evaluation_plan": {
