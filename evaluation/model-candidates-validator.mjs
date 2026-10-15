@@ -2,7 +2,7 @@ const EXCLUDED_PROVIDER_PATTERN = /openrouter/i;
 const ROLE_KIND_RULES = [
   {
     matchesRole: role => /^(coding|reasoning|reasoning_and_critique|synthesis_and_instruction_following)$/.test(role),
-    forbiddenKinds: new Set(["image-generation-model", "audio-model", "speech-recognition-family", "embedding-family", "reranker-family", "research-tool", "web-data-tool", "local-runtime", "replaceable-gateway", "model-routing-service", "tool-orchestration-platform", "agent-tooling", "hosted-agent-product", "public-engineering-patterns"])
+    forbiddenKinds: new Set(["image-generation-model", "audio-model", "speech-recognition-family", "embedding-family", "reranker-family", "research-tool", "web-data-tool", "local-runtime", "replaceable-gateway", "model-routing-service", "tool-orchestration-platform", "hosted-agent-product", "public-engineering-patterns"])
   },
   {
     matchesRole: role => role === "image_generation",
