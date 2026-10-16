@@ -12,6 +12,7 @@ const registry = {
     { id: "groq", provider: "Groq", model_id: "llama-test", status: "OBSERVED" },
     { id: "xai", provider: "xAI", model_id: "grok-test", status: "OBSERVED" },
     { id: "qwen", provider: "Alibaba Qwen", model_id: "qwen-test", status: "OBSERVED" },
+    { id: "openrouter", provider: "OpenRouter", model_id: "some-model", status: "OBSERVED" },
     { id: "historical", provider: "Google", model_id: "old-model", status: "SUPERSEDED" }
   ]
 };
@@ -19,6 +20,12 @@ const registry = {
 function response(payload, status = 200) {
   return { ok: status >= 200 && status < 300, status, text: async () => JSON.stringify(payload) };
 }
+
+test("OpenRouter is excluded by default even when a credential and registry candidate exist", () => {
+  const result = createProviderAdapters({ registry, env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "also-present" } });
+  assert.equal(result.adapters.openrouter, undefined);
+  assert.deepEqual(result.configured_providers, ["deepseek"]);
+});
 
 test("only constructs adapters for credentials that exist", () => {
   const result = createProviderAdapters({ registry, env: { GEMINI_API_KEY: "g-test" } });
