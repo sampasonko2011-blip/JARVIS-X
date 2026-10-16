@@ -20,14 +20,17 @@ function compareText(a: string, b: string): number {
 }
 
 export class CapabilityRouter {
-  constructor(private readonly registry: CapabilityRegistry) {}
+  constructor(
+    private readonly registry: CapabilityRegistry,
+    private readonly excludedProviders: ReadonlySet<string> = new Set(["openrouter"])
+  ) {}
   route(task: Task, preferredKind: Capability["kind"]): Route[] {
     const objectiveWords = words(task.objective);
     return this.registry.find(preferredKind)
       .map(capability => {
         // Capability IDs are opaque identifiers; do not infer provider IDs from their format.
         const provider = this.registry.getProviderForCapability(capability.id);
-        if (!provider) return undefined;
+        if (!provider || this.excludedProviders.has(provider.id.trim().toLowerCase())) return undefined;
         // Match complete words/phrases only: empty strengths and incidental substrings must not boost a route.
         const matched = capability.strengths.some(strength => containsPhrase(objectiveWords, words(strength)));
         const score = matched ? 2 : 1;
