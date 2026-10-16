@@ -1,6 +1,6 @@
 # Live provider adapters
 
-`evaluation/provider-adapters.mjs` creates adapters for model candidates only when the corresponding provider credential exists in the process environment. It never reads credentials from the registry, prints credentials, or treats adapter construction as proof of a working route.
+`evaluation/provider-adapters.mjs` creates adapters for hosted candidates when their provider credentials exist and for explicitly registered local Ollama candidates without API credentials. It never reads credentials from the registry, prints credentials, or treats adapter construction as proof of a working route.
 
 ## Supported routes
 
@@ -13,9 +13,9 @@
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
 | xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
-| Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
+| Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |\n| Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
 
-Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. OpenRouter is intentionally excluded by policy at registry, routing, and adapter boundaries. Never point these at an untrusted endpoint: the endpoint receives task text and an authorization header.
+Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. `OLLAMA_BASE_URL` can point to a local Ollama-compatible service; the default is `http://127.0.0.1:11434`. OpenRouter is intentionally excluded by policy at registry, routing, and adapter boundaries. Hosted custom endpoints receive task text and an authorization header; only point them at trusted services.
 
 ## Usage
 
@@ -27,6 +27,26 @@ const registry = JSON.parse(readFileSync("evaluation/model-candidates.json", "ut
 const { adapters, configured_providers } = createProviderAdapters({ registry });
 console.log({ configured_providers, adapter_count: Object.keys(adapters).length });
 ```
+
+### Optional local Ollama route
+
+Install and start Ollama on the machine that will run the JARVIS-X process, then pull a model that fits that machine. Check the installed model list with `ollama list`; do not assume a model is present because it appears in the catalog.
+
+To register a chosen local model, add an explicit candidate to a local registry overlay (do not commit machine-specific choices into the shared catalog unless intentionally approved):
+
+```json
+{
+  "id": "ollama-local-qwen",
+  "provider": "Ollama",
+  "model_id": "REPLACE_WITH_AN_INSTALLED_MODEL_TAG",
+  "kind": "local-runtime",
+  "status": "UNPROVEN"
+}
+```
+
+The placeholder must be replaced by the exact installed model tag before use. The adapter calls `POST /api/chat` with `stream: false`, uses temperature 0, and records Ollama's prompt/evaluation counts and timing metadata when returned. Local execution avoids a per-request hosted inference fee, but still uses local hardware, electricity, disk, and memory. It is not proof of model quality or privacy of any surrounding application.
+
+If Ollama is not running, the route fails as unavailable; JARVIS-X should report the failure honestly rather than silently switching to a paid cloud provider. Never expose the local Ollama port to an untrusted network without appropriate controls.
 
 Use `adapters[candidate.id]({ task, role })` with the existing composite engine. The engine still requires a validated scorecard and sufficient holdout evidence before routing a candidate. Do not mark a candidate `VALIDATED` just because an API call succeeds.
 
