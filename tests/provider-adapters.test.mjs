@@ -169,6 +169,7 @@ test("Ollama local adapter uses localhost without API credentials", async () => 
   assert.equal(JSON.parse(request.options.body).model, "qwen3:8b");
   assert.equal(JSON.parse(request.options.body).stream, false);
   assert.equal(request.options.headers.authorization, undefined);
+  assert.equal((await result.adapters["local-qwen"]({ task: "metrics", role: "reasoning" })).raw_usage.eval_count, 3);
 });
 
 test("Ollama local adapter supports an explicit local base URL and can be disabled", async () => {
