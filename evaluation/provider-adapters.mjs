@@ -5,6 +5,9 @@ function cleanBaseUrl(value, fallback) {
 }
 
 function extractText(provider, payload) {
+  if (provider === "ollama") {
+    return typeof payload?.message?.content === "string" ? payload.message.content.trim() : "";
+  }
   if (provider === "google") {
     return (payload?.candidates?.[0]?.content?.parts ?? [])
       .filter(part => part?.thought !== true && typeof part?.text === "string")
@@ -57,7 +60,12 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
       latency_ms: Date.now() - started,
       provider,
       observed_model_id: provider === "google" ? payload?.modelVersion ?? null : payload?.model ?? null,
-      raw_usage: payload?.usage ?? payload?.usageMetadata ?? null
+      raw_usage: payload?.usage ?? payload?.usageMetadata ?? (provider === "ollama" ? {
+        prompt_eval_count: payload?.prompt_eval_count ?? null,
+        eval_count: payload?.eval_count ?? null,
+        total_duration: payload?.total_duration ?? null,
+        load_duration: payload?.load_duration ?? null
+      } : null)
     };
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -73,19 +81,20 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
 }
 
 /**
- * Construct adapters only for providers with API credentials in the runtime environment.
+ * Construct adapters for credentialed hosted providers and explicitly registered local Ollama models.
  * Credentials are never read from files or returned to callers.
  *
  * Supported environment variables:
  * GEMINI_API_KEY or GOOGLE_API_KEY, ANTHROPIC_API_KEY, DEEPSEEK_API_KEY,
- * OPENAI_API_KEY, OPENROUTER_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY, QWEN_API_KEY.
- * Optional base URLs: OPENAI_BASE_URL, OPENROUTER_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL, QWEN_BASE_URL.
+ * OPENAI_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY, QWEN_API_KEY.
+ * Optional base URLs: OPENAI_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL, QWEN_BASE_URL.
  */
 export function createProviderAdapters({
   registry,
   env = process.env,
   fetchImpl = globalThis.fetch,
-  timeoutMs = DEFAULT_TIMEOUT_MS
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  excludedProviders = ["openrouter"]
 } = {}) {
   if (typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function");
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1) throw new TypeError("timeoutMs must be a positive integer");
@@ -95,18 +104,26 @@ export function createProviderAdapters({
     anthropic: env.ANTHROPIC_API_KEY,
     deepseek: env.DEEPSEEK_API_KEY,
     openai: env.OPENAI_API_KEY,
-    openrouter: env.OPENROUTER_API_KEY,
     mistral: env.MISTRAL_API_KEY,
     groq: env.GROQ_API_KEY,
     xai: env.XAI_API_KEY,
     qwen: env.QWEN_API_KEY
   };
-  const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]));
+  const excluded = new Set(["openrouter", ...excludedProviders.map(value => String(value).trim().toLowerCase())]);
+  const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]) && !excluded.has(key));
+  const ollamaCandidates = (registry?.candidates ?? []).filter(candidate =>
+    String(candidate?.provider ?? "").trim().toLowerCase() === "ollama" &&
+    typeof candidate?.model_id === "string" && candidate.model_id.trim() &&
+    candidate.status !== "SUPERSEDED"
+  );
+  if (ollamaCandidates.length && !excluded.has("ollama")) configured.push("ollama");
   const adapters = {};
 
-  const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
+  const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family", "local-runtime"]);
   for (const candidate of registry?.candidates ?? []) {
     if (!candidate?.id || !candidate?.model_id || candidate.status === "SUPERSEDED") continue;
+    const candidateProvider = String(candidate.provider ?? "").trim().toLowerCase();
+    if (excluded.has(candidateProvider)) continue;
     if (candidate.kind && !textModelKinds.has(candidate.kind)) continue;
     const provider = String(candidate.provider ?? "").trim().toLowerCase();
     let adapter;
@@ -120,6 +137,23 @@ export function createProviderAdapters({
           systemInstruction: { parts: [{ text: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` }] },
           contents: [{ role: "user", parts: [{ text: task }] }],
           generationConfig: { temperature: 0 }
+        },
+        fetchImpl, timeoutMs
+      });
+    } else if (provider === "ollama" && !excluded.has("ollama")) {
+      const baseUrl = cleanBaseUrl(env.OLLAMA_BASE_URL, "http://127.0.0.1:11434");
+      adapter = async ({ task, role }) => postJson({
+        provider: "ollama",
+        url: `${baseUrl}/api/chat`,
+        headers: {},
+        body: {
+          model: candidate.model_id,
+          messages: [
+            { role: "system", content: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` },
+            { role: "user", content: task }
+          ],
+          stream: false,
+          options: { temperature: 0 }
         },
         fetchImpl, timeoutMs
       });
@@ -138,7 +172,6 @@ export function createProviderAdapters({
       });
     } else {
       const compatible = {
-        openrouter: { key: credentials.openrouter, base: "https://openrouter.ai/api/v1", baseEnv: "OPENROUTER_BASE_URL" },
         deepseek: { key: credentials.deepseek, base: "https://api.deepseek.com", baseEnv: null },
         openai: { key: credentials.openai, base: "https://api.openai.com/v1", baseEnv: "OPENAI_BASE_URL" },
         "mistral ai": { key: credentials.mistral, base: "https://api.mistral.ai/v1", baseEnv: "MISTRAL_BASE_URL" },
