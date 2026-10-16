@@ -149,3 +149,40 @@ test("additional adapter exclusions cannot disable the OpenRouter exclusion", ()
   assert.equal(result.adapters.deepseek, undefined);
   assert.deepEqual(result.configured_providers, []);
 });
+
+test("Ollama local adapter uses localhost without API credentials", async () => {
+  const ollamaRegistry = { candidates: [
+    { id: "local-qwen", provider: "Ollama", model_id: "qwen3:8b", status: "UNPROVEN" }
+  ] };
+  let request;
+  const result = createProviderAdapters({
+    registry: ollamaRegistry,
+    env: {},
+    fetchImpl: async (url, options) => {
+      request = { url, options };
+      return response({ model: "qwen3:8b", message: { role: "assistant", content: "local answer" }, done: true, prompt_eval_count: 4, eval_count: 3 });
+    }
+  });
+  assert.deepEqual(result.configured_providers, ["ollama"]);
+  assert.equal((await result.adapters["local-qwen"]({ task: "test", role: "reasoning" })).text, "local answer");
+  assert.equal(request.url, "http://127.0.0.1:11434/api/chat");
+  assert.equal(JSON.parse(request.options.body).model, "qwen3:8b");
+  assert.equal(JSON.parse(request.options.body).stream, false);
+  assert.equal(request.options.headers.authorization, undefined);
+});
+
+test("Ollama local adapter supports an explicit local base URL and can be disabled", async () => {
+  const ollamaRegistry = { candidates: [
+    { id: "local-qwen", provider: "ollama", model_id: "qwen3:8b", status: "OBSERVED" }
+  ] };
+  let calledUrl;
+  const result = createProviderAdapters({
+    registry: ollamaRegistry,
+    env: { OLLAMA_BASE_URL: "http://localhost:11434/" },
+    excludedProviders: ["ollama"],
+    fetchImpl: async url => { calledUrl = url; return response({ message: { content: "unused" } }); }
+  });
+  assert.deepEqual(result.configured_providers, []);
+  assert.equal(result.adapters["local-qwen"], undefined);
+  assert.equal(calledUrl, undefined);
+});
