@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { MODEL_CATALOG_SOURCES } from "../evaluation/model-catalog-sources.mjs";
+import { scoutModelUpdates } from "../evaluation/model-scout.mjs";
 
 test("Model Scout includes current official catalog/documentation sources for the roster", () => {
   const providers = MODEL_CATALOG_SOURCES.map(source => source.provider);
@@ -19,6 +20,20 @@ test("Model Scout sources are HTTPS documentation pages and never OpenRouter", (
     assert.doesNotMatch(source.source_url, /openrouter/i);
     assert.ok(source.pattern instanceof RegExp, source.provider);
   }
+});
+
+test("every declared catalog source passes Model Scout's trusted-source gate", () => {
+  const report = scoutModelUpdates({
+    registry: { candidates: [] },
+    snapshots: MODEL_CATALOG_SOURCES.map(source => ({
+      provider: source.provider,
+      source_url: source.source_url,
+      checked_at: "2026-10-16",
+      models: []
+    }))
+  });
+  assert.equal(report.accepted_sources.length, MODEL_CATALOG_SOURCES.length);
+  assert.deepEqual(report.rejected_sources, []);
 });
 
 test("provider-specific patterns identify representative model ID families", () => {
