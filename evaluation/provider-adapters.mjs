@@ -78,14 +78,15 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
  *
  * Supported environment variables:
  * GEMINI_API_KEY or GOOGLE_API_KEY, ANTHROPIC_API_KEY, DEEPSEEK_API_KEY,
- * OPENAI_API_KEY, OPENROUTER_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY, QWEN_API_KEY.
- * Optional base URLs: OPENAI_BASE_URL, OPENROUTER_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL, QWEN_BASE_URL.
+ * OPENAI_API_KEY, MISTRAL_API_KEY, GROQ_API_KEY, XAI_API_KEY, QWEN_API_KEY.
+ * Optional base URLs: OPENAI_BASE_URL, MISTRAL_BASE_URL, GROQ_BASE_URL, XAI_BASE_URL, QWEN_BASE_URL.
  */
 export function createProviderAdapters({
   registry,
   env = process.env,
   fetchImpl = globalThis.fetch,
-  timeoutMs = DEFAULT_TIMEOUT_MS
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  excludedProviders = ["openrouter"]
 } = {}) {
   if (typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function");
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1) throw new TypeError("timeoutMs must be a positive integer");
@@ -101,12 +102,15 @@ export function createProviderAdapters({
     xai: env.XAI_API_KEY,
     qwen: env.QWEN_API_KEY
   };
-  const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]));
+  const excluded = new Set(excludedProviders.map(value => String(value).trim().toLowerCase()));
+  const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]) && !excluded.has(key));
   const adapters = {};
 
   const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
   for (const candidate of registry?.candidates ?? []) {
     if (!candidate?.id || !candidate?.model_id || candidate.status === "SUPERSEDED") continue;
+    const candidateProvider = String(candidate.provider ?? "").trim().toLowerCase();
+    if (excluded.has(candidateProvider)) continue;
     if (candidate.kind && !textModelKinds.has(candidate.kind)) continue;
     const provider = String(candidate.provider ?? "").trim().toLowerCase();
     let adapter;
