@@ -138,3 +138,14 @@ test("request timeout is bounded and surfaced as a timeout error", async () => {
   });
   await assert.rejects(result.adapters.deepseek({ task: "test" }), error => error.code === "PROVIDER_TIMEOUT");
 });
+
+test("additional adapter exclusions cannot disable the OpenRouter exclusion", () => {
+  const result = createProviderAdapters({
+    registry,
+    env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "present" },
+    excludedProviders: []
+  });
+  assert.equal(result.adapters.openrouter, undefined);
+  assert.equal(result.adapters.deepseek, undefined);
+  assert.deepEqual(result.configured_providers, []);
+});
