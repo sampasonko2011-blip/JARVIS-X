@@ -5,6 +5,9 @@ function cleanBaseUrl(value, fallback) {
 }
 
 function extractText(provider, payload) {
+  if (provider === "ollama") {
+    return typeof payload?.message?.content === "string" ? payload.message.content.trim() : "";
+  }
   if (provider === "google") {
     return (payload?.candidates?.[0]?.content?.parts ?? [])
       .filter(part => part?.thought !== true && typeof part?.text === "string")
@@ -103,6 +106,12 @@ export function createProviderAdapters({
   };
   const excluded = new Set(["openrouter", ...excludedProviders.map(value => String(value).trim().toLowerCase())]);
   const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]) && !excluded.has(key));
+  const ollamaCandidates = (registry?.candidates ?? []).filter(candidate =>
+    String(candidate?.provider ?? "").trim().toLowerCase() === "ollama" &&
+    typeof candidate?.model_id === "string" && candidate.model_id.trim() &&
+    candidate.status !== "SUPERSEDED"
+  );
+  if (ollamaCandidates.length && !excluded.has("ollama")) configured.push("ollama");
   const adapters = {};
 
   const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
@@ -123,6 +132,23 @@ export function createProviderAdapters({
           systemInstruction: { parts: [{ text: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` }] },
           contents: [{ role: "user", parts: [{ text: task }] }],
           generationConfig: { temperature: 0 }
+        },
+        fetchImpl, timeoutMs
+      });
+    } else if (provider === "ollama" && !excluded.has("ollama")) {
+      const baseUrl = cleanBaseUrl(env.OLLAMA_BASE_URL, "http://127.0.0.1:11434");
+      adapter = async ({ task, role }) => postJson({
+        provider: "ollama",
+        url: `${baseUrl}/api/chat`,
+        headers: {},
+        body: {
+          model: candidate.model_id,
+          messages: [
+            { role: "system", content: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.` },
+            { role: "user", content: task }
+          ],
+          stream: false,
+          options: { temperature: 0 }
         },
         fetchImpl, timeoutMs
       });
