@@ -2,10 +2,15 @@ const TRUSTED_PROVIDER_HOSTS = {
   Google: new Set(["ai.google.dev", "developers.googleblog.com"]),
   Anthropic: new Set(["platform.claude.com", "docs.anthropic.com"]),
   DeepSeek: new Set(["api-docs.deepseek.com", "deepseek.com"]),
-  "OpenAI": new Set(["developers.openai.com", "platform.openai.com", "openai.com"]),
-  "Alibaba Qwen": new Set(["qwenlm.github.io", "github.com", "huggingface.co"]),
+  OpenAI: new Set(["developers.openai.com", "platform.openai.com", "openai.com"]),
+  "Alibaba Qwen": new Set(["qwenlm.github.io", "github.com", "huggingface.co", "help.aliyun.com"]),
   "Mistral AI": new Set(["docs.mistral.ai", "mistral.ai"]),
-  "xAI": new Set(["docs.x.ai", "x.ai"])
+  "xAI": new Set(["docs.x.ai", "x.ai"]),
+  Groq: new Set(["console.groq.com", "groq.com"]),
+  Cohere: new Set(["docs.cohere.com", "cohere.com"]),
+  Meta: new Set(["llama.com", "www.llama.com", "ai.meta.com", "about.fb.com"]),
+  Moonshot: new Set(["platform.moonshot.ai", "moonshot.ai"]),
+  "Z.ai": new Set(["docs.z.ai", "z.ai"])
 };
 
 const EXCLUDED_PROVIDER_PATTERN = /openrouter/i;
