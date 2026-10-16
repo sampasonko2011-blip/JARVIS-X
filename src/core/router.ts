@@ -20,10 +20,13 @@ function compareText(a: string, b: string): number {
 }
 
 export class CapabilityRouter {
+  private readonly excludedProviders: ReadonlySet<string>;
   constructor(
     private readonly registry: CapabilityRegistry,
-    private readonly excludedProviders: ReadonlySet<string> = new Set(["openrouter"])
-  ) {}
+    excludedProviders: Iterable<string> = ["openrouter"]
+  ) {
+    this.excludedProviders = new Set([...excludedProviders].map(value => value.trim().toLowerCase()));
+  }
   route(task: Task, preferredKind: Capability["kind"]): Route[] {
     const objectiveWords = words(task.objective);
     return this.registry.find(preferredKind)
