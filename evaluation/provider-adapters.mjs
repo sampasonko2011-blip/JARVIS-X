@@ -60,7 +60,12 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
       latency_ms: Date.now() - started,
       provider,
       observed_model_id: provider === "google" ? payload?.modelVersion ?? null : payload?.model ?? null,
-      raw_usage: payload?.usage ?? payload?.usageMetadata ?? null
+      raw_usage: payload?.usage ?? payload?.usageMetadata ?? (provider === "ollama" ? {
+        prompt_eval_count: payload?.prompt_eval_count ?? null,
+        eval_count: payload?.eval_count ?? null,
+        total_duration: payload?.total_duration ?? null,
+        load_duration: payload?.load_duration ?? null
+      } : null)
     };
   } catch (error) {
     if (error?.name === "AbortError") {
@@ -76,7 +81,7 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
 }
 
 /**
- * Construct adapters only for providers with API credentials in the runtime environment.
+ * Construct adapters for credentialed hosted providers and explicitly registered local Ollama models.
  * Credentials are never read from files or returned to callers.
  *
  * Supported environment variables:
@@ -114,7 +119,7 @@ export function createProviderAdapters({
   if (ollamaCandidates.length && !excluded.has("ollama")) configured.push("ollama");
   const adapters = {};
 
-  const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
+  const textModelKinds = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family", "local-runtime"]);
   for (const candidate of registry?.candidates ?? []) {
     if (!candidate?.id || !candidate?.model_id || candidate.status === "SUPERSEDED") continue;
     const candidateProvider = String(candidate.provider ?? "").trim().toLowerCase();
