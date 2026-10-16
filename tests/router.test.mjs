@@ -64,9 +64,10 @@ test("OpenRouter is excluded from routes by default", () => {
   assert.deepEqual(routes.map(route => route.provider.id), ["gemini"]);
 });
 
-test("explicit router exclusion configuration remains supported", () => {
+test("additional router exclusions cannot disable the OpenRouter exclusion", () => {
   const registry = new CapabilityRegistry();
   registry.register(provider("OpenRouter", [{ id: "or:coding", kind: "coding", strengths: ["coding"] }]));
-  const routes = new CapabilityRouter(registry, new Set()).route({ id: "test", objective: "coding" }, "coding");
-  assert.deepEqual(routes.map(route => route.provider.id), ["OpenRouter"]);
+  registry.register(provider("Gemini", [{ id: "gemini:coding", kind: "coding", strengths: ["coding"] }]));
+  const routes = new CapabilityRouter(registry, ["GEMINI"]).route({ id: "test", objective: "coding" }, "coding");
+  assert.deepEqual(routes, []);
 });
