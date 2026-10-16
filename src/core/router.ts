@@ -25,7 +25,7 @@ export class CapabilityRouter {
     private readonly registry: CapabilityRegistry,
     excludedProviders: Iterable<string> = ["openrouter"]
   ) {
-    this.excludedProviders = new Set([...excludedProviders].map(value => value.trim().toLowerCase()));
+    this.excludedProviders = new Set(["openrouter", ...[...excludedProviders].map(value => value.trim().toLowerCase())]);
   }
   route(task: Task, preferredKind: Capability["kind"]): Route[] {
     const objectiveWords = words(task.objective);
