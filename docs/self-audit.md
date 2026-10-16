@@ -127,3 +127,27 @@ No track may be declared superior without comparable evidence.
 - What should change next?
 
 A feature is not considered successful because it exists. It is successful only after comparable evidence shows improvement.
+
+## Independent Data cross-audit
+
+For material evaluations, use the connected Data analysis capability as an independent evidence challenger when available. Data review is not a substitute for executable tests, source inspection, or independent retesting.
+
+- Verify source authority, freshness, coverage, missingness, denominators, sample selection, and whether observations are comparable.
+- Recompute consequential calculations independently where feasible.
+- Separate measured outcomes from hypotheses and causal claims.
+- Record unavailable data as UNKNOWN, never as zero or proof of success.
+- Compare baseline and intervention on the same frozen task set; use a holdout set where practical.
+- Record the actual Data actions and evidence obtained. Never claim a live data query, completed audit, or measurable improvement unless it occurred.
+
+## Cost sovereignty and plugin governance
+
+JARVIS-X should remain useful when optional hosted inference credits are exhausted.
+
+- Prefer already-available first-party capabilities, deterministic local tests, public documentation, open-source tooling, and local inference when hardware and licensing permit.
+- Treat every external plugin/provider as optional until its access, terms, quotas, privacy, and actual callable status are verified.
+- Never describe a limited free tier as unlimited or guaranteed free. Distinguish free software/local execution from hosted inference that consumes credits.
+- Do not make paid inference, paid automation, or a single external provider a required dependency for core orchestration, registry integrity, tests, or evidence-led planning.
+- For optional paid routes, require explicit enablement, visible cost/limit information where available, and a bounded budget; fail closed when a required budget guard cannot be enforced.
+- Discovery is not integration approval. Keep newly discovered plugins and providers PROPOSED until the user approves their integration and the relevant tests pass.
+- OpenRouter remains excluded unless the user explicitly changes that constraint.
+
