@@ -102,7 +102,7 @@ export function createProviderAdapters({
     xai: env.XAI_API_KEY,
     qwen: env.QWEN_API_KEY
   };
-  const excluded = new Set(excludedProviders.map(value => String(value).trim().toLowerCase()));
+  const excluded = new Set(["openrouter", ...excludedProviders.map(value => String(value).trim().toLowerCase())]);
   const configured = Object.keys(credentials).filter(key => Boolean(credentials[key]) && !excluded.has(key));
   const adapters = {};
 
