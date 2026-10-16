@@ -55,3 +55,18 @@ test("phrase matching is case-insensitive and Unicode-normalized", () => {
   assert.equal(routes[0].provider.id, "alpha");
   assert.equal(routes[0].score, 2);
 });
+
+test("OpenRouter is excluded from routes by default", () => {
+  const registry = new CapabilityRegistry();
+  registry.register(provider("OpenRouter", [{ id: "or:coding", kind: "coding", strengths: ["coding"] }]));
+  registry.register(provider("gemini", [{ id: "google:coding", kind: "coding", strengths: ["coding"] }]));
+  const routes = new CapabilityRouter(registry).route({ id: "test", objective: "coding" }, "coding");
+  assert.deepEqual(routes.map(route => route.provider.id), ["gemini"]);
+});
+
+test("explicit router exclusion configuration remains supported", () => {
+  const registry = new CapabilityRegistry();
+  registry.register(provider("OpenRouter", [{ id: "or:coding", kind: "coding", strengths: ["coding"] }]));
+  const routes = new CapabilityRouter(registry, new Set()).route({ id: "test", objective: "coding" }, "coding");
+  assert.deepEqual(routes.map(route => route.provider.id), ["OpenRouter"]);
+});
