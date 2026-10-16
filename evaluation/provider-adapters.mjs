@@ -96,7 +96,6 @@ export function createProviderAdapters({
     anthropic: env.ANTHROPIC_API_KEY,
     deepseek: env.DEEPSEEK_API_KEY,
     openai: env.OPENAI_API_KEY,
-    openrouter: env.OPENROUTER_API_KEY,
     mistral: env.MISTRAL_API_KEY,
     groq: env.GROQ_API_KEY,
     xai: env.XAI_API_KEY,
@@ -142,7 +141,6 @@ export function createProviderAdapters({
       });
     } else {
       const compatible = {
-        openrouter: { key: credentials.openrouter, base: "https://openrouter.ai/api/v1", baseEnv: "OPENROUTER_BASE_URL" },
         deepseek: { key: credentials.deepseek, base: "https://api.deepseek.com", baseEnv: null },
         openai: { key: credentials.openai, base: "https://api.openai.com/v1", baseEnv: "OPENAI_BASE_URL" },
         "mistral ai": { key: credentials.mistral, base: "https://api.mistral.ai/v1", baseEnv: "MISTRAL_BASE_URL" },
