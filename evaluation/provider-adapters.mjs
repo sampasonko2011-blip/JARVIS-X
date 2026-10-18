@@ -123,7 +123,7 @@ export function createProviderAdapters({
   for (const candidate of registry?.candidates ?? []) {
     if (!candidate?.id || !candidate?.model_id || candidate.status === "SUPERSEDED") continue;
     const candidateProvider = String(candidate.provider ?? "").trim().toLowerCase();
-    if (excluded.has(candidateProvider)) continue;
+    if (candidateProvider.includes("openrouter") || excluded.has(candidateProvider)) continue;
     if (candidate.kind && !textModelKinds.has(candidate.kind)) continue;
     const provider = String(candidate.provider ?? "").trim().toLowerCase();
     let adapter;
