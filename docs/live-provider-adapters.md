@@ -13,7 +13,8 @@
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
 | xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
-| Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |\n| Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
+| Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
+| Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
 
 Optional base URL overrides: `OPENAI_BASE_URL`, `MISTRAL_BASE_URL`, `GROQ_BASE_URL`, `XAI_BASE_URL`, `QWEN_BASE_URL`. `OLLAMA_BASE_URL` can point to a local Ollama-compatible service; the default is `http://127.0.0.1:11434`. OpenRouter is intentionally excluded by policy at registry, routing, and adapter boundaries. Hosted custom endpoints receive task text and an authorization header; only point them at trusted services.
 
