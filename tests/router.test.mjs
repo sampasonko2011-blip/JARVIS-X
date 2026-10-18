@@ -77,3 +77,10 @@ test("additional router exclusions cannot disable the hard OpenRouter exclusion"
   const routes = new CapabilityRouter(registry, ["GEMINI"]).route({ id: "test", objective: "coding" }, "coding");
   assert.deepEqual(routes, []);
 });
+
+test("router rejects provider aliases containing the excluded provider name", () => {
+  const registry = new CapabilityRegistry();
+  registry.register(provider("OpenRouter-compatible", [{ id: "alias:coding", kind: "coding", strengths: ["coding"] }]));
+  const routes = new CapabilityRouter(registry).route({ id: "test", objective: "coding" }, "coding");
+  assert.deepEqual(routes, []);
+});
