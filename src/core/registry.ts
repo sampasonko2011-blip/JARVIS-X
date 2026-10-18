@@ -19,7 +19,7 @@ export class CapabilityRegistry {
   register(provider: Provider): void {
     const normalizedId = normalizeProviderId(provider.id);
     if (!normalizedId) throw new TypeError("Provider id must not be empty");
-    if (this.excludedProviders.has(normalizedId)) {
+    if (normalizedId.includes("openrouter") || this.excludedProviders.has(normalizedId)) {
       throw new Error("Provider is excluded by policy: " + normalizedId);
     }
     this.providers.set(provider.id, provider);
