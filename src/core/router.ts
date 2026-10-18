@@ -10,7 +10,7 @@ function words(value: string): string[] {
 function containsPhrase(haystack: string[], needle: string[]): boolean {
   if (needle.length === 0 || needle.length > haystack.length) return false;
   for (let start = 0; start <= haystack.length - needle.length; start++) {
-    if (needle.every((word, offset) => haystack[start + offset] === word)) return true;
+    if (needle.every((word, offset) => haystack[start + offset] === needle[offset])) return true;
   }
   return false;
 }
@@ -20,14 +20,21 @@ function compareText(a: string, b: string): number {
 }
 
 export class CapabilityRouter {
-  constructor(private readonly registry: CapabilityRegistry) {}
+  private readonly excludedProviders: ReadonlySet<string>;
+  constructor(
+    private readonly registry: CapabilityRegistry,
+    excludedProviders: Iterable<string> = ["openrouter"]
+  ) {
+    this.excludedProviders = new Set(["openrouter", ...[...excludedProviders].map(value => value.trim().toLowerCase())]);
+  }
   route(task: Task, preferredKind: Capability["kind"]): Route[] {
     const objectiveWords = words(task.objective);
     return this.registry.find(preferredKind)
       .map(capability => {
         // Capability IDs are opaque identifiers; do not infer provider IDs from their format.
         const provider = this.registry.getProviderForCapability(capability.id);
-        if (!provider) return undefined;
+        const providerId = provider?.id.trim().toLowerCase() ?? "";
+        if (!provider || providerId.includes("openrouter") || this.excludedProviders.has(providerId)) return undefined;
         // Match complete words/phrases only: empty strengths and incidental substrings must not boost a route.
         const matched = capability.strengths.some(strength => containsPhrase(objectiveWords, words(strength)));
         const score = matched ? 2 : 1;

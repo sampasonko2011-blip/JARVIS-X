@@ -12,6 +12,7 @@ const registry = {
     { id: "groq", provider: "Groq", model_id: "llama-test", status: "OBSERVED" },
     { id: "xai", provider: "xAI", model_id: "grok-test", status: "OBSERVED" },
     { id: "qwen", provider: "Alibaba Qwen", model_id: "qwen-test", status: "OBSERVED" },
+    { id: "openrouter", provider: "OpenRouter", model_id: "some-model", status: "OBSERVED" },
     { id: "historical", provider: "Google", model_id: "old-model", status: "SUPERSEDED" }
   ]
 };
@@ -19,6 +20,12 @@ const registry = {
 function response(payload, status = 200) {
   return { ok: status >= 200 && status < 300, status, text: async () => JSON.stringify(payload) };
 }
+
+test("OpenRouter is excluded by default even when a credential and registry candidate exist", () => {
+  const result = createProviderAdapters({ registry, env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "also-present" } });
+  assert.equal(result.adapters.openrouter, undefined);
+  assert.deepEqual(result.configured_providers, ["deepseek"]);
+});
 
 test("only constructs adapters for credentials that exist", () => {
   const result = createProviderAdapters({ registry, env: { GEMINI_API_KEY: "g-test" } });
@@ -130,4 +137,66 @@ test("request timeout is bounded and surfaced as a timeout error", async () => {
     })
   });
   await assert.rejects(result.adapters.deepseek({ task: "test" }), error => error.code === "PROVIDER_TIMEOUT");
+});
+
+test("additional adapter exclusions cannot disable the OpenRouter exclusion", () => {
+  const result = createProviderAdapters({
+    registry,
+    env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "present" },
+    excludedProviders: ["deepseek"]
+  });
+  assert.equal(result.adapters.openrouter, undefined);
+  assert.equal(result.adapters.deepseek, undefined);
+  assert.deepEqual(result.configured_providers, []);
+});
+
+test("Ollama local adapter uses localhost without API credentials", async () => {
+  const ollamaRegistry = { candidates: [
+    { id: "local-qwen", provider: "Ollama", model_id: "qwen3:8b", status: "UNPROVEN" }
+  ] };
+  let request;
+  const result = createProviderAdapters({
+    registry: ollamaRegistry,
+    env: {},
+    fetchImpl: async (url, options) => {
+      request = { url, options };
+      return response({ model: "qwen3:8b", message: { role: "assistant", content: "local answer" }, done: true, prompt_eval_count: 4, eval_count: 3 });
+    }
+  });
+  assert.deepEqual(result.configured_providers, ["ollama"]);
+  assert.equal((await result.adapters["local-qwen"]({ task: "test", role: "reasoning" })).text, "local answer");
+  assert.equal(request.url, "http://127.0.0.1:11434/api/chat");
+  assert.equal(JSON.parse(request.options.body).model, "qwen3:8b");
+  assert.equal(JSON.parse(request.options.body).stream, false);
+  assert.equal(request.options.headers.authorization, undefined);
+  assert.equal((await result.adapters["local-qwen"]({ task: "metrics", role: "reasoning" })).raw_usage.eval_count, 3);
+});
+
+test("Ollama local adapter supports an explicit local base URL and can be disabled", async () => {
+  const ollamaRegistry = { candidates: [
+    { id: "local-qwen", provider: "ollama", model_id: "qwen3:8b", status: "OBSERVED" }
+  ] };
+  let calledUrl;
+  const result = createProviderAdapters({
+    registry: ollamaRegistry,
+    env: { OLLAMA_BASE_URL: "http://localhost:11434/" },
+    excludedProviders: ["ollama"],
+    fetchImpl: async url => { calledUrl = url; return response({ message: { content: "unused" } }); }
+  });
+  assert.deepEqual(result.configured_providers, []);
+  assert.equal(result.adapters["local-qwen"], undefined);
+  assert.equal(calledUrl, undefined);
+});
+
+test("OpenRouter aliases are excluded from adapter construction", () => {
+  const aliasRegistry = { candidates: [
+    { id: "alias", provider: "OpenRouter-compatible", model_id: "model", status: "OBSERVED" },
+    { id: "allowed", provider: "DeepSeek", model_id: "deepseek-test", status: "OBSERVED" }
+  ] };
+  const result = createProviderAdapters({
+    registry: aliasRegistry,
+    env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "present" }
+  });
+  assert.equal(result.adapters.alias, undefined);
+  assert.ok(result.adapters.allowed);
 });
