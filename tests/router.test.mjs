@@ -78,9 +78,11 @@ test("additional router exclusions cannot disable the hard OpenRouter exclusion"
   assert.deepEqual(routes, []);
 });
 
-test("router rejects provider aliases containing the excluded provider name", () => {
+test("registry blocks OpenRouter aliases before routing can see them", () => {
   const registry = new CapabilityRegistry();
-  registry.register(provider("OpenRouter-compatible", [{ id: "alias:coding", kind: "coding", strengths: ["coding"] }]));
-  const routes = new CapabilityRouter(registry).route({ id: "test", objective: "coding" }, "coding");
-  assert.deepEqual(routes, []);
+  assert.throws(
+    () => registry.register(provider("OpenRouter-compatible", [{ id: "alias:coding", kind: "coding", strengths: ["coding"] }])),
+    /excluded by policy: openrouter-compatible/
+  );
+  assert.deepEqual(new CapabilityRouter(registry).route({ id: "test", objective: "coding" }, "coding"), []);
 });
