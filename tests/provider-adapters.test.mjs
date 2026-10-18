@@ -187,3 +187,16 @@ test("Ollama local adapter supports an explicit local base URL and can be disabl
   assert.equal(result.adapters["local-qwen"], undefined);
   assert.equal(calledUrl, undefined);
 });
+
+test("OpenRouter aliases are excluded from adapter construction", () => {
+  const aliasRegistry = { candidates: [
+    { id: "alias", provider: "OpenRouter-compatible", model_id: "model", status: "OBSERVED" },
+    { id: "allowed", provider: "DeepSeek", model_id: "deepseek-test", status: "OBSERVED" }
+  ] };
+  const result = createProviderAdapters({
+    registry: aliasRegistry,
+    env: { OPENROUTER_API_KEY: "present", DEEPSEEK_API_KEY: "present" }
+  });
+  assert.equal(result.adapters.alias, undefined);
+  assert.ok(result.adapters.allowed);
+});
