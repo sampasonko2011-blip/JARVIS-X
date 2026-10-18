@@ -14,6 +14,7 @@ test("registry rejects OpenRouter before it can enter capability discovery", () 
   const registry = new CapabilityRegistry();
   assert.throws(() => registry.register(provider("OpenRouter")), /excluded by policy: openrouter/);
   assert.throws(() => registry.register(provider(" openrouter ")), /excluded by policy: openrouter/);
+  assert.throws(() => registry.register(provider("OpenRouter.ai-compatible")), /excluded by policy: openrouter/);
   assert.deepEqual(registry.list(), []);
   assert.equal(registry.getProvider("OpenRouter"), undefined);
 });
