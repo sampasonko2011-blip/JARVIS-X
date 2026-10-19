@@ -106,10 +106,22 @@ test("Qwen trust gate accepts official GitHub and Hugging Face namespaces", () =
         source_url: "https://huggingface.co/Qwen/Qwen3.5-0.6B",
         checked_at: "2026-10-18",
         models: [{ model_id: "qwen-test" }]
+      },
+      {
+        provider: "Alibaba Qwen",
+        source_url: "https://github.com/QwenLM",
+        checked_at: "2026-10-18",
+        models: [{ model_id: "qwen-test" }]
+      },
+      {
+        provider: "Alibaba Qwen",
+        source_url: "https://github.com.evil.example/QwenLM/Qwen3.5",
+        checked_at: "2026-10-18",
+        models: [{ model_id: "qwen-test" }]
       }
     ]
   });
   assert.equal(report.accepted_sources.length, 2);
-  assert.equal(report.rejected_sources.length, 0);
+  assert.equal(report.rejected_sources.length, 2);
   assert.equal(report.discoveries.length, 2);
 });
