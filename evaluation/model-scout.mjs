@@ -18,7 +18,19 @@ const EXCLUDED_PROVIDER_PATTERN = /openrouter/i;
 function isTrustedSource(provider, sourceUrl) {
   try {
     const url = new URL(sourceUrl);
-    return url.protocol === "https:" && TRUSTED_PROVIDER_HOSTS[provider]?.has(url.hostname);
+    if (url.protocol !== "https:" || !TRUSTED_PROVIDER_HOSTS[provider]?.has(url.hostname)) return false;
+
+    // Shared-hosting domains do not establish publisher identity. Require
+    // Qwen's official publisher namespace on GitHub and Hugging Face.
+    if (provider === "Alibaba Qwen" && url.hostname === "github.com") {
+      const segments = url.pathname.split("/").filter(Boolean);
+      return segments.length >= 2 && segments[0].toLowerCase() === "qwenlm";
+    }
+    if (provider === "Alibaba Qwen" && url.hostname === "huggingface.co") {
+      const segments = url.pathname.split("/").filter(Boolean);
+      return segments.length >= 2 && segments[0].toLowerCase() === "qwen";
+    }
+    return true;
   } catch {
     return false;
   }
