@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("creates a memory, survives reload, and deletes it with confirmation", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
   await page.locator("#memory-title").fill("Browser persistence proof");
   await page.locator("#memory-body").fill("Real Chromium end-to-end test");
   await page.locator("#save-memory").click();
@@ -20,15 +21,18 @@ test("creates a memory, survives reload, and deletes it with confirmation", asyn
 });
 
 test("rejects an empty memory and does not persist it", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#save-memory").click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBeNull();
 });
 
 test("exports a JSON backup containing saved records", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
   await page.locator("#memory-title").fill("Export proof");
   await page.locator("#memory-body").fill("Export round-trip fixture");
   await page.locator("#save-memory").click();
+  await page.locator('[data-view="settings"]').click();
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#export-data").click();
   const download = await downloadPromise;
