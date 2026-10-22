@@ -112,3 +112,12 @@ test("HQ service worker restricts caching and only replaces shell navigation off
   assert.ok(sw.includes("if (request.mode === 'navigate')"));
   assert.ok(sw.includes("const cached = await caches.match('./index.html')"));
 });
+
+
+test("HQ inline JavaScript has no escaped line break between declarations", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("function stamp(){return new Date().toLocaleString()}\\nfunction newId()") === false);
+  assert.ok(html.includes("function stamp(){return new Date().toLocaleString()}\nfunction newId()"));
+  assert.ok(html.includes("data.memories.push({id:newId()"));
+  assert.ok(html.includes("data.audits.push({id:newId()"));
+});
