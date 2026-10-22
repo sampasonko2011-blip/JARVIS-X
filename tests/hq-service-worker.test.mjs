@@ -7,13 +7,13 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl } = {}) {
+async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl, cacheMatchImpl, cacheAddAllImpl } = {}) {
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
-    addAll: async (assets) => lifecycleCalls.push(["addAll", assets]),
+    addAll: cacheAddAllImpl || (async (assets) => lifecycleCalls.push(["addAll", assets]),
     put: cachePutImpl || (async (...args) => cacheCalls.push(["put", ...args])),
     match: async () => undefined,
   };
@@ -21,7 +21,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
     open: async () => cache,
     keys: async () => ["jarvis-x-hq-shell-v1", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
-    match: async (key) => key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined,
+    match: cacheMatchImpl || (async (key) => key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined),
   };
   const self = {
     location: { href: "https://example.test/JARVIS-X/hq/sw.js", origin: "https://example.test" },
@@ -107,4 +107,29 @@ test("cache quota failure does not break a successful online shell response", as
   });
   const response = await responsePromise;
   assert.equal(response, networkResponse);
+});
+
+
+test("failed shell precache does not mark installation successful", async () => {
+  const { listeners, lifecycleCalls } = await loadWorker({
+    cacheAddAllImpl: async () => { throw new Error("offline during install"); },
+  });
+  let installPromise;
+  listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
+  await assert.rejects(installPromise, /offline during install/);
+  assert.ok(!lifecycleCalls.some((call) => call[0] === "skipWaiting"));
+});
+
+test("offline navigation returns an explicit network error when the shell is missing", async () => {
+  const { listeners } = await loadWorker({
+    fetchImpl: async () => { throw new Error("offline"); },
+    cacheMatchImpl: async () => undefined,
+  });
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/index.html", mode: "navigate" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  const response = await responsePromise;
+  assert.equal(response.type, "error");
 });
