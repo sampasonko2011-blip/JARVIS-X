@@ -13,15 +13,15 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
-    addAll: cacheAddAllImpl || (async (assets) => { lifecycleCalls.push(["addAll", assets]); }),
-    put: cachePutImpl || (async (...args) => cacheCalls.push(["put", ...args])),
+    addAll: cacheAddAllImpl ? cacheAddAllImpl : async function (assets) { lifecycleCalls.push(["addAll", assets]); },
+    put: cachePutImpl ? cachePutImpl : async function (...args) { cacheCalls.push(["put", ...args]); },
     match: async () => undefined,
   };
   const caches = {
     open: async () => cache,
     keys: async () => ["jarvis-x-hq-shell-v1", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
-    match: cacheMatchImpl || (async (key) => key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined),
+    match: cacheMatchImpl ? cacheMatchImpl : async function (key) { return key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined; },
   };
   const self = {
     location: { href: "https://example.test/JARVIS-X/hq/sw.js", origin: "https://example.test" },
