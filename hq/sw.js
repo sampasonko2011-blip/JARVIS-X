@@ -43,12 +43,16 @@ self.addEventListener('fetch', (event) => {
   if (!allowed.has(url.href)) return;
 
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request).then((response) => {
-      if (response.ok && response.type === 'basic') {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy));
-      }
-      return response;
-    }))
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        if (!response.ok || response.type !== 'basic') return response;
+        // Complete the cache write before resolving the response. Fire-and-forget
+        // cache writes can be interrupted when the browser terminates the worker.
+        return caches.open(CACHE)
+          .then((cache) => cache.put(request, response.clone()))
+          .then(() => response);
+      });
+    })
   );
 });
