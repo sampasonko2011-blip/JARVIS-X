@@ -65,3 +65,21 @@ test("HQ backup import checks size and record arrays before replacing local data
   assert.ok(html.includes("duplicate record IDs"));
   assert.ok(html.includes("Object.values(x).every"));
 });
+
+
+test("HQ protects malformed stored state and rolls back failed writes", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("Saved data has an unexpected structure"));
+  assert.ok(html.includes("Saved data could not be read"));
+  assert.ok(html.includes("unsaved changes were rolled back"));
+  assert.ok(html.includes("lastSaved"));
+  assert.ok(html.includes('id="storage-warning"'));
+  assert.ok(html.includes("Resolve this in Settings before saving new changes"));
+});
+
+test("HQ import refuses unsafe record values and duplicate IDs", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("a.length<=5000"));
+  assert.ok(html.includes("duplicate record IDs"));
+  assert.ok(html.includes("Object.values(x).every"));
+});
