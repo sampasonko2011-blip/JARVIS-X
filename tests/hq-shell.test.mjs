@@ -126,7 +126,9 @@ test("HQ inline JavaScript has no escaped line break between declarations", asyn
 
 test("HQ inline application script parses as valid JavaScript", async () => {
   const html = await read("hq/index.html");
-  const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
-  assert.ok(scripts.length > 0, "HQ should contain its application script");
-  assert.doesNotThrow(() => new vm.Script(scripts.at(-1)[1], { filename: "hq/index.html:inline-script" }));
+  const opening = html.lastIndexOf("<script>");
+  const closing = html.indexOf("</script>", opening);
+  assert.ok(opening >= 0 && closing > opening, "HQ should contain its application script");
+  const source = html.slice(opening + "<script>".length, closing);
+  assert.doesNotThrow(() => new vm.Script(source, { filename: "hq/index.html:inline-script" }));
 });
