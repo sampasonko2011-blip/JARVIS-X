@@ -13,6 +13,7 @@ test("creates a memory, survives reload, and deletes it with confirmation", asyn
   await page.locator("#save-memory").click();
   await expect(page.locator("#memory-list")).toContainText("Browser persistence proof");
   await page.reload();
+  await page.locator('[data-view="memory"]').click();
   await expect(page.locator("#memory-list")).toContainText("Browser persistence proof");
 
   page.once("dialog", dialog => dialog.accept());
