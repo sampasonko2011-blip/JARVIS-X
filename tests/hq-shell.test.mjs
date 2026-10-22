@@ -61,4 +61,7 @@ test("HQ backup import checks size and record arrays before replacing local data
   assert.ok(html.includes("validArray(parsed.memories)"));
   assert.ok(html.includes("validArray(parsed.audits)"));
   assert.ok(html.includes("Replace all current local records"));
+  assert.ok(html.includes("a.length<=5000"));
+  assert.ok(html.includes("duplicate record IDs"));
+  assert.ok(html.includes("Object.values(x).every"));
 });
