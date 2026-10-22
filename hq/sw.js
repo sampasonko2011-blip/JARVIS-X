@@ -51,6 +51,7 @@ self.addEventListener('fetch', (event) => {
         // cache writes can be interrupted when the browser terminates the worker.
         return caches.open(CACHE)
           .then((cache) => cache.put(request, response.clone()))
+          .catch(() => undefined) // Cache quota/storage failure must not break online navigation.
           .then(() => response);
       });
     })
