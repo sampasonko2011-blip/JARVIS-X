@@ -18,6 +18,9 @@ This folder contains the first isolated, static PWA shell for JARVIS-X HQ.
 - No real multi-agent orchestration or autonomous background execution
 - No deployment or installed-device test is implied by this commit
 
+## GitHub Pages deployment workflow
+A reviewed workflow definition lives at `.github/workflows/deploy-hq-pages.yml`. It is configured to deploy the `hq/` static directory only after changes reach `main`, or when manually dispatched. This feature branch does not publish the site. Before a first deployment, the repository owner must configure GitHub Pages to use GitHub Actions and confirm the `github-pages` environment and repository policy permit the workflow. A successful workflow and the emitted deployment URL must be checked before calling the site live.
+
 ## Safe deployment direction
 Serve this directory over HTTPS using a static host to test the shell. Static hosting alone cannot safely store provider secrets or implement cross-device private memory. A later backend must provide managed authentication, authorization, encrypted transport, isolated data access, retention/deletion, secret management, provider budget controls, and auditable tool execution. Never put API keys in browser JavaScript or commit them to Git.
 
