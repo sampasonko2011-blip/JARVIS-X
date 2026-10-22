@@ -11,8 +11,9 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
+  const lifecycleCalls = [];
   const cache = {
-    addAll: async () => {},
+    addAll: async (assets) => lifecycleCalls.push(["addAll", assets]),
     put: async (...args) => cacheCalls.push(["put", ...args]),
     match: async () => undefined,
   };
@@ -24,14 +25,14 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   };
   const self = {
     location: { href: "https://example.test/JARVIS-X/hq/sw.js", origin: "https://example.test" },
-    clients: { claim: async () => {} },
-    skipWaiting: async () => {},
+    clients: { claim: async () => lifecycleCalls.push(["claim"]) },
+    skipWaiting: async () => lifecycleCalls.push(["skipWaiting"]),
     addEventListener: (name, handler) => listeners.set(name, handler),
   };
   vm.runInNewContext(source, {
     self, caches, fetch: fetchImpl, URL, Response, Promise, Set,
   }, { filename: "hq/sw.js" });
-  return { listeners, cacheCalls };
+  return { listeners, cacheCalls, lifecycleCalls };
 }
 
 test("service worker ignores mutations, cross-origin requests, and non-shell assets", async () => {
@@ -73,4 +74,21 @@ test("service worker caches successful same-origin shell assets only", async () 
   assert.equal(response.status, 200);
   await new Promise((resolve) => setImmediate(resolve));
   assert.ok(cacheCalls.some((call) => call[0] === "put"));
+});
+
+
+test("service worker precaches the app shell and activates without deleting unrelated caches", async () => {
+  const { listeners, cacheCalls, lifecycleCalls } = await loadWorker();
+  let installPromise;
+  listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
+  await installPromise;
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
+
+  let activatePromise;
+  listeners.get("activate")({ waitUntil(promise) { activatePromise = promise; } });
+  await activatePromise;
+  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v1"));
+  assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "unrelated-cache"));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "claim"));
 });
