@@ -217,3 +217,14 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
   });
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
 });
+
+
+test("HQ shell sets a restrictive same-origin content security policy", async ({ page }) => {
+  const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("base-uri 'self'");
+  expect(csp).toContain("connect-src 'self'");
+  expect(csp).not.toContain("https:");
+  expect(await page.locator('meta[name="referrer"]').getAttribute("content")).toBe("no-referrer");
+});
