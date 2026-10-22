@@ -110,5 +110,5 @@ test("HQ service worker restricts caching and only replaces shell navigation off
   assert.ok(sw.includes("if (url.origin !== self.location.origin) return"));
   assert.ok(sw.includes("const allowed = new Set(SHELL.map"));
   assert.ok(sw.includes("if (request.mode === 'navigate')"));
-  assert.ok(!sw.includes("caches.match('./index.html')")) || assert.ok(sw.includes("const cached = await caches.match('./index.html')"));
+  assert.ok(sw.includes("const cached = await caches.match('./index.html')"));
 });
