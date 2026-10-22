@@ -13,7 +13,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
-    addAll: cacheAddAllImpl || (async (assets) => lifecycleCalls.push(["addAll", assets]),
+    addAll: cacheAddAllImpl || (async (assets) => { lifecycleCalls.push(["addAll", assets]); }),
     put: cachePutImpl || (async (...args) => cacheCalls.push(["put", ...args])),
     match: async () => undefined,
   };
