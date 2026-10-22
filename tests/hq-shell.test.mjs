@@ -100,3 +100,15 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
   assert.ok(html.includes("aria-current','page'"));
   assert.ok(html.includes("function newId()"));
 });
+
+
+test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
+  const sw = await read("hq/sw.js");
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v2'"));
+  assert.ok(sw.includes("key.startsWith('jarvis-x-hq-shell-')"));
+  assert.ok(sw.includes("if (request.method !== 'GET') return"));
+  assert.ok(sw.includes("if (url.origin !== self.location.origin) return"));
+  assert.ok(sw.includes("const allowed = new Set(SHELL.map"));
+  assert.ok(sw.includes("if (request.mode === 'navigate')"));
+  assert.ok(!sw.includes("caches.match('./index.html')")) || assert.ok(sw.includes("const cached = await caches.match('./index.html')"));
+});
