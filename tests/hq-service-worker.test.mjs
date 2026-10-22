@@ -7,14 +7,14 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }) } = {}) {
+async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl = async (...args) => cacheCalls.push(["put", ...args]) } = {}) {
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
     addAll: async (assets) => lifecycleCalls.push(["addAll", assets]),
-    put: async (...args) => cacheCalls.push(["put", ...args]),
+    put: cachePutImpl,
     match: async () => undefined,
   };
   const caches = {
@@ -91,4 +91,20 @@ test("service worker precaches the app shell and activates without deleting unre
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v1"));
   assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "unrelated-cache"));
   assert.ok(lifecycleCalls.some((call) => call[0] === "claim"));
+});
+
+
+test("cache quota failure does not break a successful online shell response", async () => {
+  const networkResponse = { ok: true, type: "basic", status: 200, clone: () => ({ marker: "copy" }) };
+  const { listeners } = await loadWorker({
+    fetchImpl: async () => networkResponse,
+    cachePutImpl: async () => { throw new Error("quota exceeded"); },
+  });
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/icon.svg", mode: "cors" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  const response = await responsePromise;
+  assert.equal(response, networkResponse);
 });
