@@ -81,3 +81,36 @@ test("cancelling delete-all confirmation preserves saved data", async ({ page })
   await page.locator("#clear-data").click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
 });
+
+
+test("service worker installs and precaches the HQ shell", async ({ page }) => {
+  await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator)) throw new Error("Service workers are unavailable");
+    await navigator.serviceWorker.ready;
+  });
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  const cached = await page.evaluate(async () => {
+    const keys = await caches.keys();
+    const shellCacheName = keys.find(key => key.startsWith("jarvis-x-hq-shell-"));
+    if (!shellCacheName) return { cacheName: null, shellResponse: false };
+    const cache = await caches.open(shellCacheName);
+    return {
+      cacheName: shellCacheName,
+      shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
+    };
+  });
+  expect(cached.cacheName).toBeTruthy();
+  expect(cached.shellResponse).toBe(true);
+});
+
+test("cached HQ page remains navigable when the browser goes offline", async ({ page, context }) => {
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("body")).toContainText("JARVIS-X HQ");
+  } finally {
+    await context.setOffline(false);
+  }
+});
