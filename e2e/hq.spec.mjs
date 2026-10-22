@@ -192,3 +192,28 @@ test("rejects oversized backup files without changing saved records", async ({ p
   });
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
 });
+
+
+test("rejects duplicate IDs in imported backups without replacing records", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill("Duplicate guard sentinel");
+  await page.locator("#memory-body").fill("Existing records must survive");
+  await page.locator("#save-memory").click();
+  const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
+  const invalidBackup = {
+    tasks: [],
+    memories: [
+      { id: "duplicate", title: "First", body: "A" },
+      { id: "duplicate", title: "Second", body: "B" },
+    ],
+    audits: [],
+  };
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator('[data-view="settings"]').click();
+  await page.locator("#import-file").setInputFiles({
+    name: "duplicate-ids.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(invalidBackup)),
+  });
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
+});
