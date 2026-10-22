@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
@@ -120,4 +121,12 @@ test("HQ inline JavaScript has no escaped line break between declarations", asyn
   assert.ok(html.includes("function stamp(){return new Date().toLocaleString()}\nfunction newId()"));
   assert.ok(html.includes("data.memories.push({id:newId()"));
   assert.ok(html.includes("data.audits.push({id:newId()"));
+});
+
+
+test("HQ inline application script parses as valid JavaScript", async () => {
+  const html = await read("hq/index.html");
+  const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)];
+  assert.ok(scripts.length > 0, "HQ should contain its application script");
+  assert.doesNotThrow(() => new vm.Script(scripts.at(-1)[1], { filename: "hq/index.html:inline-script" }));
 });
