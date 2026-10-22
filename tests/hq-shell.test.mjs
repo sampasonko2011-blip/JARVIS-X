@@ -91,3 +91,12 @@ test("HQ validated backup import can recover malformed local state", async () =>
   assert.ok(html.includes("loadProblem=previousProblem"));
   assert.ok(html.includes("Backup imported into this browser"));
 });
+
+
+test("HQ includes keyboard focus indicators and accessible live status", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("button:focus-visible"));
+  assert.ok(html.includes('role="status" aria-live="polite"'));
+  assert.ok(html.includes("aria-current','page'"));
+  assert.ok(html.includes("function newId()"));
+});
