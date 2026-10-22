@@ -148,3 +148,47 @@ test("navigation buttons are keyboard operable and expose accessible names", asy
     await expect(page.locator(`[data-view="${key}"]`)).toHaveAccessibleName(/.+/);
   }
 });
+
+
+test("imports a valid backup only after confirmation and replaces records", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill("Old record");
+  await page.locator("#memory-body").fill("Should be replaced");
+  await page.locator("#save-memory").click();
+
+  const backup = {
+    exported_at: "2026-10-22T00:00:00.000Z",
+    tasks: [{ id: "task-import-1", title: "Imported task", constraints: "Validated backup fixture", route: "Offline only", time: "2026-10-22" }],
+    memories: [{ id: "memory-import-1", title: "Imported memory", body: "Known backup payload", time: "2026-10-22" }],
+    audits: [{ id: "audit-import-1", claim: "Import succeeds", status: "OBSERVED", proof: "Browser regression fixture", time: "2026-10-22" }],
+  };
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator('[data-view="settings"]').click();
+  await page.locator("#import-file").setInputFiles({
+    name: "valid-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0") || "null"))).toMatchObject({
+    tasks: [{ id: "task-import-1", title: "Imported task" }],
+    memories: [{ id: "memory-import-1", title: "Imported memory" }],
+    audits: [{ id: "audit-import-1", claim: "Import succeeds", status: "OBSERVED" }],
+  });
+  await expect(page.locator("#memory-list")).not.toContainText("Old record");
+});
+
+test("rejects oversized backup files without changing saved records", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill("Oversize guard sentinel");
+  await page.locator("#memory-body").fill("Must remain after rejected import");
+  await page.locator("#save-memory").click();
+  const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator('[data-view="settings"]').click();
+  await page.locator("#import-file").setInputFiles({
+    name: "oversized.json",
+    mimeType: "application/json",
+    buffer: Buffer.alloc(2 * 1024 * 1024 + 1, 32),
+  });
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
+});
