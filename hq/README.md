@@ -23,7 +23,7 @@ Serve this directory over HTTPS using a static host to test the shell. Static ho
 
 ## Regression checks
 
-The repository's `npm test` suite includes `tests/hq-shell.test.mjs`, which checks the dashboard's core surfaces, manifest structure, offline shell assets, and documentation boundaries. A passing static test is not a substitute for a real browser, install, or offline-device test.
+The repository's `npm test` suite includes `tests/hq-shell.test.mjs` for core surfaces and storage boundaries, plus `tests/hq-service-worker.test.mjs` for service-worker install/activation, cache cleanup, request filtering, offline navigation fallback, and successful shell-asset caching. These are Node-based runtime tests with a controlled service-worker harness; they are not a substitute for a real browser, install, or offline-device test.
 
 ## Local behavior
 Records remain in the current browser profile. Browser storage can be cleared and is not a backup. The service worker caches the shell after first successful load; remote model calls would still require network access and a separately implemented backend.
