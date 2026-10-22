@@ -52,3 +52,32 @@ test("navigation changes the visible section and current-page marker", async ({ 
   await expect(memoryNav).toHaveAttribute("aria-current", "page");
   await expect(page.locator("#page-title")).toHaveText("Memory vault");
 });
+
+
+test("rejects malformed backup data without overwriting existing records", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill("Keep existing record");
+  await page.locator("#memory-body").fill("Must survive invalid import");
+  await page.locator("#save-memory").click();
+  const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator('[data-view="settings"]').click();
+  await page.locator("#import-file").setInputFiles({
+    name: "malformed.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ tasks: "not-an-array", memories: [], audits: [] })),
+  });
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
+});
+
+test("cancelling delete-all confirmation preserves saved data", async ({ page }) => {
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill("Protected by confirmation");
+  await page.locator("#memory-body").fill("Cancel must preserve this");
+  await page.locator("#save-memory").click();
+  const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
+  await page.locator('[data-view="settings"]').click();
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.locator("#clear-data").click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
+});
