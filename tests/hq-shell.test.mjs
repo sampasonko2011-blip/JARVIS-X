@@ -83,3 +83,11 @@ test("HQ import refuses unsafe record values and duplicate IDs", async () => {
   assert.ok(html.includes("duplicate record IDs"));
   assert.ok(html.includes("Object.values(x).every"));
 });
+
+
+test("HQ validated backup import can recover malformed local state", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("previousProblem=loadProblem;loadProblem=''"));
+  assert.ok(html.includes("loadProblem=previousProblem"));
+  assert.ok(html.includes("Backup imported into this browser"));
+});
