@@ -20,7 +20,7 @@ async function loadWorker({ fetchImpl = async () => new Response("network") } = 
     open: async () => cache,
     keys: async () => ["jarvis-x-hq-shell-v1", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
-    match: async () => new Response("cached shell", { status: 200 }),
+    match: async (key) => key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined,
   };
   const self = {
     location: { href: "https://example.test/JARVIS-X/hq/sw.js", origin: "https://example.test" },
