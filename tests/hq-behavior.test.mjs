@@ -170,3 +170,35 @@ test("navigation switches views and updates accessible current-page state", asyn
   assert.equal(memoryNav.attributes["aria-current"], "page");
   assert.equal(app.elements.get("page-title").textContent, "Memory vault");
 });
+
+
+test("validated backup import replaces local records only after confirmation", async () => {
+  const existing = JSON.stringify({ tasks: [], memories: [{ id: "old", title: "Old" }], audits: [] });
+  const app = createApp({ initialStore: existing, confirms: [true] });
+  const backup = JSON.stringify({
+    tasks: [{ id: "task-1", title: "Imported task" }],
+    memories: [{ id: "memory-1", title: "Imported memory", body: "Evidence" }],
+    audits: [],
+  });
+  const file = { size: backup.length, text: async () => backup };
+  await app.elements.get("import-file").dispatch("change", { target: { files: [file], value: "backup.json" } });
+  const saved = JSON.parse(app.store.get("jarvis-x-hq-v0"));
+  assert.equal(saved.tasks[0].title, "Imported task");
+  assert.equal(saved.memories[0].title, "Imported memory");
+  assert.equal(saved.memories.some((item) => item.id === "old"), false);
+  assert.match(app.alerts.join(" "), /backup imported into this browser/i);
+});
+
+test("backup import rejects duplicate IDs without replacing existing data", async () => {
+  const existing = JSON.stringify({ tasks: [], memories: [{ id: "keep", title: "Keep me" }], audits: [] });
+  const app = createApp({ initialStore: existing });
+  const backup = JSON.stringify({
+    tasks: [{ id: "duplicate", title: "One" }, { id: "duplicate", title: "Two" }],
+    memories: [],
+    audits: [],
+  });
+  const file = { size: backup.length, text: async () => backup };
+  await app.elements.get("import-file").dispatch("change", { target: { files: [file], value: "bad.json" } });
+  assert.equal(app.store.get("jarvis-x-hq-v0"), existing);
+  assert.match(app.alerts.join(" "), /duplicate record IDs/i);
+});
