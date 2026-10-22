@@ -18,6 +18,10 @@ test("HQ shell includes the core command surfaces and transparent capability bou
     "localStorage",
     "export-data",
     "clear-data",
+    "import-file",
+    "data-delete-record",
+    "Backup imported into this browser",
+    "2 MB safety limit",
     "cross-device sync",
   ]) {
     assert.ok(html.includes(marker), `HQ shell should include ${marker}`);
@@ -47,4 +51,14 @@ test("HQ documentation does not imply remote services are already implemented", 
   assert.ok(docs.includes("not implemented or verified"));
   assert.ok(docs.includes("cross-device sync"));
   assert.ok(docs.includes("Never put API keys in browser JavaScript"));
+});
+
+
+test("HQ backup import checks size and record arrays before replacing local data", async () => {
+  const html = await read("hq/index.html");
+  assert.ok(html.includes("file.size>2*1024*1024"));
+  assert.ok(html.includes("validArray(parsed.tasks)"));
+  assert.ok(html.includes("validArray(parsed.memories)"));
+  assert.ok(html.includes("validArray(parsed.audits)"));
+  assert.ok(html.includes("Replace all current local records"));
 });
