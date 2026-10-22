@@ -1,0 +1,76 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import vm from "node:vm";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+async function loadWorker({ fetchImpl = async () => new Response("network") } = {}) {
+  const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
+  const listeners = new Map();
+  const cacheCalls = [];
+  const cache = {
+    addAll: async () => {},
+    put: async (...args) => cacheCalls.push(["put", ...args]),
+    match: async () => undefined,
+  };
+  const caches = {
+    open: async () => cache,
+    keys: async () => ["jarvis-x-hq-shell-v1", "unrelated-cache"],
+    delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
+    match: async () => new Response("cached shell", { status: 200 }),
+  };
+  const self = {
+    location: { href: "https://example.test/JARVIS-X/hq/sw.js", origin: "https://example.test" },
+    clients: { claim: async () => {} },
+    skipWaiting: async () => {},
+    addEventListener: (name, handler) => listeners.set(name, handler),
+  };
+  vm.runInNewContext(source, {
+    self, caches, fetch: fetchImpl, URL, Response, Promise, Set,
+  }, { filename: "hq/sw.js" });
+  return { listeners, cacheCalls };
+}
+
+test("service worker ignores mutations, cross-origin requests, and non-shell assets", async () => {
+  const { listeners } = await loadWorker();
+  let responseCalls = 0;
+  const fire = (request) => listeners.get("fetch")({
+    request,
+    respondWith() { responseCalls += 1; },
+  });
+  fire({ method: "POST", url: "https://example.test/JARVIS-X/hq/index.html", mode: "cors" });
+  fire({ method: "GET", url: "https://other.test/secret", mode: "cors" });
+  fire({ method: "GET", url: "https://example.test/JARVIS-X/hq/not-in-shell.js", mode: "cors" });
+  assert.equal(responseCalls, 0);
+});
+
+test("service worker serves cached shell navigation when network fails", async () => {
+  const { listeners } = await loadWorker({
+    fetchImpl: async () => { throw new Error("offline"); },
+  });
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/index.html", mode: "navigate" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  assert.ok(responsePromise instanceof Promise || typeof responsePromise?.then === "function");
+  const response = await responsePromise;
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "cached shell");
+});
+
+test("service worker caches successful same-origin shell assets only", async () => {
+  const { listeners, cacheCalls } = await loadWorker();
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/icon.svg", mode: "cors" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  const response = await responsePromise;
+  assert.equal(response.status, 200);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(cacheCalls.some((call) => call[0] === "put"));
+});
