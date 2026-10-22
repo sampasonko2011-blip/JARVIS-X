@@ -114,3 +114,28 @@ test("cached HQ page remains navigable when the browser goes offline", async ({ 
     await context.setOffline(false);
   }
 });
+
+
+test("mobile viewport keeps the command interface within the screen width", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  await expect(page.locator('[data-view="memory"]')).toBeVisible();
+});
+
+test("navigation buttons are keyboard operable and expose accessible names", async ({ page }) => {
+  const memoryNav = page.locator('[data-view="memory"]');
+  await memoryNav.focus();
+  await expect(memoryNav).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#view-memory")).toBeVisible();
+  await expect(memoryNav).toHaveAttribute("aria-current", "page");
+  for (const key of ["overview", "workspace", "memory", "audit", "settings"]) {
+    await expect(page.locator(`[data-view="${key}"]`)).toHaveAccessibleName(/.+/);
+  }
+});
