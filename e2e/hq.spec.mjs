@@ -122,8 +122,17 @@ test("mobile viewport keeps the command interface within the screen width", asyn
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll("body *")].map(el => ({
+      tag: el.tagName.toLowerCase(),
+      className: typeof el.className === "string" ? el.className : "",
+      id: el.id,
+      left: Math.round(el.getBoundingClientRect().left),
+      right: Math.round(el.getBoundingClientRect().right),
+      width: Math.round(el.getBoundingClientRect().width),
+    })).filter(el => el.left < 0 || el.right > document.documentElement.clientWidth)
+      .slice(0, 12),
   }));
-  expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport);
+  expect(dimensions.content, JSON.stringify(dimensions)).toBeLessThanOrEqual(dimensions.viewport);
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await expect(page.locator('[data-view="memory"]')).toBeVisible();
 });
