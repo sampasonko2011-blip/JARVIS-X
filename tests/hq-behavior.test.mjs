@@ -202,3 +202,34 @@ test("backup import rejects duplicate IDs without replacing existing data", asyn
   assert.equal(app.store.get("jarvis-x-hq-v0"), existing);
   assert.match(app.alerts.join(" "), /duplicate record IDs/i);
 });
+
+
+test("failed task save preserves the user's form inputs for retry", async () => {
+  const app = createApp({ failWrites: true });
+  app.elements.get("task-title").value = "Important task";
+  app.elements.get("task-constraints").value = "Keep these constraints";
+  await app.elements.get("save-task").dispatch("click");
+  assert.equal(app.elements.get("task-title").value, "Important task");
+  assert.equal(app.elements.get("task-constraints").value, "Keep these constraints");
+  assert.equal(app.elements.get("data-count").textContent, 0);
+});
+
+test("failed memory save preserves the draft for retry", async () => {
+  const app = createApp({ failWrites: true });
+  app.elements.get("memory-title").value = "Important memory";
+  app.elements.get("memory-body").value = "Do not lose this draft";
+  await app.elements.get("save-memory").dispatch("click");
+  assert.equal(app.elements.get("memory-title").value, "Important memory");
+  assert.equal(app.elements.get("memory-body").value, "Do not lose this draft");
+  assert.equal(app.elements.get("data-count").textContent, 0);
+});
+
+test("failed evidence save preserves claim and proof fields", async () => {
+  const app = createApp({ failWrites: true });
+  app.elements.get("audit-claim").value = "Claim requiring proof";
+  app.elements.get("audit-proof").value = "Evidence not yet saved";
+  await app.elements.get("save-audit").dispatch("click");
+  assert.equal(app.elements.get("audit-claim").value, "Claim requiring proof");
+  assert.equal(app.elements.get("audit-proof").value, "Evidence not yet saved");
+  assert.equal(app.elements.get("data-count").textContent, 0);
+});
