@@ -7,14 +7,14 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl = async (...args) => cacheCalls.push(["put", ...args]) } = {}) {
+async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl } = {}) {
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
     addAll: async (assets) => lifecycleCalls.push(["addAll", assets]),
-    put: cachePutImpl,
+    put: cachePutImpl || (async (...args) => cacheCalls.push(["put", ...args]),
     match: async () => undefined,
   };
   const caches = {
