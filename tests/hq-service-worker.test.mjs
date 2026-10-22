@@ -7,7 +7,7 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-async function loadWorker({ fetchImpl = async () => new Response("network") } = {}) {
+async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }) } = {}) {
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
