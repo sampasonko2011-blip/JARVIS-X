@@ -18,7 +18,7 @@ test("HQ shell includes the core command surfaces and transparent capability bou
     "localStorage",
     "export-data",
     "clear-data",
-    "No authentication",
+    "cross-device sync",
   ]) {
     assert.ok(html.includes(marker), `HQ shell should include ${marker}`);
   }
