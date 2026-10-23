@@ -57,7 +57,7 @@ test("council planner requires independent verified providers for a live council
 test("tool broker policy is fail-closed for missing scope, disabled tools, and writes without approval", () => {
   assert.equal(assessToolRequest({ toolId: "x", action: "read", enabled: true }).reason, "SCOPE_REQUIRED");
   assert.equal(assessToolRequest({ toolId: "x", action: "read", scope: ["records"], enabled: false }).reason, "TOOL_NOT_ENABLED");
-  const blocked = assessToolRequest({ toolId: "x", action: "delete", scope: ["records"], enabled: true });
+  const blocked = assessToolRequest({ toolId: "x", action: "delete", scope: ["records"], allowedScopes: ["records"], enabled: true });
   assert.equal(blocked.allowed, false);
   assert.equal(blocked.reason, "EXPLICIT_APPROVAL_REQUIRED");
   assert.equal(blocked.risk, "HIGH");
