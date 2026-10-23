@@ -105,3 +105,8 @@ This runtime does not discover or connect providers and contains no provider SDK
 - `hq/capability-core.mjs` now includes task-aware provider ranking that requires complete, benchmarked quality/reliability/latency/cost evidence and filters by required capabilities, authorization, safety, and live-test status. Missing metrics stay UNKNOWN rather than being treated as zero.
 - `hq/tool-broker-runtime.mjs` provides an injected executor boundary with exact scopes, explicit approval for writes, a pre-execution audit gate, idempotency key, bounded timeout, output validation, and independent world-state verification. Timeouts are OUTCOME_UNKNOWN and are not automatically retried.
 - These are local executable contracts with mock-based tests, not connected providers or tools. Real adapters, benchmark-source verification, durable audit storage, and live end-to-end tests remain required.
+
+
+### Conflict-aware sync planning
+
+`reconcileSyncEnvelopes` plans merges using explicit record versions, base versions, content hashes, timestamps, and tombstone flags. It preserves records omitted on one side, rejects duplicate IDs/account mismatches/revision overflow, and exposes divergent histories for review rather than silently choosing a winner. This is merge planning only—not authenticated or durable cross-device sync.
