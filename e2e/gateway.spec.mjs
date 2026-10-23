@@ -35,7 +35,7 @@ test("gateway records a valid health response but does not claim provider execut
   await expect(page.locator("#gateway-auth")).toHaveText("SERVER CLAIM: AUTHENTICATED");
   await expect(page.locator("#gateway-providers")).toContainText("Smoke-tested: NO / UNKNOWN");
   await expect(page.locator("#gateway-report")).toContainText("gateway-test-trace-123");
-  await expect(page.locator("#gateway-result")).toContainText("does not independently prove provider execution");
+  await expect(page.locator("#gateway-result")).toContainText("not a provider execution test");
   await expect(page.locator("#chat-send")).toBeEnabled();
   const report = await page.locator("#gateway-report").textContent();
   expect(report).not.toContain("secret");
