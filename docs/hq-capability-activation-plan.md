@@ -59,3 +59,12 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - Generated asset metadata must carry provider/model/asset identifiers, supported MIME type, bounded byte length, content hash, and timestamp.
 - `tests/hq-image-contract.test.mjs` covers invalid requests and metadata.
 - These checks do not call an image provider, verify asset bytes, or claim that image generation is connected.
+
+
+## Multi-AI council runtime added
+
+- `hq/council-runtime.mjs` implements a bounded lead → independent critic → synthesizer sequence over explicitly injected provider adapters.
+- Every adapter must present a distinct provider ID, model ID, explicit authorization, passed live-test evidence, and `WORLD_STATE_VERIFIED` status before the runtime will invoke any adapter.
+- The runtime bounds objective/reply lengths and timeout values; redacts raw provider errors; records per-stage provider/model/request/latency metadata when supplied; and returns MANUAL_HANDOFF, FAILED, or PARTIAL rather than fabricating success when gates or stages fail.
+- `tests/hq-council-runtime.test.mjs` covers the successful three-role flow, duplicate/unauthorized/unverified provider rejection, invalid inputs, lead failure, critic failure, empty replies, and error redaction.
+- This is an executable orchestration core over injected adapters, **not** a provider integration. No network clients, API keys, provider accounts, or live calls are included. Provider factual accuracy and external world state still require independent verification.
