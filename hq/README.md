@@ -110,3 +110,6 @@ This runtime does not discover or connect providers and contains no provider SDK
 ### Conflict-aware sync planning
 
 `reconcileSyncEnvelopes` plans merges using explicit record versions, base versions, content hashes, timestamps, and tombstone flags. It preserves records omitted on one side, rejects duplicate IDs/account mismatches/revision overflow, and exposes divergent histories for review rather than silently choosing a winner. This is merge planning only—not authenticated or durable cross-device sync.
+
+
+The `runRankedCouncil` entry point composes evidence-gated routing with the council runtime: it ranks candidates first, then runs lead/critic/synthesizer stages using only the selected injected adapters. Insufficient evidence falls back to manual handoff without calling adapters. Unit tests use mocks and do not establish live-provider readiness.
