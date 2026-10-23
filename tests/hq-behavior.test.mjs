@@ -52,21 +52,22 @@ class FakeElement {
 function createApp({ initialStore = null, failWrites = false, confirms = [] } = {}) {
   const ids = [
     "storage-warning", "metric-notes", "metric-ledger", "bar-notes", "bar-ledger",
-    "data-count", "task-list", "memory-list", "audit-list", "net-status", "runtime-status",
+    "data-count", "task-list", "memory-list", "audit-list", "chat-history", "integration-list", "net-status", "runtime-status",
     "page-title", "page-sub", "save-task", "clear-task", "task-title", "task-constraints",
     "task-route", "save-memory", "memory-title", "memory-body", "save-audit", "audit-claim",
     "audit-proof", "audit-status", "export-data", "import-file", "clear-data",
-    "view-overview", "view-workspace", "view-memory", "view-audit", "view-settings",
+    "view-overview", "view-workspace", "view-console", "view-integrations", "view-memory", "view-audit", "view-settings", "prompt-format", "prompt-context", "prompt-input", "prompt-status", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-reply", "attach-reply",
   ];
   const elements = new Map(ids.map((id) => [id, new FakeElement(id)]));
   elements.get("task-route").value = "manual";
   elements.get("audit-status").value = "OBSERVED";
-  const views = ["overview", "workspace", "memory", "audit", "settings"].map((name) => {
+  elements.get("prompt-format").value = "conversational";
+  const views = ["overview", "workspace", "console", "integrations", "memory", "audit", "settings"].map((name) => {
     const el = elements.get("view-" + name);
     el.classList.add("view");
     return el;
   });
-  const navs = ["overview", "workspace", "memory", "audit", "settings"].map((name) => {
+  const navs = ["overview", "workspace", "console", "integrations", "memory", "audit", "settings"].map((name) => {
     const el = new FakeElement("nav-" + name);
     el.dataset.view = name;
     return el;
