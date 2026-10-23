@@ -192,11 +192,17 @@ export function rankProvidersForTask({
     const latencyMs = p.latencyMs;
     const costMicros = p.costMicros;
     const evidenceId = p.benchmarkEvidenceId;
-    // All decision-critical metrics and their provenance are required.
+    const evidenceSource = p.benchmarkSource;
+    const evidenceVersion = p.benchmarkVersion;
+    const evidenceDate = p.benchmarkDate;
+    // All decision-critical metrics and source/version/date provenance are required.
     if (![quality, reliability].every((v) => Number.isFinite(v) && v >= 0 && v <= 1) ||
         !Number.isFinite(latencyMs) || latencyMs <= 0 ||
         !Number.isFinite(costMicros) || costMicros < 0 ||
-        typeof evidenceId !== "string" || !evidenceId.trim()) continue;
+        typeof evidenceId !== "string" || !evidenceId.trim() ||
+        typeof evidenceSource !== "string" || !evidenceSource.trim() ||
+        typeof evidenceVersion !== "string" || !evidenceVersion.trim() ||
+        typeof evidenceDate !== "string" || Number.isNaN(Date.parse(evidenceDate))) continue;
     if (quality < minimumQuality || latencyMs > maxLatencyMs || costMicros > maxCostMicros) continue;
 
     const latencyScore = Math.max(0, 1 - latencyMs / maxLatencyMs);
@@ -212,6 +218,9 @@ export function rankProvidersForTask({
       costMicros,
       utility: Number(utility.toFixed(6)),
       benchmarkEvidenceId: evidenceId,
+      benchmarkSource: evidenceSource,
+      benchmarkVersion: evidenceVersion,
+      benchmarkDate: evidenceDate,
     });
     seenProviders.add(p.providerId);
     seenModels.add(p.modelId);
