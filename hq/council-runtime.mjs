@@ -113,12 +113,15 @@ export async function runCouncil({
   }
 
   const unique = [];
-  const seen = new Set();
+  const seenProviderIds = new Set();
+  const seenModelIds = new Set();
   for (const provider of providers) {
-    if (eligibleProvider(provider) && !seen.has(provider.id)) {
-      unique.push(provider);
-      seen.add(provider.id);
-    }
+    if (!eligibleProvider(provider)) continue;
+    // Require distinct provider and model identities to reduce false independence.
+    if (seenProviderIds.has(provider.id) || seenModelIds.has(provider.modelId)) continue;
+    unique.push(provider);
+    seenProviderIds.add(provider.id);
+    seenModelIds.add(provider.modelId);
   }
   const needed = requireIndependentCritic ? 3 : 2;
   if (unique.length < needed) {
