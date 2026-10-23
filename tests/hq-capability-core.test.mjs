@@ -34,7 +34,7 @@ test("evidence lifecycle rejects skipping directly from proposal to world-state 
 
 test("council planner falls back to manual handoff when no providers have live evidence", () => {
   const plan = buildCouncilPlan({ objective: "Compare two strategies", providers: [
-    { id: "provider-a", status: "CONNECTED", authorized: true, liveTestPassed: false },
+    { id: "provider-a", modelId: "model-a", status: "CONNECTED", authorized: true, liveTestPassed: false },
   ] });
   assert.equal(plan.mode, "MANUAL_HANDOFF");
   assert.deepEqual(plan.providerIds, []);
@@ -44,14 +44,22 @@ test("council planner falls back to manual handoff when no providers have live e
 
 test("council planner requires independent verified providers for a live council", () => {
   const providers = [
-    { id: "a", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
-    { id: "b", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
+    { id: "a", modelId: "model-a", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
+    { id: "b", modelId: "model-b", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
   ];
   const plan = buildCouncilPlan({ objective: "Challenge the first solution", providers });
   assert.equal(plan.mode, "LIVE_ELIGIBLE");
   assert.deepEqual(plan.providerIds, ["a", "b"]);
   assert.equal(plan.stages.length, 3);
   assert.match(plan.limitation, /does not itself invoke/);
+  const sameModel = buildCouncilPlan({
+    objective: "Independent review",
+    providers: [
+      { id: "alias-a", modelId: "same-model", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
+      { id: "alias-b", modelId: "same-model", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
+    ],
+  });
+  assert.equal(sameModel.mode, "MANUAL_HANDOFF");
 });
 
 test("tool broker policy is fail-closed for missing scope, disabled tools, and writes without approval", () => {
