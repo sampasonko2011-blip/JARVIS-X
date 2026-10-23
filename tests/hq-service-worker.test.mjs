@@ -83,6 +83,7 @@ test("service worker precaches the app shell and activates without deleting unre
   listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./mission-control.html")), "Mission Control must be precached");
   assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
 
   let activatePromise;
