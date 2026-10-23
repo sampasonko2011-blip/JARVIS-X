@@ -85,11 +85,19 @@ const HIGH_RISK = new Set(["delete", "publish", "purchase", "execute"]);
 export function assessToolRequest(request = {}) {
   const action = typeof request.action === "string" ? request.action.toLowerCase() : "";
   const toolId = typeof request.toolId === "string" ? request.toolId.trim() : "";
-  const scope = Array.isArray(request.scope) ? [...new Set(request.scope.filter((s) => typeof s === "string"))] : [];
+  const rawScope = Array.isArray(request.scope) ? request.scope : null;
+  const malformedScope = rawScope !== null && (
+    rawScope.some((item) => typeof item !== "string" || !item.trim()) ||
+    new Set(rawScope).size !== rawScope.length
+  );
+  const scope = rawScope ? [...rawScope] : [];
   const approval = request.approval;
-  const approvedScopes = Array.isArray(approval?.scope)
-    ? [...new Set(approval.scope.filter((item) => typeof item === "string"))].sort()
-    : [];
+  const approvalScope = Array.isArray(approval?.scope) ? approval.scope : null;
+  const malformedApprovalScope = approvalScope !== null && (
+    approvalScope.some((item) => typeof item !== "string" || !item.trim()) ||
+    new Set(approvalScope).size !== approvalScope.length
+  );
+  const approvedScopes = approvalScope ? [...approvalScope].sort() : [];
   const requestedScopes = [...scope].sort();
   const hasApproval = approval?.approved === true &&
     typeof approval?.approvedBy === "string" &&
@@ -106,6 +114,9 @@ export function assessToolRequest(request = {}) {
     approvedScopes.length === requestedScopes.length &&
     approvedScopes.every((item, index) => item === requestedScopes[index]);
   if (!toolId || !action) return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "INVALID_REQUEST" };
+  if (malformedScope || malformedApprovalScope) {
+    return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "INVALID_SCOPE_ENCODING", toolId, action };
+  }
   if (!READ_ACTIONS.has(action) && !WRITE_ACTIONS.has(action)) {
     return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "UNSUPPORTED_ACTION", toolId, action };
   }
