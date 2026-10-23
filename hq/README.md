@@ -77,3 +77,8 @@ The HQ shell now includes a **Multi-AI council prompt pack** with separate lead-
 The **Secure vault** can encrypt a portable backup locally with Web Crypto (PBKDF2-SHA-256, 310,000 iterations, AES-256-GCM) and decrypt/import it on another browser. The passphrase is not stored or transmitted. Losing it means losing access to that backup. This is encrypted file portability, **not** remote account storage or live cross-device sync. Import is bounded, schema-checked, and requires confirmation before replacing local records.
 
 Image Studio remains a prompt-preparation/handoff workbench; actual image generation is not connected. The plugin catalogue is a local planning queue, not a live broker. Direct model chat, real plugin execution, authenticated cloud sync, and server-side model routing remain unimplemented until an authorized backend is deployed and independently verified.
+
+
+## Security Gateway console (feature branch)
+
+The Security Gateway view provides a permanent navigation entry, fail-closed health probe, bounded timeout, response schema validation, server-reported provider status separation, and a safe diagnostic report. The browser UI is not the backend: the actual gateway is **not deployed** on GitHub Pages. The console begins as UNAVAILABLE and only changes status after a real response; Playwright route mocks test behavior but do not prove a live service exists. See `docs/hq-security-gateway-contract.md` for the proposed health/chat contracts and production gates. GitHub Pages cannot run the server-side API routes, and this change does not add hosting, connect provider accounts, or store secrets.
