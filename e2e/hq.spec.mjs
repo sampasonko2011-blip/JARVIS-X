@@ -309,7 +309,7 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await page.route("**/api/v1/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", chat_enabled: true, authenticated: true }) }));
+  await page.route("**/api/v1/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", service: "jarvis-x-gateway", version: "0.1.0", environment: "test", chat_enabled: true, authenticated: true, providers: [] }) }));
   await page.route("**/api/v1/chat", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reply: "Verified gateway reply" }) }));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
