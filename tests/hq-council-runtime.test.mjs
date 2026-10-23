@@ -180,6 +180,12 @@ test("ranked council selects benchmark-qualified diverse providers and executes 
       async invoke(payload) { calls.push(payload.role); return { text: "Integrated answer" }; },
     },
   ];
+  candidates.push({
+    ...candidates[0],
+    status: "CONNECTED",
+    authorized: false,
+    async invoke() { assert.fail("unverified duplicate adapter must never be selected"); },
+  });
   const result = await runRankedCouncil({
     objective: "Evaluate this proposal",
     taskType: "analysis",
