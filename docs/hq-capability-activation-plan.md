@@ -7,7 +7,7 @@
 1. **Multi-AI live orchestration**
    - Preserve the existing prompt council and manual handoff.
    - Define provider eligibility, lead/independent critic/synthesizer roles, provenance, and fail-closed fallback.
-   - Only a provider with explicit authorization, a live test, and independently verified state may be treated as eligible. Planning eligibility is not invocation.
+   - Only a provider with explicit authorization, a live test, independently verified state, and distinct provider/model identities may be treated as eligible for an independent council. Planning eligibility is not invocation.
    - Later backend phase: add one authorized provider adapter at a time; capture redacted request IDs, provider/model, latency, errors, and usage/cost where available. Never put provider secrets in browser code.
 
 2. **Real image generation**
