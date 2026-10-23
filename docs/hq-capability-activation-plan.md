@@ -92,3 +92,11 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - `reconcileSyncEnvelopes` validates both envelopes and account identity, requires per-record version/base-version/hash/timestamp/tombstone metadata, merges only causally related version changes, and emits explicit conflicts for same-version divergent content or divergent histories.
 - Records omitted by one side are preserved; omission is not deletion. Duplicate IDs and revision overflow are rejected.
 - This produces a merge plan only. It does not authenticate users, resolve conflicts automatically, persist data, or perform remote sync.
+
+
+## Ranked orchestration path integrated
+
+- `runRankedCouncil` now composes the evidence-gated router with the lead/critic/synthesizer runtime: candidates are filtered/ranked first, then the injected adapters for the selected provider/model identities are passed to the council.
+- If benchmark evidence or capability coverage is insufficient, it returns MANUAL_HANDOFF without invoking an adapter.
+- The end-to-end unit tests use mocked adapters and assert both successful ranked execution and zero calls on insufficient evidence.
+- This remains a local runtime. The benchmark evidence, authorization state, and adapter implementation must come from a trusted future integration layer; this code does not establish those facts on its own.
