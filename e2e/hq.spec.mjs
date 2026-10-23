@@ -293,3 +293,30 @@ test("upgrade center fails closed when release metadata cannot be fetched", asyn
   await expect(page.locator("#upgrade-message")).toContainText("failed closed");
   await expect(page.locator("#upgrade-log")).toContainText("Release check failed");
 });
+
+
+test("direct chat stays disabled when the authenticated gateway is unavailable", async ({ page }) => {
+  await page.route("**/api/v1/health", route => route.fulfill({ status: 404, body: "not configured" }));
+  await page.locator('[data-view="chat"]').click();
+  await expect(page.locator("#view-chat")).toBeVisible();
+  await expect(page.locator("#chat-send")).toBeDisabled();
+  await page.locator("#chat-compose").fill("Hello JARVIS-X");
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
+  await expect(page.locator("#chat-gateway-status")).toContainText("Nothing was sent");
+  await expect(page.locator("#chat-send")).toBeDisabled();
+  await expect(page.locator("#chat-thread")).not.toContainText("Hello JARVIS-X");
+});
+
+test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
+  await page.route("**/api/v1/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", chat_enabled: true, authenticated: true }) }));
+  await page.route("**/api/v1/chat", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reply: "Verified gateway reply" }) }));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-compose").fill("Hello JARVIS-X");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
+  await expect(page.locator("#chat-thread")).toContainText("Verified gateway reply");
+  await expect(page.locator("#chat-thread")).toContainText("JARVIS-X");
+});
