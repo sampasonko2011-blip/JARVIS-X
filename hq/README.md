@@ -30,3 +30,12 @@ The repository's `npm test` suite includes `tests/hq-shell.test.mjs` for core su
 
 ## Local behavior
 Records remain in the current browser profile. Browser storage can be cleared and is not a backup. The service worker caches the shell after first successful load; remote model calls would still require network access and a separately implemented backend.
+
+
+## Prompt console and integration roadmap (current branch)
+
+The HQ includes a multi-format prompt workspace (conversational, structured report, JSON, action plan, code review, and research brief), local prompt drafts, and manual reply capture. Users explicitly copy the prompt or open ChatGPT separately; the page does not send prompts to any AI provider automatically.
+
+The Integrations page is a **local planning registry**, not a live connector. OpenAI-compatible gateway, GitHub, Notion, Canva, Airtable and local model runtime are proposed integration targets only. No ChatGPT account/session, connected plugin, or cross-platform memory is inherited by the static site.
+
+Conversation drafts and integration requests share the current browser's local storage and are included in local backup exports. They are not encrypted, authenticated or synchronized between devices. Cross-device memory requires a separately deployed backend, managed authentication, per-user authorization, secure server-side secrets, deletion/export controls, and verified tenant-isolation tests.
