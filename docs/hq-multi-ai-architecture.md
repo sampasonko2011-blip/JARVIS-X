@@ -183,3 +183,10 @@ Every route must require a valid session, apply per-object authorization, valida
 - Tombstones propagate deletion; restores require an explicit recovery flow and audit event.
 - Offline records remain marked local/un-synced until the server acknowledges them. UI must never label a queued write as synchronized.
 - Connectors retrieve data only through the same authorization boundary and never gain broad database access.
+
+
+## Direct chat transport contract (implementation gate)
+
+The HQ chat client checks same-origin `GET /api/v1/health` before enabling send. It requires an affirmative `status=ok`, `chat_enabled=true`, and `authenticated=true`. `POST /api/v1/chat` accepts a bounded message and conversation identifier, then must return a non-empty `reply`. The browser never receives provider credentials. The gateway must authenticate every request, enforce per-account rate and spend limits, validate input/output, redact logs, and call only a server-configured provider/model allowlist. It must not claim to be the user's existing ChatGPT session; API model access is a separate service and account boundary.
+
+The static Pages origin currently has no `/api/v1/health` or `/api/v1/chat` implementation. The UI therefore stays disabled until a separately deployed gateway is verified. Production enablement requires an explicit hosting choice, server-side secret configuration, authentication/session design, CORS/origin policy if applicable, and end-to-end tests against the deployed service.
