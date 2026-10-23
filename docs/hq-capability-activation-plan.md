@@ -100,3 +100,8 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - If benchmark evidence or capability coverage is insufficient, it returns MANUAL_HANDOFF without invoking an adapter.
 - The end-to-end unit tests use mocked adapters and assert both successful ranked execution and zero calls on insufficient evidence.
 - This remains a local runtime. The benchmark evidence, authorization state, and adapter implementation must come from a trusted future integration layer; this code does not establish those facts on its own.
+
+
+### Benchmark provenance hardening
+
+Provider routing now requires a benchmark evidence ID plus source, version, and parseable benchmark date, in addition to quality/reliability/latency/cost and authorization/safety gates. Selected routing receipts preserve these provenance fields. Missing provenance means the candidate is excluded rather than assigned a zero score.
