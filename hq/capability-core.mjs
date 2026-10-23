@@ -78,6 +78,7 @@ export function buildCouncilPlan({ objective, providers = [], requireIndependent
   });
 }
 
+const READ_ACTIONS = new Set(["read", "list", "search", "get", "fetch"]);
 const WRITE_ACTIONS = new Set(["create", "update", "delete", "send", "publish", "purchase", "execute"]);
 const HIGH_RISK = new Set(["delete", "publish", "purchase", "execute"]);
 
@@ -91,6 +92,9 @@ export function assessToolRequest(request = {}) {
     typeof request.approval?.approvalId === "string" &&
     request.approval.approvalId.trim().length > 0;
   if (!toolId || !action) return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "INVALID_REQUEST" };
+  if (!READ_ACTIONS.has(action) && !WRITE_ACTIONS.has(action)) {
+    return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "UNSUPPORTED_ACTION", toolId, action };
+  }
   if (!scope.length) return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "SCOPE_REQUIRED" };
   const requiresApproval = WRITE_ACTIONS.has(action);
   const risk = HIGH_RISK.has(action) ? "HIGH" : requiresApproval ? "MATERIAL" : "LOW";
