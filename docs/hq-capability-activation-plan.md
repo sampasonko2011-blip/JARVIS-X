@@ -51,3 +51,11 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - No provider accounts, API keys, hosting, paid services, or connectors are added.
 - No changes to the default branch or existing PR #39.
 - No claim of live multi-AI orchestration, generated images, executable tools, authenticated sync, or deployed gateway.
+
+
+## Image Studio contract added
+
+- `hq/image-contract.mjs` validates bounded image-generation requests and requires explicit user confirmation.
+- Generated asset metadata must carry provider/model/asset identifiers, supported MIME type, bounded byte length, content hash, and timestamp.
+- `tests/hq-image-contract.test.mjs` covers invalid requests and metadata.
+- These checks do not call an image provider, verify asset bytes, or claim that image generation is connected.
