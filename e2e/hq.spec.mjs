@@ -324,6 +324,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
 test("image studio builds a prompt without claiming image generation", async ({ page }) => {
   await page.locator('[data-view="images"]').click();
   await expect(page.locator("#view-images")).toBeVisible();
+  await expect(page.locator("#page-title")).toHaveText("Image Studio");
   await expect(page.locator("#img-status")).toContainText("No image generated or sent");
   await page.locator("#img-subject").fill("A futuristic football training lab");
   await page.locator("#img-style").selectOption({label:"Premium 3D render"});
