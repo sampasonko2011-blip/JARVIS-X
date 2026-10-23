@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runCouncil } from "../hq/council-runtime.mjs";
+import { runCouncil, runRankedCouncil } from "../hq/council-runtime.mjs";
 
 function provider(id, response, extra = {}) {
   return {
@@ -152,4 +152,69 @@ test("council rejects malformed provider collections and oversized replies", asy
   const result = await runCouncil({ objective: "Bound outputs", providers });
   assert.equal(result.status, "FAILED");
   assert.equal(result.stages[0].reason, "REPLY_TOO_LONG");
+});
+
+
+test("ranked council selects benchmark-qualified diverse providers and executes the three-role flow", async () => {
+  const calls = [];
+  const candidates = [
+    {
+      providerId: "lead", modelId: "model-lead",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning"], qualityByTask: { analysis: 0.95 }, reliability: 0.96,
+      latencyMs: 2000, costMicros: 100, benchmarkEvidenceId: "benchmark-lead",
+      async invoke(payload) { calls.push(payload.role); return { text: payload.role === "lead" ? "Initial answer" : "Final synthesis" }; },
+    },
+    {
+      providerId: "critic", modelId: "model-critic",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning"], qualityByTask: { analysis: 0.9 }, reliability: 0.95,
+      latencyMs: 2500, costMicros: 150, benchmarkEvidenceId: "benchmark-critic",
+      async invoke(payload) { calls.push(payload.role); return { text: "Counterevidence" }; },
+    },
+    {
+      providerId: "synth", modelId: "model-synth",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning"], qualityByTask: { analysis: 0.88 }, reliability: 0.94,
+      latencyMs: 3000, costMicros: 200, benchmarkEvidenceId: "benchmark-synth",
+      async invoke(payload) { calls.push(payload.role); return { text: "Integrated answer" }; },
+    },
+  ];
+  const result = await runRankedCouncil({
+    objective: "Evaluate this proposal",
+    taskType: "analysis",
+    requiredCapabilities: ["reasoning"],
+    candidates,
+    maxLatencyMs: 10000,
+    maxCostMicros: 1000,
+    minimumQuality: 0.8,
+  });
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.routing.selected.length, 3);
+  assert.deepEqual(calls, ["lead", "critic", "synthesizer"]);
+  assert.equal(result.council.answer, "Integrated answer");
+});
+
+test("ranked council falls back without invoking any adapter when evidence is insufficient", async () => {
+  let calls = 0;
+  const result = await runRankedCouncil({
+    objective: "Do research",
+    taskType: "research",
+    candidates: [{
+      providerId: "unknown", modelId: "unknown-model",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["research"], qualityByTask: { research: 0.99 }, reliability: 0.99,
+      latencyMs: 10, costMicros: 0,
+      async invoke() { calls++; return { text: "should not run" }; },
+    }],
+  });
+  assert.equal(result.status, "MANUAL_HANDOFF");
+  assert.equal(result.council.providerCalls, 0);
+  assert.equal(calls, 0);
+});
+
+test("council rejects malformed provider collections without throwing", async () => {
+  const result = await runCouncil({ objective: "Malformed", providers: {} });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.reason, "PROVIDERS_MUST_BE_AN_ARRAY");
 });
