@@ -344,9 +344,9 @@ test("image studio builds a local prompt and never claims an image was generated
   await page.locator("#image-ratio").selectOption({label:"16:9 landscape"});
   await page.locator("#image-constraints").fill("No logos; accurate football pitch markings");
   await page.locator("#image-build-prompt").click();
-  await expect(page.locator("#image-final-prompt")).toContainText("futuristic football training academy");
-  await expect(page.locator("#image-final-prompt")).toContainText("Premium 3D render");
-  await expect(page.locator("#image-final-prompt")).toContainText("16:9 landscape");
+  await expect(page.locator("#image-final-prompt")).toHaveValue(/futuristic football training academy/);
+  await expect(page.locator("#image-final-prompt")).toHaveValue(/Premium 3D render/);
+  await expect(page.locator("#image-final-prompt")).toHaveValue(/16:9 landscape/);
   await expect(page.locator("#image-status")).toContainText("No image was generated");
   await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
 });
