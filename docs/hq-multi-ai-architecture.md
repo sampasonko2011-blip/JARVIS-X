@@ -197,3 +197,12 @@ The static Pages origin currently has no `/api/v1/health` or `/api/v1/chat` impl
 Each proposed upgrade must define its objective, baseline, constraints, privacy boundaries, rollback, and measurable acceptance criteria before coding. The pipeline is: **SCOUT → SPECIFY → IMPLEMENT IN ISOLATION → MODULE TEST → NEGATIVE/FAULT TEST → INDEPENDENT CHALLENGE → COMPARABLE RETEST → EVIDENCE REVIEW → HUMAN DECISION → STAGED RELEASE → POST-RELEASE MONITOR → ROLLBACK OR PROMOTE**. A hard-gate failure blocks promotion and loops back to revision; repeated failure is rejected/superseded. Unknown measurements are never scored as zero or treated as a pass. Candidate discovery does not confer permission.
 
 HQ now lists six proposals with individual local Approve-for-planning and Dismiss controls. These decisions only record the user's preference on that browser. They do not implement, install, connect, grant access, spend money, or deploy anything. The catalogue itself is not evidence that a candidate passed its eventual tests.
+
+
+## Implemented local capability layer (PR candidate)
+
+The HQ static shell has a local multi-AI council prompt pack with separate lead solver, independent challenger, and evidence synthesizer assignments. Prompts and pasted replies remain in the current browser unless the user manually copies them elsewhere. No provider is invoked and pasted output is not independently verified. This is orchestration preparation, not live multi-model orchestration.
+
+A separate Secure Vault view provides encrypted backup portability using browser Web Crypto: PBKDF2-HMAC-SHA-256 (310,000 iterations) to derive an AES-256-GCM key, random 16-byte salt, and random 12-byte nonce. The passphrase is not persisted or sent to a server. Decryption and record checks precede a user-confirmed replacement. This protects the exported file when the passphrase remains secret; it does not encrypt existing localStorage, authenticate users, or provide remote synchronization. Remote sync still requires the backend described above.
+
+The static plugin registry remains a local request queue. It does not execute connectors, manage real OAuth grants, or revoke provider-side access. Actual plugin calls must be routed through an authenticated server-side broker with explicit capability allowlists, short-lived scoped authorization, per-action approvals for consequential actions, audit records, timeouts, rate limits, and adversarial tests.

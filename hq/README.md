@@ -68,3 +68,12 @@ Required closed failure loop for every candidate:
 6. Only after passing gates is a proposal ready for your explicit review. Production activation remains a separate approval.
 
 The current catalogue is a reviewed roadmap, not evidence that those capabilities are already implemented or tested. Each candidate must earn its own validation before any implementation or release claim.
+
+
+## Capability control plane (2026-10)
+
+The HQ shell now includes a **Multi-AI council prompt pack** with separate lead-solver, independent-challenger, and evidence-synthesizer roles. It prepares prompts locally and supports manual copy/paste of actual provider replies. It does not call models, claim model agreement, or verify pasted answers.
+
+The **Secure vault** can encrypt a portable backup locally with Web Crypto (PBKDF2-SHA-256, 310,000 iterations, AES-256-GCM) and decrypt/import it on another browser. The passphrase is not stored or transmitted. Losing it means losing access to that backup. This is encrypted file portability, **not** remote account storage or live cross-device sync. Import is bounded, schema-checked, and requires confirmation before replacing local records.
+
+Image Studio remains a prompt-preparation/handoff workbench; actual image generation is not connected. The plugin catalogue is a local planning queue, not a live broker. Direct model chat, real plugin execution, authenticated cloud sync, and server-side model routing remain unimplemented until an authorized backend is deployed and independently verified.

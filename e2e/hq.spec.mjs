@@ -350,3 +350,23 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#image-status")).toContainText("No image was generated");
   await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
 });
+
+test("multi-AI council builds distinct lead, challenge, and synthesis prompts without pretending to call models", async ({ page }) => {
+  await page.locator('[data-view="console"]').click();
+  await page.locator("#council-goal").fill("Design a reliable football training tracker with evidence gates.");
+  await page.locator("#council-context").fill("Only use the supplied test data.");
+  await page.locator("#council-build").click();
+  await expect(page.locator("#council-lead")).toHaveValue(/ROLE: LEAD SOLVER/);
+  await expect(page.locator("#council-challenge")).toHaveValue(/INDEPENDENT RED-TEAM CHALLENGER/);
+  await expect(page.locator("#council-challenge")).toHaveValue(/counterexamples/);
+  await expect(page.locator("#council-synthesis")).toHaveValue(/EVIDENCE-LED SYNTHESIZER/);
+  await expect(page.locator("#council-status")).toContainText("No AI was called");
+});
+
+test("encrypted vault refuses a short passphrase and documents local-only transfer", async ({ page }) => {
+  await page.locator('[data-view="sync"]').click();
+  await page.locator("#vault-passphrase").fill("short");
+  await page.locator("#vault-export").click();
+  await expect(page.locator("#vault-status")).toContainText("at least 12 characters");
+  await expect(page.locator("#view-sync")).toContainText("not live synchronization");
+});
