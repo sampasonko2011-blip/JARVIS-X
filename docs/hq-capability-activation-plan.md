@@ -76,3 +76,12 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - Decision-critical metrics that are missing or malformed exclude a candidate; UNKNOWN is never silently converted to zero.
 - Eligible candidates are ranked using explicit weights: quality 0.55, reliability 0.25, latency 0.10, cost 0.10. The function reports its limitations and does not verify the provenance of supplied metrics.
 - Regression tests check ranking, missing evidence, capability mismatch, and invalid constraints.
+
+
+## Executable tool-broker boundary added
+
+- `hq/tool-broker-runtime.mjs` invokes only an explicitly injected executor; it requires an enabled tool, exact granted-scope match, required approval for material writes, pre-execution audit, output validation, and independent world-state verification.
+- An external-operation timeout is recorded as `OUTCOME_UNKNOWN` with explicit no-automatic-retry guidance, because a lost response does not prove the side effect did not happen.
+- The runtime redacts raw executor errors, accepts an idempotency key, and distinguishes execution success from post-execution audit persistence failure.
+- `tests/hq-tool-broker-runtime.test.mjs` covers successful verified execution and negative paths for ungranted scopes, missing approval/verifiers, failed output/state checks, timeouts, and failed pre-execution audit.
+- This remains an injected execution boundary: no real connector, remote service, credential, or tool has been enabled.
