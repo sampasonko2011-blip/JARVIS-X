@@ -209,3 +209,13 @@ test("sync reconciliation blocks account mismatches and malformed version metada
   };
   assert.equal(reconcileSyncEnvelopes(malformed, base).reason, "INVALID_RECORD_VERSION_METADATA");
 });
+
+
+test("sync schema rejects duplicate record IDs instead of silently overwriting", () => {
+  const duplicate = {
+    schemaVersion: 1, accountId: "a", revision: 1,
+    updatedAt: "2026-10-23T12:00:00Z",
+    records: [{ id: "same" }, { id: "same" }],
+  };
+  assert.equal(assessSyncEnvelope(duplicate).reason, "DUPLICATE_RECORD_ID");
+});
