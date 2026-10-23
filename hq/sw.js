@@ -1,5 +1,5 @@
-const CACHE = 'jarvis-x-hq-shell-v2';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'jarvis-x-hq-shell-v3';
+const SHELL = ['./', './index.html', './mission-control.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(async () => {
-        const cached = await caches.match('./index.html');
+        const cached = await caches.match(request) || await caches.match('./index.html');
         return cached || Response.error();
       })
     );
