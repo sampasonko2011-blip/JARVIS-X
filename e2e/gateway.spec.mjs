@@ -74,3 +74,28 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
   await expect(page.locator("#gateway-copy")).toBeEnabled();
   await expect(page.locator("#chat-send")).toBeDisabled();
 });
+
+test("direct chat health check times out and remains fail-closed", async ({ page }) => {
+  await page.route("**/api/v1/health", route => new Promise(() => {}));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 8000 });
+  await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 5 seconds");
+  await expect(page.locator("#chat-send")).toBeDisabled();
+});
+
+test("direct chat send timeout is bounded and marked delivery-unknown", async ({ page }) => {
+  await page.route("**/api/v1/health", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ status: "ok", service: "jarvis-x-gateway", version: "0.1.0", environment: "test", authenticated: true, chat_enabled: true, providers: [] }),
+  }));
+  await page.route("**/api/v1/chat", route => new Promise(() => {}));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-compose").fill("timeout regression");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 15 seconds", { timeout: 20000 });
+  await expect(page.locator("#chat-thread")).toContainText("DELIVERY UNKNOWN");
+  await expect(page.locator("#chat-send")).toBeEnabled();
+});
