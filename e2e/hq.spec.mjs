@@ -271,3 +271,25 @@ test("integration registry records proposals without connecting a provider", asy
   expect(saved.integrationRequests[0].status).toBe("PROPOSED");
   await expect(page.locator("#integration-list")).toContainText("local request only");
 });
+
+
+test("upgrade center checks the stable release manifest without executing or installing code", async ({ page }) => {
+  await page.locator('[data-view="upgrades"]').click();
+  await expect(page.locator("#hq-version")).toHaveText("0.2.0");
+  await page.locator("#check-updates").click();
+  await expect(page.locator("#upgrade-status")).toHaveText("Up to date");
+  await expect(page.locator("#upgrade-message")).toContainText("matches this app version");
+  await expect(page.locator("#upgrade-log")).toContainText("MATCH");
+  const release = await page.evaluate(async () => (await (await fetch("./release-manifest.json")).json()));
+  expect(release.automatic_provider_installation).toBe(false);
+  expect(release.automatic_permission_grants).toBe(false);
+});
+
+test("upgrade center fails closed when release metadata cannot be fetched", async ({ page }) => {
+  await page.route("**/release-manifest.json", route => route.fulfill({ status: 503, body: "unavailable" }));
+  await page.locator('[data-view="upgrades"]').click();
+  await page.locator("#check-updates").click();
+  await expect(page.locator("#upgrade-status")).toHaveText("Unavailable");
+  await expect(page.locator("#upgrade-message")).toContainText("failed closed");
+  await expect(page.locator("#upgrade-log")).toContainText("Release check failed");
+});
