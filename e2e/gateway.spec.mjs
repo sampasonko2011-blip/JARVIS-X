@@ -38,8 +38,9 @@ test("gateway records a valid health response but does not claim provider execut
   await expect(page.locator("#gateway-result")).toContainText("not a provider execution test");
   await expect(page.locator("#chat-send")).toBeEnabled();
   const report = await page.locator("#gateway-report").textContent();
-  expect(report).not.toContain("secret");
-  expect(report).not.toContain("api_key");
+  const diagnostic = JSON.parse(report);
+  expect(Object.keys(diagnostic).join(" ").toLowerCase()).not.toMatch(/secret|api[_-]?key|authorization|cookie|prompt|message.?body/);
+  expect(diagnostic.limitations.join(" ")).toContain("secret is included");
 });
 
 test("gateway remains unavailable and chat disabled when the health endpoint is missing", async ({ page }) => {
