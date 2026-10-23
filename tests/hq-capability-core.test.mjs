@@ -228,3 +228,17 @@ test("tool policy rejects missing or ungranted allowed scopes", () => {
   assert.equal(assessToolRequest({ ...request, allowedScopes: ["record:2:read"] }).reason, "SCOPE_NOT_GRANTED");
   assert.equal(assessToolRequest({ ...request, allowedScopes: ["record:1:read"] }).allowed, true);
 });
+
+
+test("tool policy rejects unknown action names rather than treating them as reads", () => {
+  const result = assessToolRequest({
+    toolId: "records",
+    action: "drop_database",
+    scope: ["database"],
+    allowedScopes: ["database"],
+    enabled: true,
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, "UNSUPPORTED_ACTION");
+  assert.equal(result.risk, "UNKNOWN");
+});
