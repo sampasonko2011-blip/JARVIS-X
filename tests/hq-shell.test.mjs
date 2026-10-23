@@ -188,7 +188,7 @@ test("HQ inline application script parses as valid JavaScript", async () => {
 test("HQ release metadata is valid, pinned to stable, and forbids automatic provider permission grants", async () => {
   const release = JSON.parse(await read("hq/release-manifest.json"));
   assert.equal(release.schema_version, 1);
-  assert.match(release.version, /^\\d+\\.\\d+\\.\\d+$/);
+  assert.match(release.version, /^\d+\.\d+\.\d+$/);
   assert.equal(release.channel, "stable");
   assert.deepEqual(release.provider_adapters, []);
   assert.equal(release.automatic_provider_installation, false);
