@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "version": "0.2.0",
+  "channel": "stable",
+  "release_notes": "HQ prompt studio, integration request registry, and governed upgrade center.",
+  "minimum_shell_version": "0.2.0",
+  "capabilities": ["prompt-studio", "integration-roadmap", "governed-upgrade-checks"],
+  "provider_adapters": [],
+  "automatic_provider_installation": false,
+  "automatic_permission_grants": false
+}
