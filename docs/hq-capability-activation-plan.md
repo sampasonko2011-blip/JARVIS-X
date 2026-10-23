@@ -85,3 +85,10 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - The runtime redacts raw executor errors, accepts an idempotency key, and distinguishes execution success from post-execution audit persistence failure.
 - `tests/hq-tool-broker-runtime.test.mjs` covers successful verified execution and negative paths for ungranted scopes, missing approval/verifiers, failed output/state checks, timeouts, and failed pre-execution audit.
 - This remains an injected execution boundary: no real connector, remote service, credential, or tool has been enabled.
+
+
+## Conflict-aware sync reconciliation added
+
+- `reconcileSyncEnvelopes` validates both envelopes and account identity, requires per-record version/base-version/hash/timestamp/tombstone metadata, merges only causally related version changes, and emits explicit conflicts for same-version divergent content or divergent histories.
+- Records omitted by one side are preserved; omission is not deletion. Duplicate IDs and revision overflow are rejected.
+- This produces a merge plan only. It does not authenticate users, resolve conflicts automatically, persist data, or perform remote sync.
