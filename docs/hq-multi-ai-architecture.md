@@ -190,3 +190,35 @@ Every route must require a valid session, apply per-object authorization, valida
 The HQ chat client checks same-origin `GET /api/v1/health` before enabling send. It requires an affirmative `status=ok`, `chat_enabled=true`, and `authenticated=true`. `POST /api/v1/chat` accepts a bounded message and conversation identifier, then must return a non-empty `reply`. The browser never receives provider credentials. The gateway must authenticate every request, enforce per-account rate and spend limits, validate input/output, redact logs, and call only a server-configured provider/model allowlist. It must not claim to be the user's existing ChatGPT session; API model access is a separate service and account boundary.
 
 The static Pages origin currently has no `/api/v1/health` or `/api/v1/chat` implementation. The UI therefore stays disabled until a separately deployed gateway is verified. Production enablement requires an explicit hosting choice, server-side secret configuration, authentication/session design, CORS/origin policy if applicable, and end-to-end tests against the deployed service.
+
+
+## Image-generation and multimodal capability boundary
+
+The Image Studio is a prompt composer and manual handoff only until a real provider adapter is deployed. It must not infer image-generation capability from a text model's name, from a plugin being listed, or from a successful health check. A future image adapter must report: provider and exact model/version; supported image inputs/outputs; output dimensions and format; job identifier; returned artifact reference; usage/cost metadata where available; latency; errors; and deletion/retention policy. The UI may display **GENERATED** only after it receives and validates a real artifact reference from the authenticated server. User-uploaded source images and generated outputs need explicit consent and separate retention controls.
+
+## Plugin and capability broker contract
+
+A plugin registry entry is descriptive metadata, not an enabled connection. Each capability needs a stable ID, provider/version, declared input/output schema, data classification, required scopes, external side effects, timeout, rate/spend limits, health state, and revocation status. Keep these states separate: **DISCOVERED → PROPOSED → USER-APPROVED → CONNECTED → HEALTH-CHECKED → BEHAVIOR-VALIDATED**. Any state can become **REVOKED**, and a health check must not skip behavior validation. Tools receive task-scoped, short-lived authorization and only the minimum required data. No arbitrary endpoint URLs, shell access, credential echoing, or silent permission escalation. Consequential actions require a fresh confirmation immediately before execution.
+
+## Multi-AI synthesis: the evidence-weighted panel
+
+The default innovation is not to ask every model every question. Use a cost-aware, capability-first panel:
+1. **Router** — classify the task and choose only providers that can contribute a distinct capability; exclude unauthorized/unavailable models.
+2. **Independent drafts** — ask selected models to answer without seeing each other's conclusions when independence matters.
+3. **Evidence extraction** — normalize claims into claim/source/date/confidence/unknowns and separate factual claims from recommendations.
+4. **Adversarial challenge** — a separate critic searches for counterexamples, missing constraints, citation mismatch, and overclaiming.
+5. **Deterministic verification** — recompute calculations, validate schemas, run tests, and check source links where possible; model consensus alone is not proof.
+6. **Synthesis** — preserve disagreement and uncertainty; prefer a smaller verified answer over a larger unsupported consensus.
+7. **Outcome feedback** — record acceptance, correction, latency, cost, failure type, and task result; only alter routing policy after comparable evaluation and human review.
+
+The panel must never claim models share private memory, credentials, hidden reasoning, or weights. Context transfer is explicit and data-minimized. Each provider's answer is labelled with provider/model/version and execution state. If no model is connected, the task stays a local draft; it must not manufacture a response.
+
+## Release gates for real integrations
+
+- Authentication and per-user authorization on every request; CSRF/origin protection where applicable.
+- Server-side provider credentials only; secret rotation and redacted logs.
+- Input/output validation, size caps, timeouts, cancellation, concurrency limits, per-user quotas and spend caps.
+- Provider failure, malformed response, timeout, revoked token, unavailable image output, and cross-user access negative tests.
+- Data retention/deletion, export, backup restore, and cross-device consistency tests before memory sync is labelled durable.
+- End-to-end tests against the deployed gateway, not only mocked browser routes.
+- Independent challenge of the test evidence and a tested rollback path before promotion.
