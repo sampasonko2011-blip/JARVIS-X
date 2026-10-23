@@ -77,3 +77,16 @@ The HQ shell now includes a **Multi-AI council prompt pack** with separate lead-
 The **Secure vault** can encrypt a portable backup locally with Web Crypto (PBKDF2-SHA-256, 310,000 iterations, AES-256-GCM) and decrypt/import it on another browser. The passphrase is not stored or transmitted. Losing it means losing access to that backup. This is encrypted file portability, **not** remote account storage or live cross-device sync. Import is bounded, schema-checked, and requires confirmation before replacing local records.
 
 Image Studio remains a prompt-preparation/handoff workbench; actual image generation is not connected. The plugin catalogue is a local planning queue, not a live broker. Direct model chat, real plugin execution, authenticated cloud sync, and server-side model routing remain unimplemented until an authorized backend is deployed and independently verified.
+
+
+## Capability runtime core — separate activation branch
+
+A clean, isolated capability implementation is being reviewed in the `feat/hq-capability-core-clean` branch, keeping the Security Gateway PR untouched and preserving the agreed order: Multi-AI orchestration, image-generation contract, tool broker, sync reconciliation, then gateway/backend last.
+
+- `hq/capability-core.mjs`: evidence-gated provider ranking, explicit lifecycle states, receipt validation, and conflict-aware sync merge planning.
+- `hq/council-runtime.mjs`: bounded lead → independent critic → synthesizer flow over injected adapters; validates distinct provider/model identities, authorization and live-test evidence; handles timeout, redacted errors, and partial outcomes.
+- `hq/image-contract.mjs`: bounded request validation, explicit user confirmation, and provider/model/asset provenance metadata checks.
+- `hq/tool-broker-runtime.mjs`: exact granted-scope checks, approvals, pre-execution audit, idempotency context, output validation, independent world-state verification, and UNKNOWN outcomes after timeouts.
+- Regression tests cover successful mocked flows and negative cases.
+
+**Evidence boundary:** these modules execute local logic against injected adapters in tests. They do not discover/connect providers, call live models, generate images, execute real external tools, authenticate accounts, or persist remote sync. Mock success is not live integration evidence. Current-head CI and code review are required before promotion.
