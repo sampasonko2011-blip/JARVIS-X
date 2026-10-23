@@ -55,6 +55,15 @@ test("council refuses unverified, unauthorized, duplicate, or insufficient provi
   assert.equal(result.status, "MANUAL_HANDOFF");
   assert.equal(result.providerCalls, 0);
   assert.equal(calls, 0);
+
+  const sameModel = [
+    callProvider("model-a", { modelId: "shared-model" }),
+    callProvider("model-b", { modelId: "shared-model" }),
+    callProvider("model-c", { modelId: "unique-model" }),
+  ];
+  const independence = await runCouncil({ objective: "Check independence", providers: sameModel });
+  assert.equal(independence.status, "MANUAL_HANDOFF");
+  assert.equal(independence.providerCalls, 0);
 });
 
 test("council blocks invalid objectives and timeout values before invoking adapters", async () => {
@@ -103,4 +112,28 @@ test("council refuses empty provider replies and does not leak arbitrary error t
   const result = await runCouncil({ objective: "Test empty", providers });
   assert.equal(result.status, "FAILED");
   assert.equal(result.stages[0].reason, "EMPTY_OR_INVALID_REPLY");
+});
+
+
+test("council timeout aborts the adapter signal and returns a bounded failure", async () => {
+  let signalAborted = false;
+  const providers = [
+    provider("slow-lead", "unused", {
+      async invoke(_payload, { signal }) {
+        await new Promise((resolve) => {
+          signal.addEventListener("abort", () => {
+            signalAborted = true;
+            resolve();
+          }, { once: true });
+        });
+        throw Object.assign(new Error("late failure"), { name: "AbortError" });
+      },
+    }),
+    provider("critic", "critique"),
+    provider("synth", "synthesis"),
+  ];
+  const result = await runCouncil({ objective: "Test timeout", providers, timeoutMs: 100 });
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.stages[0].reason, "TIMEOUT");
+  assert.equal(signalAborted, true);
 });
