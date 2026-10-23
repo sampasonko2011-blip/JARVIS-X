@@ -184,3 +184,23 @@ test("HQ inline application script parses as valid JavaScript", async () => {
   const source = html.slice(opening + "<script>".length, closing);
   assert.doesNotThrow(() => new vm.Script(source, { filename: "hq/index.html:inline-script" }));
 });
+
+test("HQ release metadata is valid, pinned to stable, and forbids automatic provider permission grants", async () => {
+  const release = JSON.parse(await read("hq/release-manifest.json"));
+  assert.equal(release.schema_version, 1);
+  assert.match(release.version, /^\\d+\\.\\d+\\.\\d+$/);
+  assert.equal(release.channel, "stable");
+  assert.deepEqual(release.provider_adapters, []);
+  assert.equal(release.automatic_provider_installation, false);
+  assert.equal(release.automatic_permission_grants, false);
+});
+
+test("HQ upgrade center separates read-only update discovery from privileged changes", async () => {
+  const html = await read("hq/index.html");
+  for (const id of ["view-upgrades", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log"]) assert.ok(html.includes('id="' + id + '"'));
+  assert.ok(html.includes("fetch('./release-manifest.json'"));
+  assert.ok(html.includes("registration.update()"));
+  assert.ok(html.includes("Always requires approval"));
+  assert.ok(html.includes("No code was changed"));
+  assert.ok(html.includes("automatic_provider_installation"));
+});
