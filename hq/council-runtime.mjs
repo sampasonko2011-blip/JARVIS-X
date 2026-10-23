@@ -244,14 +244,18 @@ export async function runRankedCouncil({
     };
   }
 
-  const adapterByIdentity = new Map();
-  for (const candidate of candidates) {
-    if (!candidate || typeof candidate.providerId !== "string" || typeof candidate.modelId !== "string") continue;
-    if (!adapterByIdentity.has(candidate.providerId)) adapterByIdentity.set(candidate.providerId, new Map());
-    adapterByIdentity.get(candidate.providerId).set(candidate.modelId, candidate);
-  }
   const providers = routing.candidates.map((ranked) => {
-    const candidate = adapterByIdentity.get(ranked.providerId)?.get(ranked.modelId);
+    const candidate = candidates.find((item) =>
+      item &&
+      item.providerId === ranked.providerId &&
+      item.modelId === ranked.modelId &&
+      item.status === "WORLD_STATE_VERIFIED" &&
+      item.authorized === true &&
+      item.liveTestPassed === true &&
+      item.safetyPassed === true &&
+      typeof item.invoke === "function"
+    );
+    if (!candidate) return null;
     return {
       id: ranked.providerId,
       modelId: ranked.modelId,
@@ -261,6 +265,14 @@ export async function runRankedCouncil({
       invoke: candidate.invoke,
     };
   });
+  if (providers.some((provider) => !provider)) {
+    return {
+      status: "MANUAL_HANDOFF",
+      reason: "SELECTED_ADAPTER_MISSING_OR_UNVERIFIED",
+      routing,
+      council: { status: "MANUAL_HANDOFF", providerCalls: 0 },
+    };
+  }
   const council = await runCouncil({ objective, providers, timeoutMs, now });
   return {
     status: council.status,
