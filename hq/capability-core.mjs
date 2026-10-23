@@ -147,3 +147,78 @@ export function assessSyncEnvelope(envelope = {}) {
     limitation: "Schema validation only; authentication, authorization, encryption in transit, tenant isolation, and persistence are not verified.",
   };
 }
+
+
+/**
+ * Rank providers only when comparable benchmark evidence is complete.
+ * Missing values are UNKNOWN and exclude a candidate; they are never treated as zero.
+ * Scores must come from a separately verified benchmark pipeline.
+ */
+export function rankProvidersForTask({
+  taskType,
+  requiredCapabilities = [],
+  providers = [],
+  maxLatencyMs = 30000,
+  maxCostMicros = 100000,
+  minimumQuality = 0.65,
+} = {}) {
+  if (typeof taskType !== "string" || !taskType.trim()) {
+    return { status: "BLOCKED", reason: "TASK_TYPE_REQUIRED", candidates: [] };
+  }
+  if (!Array.isArray(requiredCapabilities) || !Array.isArray(providers)) {
+    return { status: "BLOCKED", reason: "INVALID_ROUTING_INPUT", candidates: [] };
+  }
+  if (!Number.isFinite(maxLatencyMs) || maxLatencyMs <= 0 ||
+      !Number.isFinite(maxCostMicros) || maxCostMicros < 0 ||
+      !Number.isFinite(minimumQuality) || minimumQuality < 0 || minimumQuality > 1) {
+    return { status: "BLOCKED", reason: "INVALID_ROUTING_CONSTRAINTS", candidates: [] };
+  }
+
+  const candidates = [];
+  const seenProviders = new Set();
+  const seenModels = new Set();
+  for (const p of providers) {
+    if (!p || typeof p.providerId !== "string" || !p.providerId.trim() ||
+        typeof p.modelId !== "string" || !p.modelId.trim()) continue;
+    if (seenProviders.has(p.providerId) || seenModels.has(p.modelId)) continue;
+    if (p.status !== "WORLD_STATE_VERIFIED" || p.authorized !== true ||
+        p.liveTestPassed !== true || p.safetyPassed !== true) continue;
+    if (!Array.isArray(p.capabilities) ||
+        !requiredCapabilities.every((capability) => p.capabilities.includes(capability))) continue;
+    const quality = p.qualityByTask?.[taskType];
+    const reliability = p.reliability;
+    const latencyMs = p.latencyMs;
+    const costMicros = p.costMicros;
+    const evidenceId = p.benchmarkEvidenceId;
+    // All decision-critical metrics and their provenance are required.
+    if (![quality, reliability].every((v) => Number.isFinite(v) && v >= 0 && v <= 1) ||
+        !Number.isFinite(latencyMs) || latencyMs <= 0 ||
+        !Number.isFinite(costMicros) || costMicros < 0 ||
+        typeof evidenceId !== "string" || !evidenceId.trim()) continue;
+    if (quality < minimumQuality || latencyMs > maxLatencyMs || costMicros > maxCostMicros) continue;
+
+    const latencyScore = Math.max(0, 1 - latencyMs / maxLatencyMs);
+    const costScore = maxCostMicros === 0 ? (costMicros === 0 ? 1 : 0) : Math.max(0, 1 - costMicros / maxCostMicros);
+    const utility = 0.55 * quality + 0.25 * reliability + 0.10 * latencyScore + 0.10 * costScore;
+    candidates.push({
+      providerId: p.providerId,
+      modelId: p.modelId,
+      taskType,
+      quality,
+      reliability,
+      latencyMs,
+      costMicros,
+      utility: Number(utility.toFixed(6)),
+      benchmarkEvidenceId: evidenceId,
+    });
+    seenProviders.add(p.providerId);
+    seenModels.add(p.modelId);
+  }
+  candidates.sort((a, b) => b.utility - a.utility);
+  return {
+    status: candidates.length ? "RANKED" : "NO_EVIDENCE_QUALIFIED_CANDIDATE",
+    candidates,
+    weights: { quality: 0.55, reliability: 0.25, latency: 0.10, cost: 0.10 },
+    limitation: "Ranking is only as trustworthy as the benchmark evidence and authorization state supplied; this function does not verify those sources or invoke providers.",
+  };
+}
