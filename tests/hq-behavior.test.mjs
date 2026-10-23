@@ -56,13 +56,13 @@ function createApp({ initialStore = null, failWrites = false, confirms = [] } = 
     "page-title", "page-sub", "save-task", "clear-task", "task-title", "task-constraints",
     "task-route", "save-memory", "memory-title", "memory-body", "save-audit", "audit-claim",
     "audit-proof", "audit-status", "export-data", "import-file", "clear-data",
-    "view-overview", "view-workspace", "view-console", "view-integrations", "view-memory", "view-audit", "view-settings", "prompt-format", "prompt-context", "prompt-input", "prompt-status", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-reply", "attach-reply",
+    "view-overview", "view-workspace", "view-console", "view-integrations", "view-upgrades", "view-memory", "view-audit", "view-settings", "prompt-format", "prompt-context", "prompt-input", "prompt-status", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-reply", "attach-reply", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log", "hq-version",
   ];
   const elements = new Map(ids.map((id) => [id, new FakeElement(id)]));
   elements.get("task-route").value = "manual";
   elements.get("audit-status").value = "OBSERVED";
   elements.get("prompt-format").value = "conversational";
-  const views = ["overview", "workspace", "console", "integrations", "memory", "audit", "settings"].map((name) => {
+  const views = ["overview", "workspace", "console", "integrations", "upgrades", "memory", "audit", "settings"].map((name) => {
     const el = elements.get("view-" + name);
     el.classList.add("view");
     return el;
