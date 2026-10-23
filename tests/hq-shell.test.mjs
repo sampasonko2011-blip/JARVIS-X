@@ -202,5 +202,6 @@ test("HQ upgrade center separates read-only update discovery from privileged cha
   assert.ok(html.includes("registration.update()"));
   assert.ok(html.includes("Always requires approval"));
   assert.ok(html.includes("No code was changed"));
-  assert.ok(html.includes("automatic_provider_installation"));
+  assert.ok(html.includes("No code was changed"));
+  assert.ok(html.includes("publishing and promoting releases remain a reviewed deployment action"));
 });
