@@ -46,3 +46,10 @@ Conversation drafts and integration requests share the current browser's local s
 The upgrade center checks a same-origin, schema-validated stable release manifest and records the result locally. Service-worker update discovery is triggered on app startup. This is **not** a self-modifying runtime: the static site cannot publish new code, change its own repository, or install provider adapters by itself.
 
 Model scouting is a planned backend capability. A future scout must discover candidates, pin exact versions, run comparable quality/latency/cost/safety/privacy tests, and produce a reviewable proposal. Provider activation, credential use, paid usage, plugin scopes, destructive migrations, and production promotion require explicit authorization. Automatic discovery is permitted; automatic privilege escalation is not.
+
+
+## Direct chat interface
+
+The dedicated Chat tab renders persistent local conversation history and uses `GET /api/v1/health` plus `POST /api/v1/chat` on the same origin. The send control remains disabled until the health endpoint returns `{ "status": "ok", "chat_enabled": true, "authenticated": true }`. The chat endpoint must return a non-empty `reply` string. If the gateway is absent, fails authentication, or returns an invalid response, HQ does not fabricate an assistant answer. A message is sent only after the health gate passes.
+
+**The static GitHub Pages release does not include these API endpoints**, so the live interface will honestly report that direct chat is not connected until a separately deployed authenticated gateway is installed. This is not the same as being connected to this ChatGPT conversation or inheriting a ChatGPT account session. Never put a provider API key in browser code.
