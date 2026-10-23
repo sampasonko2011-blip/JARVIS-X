@@ -12,6 +12,12 @@
 - Failure, timeout, invalid content type, invalid JSON, invalid schema, and HTTP errors fail closed and keep direct chat disabled.
 - Diagnostic reports contain timestamp, endpoint, status, latency, HTTP status, a client diagnostic ID, optional server trace ID, service/version/environment, and provider status claims. They intentionally exclude prompts, message bodies, cookies, authorization headers, and credentials.
 
+### Direct chat request bounds
+
+- The direct-chat health check uses a five-second abort timeout and must validate the same required identity/version/environment fields as the Security Gateway view before enabling chat.
+- The chat POST uses a fifteen-second client-side timeout. A timeout is **delivery unknown**, not proof that the server did not process the message; users must verify server-side delivery before retrying to avoid duplicate actions.
+- These client-side timeouts do not replace backend timeouts, idempotency, authorization, rate limits, or audit controls.
+
 ## Required backend contract (proposed, not live)
 
 ### `GET /api/v1/health`
