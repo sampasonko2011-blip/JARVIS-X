@@ -86,11 +86,25 @@ export function assessToolRequest(request = {}) {
   const action = typeof request.action === "string" ? request.action.toLowerCase() : "";
   const toolId = typeof request.toolId === "string" ? request.toolId.trim() : "";
   const scope = Array.isArray(request.scope) ? [...new Set(request.scope.filter((s) => typeof s === "string"))] : [];
-  const hasApproval = request.approval?.approved === true &&
-    typeof request.approval?.approvedBy === "string" &&
-    request.approval.approvedBy.trim().length > 0 &&
-    typeof request.approval?.approvalId === "string" &&
-    request.approval.approvalId.trim().length > 0;
+  const approval = request.approval;
+  const approvedScopes = Array.isArray(approval?.scope)
+    ? [...new Set(approval.scope.filter((item) => typeof item === "string"))].sort()
+    : [];
+  const requestedScopes = [...scope].sort();
+  const hasApproval = approval?.approved === true &&
+    typeof approval?.approvedBy === "string" &&
+    approval.approvedBy.trim().length > 0 &&
+    typeof approval?.approvalId === "string" &&
+    approval.approvalId.trim().length > 0 &&
+    typeof request.requestId === "string" &&
+    request.requestId.trim().length > 0 &&
+    approval.requestId === request.requestId &&
+    approval.toolId === toolId &&
+    typeof approval.action === "string" &&
+    approval.action.toLowerCase() === action &&
+    Array.isArray(approval.scope) &&
+    approvedScopes.length === requestedScopes.length &&
+    approvedScopes.every((item, index) => item === requestedScopes[index]);
   if (!toolId || !action) return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "INVALID_REQUEST" };
   if (!READ_ACTIONS.has(action) && !WRITE_ACTIONS.has(action)) {
     return { allowed: false, requiresApproval: true, risk: "UNKNOWN", reason: "UNSUPPORTED_ACTION", toolId, action };
