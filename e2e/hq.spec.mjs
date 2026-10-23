@@ -228,3 +228,17 @@ test("HQ shell sets a restrictive same-origin content security policy", async ({
   expect(csp).not.toContain("https:");
   expect(await page.locator('meta[name="referrer"]').getAttribute("content")).toBe("no-referrer");
 });
+
+
+test("renders hostile memory text as inert text instead of executable markup", async ({ page }) => {
+  const hostile = '<img src=x onerror="window.__hqXss=1"> hostile title';
+  await page.locator('[data-view="memory"]').click();
+  await page.locator("#memory-title").fill(hostile);
+  await page.locator("#memory-body").fill('<svg onload="window.__hqXss=2"></svg>');
+  await page.locator("#save-memory").click();
+
+  await expect(page.locator("#memory-list")).toContainText(hostile);
+  await expect(page.locator("#memory-list img")).toHaveCount(0);
+  await expect(page.locator("#memory-list svg")).toHaveCount(0);
+  expect(await page.evaluate(() => (window).__hqXss)).toBeUndefined();
+});
