@@ -215,3 +215,14 @@ test("HQ direct chat is a real gateway client but fails closed without authentic
   assert.ok(html.includes("No simulated assistant answers"));
   assert.ok(html.includes("No message will be sent until an authenticated gateway is verified."));
 });
+
+test("HQ upgrade proposals expose individual approve and dismiss controls and hard failure gates", async () => {
+  const html = await read("hq/index.html");
+  for (const id of ["upgrade-proposals", "proposal-status"]) assert.ok(html.includes('id="' + id + '"'));
+  for (const id of ["secure-chat-gateway", "cross-device-memory", "multi-model-adapters", "closed-loop-self-audit", "plugin-broker", "cross-platform-pwa"]) assert.ok(html.includes("id:'" + id + "'"));
+  assert.ok(html.includes("APPROVED FOR PLANNING"));
+  assert.ok(html.includes("DISMISSED"));
+  assert.ok(html.includes("Repeated failure is REJECTED or SUPERSEDED"));
+  assert.ok(html.includes("planning-only"));
+  assert.ok(html.includes("upgradeProposals"));
+});
