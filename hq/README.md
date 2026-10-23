@@ -98,3 +98,10 @@ This is a tested-by-design contract layer, not a live integration. Multi-AI call
 `hq/council-runtime.mjs` runs an explicit lead → independent critic → synthesizer pipeline over injected adapters. By default it requires three distinct provider IDs and model IDs, authorization and live-test flags, and a verified state before invocation. It applies bounded input/output/time limits, redacts arbitrary provider errors, records stage receipts when supplied, and refuses to label failed or incomplete stages as a completed council. Regression tests cover the success path, invalid/duplicate/unverified providers, stage failures, timeout abort, empty replies, and error redaction.
 
 This runtime does not discover or connect providers and contains no provider SDKs, credentials, or network client. Its eligibility fields are a contract for a future trusted server-side adapter layer, not cryptographic proof by themselves. The automated tests use mock adapters; live multi-AI orchestration remains NOT CONNECTED.
+
+
+### Evidence-gated routing and tool execution contracts
+
+- `hq/capability-core.mjs` now includes task-aware provider ranking that requires complete, benchmarked quality/reliability/latency/cost evidence and filters by required capabilities, authorization, safety, and live-test status. Missing metrics stay UNKNOWN rather than being treated as zero.
+- `hq/tool-broker-runtime.mjs` provides an injected executor boundary with exact scopes, explicit approval for writes, a pre-execution audit gate, idempotency key, bounded timeout, output validation, and independent world-state verification. Timeouts are OUTCOME_UNKNOWN and are not automatically retried.
+- These are local executable contracts with mock-based tests, not connected providers or tools. Real adapters, benchmark-source verification, durable audit storage, and live end-to-end tests remain required.
