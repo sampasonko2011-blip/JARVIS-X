@@ -137,3 +137,19 @@ test("council timeout aborts the adapter signal and returns a bounded failure", 
   assert.equal(result.stages[0].reason, "TIMEOUT");
   assert.equal(signalAborted, true);
 });
+
+
+test("council rejects malformed provider collections and oversized replies", async () => {
+  assert.equal(
+    (await runCouncil({ objective: "Malformed", providers: {} })).reason,
+    "PROVIDERS_MUST_BE_AN_ARRAY"
+  );
+  const providers = [
+    provider("lead", "x".repeat(60001)),
+    provider("critic", "critique"),
+    provider("synth", "synthesis"),
+  ];
+  const result = await runCouncil({ objective: "Bound outputs", providers });
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.stages[0].reason, "REPLY_TOO_LONG");
+});
