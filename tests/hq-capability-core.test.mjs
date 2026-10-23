@@ -103,13 +103,13 @@ test("provider router ranks only complete, authorized, benchmarked candidates", 
       providerId: "provider-a", modelId: "model-a",
       status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
       capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.92 },
-      reliability: 0.96, latencyMs: 3000, costMicros: 250, benchmarkEvidenceId: "bench-a",
+      reliability: 0.96, latencyMs: 3000, costMicros: 250, benchmarkEvidenceId: "bench-a", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
     },
     {
       providerId: "provider-b", modelId: "model-b",
       status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
       capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.84 },
-      reliability: 0.98, latencyMs: 1800, costMicros: 100, benchmarkEvidenceId: "bench-b",
+      reliability: 0.98, latencyMs: 1800, costMicros: 100, benchmarkEvidenceId: "bench-b", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
     },
     {
       providerId: "provider-c", modelId: "model-c",
@@ -145,7 +145,7 @@ test("provider router keeps unknown metrics distinct from zero and fails closed"
     providerId: "provider-a", modelId: "model-a",
     status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
     capabilities: ["reasoning"], qualityByTask: { math: 0.9 },
-    reliability: 0.9, costMicros: 0, benchmarkEvidenceId: "bench-a",
+    reliability: 0.9, costMicros: 0, benchmarkEvidenceId: "bench-a", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
   };
   assert.equal(rankProvidersForTask({ taskType: "math", providers: [missingLatency] }).status, "NO_EVIDENCE_QUALIFIED_CANDIDATE");
   assert.equal(rankProvidersForTask({ taskType: "", providers: [] }).reason, "TASK_TYPE_REQUIRED");
