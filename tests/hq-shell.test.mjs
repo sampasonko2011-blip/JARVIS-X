@@ -124,6 +124,29 @@ test("HQ inline JavaScript has no escaped line break between declarations", asyn
 });
 
 
+test("HQ security and multi-AI deployment claims stay explicit and gated", async () => {
+  const html = await read("hq/index.html");
+  const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/);
+  assert.ok(csp, "HQ shell should define a CSP");
+  assert.ok(csp[1].includes("default-src 'self'"));
+  assert.ok(csp[1].includes("object-src 'none'"));
+  assert.ok(csp[1].includes("connect-src 'self'"));
+  assert.ok(csp[1].includes("base-uri 'self'"));
+  assert.ok(html.includes('<meta name="referrer" content="no-referrer">'));
+
+  const architecture = await read("docs/hq-multi-ai-architecture.md");
+  assert.ok(architecture.includes("**Status: PROPOSED.**"));
+  assert.ok(architecture.includes("server-side secrets only"));
+  assert.ok(architecture.includes("user A cannot read/write user B"));
+  assert.ok(architecture.includes("Gate E — multi-provider orchestration"));
+
+  const workflow = await read(".github/workflows/deploy-hq-pages.yml");
+  assert.ok(workflow.includes("branches: [main]"));
+  assert.ok(workflow.includes("path: hq"));
+  assert.ok(workflow.includes("actions/deploy-pages@v4"));
+  assert.ok(!workflow.includes("secrets."));
+});
+
 test("HQ inline application script parses as valid JavaScript", async () => {
   const html = await read("hq/index.html");
   const opening = html.lastIndexOf("<script>");
