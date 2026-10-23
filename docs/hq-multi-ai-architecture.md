@@ -135,3 +135,51 @@ Implementation of the backend cannot responsibly guess:
 - retention/deletion policy and allowed tool scopes.
 
 Do not paste API keys into chat, browser JavaScript or Git. Configure secrets through the selected provider's secure secret manager after the hosting choice is approved.
+
+
+## Cross-platform memory API contract (proposed, not deployed)
+
+The target is one account-scoped memory graph accessible from the HQ PWA and any separately authorized connector client. The HQ UI is never the source of authorization truth.
+
+### Resource boundaries
+
+- `GET /v1/me` — return the authenticated account's stable subject and permitted capabilities.
+- `GET /v1/memories?cursor=…` — return only the current subject's authorized memory records, with pagination and sync cursor.
+- `PUT /v1/memories/{id}` — create/update one memory using an idempotency key and expected revision (optimistic concurrency).
+- `DELETE /v1/memories/{id}` — tombstone a record so deletion propagates to authorized devices and backup lifecycle.
+- `GET /v1/sync?cursor=…` — return versioned changes/tombstones since a cursor; cursor is bound to the current user.
+- `POST /v1/exports` and `POST /v1/deletions` — explicit export/delete workflows with status tracking.
+- `POST /v1/ai/responses` — optional provider-gateway request; validates data scope, model allowlist, budget, output format, and consent before dispatch.
+
+Every route must require a valid session, apply per-object authorization, validate schemas and body sizes, rate-limit, and emit a redacted audit event. Missing/expired auth fails closed. A connector can access only scopes the user explicitly grants; a ChatGPT connector or browser session is not automatically inherited by the static HQ.
+
+### Memory record shape
+
+```json
+{
+  "id": "stable-random-id",
+  "schema_version": 1,
+  "owner_id": "server-derived-subject",
+  "kind": "user|project|evidence",
+  "title": "User-visible title",
+  "content": "User-approved context",
+  "source": {"type": "user|tool|model", "ref": "optional-source-reference"},
+  "status": "OBSERVED|VALIDATED|PROPOSED|UNPROVEN|REJECTED|SUPERSEDED",
+  "sensitivity": "normal|sensitive",
+  "revision": 1,
+  "created_at": "server timestamp",
+  "updated_at": "server timestamp",
+  "deleted_at": null
+}
+```
+
+`owner_id` is assigned by the server, never trusted from request JSON. Model/tool-sourced content remains proposed until a user or independent validation gate promotes it. Sensitive memory should be excluded from provider calls unless the user explicitly consents to that specific transfer.
+
+### Sync and merge behavior
+
+- Local changes enter an outbox with stable operation IDs; retry is idempotent.
+- Each record has a monotonic server revision or ETag. A stale write returns a conflict rather than silently overwriting newer data.
+- Text conflicts preserve both versions for review; never auto-merge evidence-status transitions or deletion/resurrection.
+- Tombstones propagate deletion; restores require an explicit recovery flow and audit event.
+- Offline records remain marked local/un-synced until the server acknowledges them. UI must never label a queued write as synchronized.
+- Connectors retrieve data only through the same authorization boundary and never gain broad database access.
