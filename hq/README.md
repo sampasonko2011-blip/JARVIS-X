@@ -82,3 +82,12 @@ Image Studio remains a prompt-preparation/handoff workbench; actual image genera
 ## Security Gateway console (feature branch)
 
 The Security Gateway view provides a permanent navigation entry, fail-closed health probe, bounded timeout, response schema validation, server-reported provider status separation, and a safe diagnostic report. The browser UI is not the backend: the actual gateway is **not deployed** on GitHub Pages. The console begins as UNAVAILABLE and only changes status after a real response; Playwright route mocks test behavior but do not prove a live service exists. See `docs/hq-security-gateway-contract.md` for the proposed health/chat contracts and production gates. GitHub Pages cannot run the server-side API routes, and this change does not add hosting, connect provider accounts, or store secrets.
+
+
+## Capability activation core (separate feature branch)
+
+The capability activation work is deliberately sequenced before the Security Gateway/backend. See `docs/hq-capability-activation-plan.md`.
+
+The provider-neutral `hq/capability-core.mjs` defines evidence lifecycle transitions, honest Multi-AI council eligibility with manual fallback, fail-closed tool request policy, execution receipt validation, and a versioned sync-envelope schema. It has no network, credential, filesystem, provider, or external-tool side effects. Tests live in `tests/hq-capability-core.test.mjs`.
+
+This is a tested-by-design contract layer, not a live integration. Multi-AI calls, image generation, plugin execution, and authenticated cross-device sync remain NOT CONNECTED until separately authorized adapters/backend work and end-to-end verification exist. The Security Gateway remains in PR #39 and is intentionally deferred to the final backend phase.
