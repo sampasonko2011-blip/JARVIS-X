@@ -56,7 +56,7 @@ function createApp({ initialStore = null, failWrites = false, confirms = [] } = 
     "page-title", "page-sub", "save-task", "clear-task", "task-title", "task-constraints",
     "task-route", "save-memory", "memory-title", "memory-body", "save-audit", "audit-claim",
     "audit-proof", "audit-status", "export-data", "import-file", "clear-data",
-    "view-overview", "view-workspace", "view-console", "view-integrations", "view-upgrades", "view-memory", "view-audit", "view-settings", "prompt-format", "prompt-context", "prompt-input", "prompt-status", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-reply", "attach-reply", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log", "hq-version",
+    "view-overview", "view-workspace", "view-chat", "view-console", "view-integrations", "view-upgrades", "view-memory", "view-audit", "view-settings", "chat-thread", "chat-compose", "chat-send", "chat-check-gateway", "chat-clear-draft", "chat-gateway-status", "chat-connection-tag", "prompt-format", "prompt-context", "prompt-input", "prompt-status", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-reply", "attach-reply", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log", "hq-version",
   ];
   const elements = new Map(ids.map((id) => [id, new FakeElement(id)]));
   elements.get("task-route").value = "manual";
@@ -67,7 +67,7 @@ function createApp({ initialStore = null, failWrites = false, confirms = [] } = 
     el.classList.add("view");
     return el;
   });
-  const navs = ["overview", "workspace", "console", "integrations", "memory", "audit", "settings"].map((name) => {
+  const navs = ["overview", "workspace", "chat", "console", "integrations", "memory", "audit", "settings"].map((name) => {
     const el = new FakeElement("nav-" + name);
     el.dataset.view = name;
     return el;
