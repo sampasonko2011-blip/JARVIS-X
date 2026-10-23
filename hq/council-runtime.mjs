@@ -49,8 +49,13 @@ async function invokeBounded(provider, payload, timeoutMs) {
         }, timeoutMs);
       }),
     ]);
-    const reply = cleanText(result?.text, MAX_REPLY_CHARS);
-    if (!reply) return { ok: false, reason: "EMPTY_OR_INVALID_REPLY" };
+    if (typeof result?.text !== "string" || !result.text.trim()) {
+      return { ok: false, reason: "EMPTY_OR_INVALID_REPLY" };
+    }
+    if (result.text.trim().length > MAX_REPLY_CHARS) {
+      return { ok: false, reason: "REPLY_TOO_LONG" };
+    }
+    const reply = result.text.trim();
     return {
       ok: true,
       reply,
@@ -110,6 +115,9 @@ export async function runCouncil({
   if (task.length >= MAX_OBJECTIVE_CHARS) return { status: "BLOCKED", reason: "OBJECTIVE_TOO_LONG", stages: [], providerCalls: 0 };
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > MAX_TIMEOUT_MS) {
     return { status: "BLOCKED", reason: "INVALID_TIMEOUT", stages: [], providerCalls: 0 };
+  }
+  if (!Array.isArray(providers)) {
+    return { status: "BLOCKED", reason: "PROVIDERS_MUST_BE_AN_ARRAY", stages: [], providerCalls: 0 };
   }
 
   const unique = [];
