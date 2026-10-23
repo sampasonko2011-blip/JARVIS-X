@@ -90,14 +90,14 @@ export function assessToolRequest(request = {}) {
   const toolId = typeof request.toolId === "string" ? request.toolId.trim() : "";
   const rawScope = Array.isArray(request.scope) ? request.scope : null;
   const malformedScope = rawScope !== null && (
-    rawScope.some((item) => typeof item !== "string" || !item.trim()) ||
+    rawScope.some((item) => typeof item !== "string" || !item.trim() || item.trim() !== item) ||
     new Set(rawScope).size !== rawScope.length
   );
   const scope = rawScope ? [...rawScope] : [];
   const approval = request.approval;
   const approvalScope = Array.isArray(approval?.scope) ? approval.scope : null;
   const malformedApprovalScope = approvalScope !== null && (
-    approvalScope.some((item) => typeof item !== "string" || !item.trim()) ||
+    approvalScope.some((item) => typeof item !== "string" || !item.trim() || item.trim() !== item) ||
     new Set(approvalScope).size !== approvalScope.length
   );
   const approvedScopes = approvalScope ? [...approvalScope].sort() : [];
