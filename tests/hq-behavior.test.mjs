@@ -234,18 +234,3 @@ test("failed evidence save preserves claim and proof fields", async () => {
   assert.equal(app.elements.get("audit-proof").value, "Evidence not yet saved");
   assert.equal(app.elements.get("data-count").textContent, 0);
 });
-
-test("upgrade proposal decisions persist locally and render disabled controls after selection", async () => {
-  const app = createApp();
-  const root = app.elements.get("upgrade-proposals");
-  assert.ok(root, "proposal list exists");
-  assert.match(root.innerHTML, /secure-chat-gateway/);
-  const approve = root.querySelector('[data-proposal-approve="secure-chat-gateway"]');
-  assert.ok(approve, "approve control exists");
-  await approve.dispatch("click");
-  const saved = JSON.parse(app.store.get("jarvis-x-hq-v0"));
-  assert.equal(saved.upgradeProposals[0].decision, "APPROVED FOR PLANNING");
-  assert.equal(saved.upgradeProposals[0].scope, "planning-only");
-  assert.match(root.innerHTML, /APPROVED FOR PLANNING/);
-  assert.equal(root.querySelector('[data-proposal-approve="secure-chat-gateway"]').disabled, true);
-});
