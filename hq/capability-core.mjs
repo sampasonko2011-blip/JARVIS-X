@@ -56,13 +56,16 @@ export function buildCouncilPlan({ objective, providers = [], requireIndependent
   if (!task) throw new TypeError("objective must be a non-empty string");
   const eligible = providers.filter((provider) =>
     provider &&
-    typeof provider.id === "string" &&
+    typeof provider.id === "string" && provider.id.trim() &&
+    typeof provider.modelId === "string" && provider.modelId.trim() &&
     provider.status === "WORLD_STATE_VERIFIED" &&
     provider.authorized === true &&
     provider.liveTestPassed === true
   );
   const lead = eligible[0] ?? null;
-  const critic = eligible.find((provider) => provider.id !== lead?.id) ?? null;
+  const critic = eligible.find((provider) =>
+    provider.id !== lead?.id && provider.modelId !== lead?.modelId
+  ) ?? null;
   return Object.freeze({
     objective: task,
     mode: lead && (!requireIndependentCritic || critic) ? "LIVE_ELIGIBLE" : "MANUAL_HANDOFF",
