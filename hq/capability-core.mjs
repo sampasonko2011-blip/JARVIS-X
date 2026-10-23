@@ -95,6 +95,9 @@ export function assessToolRequest(request = {}) {
   const requiresApproval = WRITE_ACTIONS.has(action);
   const risk = HIGH_RISK.has(action) ? "HIGH" : requiresApproval ? "MATERIAL" : "LOW";
   if (request.enabled !== true) return { allowed: false, requiresApproval, risk, reason: "TOOL_NOT_ENABLED", toolId, action, scope };
+  if (!Array.isArray(request.allowedScopes) || scope.some((requested) => !request.allowedScopes.includes(requested))) {
+    return { allowed: false, requiresApproval: true, risk, reason: "SCOPE_NOT_GRANTED", toolId, action, scope };
+  }
   if (requiresApproval && !hasApproval) return { allowed: false, requiresApproval: true, risk, reason: "EXPLICIT_APPROVAL_REQUIRED", toolId, action, scope };
   return {
     allowed: true,
