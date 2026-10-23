@@ -105,13 +105,13 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v2'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v3'"));
   assert.ok(sw.includes("key.startsWith('jarvis-x-hq-shell-')"));
   assert.ok(sw.includes("if (request.method !== 'GET') return"));
   assert.ok(sw.includes("if (url.origin !== self.location.origin) return"));
   assert.ok(sw.includes("const allowed = new Set(SHELL.map"));
   assert.ok(sw.includes("if (request.mode === 'navigate')"));
-  assert.ok(sw.includes("const cached = await caches.match('./index.html')"));
+  assert.ok(sw.includes("const cached = await caches.match(request) || await caches.match('./index.html')"));
 });
 
 
@@ -236,4 +236,17 @@ test("HQ capability control plane has honest multi-AI and encrypted vault bounda
     'id="council-synthesis"', 'No AI was called', 'not live synchronization',
     'never leaves this page', 'No provider was called'
   ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
+});
+
+
+test("Mission Control is linked from the primary HQ navigation and included in the offline shell", async () => {
+  const html = await read("hq/index.html");
+  const sw = await read("hq/sw.js");
+  const mission = await read("hq/mission-control.html");
+  const script = await read("hq/mission-control.js");
+  assert.ok(html.includes('href="./mission-control.html"'));
+  assert.ok(sw.includes("'./mission-control.html'"));
+  assert.ok(mission.includes("script-src 'self';"));
+  assert.ok(mission.includes('src="./mission-control.js" defer'));
+  assert.ok(script.includes("jarvis-x-portable-handoff"));
 });

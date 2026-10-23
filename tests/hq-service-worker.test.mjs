@@ -83,6 +83,7 @@ test("service worker precaches the app shell and activates without deleting unre
   listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./mission-control.html")), "Mission Control must be precached");
   assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
 
   let activatePromise;
@@ -132,4 +133,25 @@ test("offline navigation returns an explicit network error when the shell is mis
   });
   const response = await responsePromise;
   assert.equal(response.type, "error");
+});
+
+
+test("offline Mission Control navigation serves the cached Mission Control page", async () => {
+  const { listeners } = await loadWorker({
+    fetchImpl: async () => { throw new Error("offline"); },
+    cacheMatchImpl: async (key) => {
+      if (typeof key === "object" && key.url.endsWith("/mission-control.html")) {
+        return new Response("cached Mission Control", { status: 200 });
+      }
+      return undefined;
+    },
+  });
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/mission-control.html", mode: "navigate" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  const response = await responsePromise;
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "cached Mission Control");
 });

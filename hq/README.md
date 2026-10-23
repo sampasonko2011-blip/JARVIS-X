@@ -82,3 +82,15 @@ Image Studio remains a prompt-preparation/handoff workbench; actual image genera
 ## Security Gateway console (feature branch)
 
 The Security Gateway view provides a permanent navigation entry, fail-closed health probe, bounded timeout, response schema validation, server-reported provider status separation, and a safe diagnostic report. The browser UI is not the backend: the actual gateway is **not deployed** on GitHub Pages. The console begins as UNAVAILABLE and only changes status after a real response; Playwright route mocks test behavior but do not prove a live service exists. See `docs/hq-security-gateway-contract.md` for the proposed health/chat contracts and production gates. GitHub Pages cannot run the server-side API routes, and this change does not add hosting, connect provider accounts, or store secrets.
+
+## Mission Control (cross-platform workbench)
+
+mission-control.html is a responsive local-first command surface linked from the main HQ. It includes:
+- A local passphrase gate for casual screen privacy only; it is not server authentication and does not encrypt local browser records.
+- Provider-neutral AI council task packets with explicit lead, critic, and synthesis roles. No live provider calls are made from this static page.
+- Validated portable handoff JSON export/import. Imported context grants no authority; secret-like patterns are rejected and sensitive council tasks cannot be exported.
+- Local workflow checklists with manual completion states; no remote jobs are executed.
+- Browser posture checks and defensive response guidance, not an antivirus or OS-level scanner.
+- Image prompt preparation and handoff; no image is claimed generated without an actual provider result.
+
+The Mission Control JavaScript is a same-origin external file, syntax-checked in CI, and covered by unit and Chromium browser tests. The service worker caches the Mission Control page and uses a bumped shell cache version. The offline shell remains a client app; multi-provider calls, authenticated sync, tool execution, automatic cross-platform recovery, and production malware detection require separately authorized services and independent end-to-end validation.

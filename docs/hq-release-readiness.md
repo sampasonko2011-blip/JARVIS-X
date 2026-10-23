@@ -30,3 +30,17 @@ A capability is not complete merely because its screen, endpoint contract, adapt
 7. Implement remote memory sync only after account identity and tenant isolation are independently validated.
 
 No hosting provider, API key, paid service, or new connector is presumed approved by this register. Do not commit secrets or put them in browser storage.
+
+## Mission Control follow-up (2026-10-23)
+
+| Capability | Current status | Evidence boundary |
+|---|---|---|
+| Mission Control UI | Implemented in feature PR | Responsive client-side AI council packets, handoff bridge, workflow checklist, browser posture panel, image brief builder, local privacy gate. |
+| Cross-platform handoff | Local export/import only | Versioned JSON packet, size/schema checks, secret-pattern rejection, no authority transfer or shared memory. Automated tests must pass on the exact PR head. |
+| Multi-AI calls from Mission Control | NOT CONNECTED | Repository provider adapters exist, but static Pages has no server-side secrets or orchestration endpoint. |
+| Production workflow execution | NOT CONNECTED | UI stores a checklist; no remote jobs or tools are executed. |
+| Authentication | LOCAL PRIVACY GATE ONLY | PBKDF2-derived local verifier in this browser; not a real account, server auth, or protection from developer tools. |
+| Malware / threat response | BROWSER POSTURE ONLY | No OS scan, threat feed, endpoint agent, or automatic containment is claimed. |
+| Image generation | PROMPT HANDOFF ONLY | No generated asset is produced by this page. |
+
+Release gate: CI must validate external script syntax, unit security-boundary tests, Chromium E2E flows, and service-worker precaching of mission-control.html. After merge, verify the exact GitHub Pages URL and physical mobile navigation. Do not claim provider, auth, sync, workflow, image, or endpoint-security capabilities are live without their own deployed service and end-to-end evidence.
