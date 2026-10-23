@@ -266,8 +266,8 @@ export async function runRankedCouncil({
     status: council.status,
     routing: {
       status: routing.status,
-      selected: routing.candidates.map(({ providerId, modelId, utility, benchmarkEvidenceId }) => ({
-        providerId, modelId, utility, benchmarkEvidenceId,
+      selected: routing.candidates.map(({ providerId, modelId, utility, benchmarkEvidenceId, benchmarkSource, benchmarkVersion, benchmarkDate }) => ({
+        providerId, modelId, utility, benchmarkEvidenceId, benchmarkSource, benchmarkVersion, benchmarkDate,
       })),
       weights: routing.weights,
       limitation: routing.limitation,
