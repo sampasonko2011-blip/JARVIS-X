@@ -97,6 +97,24 @@ test("tool broker records policy approval without claiming execution", () => {
       requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123"],
     },
   }).reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(assessToolRequest({
+    requestId: "policy-request-001",
+    toolId: "records", action: "update", scope: ["record:123", 7],
+    allowedScopes: ["record:123"], enabled: true,
+    approval: {
+      approved: true, approvedBy: "owner", approvalId: "approval-001",
+      requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123"],
+    },
+  }).reason, "INVALID_SCOPE_ENCODING");
+  assert.equal(assessToolRequest({
+    requestId: "policy-request-001",
+    toolId: "records", action: "update", scope: ["record:123"],
+    allowedScopes: ["record:123"], enabled: true,
+    approval: {
+      approved: true, approvedBy: "owner", approvalId: "approval-001",
+      requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123", "record:123"],
+    },
+  }).reason, "INVALID_SCOPE_ENCODING");
 });
 
 test("execution receipts cannot claim success without output and world-state verification", () => {
