@@ -8,6 +8,7 @@ import {
   assessToolRequest,
   validateExecutionReceipt,
   assessSyncEnvelope,
+  rankProvidersForTask,
 } from "../hq/capability-core.mjs";
 
 test("capability register preserves current live-state boundaries", () => {
@@ -92,4 +93,60 @@ test("sync envelope schema checks do not claim authentication or persistence", (
   assert.equal(assessSyncEnvelope({
     schemaVersion: 1, accountId: "a", revision: -1, updatedAt: "2026-10-23T12:00:00Z", records: [],
   }).reason, "INVALID_REVISION");
+});
+
+
+test("provider router ranks only complete, authorized, benchmarked candidates", () => {
+  const providers = [
+    {
+      providerId: "provider-a", modelId: "model-a",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.92 },
+      reliability: 0.96, latencyMs: 3000, costMicros: 250, benchmarkEvidenceId: "bench-a",
+    },
+    {
+      providerId: "provider-b", modelId: "model-b",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.84 },
+      reliability: 0.98, latencyMs: 1800, costMicros: 100, benchmarkEvidenceId: "bench-b",
+    },
+    {
+      providerId: "provider-c", modelId: "model-c",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning"], qualityByTask: { research: 0.99 },
+      reliability: 0.99, latencyMs: 1000, costMicros: 0, benchmarkEvidenceId: "bench-c",
+    },
+    {
+      providerId: "provider-unknown", modelId: "model-unknown",
+      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.99 },
+      reliability: 0.99, latencyMs: 100, costMicros: 0,
+    },
+  ];
+  const result = rankProvidersForTask({
+    taskType: "research",
+    requiredCapabilities: ["reasoning", "web-research"],
+    providers,
+    maxLatencyMs: 10000,
+    maxCostMicros: 1000,
+    minimumQuality: 0.8,
+  });
+  assert.equal(result.status, "RANKED");
+  assert.equal(result.candidates.length, 2);
+  assert.equal(result.candidates[0].providerId, "provider-a");
+  assert.equal(result.candidates.some((p) => p.providerId === "provider-c"), false);
+  assert.equal(result.candidates.some((p) => p.providerId === "provider-unknown"), false);
+  assert.equal(result.weights.quality + result.weights.reliability + result.weights.latency + result.weights.cost, 1);
+});
+
+test("provider router keeps unknown metrics distinct from zero and fails closed", () => {
+  const missingLatency = {
+    providerId: "provider-a", modelId: "model-a",
+    status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
+    capabilities: ["reasoning"], qualityByTask: { math: 0.9 },
+    reliability: 0.9, costMicros: 0, benchmarkEvidenceId: "bench-a",
+  };
+  assert.equal(rankProvidersForTask({ taskType: "math", providers: [missingLatency] }).status, "NO_EVIDENCE_QUALIFIED_CANDIDATE");
+  assert.equal(rankProvidersForTask({ taskType: "", providers: [] }).reason, "TASK_TYPE_REQUIRED");
+  assert.equal(rankProvidersForTask({ taskType: "math", maxLatencyMs: 0, providers: [] }).reason, "INVALID_ROUTING_CONSTRAINTS");
 });
