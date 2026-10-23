@@ -139,6 +139,8 @@ export function assessSyncEnvelope(envelope = {}) {
   if (envelope.records.some((record) => !record || typeof record.id !== "string" || !record.id.trim())) {
     return { valid: false, reason: "INVALID_RECORD_ID" };
   }
+  const ids = envelope.records.map((record) => record.id);
+  if (new Set(ids).size !== ids.length) return { valid: false, reason: "DUPLICATE_RECORD_ID" };
   return {
     valid: true,
     schemaVersion: 1,
@@ -249,6 +251,10 @@ export function reconcileSyncEnvelopes(local, remote) {
 
   if ([...local.records, ...remote.records].some((record) => !validateRecord(record))) {
     return { status: "BLOCKED", reason: "INVALID_RECORD_VERSION_METADATA" };
+  }
+
+  if (Math.max(local.revision, remote.revision) >= Number.MAX_SAFE_INTEGER) {
+    return { status: "BLOCKED", reason: "REVISION_OVERFLOW" };
   }
 
   const left = new Map(local.records.map((record) => [record.id, record]));
