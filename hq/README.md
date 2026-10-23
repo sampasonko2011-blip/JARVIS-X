@@ -91,3 +91,10 @@ The capability activation work is deliberately sequenced before the Security Gat
 The provider-neutral `hq/capability-core.mjs` defines evidence lifecycle transitions, honest Multi-AI council eligibility with manual fallback, fail-closed tool request policy, execution receipt validation, and a versioned sync-envelope schema. It has no network, credential, filesystem, provider, or external-tool side effects. Tests live in `tests/hq-capability-core.test.mjs`.
 
 This is a tested-by-design contract layer, not a live integration. Multi-AI calls, image generation, plugin execution, and authenticated cross-device sync remain NOT CONNECTED until separately authorized adapters/backend work and end-to-end verification exist. The Security Gateway remains in PR #39 and is intentionally deferred to the final backend phase.
+
+
+### Executable council core (not yet provider-connected)
+
+`hq/council-runtime.mjs` runs an explicit lead → independent critic → synthesizer pipeline over injected adapters. By default it requires three distinct provider IDs and model IDs, authorization and live-test flags, and a verified state before invocation. It applies bounded input/output/time limits, redacts arbitrary provider errors, records stage receipts when supplied, and refuses to label failed or incomplete stages as a completed council. Regression tests cover the success path, invalid/duplicate/unverified providers, stage failures, timeout abort, empty replies, and error redaction.
+
+This runtime does not discover or connect providers and contains no provider SDKs, credentials, or network client. Its eligibility fields are a contract for a future trusted server-side adapter layer, not cryptographic proof by themselves. The automated tests use mock adapters; live multi-AI orchestration remains NOT CONNECTED.
