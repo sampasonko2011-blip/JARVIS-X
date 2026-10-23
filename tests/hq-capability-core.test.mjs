@@ -65,16 +65,38 @@ test("tool broker policy is fail-closed for missing scope, disabled tools, and w
 
 test("tool broker records policy approval without claiming execution", () => {
   const result = assessToolRequest({
+    requestId: "policy-request-001",
     toolId: "records",
     action: "update",
     scope: ["record:123"],
     allowedScopes: ["record:123"],
     enabled: true,
-    approval: { approved: true, approvedBy: "owner", approvalId: "approval-001" },
+    approval: {
+      approved: true, approvedBy: "owner", approvalId: "approval-001",
+      requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123"],
+    },
   });
   assert.equal(result.allowed, true);
   assert.equal(result.executionStatus, "NOT_INVOKED");
   assert.equal(result.reason, "POLICY_CHECK_PASSED_NOT_EXECUTED");
+  assert.equal(assessToolRequest({
+    requestId: "other-request",
+    toolId: "records", action: "update", scope: ["record:123"],
+    allowedScopes: ["record:123"], enabled: true,
+    approval: {
+      approved: true, approvedBy: "owner", approvalId: "approval-001",
+      requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123"],
+    },
+  }).reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(assessToolRequest({
+    requestId: "policy-request-001",
+    toolId: "records", action: "delete", scope: ["record:123"],
+    allowedScopes: ["record:123"], enabled: true,
+    approval: {
+      approved: true, approvedBy: "owner", approvalId: "approval-001",
+      requestId: "policy-request-001", toolId: "records", action: "update", scope: ["record:123"],
+    },
+  }).reason, "EXPLICIT_APPROVAL_REQUIRED");
 });
 
 test("execution receipts cannot claim success without output and world-state verification", () => {
