@@ -226,3 +226,14 @@ test("HQ upgrade proposals expose individual approve and dismiss controls and ha
   assert.ok(html.includes("planning-only"));
   assert.ok(html.includes("upgradeProposals"));
 });
+
+test("HQ capability control plane has honest multi-AI and encrypted vault boundaries", async () => {
+  const html = await read("hq/index.html");
+  for (const marker of [
+    'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
+    'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
+    'id="council-build"', 'id="council-lead"', 'id="council-challenge"',
+    'id="council-synthesis"', 'No AI was called', 'not live synchronization',
+    'never leaves this page', 'No provider was called'
+  ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
+});
