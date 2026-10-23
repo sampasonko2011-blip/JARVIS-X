@@ -338,6 +338,7 @@ test("upgrade proposals show per-candidate decisions and preserve approval as pl
 test("image studio builds a local prompt and never claims an image was generated", async ({ page }) => {
   await page.locator('[data-view="images"]').click();
   await expect(page.locator("#view-images")).toBeVisible();
+  await expect(page.locator("#page-title")).toHaveText("Image Studio");
   await page.locator("#image-subject").fill("A futuristic football training academy at sunset");
   await page.locator("#image-style").selectOption({label:"Premium 3D render"});
   await page.locator("#image-ratio").selectOption({label:"16:9 landscape"});
