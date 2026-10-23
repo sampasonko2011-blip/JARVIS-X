@@ -68,6 +68,7 @@ test("tool broker records policy approval without claiming execution", () => {
     toolId: "records",
     action: "update",
     scope: ["record:123"],
+    allowedScopes: ["record:123"],
     enabled: true,
     approval: { approved: true, approvedBy: "owner", approvalId: "approval-001" },
   });
@@ -218,4 +219,12 @@ test("sync schema rejects duplicate record IDs instead of silently overwriting",
     records: [{ id: "same" }, { id: "same" }],
   };
   assert.equal(assessSyncEnvelope(duplicate).reason, "DUPLICATE_RECORD_ID");
+});
+
+
+test("tool policy rejects missing or ungranted allowed scopes", () => {
+  const request = { toolId: "records", action: "read", scope: ["record:1:read"], enabled: true };
+  assert.equal(assessToolRequest(request).reason, "SCOPE_NOT_GRANTED");
+  assert.equal(assessToolRequest({ ...request, allowedScopes: ["record:2:read"] }).reason, "SCOPE_NOT_GRANTED");
+  assert.equal(assessToolRequest({ ...request, allowedScopes: ["record:1:read"] }).allowed, true);
 });
