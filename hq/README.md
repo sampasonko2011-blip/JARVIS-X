@@ -39,3 +39,10 @@ The HQ includes a multi-format prompt workspace (conversational, structured repo
 The Integrations page is a **local planning registry**, not a live connector. OpenAI-compatible gateway, GitHub, Notion, Canva, Airtable and local model runtime are proposed integration targets only. No ChatGPT account/session, connected plugin, or cross-platform memory is inherited by the static site.
 
 Conversation drafts and integration requests share the current browser's local storage and are included in local backup exports. They are not encrypted, authenticated or synchronized between devices. Cross-device memory requires a separately deployed backend, managed authentication, per-user authorization, secure server-side secrets, deletion/export controls, and verified tenant-isolation tests.
+
+
+## Governed upgrade center (current branch)
+
+The upgrade center checks a same-origin, schema-validated stable release manifest and records the result locally. Service-worker update discovery is triggered on app startup. This is **not** a self-modifying runtime: the static site cannot publish new code, change its own repository, or install provider adapters by itself.
+
+Model scouting is a planned backend capability. A future scout must discover candidates, pin exact versions, run comparable quality/latency/cost/safety/privacy tests, and produce a reviewable proposal. Provider activation, credential use, paid usage, plugin scopes, destructive migrations, and production promotion require explicit authorization. Automatic discovery is permitted; automatic privilege escalation is not.
