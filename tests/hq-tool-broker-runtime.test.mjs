@@ -3,7 +3,15 @@ import assert from "node:assert/strict";
 import { executeAuthorizedTool } from "../hq/tool-broker-runtime.mjs";
 
 const tool = { id: "records", enabled: true, allowedScopes: ["record:123:read", "record:123:update"] };
-const approval = { approved: true, approvedBy: "owner", approvalId: "approval-123" };
+const approval = {
+  approved: true,
+  approvedBy: "owner",
+  approvalId: "approval-123",
+  requestId: "request-123",
+  toolId: "records",
+  action: "update",
+  scope: ["record:123:update"],
+};
 function request(overrides = {}) {
   return {
     requestId: "request-123",
@@ -59,6 +67,34 @@ test("tool broker blocks ungranted scope, missing approval, or unavailable verif
   assert.equal(noApproval.reason, "EXPLICIT_APPROVAL_REQUIRED");
   const noVerifier = await executeAuthorizedTool({ ...base, request: request(), verifyWorldState: undefined });
   assert.equal(noVerifier.reason, "EXECUTOR_VERIFIERS_AND_AUDIT_REQUIRED");
+  assert.equal(calls, 0);
+});
+
+test("tool broker rejects approvals bound to a different action or request", async () => {
+  let calls = 0;
+  const base = {
+    request: request(),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    audit: auditOk,
+  };
+  const wrongRequest = await executeAuthorizedTool({
+    ...base,
+    request: request({ approval: { ...approval, requestId: "another-request" } }),
+  });
+  assert.equal(wrongRequest.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  const wrongAction = await executeAuthorizedTool({
+    ...base,
+    request: request({ approval: { ...approval, action: "delete" } }),
+  });
+  assert.equal(wrongAction.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  const wrongScope = await executeAuthorizedTool({
+    ...base,
+    request: request({ approval: { ...approval, scope: ["record:999:update"] } }),
+  });
+  assert.equal(wrongScope.reason, "EXPLICIT_APPROVAL_REQUIRED");
   assert.equal(calls, 0);
 });
 
