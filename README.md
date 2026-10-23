@@ -15,6 +15,10 @@ JARVIS-X composes reasoning, coding, research, memory, verification, and executi
 - Capability > brand
 - Composition > competition
 
+## Self-audit and recovery
+
+See [Self-Audit Protocol](docs/self-audit.md) and [Failure Recovery / Circuit Breaker](docs/self-audit-failure-recovery.md). Repeated failures must stop the loop, preserve a known-good checkpoint, and produce a redacted portable handoff packet. Cross-platform recovery does not imply shared memory, credentials, or permissions.
+
 ## Architecture
 
 See `docs/architecture.md` and `docs/self-audit.md`.

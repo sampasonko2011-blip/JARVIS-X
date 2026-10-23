@@ -151,3 +151,10 @@ JARVIS-X should remain useful when optional hosted inference credits are exhaust
 - Discovery is not integration approval. Keep newly discovered plugins and providers PROPOSED until the user approves their integration and the relevant tests pass.
 - OpenRouter remains excluded unless the user explicitly changes that constraint.
 
+## Failure-loop circuit breaker and portable recovery
+
+See [Self-Audit Failure Recovery](self-audit-failure-recovery.md) for the operational circuit breaker, portable cross-platform failure packet, escalation ladder, and acceptance matrix.
+
+Mandatory stop rule: if the same failure signature repeats twice without a meaningful intervention, or two comparable retests fail, stop repeating the action. Preserve the last known-good checkpoint, classify the failure, capture a redacted evidence packet, test a materially different hypothesis, and require an independent retest. For ambiguous side effects, mark OUTCOME_UNKNOWN and verify remote state before retrying. Never bypass authorization or widen permissions as a recovery tactic.
+
+Cross-platform recovery is a documented handoff contract, not a claim of shared memory or automatic access. Every receiving platform must revalidate current state and permissions; the handoff grants no new authority and contains no credentials.
