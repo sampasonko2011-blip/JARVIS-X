@@ -320,3 +320,17 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await expect(page.locator("#chat-thread")).toContainText("Verified gateway reply");
   await expect(page.locator("#chat-thread")).toContainText("JARVIS-X");
 });
+
+test("image studio builds a prompt without claiming image generation", async ({ page }) => {
+  await page.locator('[data-view="images"]').click();
+  await expect(page.locator("#view-images")).toBeVisible();
+  await expect(page.locator("#img-status")).toContainText("No image generated or sent");
+  await page.locator("#img-subject").fill("A futuristic football training lab");
+  await page.locator("#img-style").selectOption({label:"Premium 3D render"});
+  await page.locator("#img-ratio").selectOption({label:"16:9 landscape"});
+  await page.locator("#img-constraints").fill("No real club logos; show a clear tactical screen");
+  await page.locator("#img-build").click();
+  await expect(page.locator("#img-output")).toContainText("A futuristic football training lab");
+  await expect(page.locator("#img-output")).toContainText("Premium 3D render");
+  await expect(page.locator("#img-status")).toContainText("No image generated or sent");
+});
