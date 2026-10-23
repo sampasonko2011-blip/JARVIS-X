@@ -190,3 +190,10 @@ Every route must require a valid session, apply per-object authorization, valida
 The HQ chat client checks same-origin `GET /api/v1/health` before enabling send. It requires an affirmative `status=ok`, `chat_enabled=true`, and `authenticated=true`. `POST /api/v1/chat` accepts a bounded message and conversation identifier, then must return a non-empty `reply`. The browser never receives provider credentials. The gateway must authenticate every request, enforce per-account rate and spend limits, validate input/output, redact logs, and call only a server-configured provider/model allowlist. It must not claim to be the user's existing ChatGPT session; API model access is a separate service and account boundary.
 
 The static Pages origin currently has no `/api/v1/health` or `/api/v1/chat` implementation. The UI therefore stays disabled until a separately deployed gateway is verified. Production enablement requires an explicit hosting choice, server-side secret configuration, authentication/session design, CORS/origin policy if applicable, and end-to-end tests against the deployed service.
+
+
+## Closed-loop upgrade governance
+
+Each proposed upgrade must define its objective, baseline, constraints, privacy boundaries, rollback, and measurable acceptance criteria before coding. The pipeline is: **SCOUT → SPECIFY → IMPLEMENT IN ISOLATION → MODULE TEST → NEGATIVE/FAULT TEST → INDEPENDENT CHALLENGE → COMPARABLE RETEST → EVIDENCE REVIEW → HUMAN DECISION → STAGED RELEASE → POST-RELEASE MONITOR → ROLLBACK OR PROMOTE**. A hard-gate failure blocks promotion and loops back to revision; repeated failure is rejected/superseded. Unknown measurements are never scored as zero or treated as a pass. Candidate discovery does not confer permission.
+
+HQ now lists six proposals with individual local Approve-for-planning and Dismiss controls. These decisions only record the user's preference on that browser. They do not implement, install, connect, grant access, spend money, or deploy anything. The catalogue itself is not evidence that a candidate passed its eventual tests.

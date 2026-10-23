@@ -320,3 +320,17 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await expect(page.locator("#chat-thread")).toContainText("Verified gateway reply");
   await expect(page.locator("#chat-thread")).toContainText("JARVIS-X");
 });
+
+test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
+  await page.locator('[data-view="upgrades"]').click();
+  await expect(page.locator("#upgrade-proposals")).toContainText("Secure live AI chat gateway");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Encrypted cross-device Memory OS");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Version-pinned multi-model router");
+  await page.locator('[data-proposal-approve="secure-chat-gateway"]').click();
+  await expect(page.locator('[data-proposal="secure-chat-gateway"]')).toContainText("APPROVED FOR PLANNING");
+  await expect(page.locator('[data-proposal-approve="secure-chat-gateway"]')).toBeDisabled();
+  await expect(page.locator("#proposal-status")).toContainText("no external action was executed");
+  await page.reload();
+  await page.locator('[data-view="upgrades"]').click();
+  await expect(page.locator('[data-proposal="secure-chat-gateway"]')).toContainText("APPROVED FOR PLANNING");
+});

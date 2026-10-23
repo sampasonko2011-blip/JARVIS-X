@@ -53,3 +53,18 @@ Model scouting is a planned backend capability. A future scout must discover can
 The dedicated Chat tab renders persistent local conversation history and uses `GET /api/v1/health` plus `POST /api/v1/chat` on the same origin. The send control remains disabled until the health endpoint returns `{ "status": "ok", "chat_enabled": true, "authenticated": true }`. The chat endpoint must return a non-empty `reply` string. If the gateway is absent, fails authentication, or returns an invalid response, HQ does not fabricate an assistant answer. A message is sent only after the health gate passes.
 
 **The static GitHub Pages release does not include these API endpoints**, so the live interface will honestly report that direct chat is not connected until a separately deployed authenticated gateway is installed. This is not the same as being connected to this ChatGPT conversation or inheriting a ChatGPT account session. Never put a provider API key in browser code.
+
+
+## Upgrade proposal review loop
+
+The Upgrade Center presents six proposed capabilities with impact, required test battery, risk, effort, rollback plan, and separate **Approve for planning** / **Dismiss** controls. Decisions persist only in this browser. Approval is not an implementation authorization, provider connection, permission grant, paid use, or deployment.
+
+Required closed failure loop for every candidate:
+1. State the expected outcome, baseline, non-goals, privacy boundary, and acceptance thresholds.
+2. Run module contract tests, negative tests, failure injection, and regression tests.
+3. Use an independent critic to challenge evidence, false positives/negatives, security, and missing cases.
+4. Re-run against the same baseline and compare raw outcomes, latency, cost, quality, and recovery.
+5. Any hard-gate failure returns the candidate to revision; repeated failure becomes rejected/superseded with evidence retained.
+6. Only after passing gates is a proposal ready for your explicit review. Production activation remains a separate approval.
+
+The current catalogue is a reviewed roadmap, not evidence that those capabilities are already implemented or tested. Each candidate must earn its own validation before any implementation or release claim.
