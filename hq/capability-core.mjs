@@ -222,3 +222,73 @@ export function rankProvidersForTask({
     limitation: "Ranking is only as trustworthy as the benchmark evidence and authorization state supplied; this function does not verify those sources or invoke providers.",
   };
 }
+
+
+/**
+ * Pure conflict-aware sync merge planner. It never writes storage or treats
+ * omission as deletion. Records must carry causal version metadata and hashes.
+ */
+export function reconcileSyncEnvelopes(local, remote) {
+  const localCheck = assessSyncEnvelope(local);
+  const remoteCheck = assessSyncEnvelope(remote);
+  if (!localCheck.valid || !remoteCheck.valid) {
+    return { status: "BLOCKED", reason: "INVALID_ENVELOPE", localReason: localCheck.reason ?? null, remoteReason: remoteCheck.reason ?? null };
+  }
+  if (local.accountId !== remote.accountId) {
+    return { status: "BLOCKED", reason: "ACCOUNT_MISMATCH" };
+  }
+
+  const validateRecord = (record) =>
+    record && typeof record.id === "string" && record.id.trim() &&
+    Number.isSafeInteger(record.version) && record.version >= 0 &&
+    Number.isSafeInteger(record.baseVersion) && record.baseVersion >= 0 &&
+    record.baseVersion <= record.version &&
+    typeof record.contentHash === "string" && /^[a-f0-9]{64}$/i.test(record.contentHash) &&
+    typeof record.updatedAt === "string" && !Number.isNaN(Date.parse(record.updatedAt)) &&
+    typeof record.deleted === "boolean";
+
+  if ([...local.records, ...remote.records].some((record) => !validateRecord(record))) {
+    return { status: "BLOCKED", reason: "INVALID_RECORD_VERSION_METADATA" };
+  }
+
+  const left = new Map(local.records.map((record) => [record.id, record]));
+  const right = new Map(remote.records.map((record) => [record.id, record]));
+  const merged = [];
+  const conflicts = [];
+  const allIds = new Set([...left.keys(), ...right.keys()]);
+
+  for (const id of allIds) {
+    const a = left.get(id);
+    const b = right.get(id);
+    if (!a) { merged.push(b); continue; }
+    if (!b) { merged.push(a); continue; }
+    if (a.version === b.version) {
+      if (a.contentHash.toLowerCase() === b.contentHash.toLowerCase() && a.deleted === b.deleted) {
+        merged.push(a);
+      } else {
+        conflicts.push({ id, reason: "SAME_VERSION_DIFFERENT_CONTENT", local: a, remote: b });
+      }
+      continue;
+    }
+    if (b.version > a.version && b.baseVersion === a.version) {
+      merged.push(b);
+      continue;
+    }
+    if (a.version > b.version && a.baseVersion === b.version) {
+      merged.push(a);
+      continue;
+    }
+    conflicts.push({ id, reason: "DIVERGENT_VERSION_HISTORY", local: a, remote: b });
+  }
+
+  merged.sort((a, b) => a.id.localeCompare(b.id));
+  conflicts.sort((a, b) => a.id.localeCompare(b.id));
+  return {
+    status: conflicts.length ? "CONFLICTS_REQUIRE_REVIEW" : "MERGE_READY",
+    accountId: local.accountId,
+    mergedRecords: merged,
+    conflicts,
+    nextRevision: Math.max(local.revision, remote.revision) + 1,
+    limitation: "Merge plan only: no authentication, authorization, remote write, durable persistence, or tombstone retention is performed.",
+  };
+}
