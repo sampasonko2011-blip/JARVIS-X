@@ -68,3 +68,11 @@ For every capability, record: objective and constraints; source/commit; authoriz
 - The runtime bounds objective/reply lengths and timeout values; redacts raw provider errors; records per-stage provider/model/request/latency metadata when supplied; and returns MANUAL_HANDOFF, FAILED, or PARTIAL rather than fabricating success when gates or stages fail.
 - `tests/hq-council-runtime.test.mjs` covers the successful three-role flow, duplicate/unauthorized/unverified provider rejection, invalid inputs, lead failure, critic failure, empty replies, and error redaction.
 - This is an executable orchestration core over injected adapters, **not** a provider integration. No network clients, API keys, provider accounts, or live calls are included. Provider factual accuracy and external world state still require independent verification.
+
+
+## Evidence-gated model routing added
+
+- `rankProvidersForTask` in `hq/capability-core.mjs` filters candidates by required capabilities, authorization, live-test status, safety gate, task-specific quality, reliability, latency, cost, and a benchmark evidence ID.
+- Decision-critical metrics that are missing or malformed exclude a candidate; UNKNOWN is never silently converted to zero.
+- Eligible candidates are ranked using explicit weights: quality 0.55, reliability 0.25, latency 0.10, cost 0.10. The function reports its limitations and does not verify the provenance of supplied metrics.
+- Regression tests check ranking, missing evidence, capability mismatch, and invalid constraints.
