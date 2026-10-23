@@ -9,6 +9,7 @@ import {
   validateExecutionReceipt,
   assessSyncEnvelope,
   rankProvidersForTask,
+  reconcileSyncEnvelopes,
 } from "../hq/capability-core.mjs";
 
 test("capability register preserves current live-state boundaries", () => {
@@ -149,4 +150,62 @@ test("provider router keeps unknown metrics distinct from zero and fails closed"
   assert.equal(rankProvidersForTask({ taskType: "math", providers: [missingLatency] }).status, "NO_EVIDENCE_QUALIFIED_CANDIDATE");
   assert.equal(rankProvidersForTask({ taskType: "", providers: [] }).reason, "TASK_TYPE_REQUIRED");
   assert.equal(rankProvidersForTask({ taskType: "math", maxLatencyMs: 0, providers: [] }).reason, "INVALID_ROUTING_CONSTRAINTS");
+});
+
+
+test("sync reconciliation merges causally related versions and preserves omitted records", () => {
+  const hashA = "a".repeat(64);
+  const hashB = "b".repeat(64);
+  const base = {
+    schemaVersion: 1, accountId: "account-a", revision: 4,
+    updatedAt: "2026-10-23T12:00:00Z",
+  };
+  const local = {
+    ...base,
+    records: [
+      { id: "record-1", version: 1, baseVersion: 0, contentHash: hashA, updatedAt: "2026-10-22T12:00:00Z", deleted: false },
+      { id: "local-only", version: 2, baseVersion: 1, contentHash: hashB, updatedAt: "2026-10-23T10:00:00Z", deleted: false },
+    ],
+  };
+  const remote = {
+    ...base, revision: 5,
+    records: [
+      { id: "record-1", version: 2, baseVersion: 1, contentHash: hashB, updatedAt: "2026-10-23T11:00:00Z", deleted: false },
+      { id: "remote-only", version: 1, baseVersion: 0, contentHash: hashA, updatedAt: "2026-10-23T09:00:00Z", deleted: false },
+    ],
+  };
+  const result = reconcileSyncEnvelopes(local, remote);
+  assert.equal(result.status, "MERGE_READY");
+  assert.equal(result.nextRevision, 6);
+  assert.deepEqual(result.mergedRecords.map((r) => r.id), ["local-only", "record-1", "remote-only"]);
+  assert.equal(result.mergedRecords.find((r) => r.id === "record-1").version, 2);
+  assert.match(result.limitation, /no authentication/);
+});
+
+test("sync reconciliation surfaces same-version and divergent-history conflicts", () => {
+  const base = { schemaVersion: 1, accountId: "a", revision: 1, updatedAt: "2026-10-23T12:00:00Z" };
+  const record = { id: "x", version: 3, baseVersion: 2, contentHash: "a".repeat(64), updatedAt: "2026-10-23T12:00:00Z", deleted: false };
+  const sameVersionConflict = reconcileSyncEnvelopes(
+    { ...base, records: [record] },
+    { ...base, records: [{ ...record, contentHash: "b".repeat(64) }] }
+  );
+  assert.equal(sameVersionConflict.status, "CONFLICTS_REQUIRE_REVIEW");
+  assert.equal(sameVersionConflict.conflicts[0].reason, "SAME_VERSION_DIFFERENT_CONTENT");
+
+  const divergent = reconcileSyncEnvelopes(
+    { ...base, records: [{ ...record, version: 5, baseVersion: 3 }] },
+    { ...base, records: [{ ...record, version: 4, baseVersion: 2, contentHash: "b".repeat(64) }] }
+  );
+  assert.equal(divergent.status, "CONFLICTS_REQUIRE_REVIEW");
+  assert.equal(divergent.conflicts[0].reason, "DIVERGENT_VERSION_HISTORY");
+});
+
+test("sync reconciliation blocks account mismatches and malformed version metadata", () => {
+  const base = { schemaVersion: 1, accountId: "a", revision: 1, updatedAt: "2026-10-23T12:00:00Z", records: [] };
+  assert.equal(reconcileSyncEnvelopes(base, { ...base, accountId: "b" }).reason, "ACCOUNT_MISMATCH");
+  const malformed = {
+    ...base,
+    records: [{ id: "x", version: 1, baseVersion: 2, contentHash: "x", updatedAt: "invalid", deleted: false }],
+  };
+  assert.equal(reconcileSyncEnvelopes(malformed, base).reason, "INVALID_RECORD_VERSION_METADATA");
 });
