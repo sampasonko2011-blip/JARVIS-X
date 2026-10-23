@@ -99,3 +99,15 @@ test("direct chat send timeout is bounded and marked delivery-unknown", async ({
   await expect(page.locator("#chat-thread")).toContainText("DELIVERY UNKNOWN");
   await expect(page.locator("#chat-send")).toBeEnabled();
 });
+
+test("direct chat refuses incomplete health schemas", async ({ page }) => {
+  await page.route("**/api/v1/health", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
+  }));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
+  await expect(page.locator("#chat-gateway-status")).toContainText("schema validation");
+  await expect(page.locator("#chat-send")).toBeDisabled();
+});
