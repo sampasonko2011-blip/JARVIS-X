@@ -246,12 +246,12 @@ export async function runRankedCouncil({
 
   const adapterByIdentity = new Map();
   for (const candidate of candidates) {
-    if (candidate && typeof candidate.providerId === "string" && typeof candidate.modelId === "string") {
-      adapterByIdentity.set(candidate.providerId + "\\u0000" + candidate.modelId, candidate);
-    }
+    if (!candidate || typeof candidate.providerId !== "string" || typeof candidate.modelId !== "string") continue;
+    if (!adapterByIdentity.has(candidate.providerId)) adapterByIdentity.set(candidate.providerId, new Map());
+    adapterByIdentity.get(candidate.providerId).set(candidate.modelId, candidate);
   }
   const providers = routing.candidates.map((ranked) => {
-    const candidate = adapterByIdentity.get(ranked.providerId + "\\u0000" + ranked.modelId);
+    const candidate = adapterByIdentity.get(ranked.providerId)?.get(ranked.modelId);
     return {
       id: ranked.providerId,
       modelId: ranked.modelId,
