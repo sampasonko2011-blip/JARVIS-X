@@ -7,6 +7,8 @@
  * later authorized server-side integration.
  */
 
+import { rankProvidersForTask } from "./capability-core.mjs";
+
 const MAX_OBJECTIVE_CHARS = 12000;
 const MAX_REPLY_CHARS = 60000;
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -205,5 +207,71 @@ export async function runCouncil({
     providerCalls,
     timestamp: now(),
     evidenceBoundary: "Provider calls completed through injected adapters. This runtime does not independently verify factual correctness or external world state.",
+  };
+}
+
+
+/**
+ * Evidence-gated end-to-end council routing. It selects only benchmark-qualified
+ * candidates, then passes their injected adapters to runCouncil. It does not
+ * verify benchmark provenance or create provider connections.
+ */
+export async function runRankedCouncil({
+  objective,
+  taskType,
+  requiredCapabilities = [],
+  candidates = [],
+  maxLatencyMs = 30000,
+  maxCostMicros = 100000,
+  minimumQuality = 0.65,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  now,
+} = {}) {
+  const routing = rankProvidersForTask({
+    taskType,
+    requiredCapabilities,
+    providers: candidates,
+    maxLatencyMs,
+    maxCostMicros,
+    minimumQuality,
+  });
+  if (routing.status !== "RANKED") {
+    return {
+      status: "MANUAL_HANDOFF",
+      reason: routing.reason ?? routing.status,
+      routing,
+      council: { status: "MANUAL_HANDOFF", providerCalls: 0 },
+    };
+  }
+
+  const adapterByIdentity = new Map();
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate.providerId === "string" && typeof candidate.modelId === "string") {
+      adapterByIdentity.set(candidate.providerId + "\\u0000" + candidate.modelId, candidate);
+    }
+  }
+  const providers = routing.candidates.map((ranked) => {
+    const candidate = adapterByIdentity.get(ranked.providerId + "\\u0000" + ranked.modelId);
+    return {
+      id: ranked.providerId,
+      modelId: ranked.modelId,
+      status: candidate.status,
+      authorized: candidate.authorized,
+      liveTestPassed: candidate.liveTestPassed,
+      invoke: candidate.invoke,
+    };
+  });
+  const council = await runCouncil({ objective, providers, timeoutMs, now });
+  return {
+    status: council.status,
+    routing: {
+      status: routing.status,
+      selected: routing.candidates.map(({ providerId, modelId, utility, benchmarkEvidenceId }) => ({
+        providerId, modelId, utility, benchmarkEvidenceId,
+      })),
+      weights: routing.weights,
+      limitation: routing.limitation,
+    },
+    council,
   };
 }
