@@ -242,3 +242,32 @@ test("renders hostile memory text as inert text instead of executable markup", a
   await expect(page.locator("#memory-list svg")).toHaveCount(0);
   expect(await page.evaluate(() => (window).__hqXss)).toBeUndefined();
 });
+
+
+test("prompt console saves format-aware drafts and keeps handoff manual", async ({ page }) => {
+  await page.locator('[data-view="console"]').click();
+  await page.locator("#prompt-format").selectOption("research");
+  await page.locator("#prompt-context").fill("Project context, intentionally selected");
+  await page.locator("#prompt-input").fill("Compare two approaches and cite sources");
+  await page.locator("#save-chat-draft").click();
+  await expect(page.locator("#chat-history")).toContainText("PROMPT DRAFT");
+  await expect(page.locator("#chat-history")).toContainText("research");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0")));
+  expect(saved.chats).toHaveLength(1);
+  expect(saved.chats[0].content).toContain("Compare two approaches and cite sources");
+  expect(saved.chats[0].content).toContain("Project context, intentionally selected");
+  expect(saved.chats[0].content).toContain("source links, dates, confidence");
+  await page.reload();
+  await page.locator('[data-view="console"]').click();
+  await expect(page.locator("#chat-history")).toContainText("Compare two approaches and cite sources");
+});
+
+test("integration registry records proposals without connecting a provider", async ({ page }) => {
+  await page.locator('[data-view="integrations"]').click();
+  await page.locator('[data-integration="GitHub scoped connector"]').click();
+  await expect(page.locator("#integration-list")).toContainText("GitHub scoped connector");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0")));
+  expect(saved.integrationRequests).toHaveLength(1);
+  expect(saved.integrationRequests[0].status).toBe("PROPOSED");
+  await expect(page.locator("#integration-list")).toContainText("local request only");
+});
