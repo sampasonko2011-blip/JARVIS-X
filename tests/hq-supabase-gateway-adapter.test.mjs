@@ -21,6 +21,7 @@ test("gateway adapter sends the selected provider, model, bounded task and sessi
   const adapter = createSupabaseGatewayAdapter({
     provider: "openai",
     modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
     getAccessToken: async () => "session-token",
     fetchImpl: async (url, options) => {
       captured = { url, options };
@@ -38,7 +39,9 @@ test("gateway adapter sends the selected provider, model, bounded task and sessi
   assert.equal(captured.url, "https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway");
   assert.equal(captured.options.method, "POST");
   assert.equal(captured.options.headers.Authorization, "Bearer session-token");
-  assert.equal(captured.options.signal, controller.signal);
+  assert.equal(captured.options.headers.apikey, "sb_publishable_test");
+  assert.notEqual(captured.options.signal, controller.signal);
+  assert.equal(captured.options.signal.aborted, false);
   const body = JSON.parse(captured.options.body);
   assert.equal(body.provider, "openai");
   assert.equal(body.model, "gpt-4.1-mini");
@@ -52,6 +55,7 @@ test("adapter is fail-closed for council eligibility until evidence is attached 
   const adapter = createSupabaseGatewayAdapter({
     provider: "google",
     modelId: "gemini-2.5-flash",
+    publishableKey: "sb_publishable_test",
     getAccessToken: async () => "token",
     fetchImpl: async () => response({}),
   });
@@ -61,7 +65,7 @@ test("adapter is fail-closed for council eligibility until evidence is attached 
 });
 
 test("adapter rejects unsupported providers, models and untrusted gateway URLs", () => {
-  const common = { getAccessToken: async () => "token", fetchImpl: async () => response({}) };
+  const common = { publishableKey: "sb_publishable_test", getAccessToken: async () => "token", fetchImpl: async () => response({}) };
   assert.throws(() => createSupabaseGatewayAdapter({ ...common, provider: "other", modelId: "model" }), /provider_not_supported/);
   assert.throws(() => createSupabaseGatewayAdapter({ ...common, provider: "openai", modelId: "gpt-4o" }), /model_not_allowed/);
   assert.throws(() => createSupabaseGatewayAdapter({
@@ -77,6 +81,7 @@ test("adapter refuses missing sessions without making a network request", async 
   const adapter = createSupabaseGatewayAdapter({
     provider: "anthropic",
     modelId: "claude-sonnet-4-20250514",
+    publishableKey: "sb_publishable_test",
     getAccessToken: async () => null,
     fetchImpl: async () => { calls++; return response({}); },
   });
@@ -89,6 +94,7 @@ test("adapter rejects oversized prompts before network access", async () => {
   const adapter = createSupabaseGatewayAdapter({
     provider: "openai",
     modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
     getAccessToken: async () => "token",
     fetchImpl: async () => { calls++; return response({}); },
   });
@@ -103,6 +109,7 @@ test("adapter rejects HTTP errors or mismatched provider/model identities", asyn
   const base = {
     provider: "openai",
     modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
     getAccessToken: async () => "token",
   };
   const failed = createSupabaseGatewayAdapter({
