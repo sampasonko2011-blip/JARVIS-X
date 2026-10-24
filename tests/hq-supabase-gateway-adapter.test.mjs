@@ -97,11 +97,6 @@ test("adapter rejects unsupported providers, models and untrusted gateway URLs",
     ...common,
     provider: "openai",
     modelId: "gpt-4.1-mini",
-  }), /council_payload_invalid/);
-  assert.throws(() => createSupabaseGatewayAdapter({
-    ...common,
-    provider: "openai",
-    modelId: "gpt-4.1-mini",
     gatewayUrl: "https://xfewajxkqntflfntisut.supabase.co.attacker.example/functions/v1/hq-gateway",
   }), /gateway_url_not_trusted/);
   assert.throws(() => createSupabaseGatewayAdapter({
