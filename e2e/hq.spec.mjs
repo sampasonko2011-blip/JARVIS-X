@@ -309,8 +309,9 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await page.route("**/api/v1/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", service: "jarvis-x-gateway", version: "0.1.0", environment: "test", chat_enabled: true, authenticated: true, providers: [] }) }));
-  await page.route("**/api/v1/chat", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reply: "Verified gateway reply" }) }));
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.route("**/functions/v1/hq-gateway/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
+  await page.route("**/functions/v1/hq-gateway", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ output: "Verified gateway reply", provider: "openai", model: "gpt-4.1-mini", provider_calls: 3 }) }));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
