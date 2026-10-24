@@ -68,10 +68,12 @@ export function buildCompositeProviders({
   attestations = [],
   now = () => new Date(),
   maxAttestationAgeMs = DEFAULT_MAX_ATTESTATION_AGE_MS,
+  verifyAttestation,
 } = {}) {
   if (!Array.isArray(registry?.candidates) ||
       !adapters || typeof adapters !== "object" ||
       !Array.isArray(attestations) ||
+      typeof verifyAttestation !== "function" ||
       typeof now !== "function" ||
       !Number.isFinite(maxAttestationAgeMs) || maxAttestationAgeMs < 0) {
     throw new TypeError("COMPOSITE_INPUT_INVALID");
@@ -92,6 +94,12 @@ export function buildCompositeProviders({
   const rejected = [];
   for (const attestation of attestations) {
     const candidate = candidatesById.get(attestation?.candidateId);
+    let signatureValid = false;
+    try { signatureValid = verifyAttestation(attestation) === true; } catch { signatureValid = false; }
+    if (!signatureValid) {
+      rejected.push({ candidateId: attestation?.candidateId ?? null, reason: "ATTESTATION_SIGNATURE_INVALID" });
+      continue;
+    }
     const rejection = checkAttestation(candidate, attestation, nowMs, maxAttestationAgeMs);
     if (rejection) {
       rejected.push({ candidateId: attestation?.candidateId ?? null, reason: rejection });
