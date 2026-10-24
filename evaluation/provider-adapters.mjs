@@ -27,7 +27,7 @@ function errorMessage(payload, status) {
   return String(payload?.error?.message ?? payload?.message ?? payload?.error ?? `HTTP ${status}`).slice(0, 800);
 }
 
-async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) {
+async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs, signal: parentSignal }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
@@ -36,7 +36,7 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
       method: "POST",
       headers: { "content-type": "application/json", ...headers },
       body: JSON.stringify(body),
-      signal: controller.signal
+      signal: parentSignal ? AbortSignal.any([controller.signal, parentSignal]) : controller.signal
     });
     const raw = await response.text();
     let payload;
@@ -68,6 +68,7 @@ async function postJson({ provider, url, headers, body, fetchImpl, timeoutMs }) 
       } : null)
     };
   } catch (error) {
+    if (parentSignal?.aborted) throw error;
     if (error?.name === "AbortError") {
       const timeoutError = new Error(`${provider} request timed out after ${timeoutMs}ms`);
       timeoutError.code = "PROVIDER_TIMEOUT";
@@ -129,7 +130,7 @@ export function createProviderAdapters({
     let adapter;
 
     if ((provider === "google" || provider === "gemini") && credentials.google) {
-      adapter = async ({ task, role }) => postJson({
+      adapter = async ({ task, role, signal }) => postJson({
         provider: "google",
         url: `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(candidate.model_id)}:generateContent`,
         headers: { "x-goog-api-key": credentials.google },
@@ -138,11 +139,11 @@ export function createProviderAdapters({
           contents: [{ role: "user", parts: [{ text: task }] }],
           generationConfig: { temperature: 0 }
         },
-        fetchImpl, timeoutMs
+        fetchImpl, timeoutMs, signal
       });
     } else if (provider === "ollama" && !excluded.has("ollama")) {
       const baseUrl = cleanBaseUrl(env.OLLAMA_BASE_URL, "http://127.0.0.1:11434");
-      adapter = async ({ task, role }) => postJson({
+      adapter = async ({ task, role, signal }) => postJson({
         provider: "ollama",
         url: `${baseUrl}/api/chat`,
         headers: {},
@@ -155,10 +156,10 @@ export function createProviderAdapters({
           stream: false,
           options: { temperature: 0 }
         },
-        fetchImpl, timeoutMs
+        fetchImpl, timeoutMs, signal
       });
     } else if (provider === "anthropic" && credentials.anthropic) {
-      adapter = async ({ task, role }) => postJson({
+      adapter = async ({ task, role, signal }) => postJson({
         provider: "anthropic",
         url: "https://api.anthropic.com/v1/messages",
         headers: { "x-api-key": credentials.anthropic, "anthropic-version": "2023-06-01" },
@@ -168,7 +169,7 @@ export function createProviderAdapters({
           system: `You are a specialist in the ${role} role. Be accurate, distinguish evidence from assumptions, and state uncertainty.`,
           messages: [{ role: "user", content: task }]
         },
-        fetchImpl, timeoutMs
+        fetchImpl, timeoutMs, signal
       });
     } else {
       const compatible = {
@@ -181,7 +182,7 @@ export function createProviderAdapters({
       };
       const config = compatible[provider];
       if (config?.key) {
-        adapter = async ({ task, role }) => postJson({
+        adapter = async ({ task, role, signal }) => postJson({
           provider,
           url: `${cleanBaseUrl(config.baseEnv ? env[config.baseEnv] : null, config.base)}/chat/completions`,
           headers: { authorization: `Bearer ${config.key}` },
@@ -201,7 +202,7 @@ export function createProviderAdapters({
     if (adapter) {
       adapters[candidate.id] = async ({ task, role = "general-reasoning" }) => {
         if (typeof task !== "string" || !task.trim()) throw new TypeError("task must be a non-empty string");
-        const result = await adapter({ task, role });
+        const result = await adapter({ task, role, signal });
         return {
           text: result.text,
           latency_ms: result.latency_ms,
