@@ -65,3 +65,34 @@ provider calls. The self-critique stage uses the same configured model as the
 lead and synthesis stages, so it must never be presented as independent
 consensus. Tests use mock sessions and mock providers; they do not prove
 deployment, live credentials, factual correctness, or model quality.
+
+
+## Supabase Edge Function deployment (current route)
+
+The active Supabase project is named `JARVIS-X` in region `eu-west-1`.
+The Edge Function `hq-gateway` was deployed as version 7 on 2026-10-24 with
+JWT verification enabled. Its source of record is
+`supabase/functions/hq-gateway/index.ts` in the feature branch.
+
+The current function intentionally fails closed until the following secrets are
+configured in Supabase Edge Function secrets:
+
+- `JX_ALLOWED_EMAILS`: comma-separated allowlist of exact account email
+  addresses. Only existing, verified, explicitly authorized accounts should
+  appear here. Keep public sign-up disabled for this gateway.
+- `OPENAI_API_KEY`: server-side primary-provider key; never place it in the
+  static frontend, a commit, or a client-side environment variable.
+
+Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and/or
+`SUPABASE_PUBLISHABLE_KEYS` to the Edge Function. The frontend only contains
+the intended public publishable key. The gateway checks the user's bearer
+session against Supabase Auth, checks the allowlist, applies database-backed
+per-user rate limits, calls the same configured primary model for lead,
+self-critique, and synthesis, and writes a content-minimized execution record.
+The three passes are sequential self-review, not independent model consensus.
+
+The public HQ changes are in the draft PR and are not live on GitHub Pages until
+that branch is merged and the static site is redeployed. The backend function
+is already deployed independently. End-to-end operation remains UNVERIFIED
+until the secrets are configured, an authorized existing user signs in, the
+frontend is deployed, and a real provider request plus audit write are tested.
