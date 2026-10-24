@@ -56,24 +56,32 @@ export async function runLiveBenchmark({ registry, adapters, candidateIds, now =
           case_id: testCase.id,
           passed: Boolean(text) && testCase.check(text),
           latency_ms: +(performance.now() - started).toFixed(2),
+          observed_provider: typeof response?.provider === "string" ? response.provider.trim().toLowerCase() : null,
+          requested_model_id: response?.requested_model_id ?? null,
           observed_model_id: response?.observed_model_id ?? null,
           response_text: text.slice(0, 1200),
           error: null
         });
       } catch (error) {
-        cases.push({ case_id: testCase.id, passed: false, latency_ms: +(performance.now() - started).toFixed(2), observed_model_id: null, response_text: "", error: String(error?.message ?? error).slice(0, 500) });
+        cases.push({ case_id: testCase.id, passed: false, latency_ms: +(performance.now() - started).toFixed(2), observed_provider: null, requested_model_id: null, observed_model_id: null, response_text: "", error: String(error?.message ?? error).slice(0, 500) });
       }
     }
 
     const observedIds = [...new Set(cases.map(item => item.observed_model_id).filter(Boolean))];
-    const identityVerified = observedIds.length === 1 && observedIds[0] === candidate.model_id && cases.every(item => item.observed_model_id === candidate.model_id);
+    const expectedProvider = String(candidate.provider ?? "").trim().toLowerCase();
+    const observedProviders = [...new Set(cases.map(item => item.observed_provider).filter(Boolean))];
+    const providerIdentityVerified = Boolean(expectedProvider) && observedProviders.length === 1 && observedProviders[0] === expectedProvider && cases.every(item => item.observed_provider === expectedProvider);
+    const modelIdentityVerified = observedIds.length === 1 && observedIds[0] === candidate.model_id && cases.every(item => item.requested_model_id === candidate.model_id && item.observed_model_id === candidate.model_id);
+    const identityVerified = providerIdentityVerified && modelIdentityVerified;
     const allCasesPassed = cases.length === LIVE_BENCHMARK_CASES.length && cases.every(item => item.passed && !item.error);
     report.results.push({
       candidate_id: id,
       provider: candidate.provider ?? null,
       requested_model_id: candidate.model_id ?? null,
+      observed_providers: observedProviders,
       observed_model_ids: observedIds,
-      exact_model_identity_verified: identityVerified,
+      exact_provider_identity_verified: providerIdentityVerified,
+      exact_model_identity_verified: modelIdentityVerified,
       cases_passed: cases.filter(item => item.passed).length,
       cases_total: LIVE_BENCHMARK_CASES.length,
       status: !identityVerified ? "IDENTITY_UNVERIFIED_OR_MISMATCH" : allCasesPassed ? "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION" : "OBSERVED_FAILURE_OR_PARTIAL",
