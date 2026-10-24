@@ -20,6 +20,7 @@ function attestation(candidate, stageRole, overrides = {}) {
     safetyPassed: true,
     status: "WORLD_STATE_VERIFIED",
     evidenceId: `evidence-${candidate.id}`,
+    signature: "valid-test-signature",
     verifiedAt: "2026-10-24T11:00:00.000Z",
     expiresAt: "2026-10-25T11:00:00.000Z",
     ...overrides,
@@ -35,7 +36,7 @@ function adaptersFor(candidates = registry.candidates) {
     request_id: `request-${candidate.id}`,
   })]));
 }
-const common = { registry, adapters: adaptersFor(), attestations, now: () => now };
+const common = { registry, adapters: adaptersFor(), attestations, now: () => now, verifyAttestation: item => item?.signature === "valid-test-signature" };
 
 test("builds exactly three evidence-gated distinct-provider stages in council order", () => {
   const result = buildCompositeProviders(common);
@@ -43,6 +44,15 @@ test("builds exactly three evidence-gated distinct-provider stages in council or
   assert.deepEqual(result.providers.map(p => p.id), ["alpha", "beta", "gamma"]);
   assert.deepEqual(result.providers.map(p => p.modelId), ["alpha-v1", "beta-v2", "gamma-v3"]);
   assert.deepEqual(result.providers.map(p => p.evidenceId), ["evidence-alpha-model", "evidence-beta-model", "evidence-gamma-model"]);
+});
+
+test("requires an injected trusted attestation verifier", () => {
+  assert.throws(() => buildCompositeProviders({ registry, adapters: adaptersFor(), attestations, now: () => now }), /COMPOSITE_INPUT_INVALID/);
+  const forged = [...attestations];
+  forged[0] = attestation(registry.candidates[0], "lead", { signature: "forged" });
+  const result = buildCompositeProviders({ ...common, attestations: forged });
+  assert.equal(result.ready, false);
+  assert.ok(result.rejected.some(x => x.reason === "ATTESTATION_SIGNATURE_INVALID"));
 });
 
 test("fails closed when any attestation is absent", async () => {
