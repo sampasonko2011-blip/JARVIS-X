@@ -14,13 +14,7 @@ async function installGatewayFetchMock(page, config) {
       const url = typeof input === "string" ? input : input.url;
       if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
       const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
-      if (fixture === "timeout") {
-        return new Promise((resolve, reject) => {
-          const signal = init.signal;
-          if (signal?.aborted) return reject(new DOMException("Aborted", "AbortError"));
-          signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
-        });
-      }
+      if (fixture === "timeout") return Promise.reject(new DOMException("Aborted", "AbortError"));
       return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
         status: fixture?.status ?? 200,
         headers: { "content-type": "application/json" },
