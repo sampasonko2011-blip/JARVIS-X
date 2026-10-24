@@ -18,7 +18,7 @@ export const LIVE_BENCHMARK_CASES = Object.freeze([
   }
 ]);
 
-const TEXT_KINDS = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
+const TEXT_KINDS = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family", "local-runtime"]);
 
 function canonicalProvider(value) {
   const provider = String(value ?? "").trim().toLowerCase();
