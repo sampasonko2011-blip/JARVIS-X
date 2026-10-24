@@ -27,3 +27,18 @@ The composite runtime also requires an injected trusted attestation verifier and
 ## What remains unavailable without credentials
 
 Hosted OpenAI, Anthropic, Google, DeepSeek and other paid/credentialed endpoints cannot be invoked by JARVIS-X without valid credentials for those services. The current ChatGPT conversation is not itself an API credential and cannot be converted into a provider endpoint. Do not paste secrets into source control or chat; configure them only in the intended secure runtime secret manager.
+
+## Explicit local model-diversity mode
+
+The default composite policy requires three distinct provider identities. For an
+offline/no-key workflow, the runtime now supports an explicit
+`independencePolicy: "local-model-diverse"` mode, restricted to Ollama-backed
+candidates with unique model IDs. This gives each model a distinct council
+stage identity while retaining the actual provider family in evidence. It reports
+provider diversity separately from model diversity; three local models on one
+runtime are **not** three independent providers and may share correlated failure
+modes. Do not use this mode to claim independent-provider consensus.
+
+The end-to-end test for this mode mocks the Ollama HTTP interface. It validates
+wiring only; it does not require Ollama to be installed and does not demonstrate
+real-model quality.
