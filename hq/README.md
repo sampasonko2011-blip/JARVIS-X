@@ -1,96 +1,51 @@
-# JARVIS-X HQ — foundation prototype
+# JARVIS-X HQ
 
-This folder contains the first isolated, static PWA shell for JARVIS-X HQ.
+JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It combines the local command workspace with an authenticated Supabase gateway for the direct-chat path.
 
-## What is implemented
-- Responsive dashboard and navigation
-- Task briefs saved in browser localStorage
-- Local memory notes with delete controls
-- Evidence ledger with explicit status labels
-- JSON export and local-data deletion controls
-- Network status indicator
-- PWA manifest, SVG icon, and basic service-worker cache for offline shell use
+## Release state
 
-## What is not implemented or verified
-- No authentication, account system, encryption-at-rest guarantee, remote database, or cross-device sync
-- No connection to ChatGPT's internal memory or model weights
-- No LLM/provider/tool execution from this page
-- No real multi-agent orchestration or autonomous background execution
-- No deployment or installed-device test is implied by this commit
+- **Source:** the feature branch and draft PR are not the public installation.
+- **Automated verification:** the latest recorded CI run for the current feature-branch head passed. See [CI run #748](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40129561846).
+- **Live provider inference:** not yet independently verified end to end.
+- **Cross-device memory:** opt-in is wired through the frontend and gateway; live XMemo recall/write, durable persistence, and account isolation still require verification.
+- **Installation link:** do not treat the expected GitHub Pages URL as live until the Pages deployment workflow succeeds and the published route is checked.
 
-## GitHub Pages deployment workflow
-A reviewed workflow definition lives at `.github/workflows/deploy-hq-pages.yml`. It is configured to deploy the `hq/` static directory only after changes reach `main`, or when manually dispatched. This feature branch does not publish the site. Before a first deployment, the repository owner must configure GitHub Pages to use GitHub Actions and confirm the `github-pages` environment and repository policy permit the workflow. A successful workflow and the emitted deployment URL must be checked before calling the site live.
+## Install after publication
 
-## Safe deployment direction
-Serve this directory over HTTPS using a static host to test the shell. Static hosting alone cannot safely store provider secrets or implement cross-device private memory. A later backend must provide managed authentication, authorization, encrypted transport, isolated data access, retention/deletion, secret management, provider budget controls, and auditable tool execution. Never put API keys in browser JavaScript or commit them to Git.
+Once the GitHub Pages deployment has succeeded, open the verified published HQ URL in Safari on iPhone or iPad, tap **Share**, choose **Add to Home Screen**, then tap **Add**. On desktop, use the browser's install option when offered. A home-screen icon is not proof that backend services or offline network calls are operational.
 
-## Regression checks
+## Architecture and privacy boundaries
 
-The repository's `npm test` suite includes `tests/hq-shell.test.mjs` for core surfaces and input boundaries, `tests/hq-service-worker.test.mjs` for service-worker install/activation, cache cleanup, request filtering, offline navigation fallback, shell-asset caching, and cache-quota failure recovery, and `tests/hq-behavior.test.mjs` for local persistence across app restarts, empty-input rejection, failed-write rollback, malformed-storage protection, accessible navigation state, and backup import/rejection paths. The Node-based service-worker harness remains distinct from `e2e/hq.spec.mjs`, which runs in Chromium through Playwright in CI and covers browser persistence across reload, deletion confirmation, empty-input rejection, JSON export, navigation, malformed-backup rejection, cancellation of delete-all, service-worker shell precaching, offline navigation, mobile viewport overflow, and keyboard-accessible navigation. The service worker waits for a successful cache write before completing a shell-asset response, reducing the chance of interrupted fire-and-forget cache writes. Browser automation still does not prove installation/offline behavior on a physical device or validate cross-device sync.
+- The static frontend is hosted separately from server-side inference.
+- Provider credentials must remain in Supabase Edge Function secrets; never put them in browser code or commit them to Git.
+- The gateway validates an authenticated Supabase session and checks a server-side email allowlist before billable inference.
+- Cross-platform memory is opt-in per chat request. With consent off, the gateway must neither recall nor write cross-platform memory.
+- The local workspace's browser storage is not a secure backup and is not automatically synchronized.
+- The council/composite runtime and the direct-chat gateway are distinct paths. A three-pass call to one provider is not independent multi-model consensus.
+- Automated tests use deterministic fixtures/mocks; they do not establish real provider availability, truthful model identity, durable memory, or production quality.
 
-## Local behavior
-Records remain in the current browser profile. Browser storage can be cleared and is not a backup. The service worker caches the shell after first successful load; remote model calls would still require network access and a separately implemented backend.
+## Required release gates
 
+1. Confirm the required Supabase Edge Function secrets are configured in the dashboard without exposing their values.
+2. Perform an authenticated real chat request and verify the server-side audit write.
+3. With memory consent off, verify no memory recall/write occurs; with consent on, verify write and later recall, including per-account isolation.
+4. Review the rate-limit RPC permissions and establish provider-level/global spend limits and monitoring.
+5. Confirm GitHub Pages configuration permits the deployment workflow; verify its successful run and the exact published URL.
+6. Run the live browser-to-gateway smoke test on the published site.
+7. Keep release claims limited to the evidence actually observed. Publication/merge and production changes require explicit owner authorization.
 
-## Prompt console and integration roadmap (current branch)
+## Development checks
 
-The HQ includes a multi-format prompt workspace (conversational, structured report, JSON, action plan, code review, and research brief), local prompt drafts, and manual reply capture. Users explicitly copy the prompt or open ChatGPT separately; the page does not send prompts to any AI provider automatically.
+Run `npm test` and `npm run build`. CI additionally runs the Chromium browser E2E suite, syntax checks, and benchmarks. Browser automation is not a substitute for a physical-device installation test or live service verification.
 
-The Integrations page is a **local planning registry**, not a live connector. OpenAI-compatible gateway, GitHub, Notion, Canva, Airtable and local model runtime are proposed integration targets only. No ChatGPT account/session, connected plugin, or cross-platform memory is inherited by the static site.
+## Deployment workflow
 
-Conversation drafts and integration requests share the current browser's local storage and are included in local backup exports. They are not encrypted, authenticated or synchronized between devices. Cross-device memory requires a separately deployed backend, managed authentication, per-user authorization, secure server-side secrets, deletion/export controls, and verified tenant-isolation tests.
+The workflow is `.github/workflows/deploy-pages.yml`. It is configured to deploy the `hq/` directory after changes reach `main` or on a manual dispatch. A feature-branch commit alone does not publish the site. Before the first release, verify the repository's Pages source and `github-pages` environment settings, then confirm the workflow output URL.
 
+## Troubleshooting
 
-## Governed upgrade center (current branch)
-
-The upgrade center checks a same-origin, schema-validated stable release manifest and records the result locally. Service-worker update discovery is triggered on app startup. This is **not** a self-modifying runtime: the static site cannot publish new code, change its own repository, or install provider adapters by itself.
-
-Model scouting is a planned backend capability. A future scout must discover candidates, pin exact versions, run comparable quality/latency/cost/safety/privacy tests, and produce a reviewable proposal. Provider activation, credential use, paid usage, plugin scopes, destructive migrations, and production promotion require explicit authorization. Automatic discovery is permitted; automatic privilege escalation is not.
-
-
-## Direct chat interface
-
-The dedicated Chat tab renders persistent local conversation history and uses `GET /api/v1/health` plus `POST /api/v1/chat` on the same origin. The send control remains disabled until the health endpoint returns `{ "status": "ok", "chat_enabled": true, "authenticated": true }`. The chat endpoint must return a non-empty `reply` string. If the gateway is absent, fails authentication, or returns an invalid response, HQ does not fabricate an assistant answer. A message is sent only after the health gate passes.
-
-**The static GitHub Pages release does not include these API endpoints**, so the live interface will honestly report that direct chat is not connected until a separately deployed authenticated gateway is installed. This is not the same as being connected to this ChatGPT conversation or inheriting a ChatGPT account session. Never put a provider API key in browser code.
-
-
-## Upgrade proposal review loop
-
-The Upgrade Center presents six proposed capabilities with impact, required test battery, risk, effort, rollback plan, and separate **Approve for planning** / **Dismiss** controls. Decisions persist only in this browser. Approval is not an implementation authorization, provider connection, permission grant, paid use, or deployment.
-
-Required closed failure loop for every candidate:
-1. State the expected outcome, baseline, non-goals, privacy boundary, and acceptance thresholds.
-2. Run module contract tests, negative tests, failure injection, and regression tests.
-3. Use an independent critic to challenge evidence, false positives/negatives, security, and missing cases.
-4. Re-run against the same baseline and compare raw outcomes, latency, cost, quality, and recovery.
-5. Any hard-gate failure returns the candidate to revision; repeated failure becomes rejected/superseded with evidence retained.
-6. Only after passing gates is a proposal ready for your explicit review. Production activation remains a separate approval.
-
-The current catalogue is a reviewed roadmap, not evidence that those capabilities are already implemented or tested. Each candidate must earn its own validation before any implementation or release claim.
-
-
-## Capability control plane (2026-10)
-
-The HQ shell now includes a **Multi-AI council prompt pack** with separate lead-solver, independent-challenger, and evidence-synthesizer roles. It prepares prompts locally and supports manual copy/paste of actual provider replies. It does not call models, claim model agreement, or verify pasted answers.
-
-The **Secure vault** can encrypt a portable backup locally with Web Crypto (PBKDF2-SHA-256, 310,000 iterations, AES-256-GCM) and decrypt/import it on another browser. The passphrase is not stored or transmitted. Losing it means losing access to that backup. This is encrypted file portability, **not** remote account storage or live cross-device sync. Import is bounded, schema-checked, and requires confirmation before replacing local records.
-
-Image Studio remains a prompt-preparation/handoff workbench; actual image generation is not connected. The plugin catalogue is a local planning queue, not a live broker. Direct model chat, real plugin execution, authenticated cloud sync, and server-side model routing remain unimplemented until an authorized backend is deployed and independently verified.
-
-
-## Security Gateway console (feature branch)
-
-The Security Gateway view provides a permanent navigation entry, fail-closed health probe, bounded timeout, response schema validation, server-reported provider status separation, and a safe diagnostic report. The browser UI is not the backend: the actual gateway is **not deployed** on GitHub Pages. The console begins as UNAVAILABLE and only changes status after a real response; Playwright route mocks test behavior but do not prove a live service exists. See `docs/hq-security-gateway-contract.md` for the proposed health/chat contracts and production gates. GitHub Pages cannot run the server-side API routes, and this change does not add hosting, connect provider accounts, or store secrets.
-
-## Mission Control (cross-platform workbench)
-
-mission-control.html is a responsive local-first command surface linked from the main HQ. It includes:
-- A local passphrase gate for casual screen privacy only; it is not server authentication and does not encrypt local browser records.
-- Provider-neutral AI council task packets with explicit lead, critic, and synthesis roles. No live provider calls are made from this static page.
-- Validated portable handoff JSON export/import. Imported context grants no authority; secret-like patterns are rejected and sensitive council tasks cannot be exported.
-- Local workflow checklists with manual completion states; no remote jobs are executed.
-- Browser posture checks and defensive response guidance, not an antivirus or OS-level scanner.
-- Image prompt preparation and handoff; no image is claimed generated without an actual provider result.
-
-The Mission Control JavaScript is a same-origin external file, syntax-checked in CI, and covered by unit and Chromium browser tests. The service worker caches the Mission Control page and uses a bumped shell cache version. The offline shell remains a client app; multi-provider calls, authenticated sync, tool execution, automatic cross-platform recovery, and production malware detection require separately authorized services and independent end-to-end validation.
+- **Sign-in blocked:** only existing, allowlisted Supabase Auth accounts are accepted.
+- **Gateway unavailable / configuration error:** check function status and required secret *presence* in Supabase; never paste secret values into chat or issue logs.
+- **Chat tests pass but live chat fails:** deterministic E2E tests mock the gateway. Test authenticated live inference and audit writes separately.
+- **Memory appears empty:** confirm consent was explicitly enabled for the relevant requests and verify the XMemo API contract and user-scoped data path.
+- **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
