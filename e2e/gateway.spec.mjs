@@ -9,7 +9,7 @@ async function allowGatewayCors(page) {
         "access-control-allow-headers": "authorization, apikey, content-type, accept",
       }});
     }
-    return route.continue();
+    return route.fallback();
   });
 }
 
@@ -109,7 +109,6 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 });
 
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
-  await allowGatewayCors(page);
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await routeGateway(page, "/health", route => new Promise(() => {}));
   await page.locator('[data-view="chat"]').click();
@@ -120,7 +119,6 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 });
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
-  await allowGatewayCors(page);
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await routeGateway(page, "/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
   await routeGateway(page, "", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "provider_not_configured" }) }));
@@ -135,12 +133,12 @@ test("direct chat send fails safely when provider is unavailable", async ({ page
 });
 
 test("direct chat refuses incomplete health schemas", async ({ page }) => {
-  await allowGatewayCors(page);
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await routeGateway(page, "/health", route => route.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
   }));
+  await allowGatewayCors(page);
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
