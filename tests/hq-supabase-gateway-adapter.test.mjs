@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSupabaseGatewayAdapter } from "../hq/supabase-gateway-adapter.mjs";
+import { runCouncil } from "../hq/council-runtime.mjs";
 
 const payload = {
   role: "lead",
@@ -229,4 +230,32 @@ test("adapter adds a bounded timeout signal to each network request", async () =
   await adapter.invoke(payload);
   assert.ok(capturedSignal instanceof AbortSignal);
   assert.equal(capturedSignal.aborted, false);
+});
+
+test("unverified gateway adapters cannot activate the council or make network calls", async () => {
+  let networkCalls = 0;
+  const providers = [
+    ["openai", "gpt-4.1-mini"],
+    ["anthropic", "claude-sonnet-4-20250514"],
+    ["google", "gemini-2.5-flash"],
+  ].map(([provider, modelId]) => createSupabaseGatewayAdapter({
+    provider,
+    modelId,
+    publishableKey: "sb_publishable_test",
+    getAccessToken: async () => "test-session",
+    fetchImpl: async () => {
+      networkCalls++;
+      return response({ ok: true, provider, model: modelId, output: "should not be called" });
+    },
+  }));
+
+  const result = await runCouncil({
+    objective: "Test fail-closed provider eligibility",
+    providers,
+  });
+
+  assert.equal(result.status, "MANUAL_HANDOFF");
+  assert.equal(result.reason, "INSUFFICIENT_VERIFIED_AUTHORIZED_PROVIDERS");
+  assert.equal(result.providerCalls, 0);
+  assert.equal(networkCalls, 0);
 });
