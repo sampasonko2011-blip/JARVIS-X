@@ -252,3 +252,13 @@ test("Mission Control is linked from the primary HQ navigation and included in t
   assert.ok(mission.includes('src="./mission-control.js" defer'));
   assert.ok(script.includes("jarvis-x-portable-handoff"));
 });
+
+test("cross-platform memory is opt-in at both the HQ control and gateway boundary", async () => {
+  const html = await read("hq/index.html");
+  const gateway = await read("supabase/functions/hq-gateway/index.ts");
+  assert.ok(html.includes('id="chat-memory-consent"'));
+  assert.ok(html.includes("memory_consent:document.querySelector('#chat-memory-consent').checked"));
+  assert.ok(gateway.includes("const memoryConsent = body.memory_consent === true;"));
+  assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
+  assert.ok(gateway.includes(': "not_consented";'));
+});
