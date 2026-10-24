@@ -240,13 +240,14 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
 });
 
 
-test("HQ shell sets a restrictive same-origin content security policy", async ({ page }) => {
+test("HQ shell CSP permits only the app and its configured Supabase origin", async ({ page }) => {
   const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("object-src 'none'");
   expect(csp).toContain("base-uri 'self'");
-  expect(csp).toContain("connect-src 'self'");
-  expect(csp).not.toContain("https:");
+  expect(csp).toContain("connect-src 'self' https://xfewajxkqntflfntisut.supabase.co");
+  expect(csp).not.toContain("connect-src *");
+  expect(csp).not.toContain("https://evil.example");
   expect(await page.locator('meta[name="referrer"]').getAttribute("content")).toBe("no-referrer");
 });
 
