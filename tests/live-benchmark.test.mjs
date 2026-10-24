@@ -5,7 +5,8 @@ import { runLiveBenchmark } from "../evaluation/live-benchmark.mjs";
 const registry = { candidates: [
   { id: "exact", provider: "Google", model_id: "gemini-exact", kind: "hosted-model" },
   { id: "mismatch", provider: "Google", model_id: "gemini-requested", kind: "hosted-model" },
-  { id: "image", provider: "Google", model_id: "gemini-image", kind: "image-generation-model" }
+  { id: "image", provider: "Google", model_id: "gemini-image", kind: "image-generation-model" },
+  { id: "gemini-alias", provider: "Gemini", model_id: "gemini-alias-model", kind: "hosted-model" }
 ] };
 const answers = [
   { text: "323", provider: "google", requested_model_id: "gemini-exact", observed_model_id: "gemini-exact" },
@@ -49,5 +50,14 @@ test("live benchmark rejects provider mismatch even when model ID appears exact"
   });
   assert.equal(report.results[0].status, "IDENTITY_UNVERIFIED_OR_MISMATCH");
   assert.equal(report.results[0].exact_provider_identity_verified, false);
+  assert.equal(report.results[0].exact_model_identity_verified, true);
+});
+
+test("canonicalizes documented provider aliases without weakening model identity", async () => {
+  const report = await runLiveBenchmark({
+    registry, candidateIds: ["gemini-alias"],
+    adapters: { "gemini-alias": async () => ({ text: "323", provider: "google", requested_model_id: "gemini-alias-model", observed_model_id: "gemini-alias-model" }) }
+  });
+  assert.equal(report.results[0].exact_provider_identity_verified, true);
   assert.equal(report.results[0].exact_model_identity_verified, true);
 });
