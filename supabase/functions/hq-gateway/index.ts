@@ -354,10 +354,14 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "provider_not_configured", provider: PRIMARY_PROVIDER }, 503, origin);
   }
 
-  const memory = await recallMemory(task, user.id);
+  // Cross-platform memory is opt-in per request. No recall or write unless the user explicitly consents.
+  const memoryConsent = body.memory_consent === true;
+  const memory = memoryConsent ? await recallMemory(task, user.id) : { status: "not_consented", context: "" };
   try {
     const result = await executeMultipass(task, apiKey, memory.context);
-    const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType);
+    const memoryWriteStatus = memoryConsent
+      ? await storeConversationMemory(task, result.answer, user.id, taskType)
+      : "not_consented";
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
