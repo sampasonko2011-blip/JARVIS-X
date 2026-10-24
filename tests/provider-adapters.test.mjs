@@ -139,6 +139,34 @@ test("request timeout is bounded and surfaced as a timeout error", async () => {
   await assert.rejects(result.adapters.deepseek({ task: "test" }), error => error.code === "PROVIDER_TIMEOUT");
 });
 
+
+test("caller cancellation reaches the actual provider HTTP request", async () => {
+  const controller = new AbortController();
+  let requestSignal;
+  const result = createProviderAdapters({
+    registry,
+    env: { DEEPSEEK_API_KEY: "s" },
+    fetchImpl: (_url, options) => {
+      requestSignal = options.signal;
+      return new Promise((resolve, reject) => {
+        if (options.signal.aborted) {
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+          return;
+        }
+        options.signal.addEventListener("abort", () => {
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+        }, { once: true });
+      });
+    }
+  });
+  const pending = result.adapters.deepseek({ task: "cancel me", signal: controller.signal });
+  assert.ok(requestSignal instanceof AbortSignal);
+  assert.equal(requestSignal.aborted, false);
+  controller.abort();
+  await assert.rejects(pending, error => error.name === "AbortError");
+  assert.equal(requestSignal.aborted, true);
+});
+
 test("additional adapter exclusions cannot disable the OpenRouter exclusion", () => {
   const result = createProviderAdapters({
     registry,

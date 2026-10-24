@@ -1,5 +1,26 @@
 import { test, expect } from "@playwright/test";
 
+
+async function installGatewayFetchMock(page, config) {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
+      const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
+      if (fixture === "timeout") return Promise.reject(new DOMException("Aborted", "AbortError"));
+      return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
+        status: fixture?.status ?? 200,
+        headers: { "content-type": "application/json" },
+      }));
+    };
+  });
+  await page.reload();
+  await page.evaluate(config => {
+    window.__jxGatewayHealth = config.health;
+    window.__jxGatewayChat = config.chat;
+  }, config);
+}
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
   await page.evaluate(() => localStorage.clear());
@@ -309,8 +330,8 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await page.route("**/api/v1/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", service: "jarvis-x-gateway", version: "0.1.0", environment: "test", chat_enabled: true, authenticated: true, providers: [] }) }));
-  await page.route("**/api/v1/chat", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reply: "Verified gateway reply" }) }));
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", provider: "openai", model: "gpt-4.1-mini", provider_calls: 3 } } });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();

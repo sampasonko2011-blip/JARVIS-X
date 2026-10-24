@@ -1,0 +1,105 @@
+# JARVIS-X protected gateway deployment
+
+The gateway now has concrete adapters for Supabase Auth session verification and
+read-only loading of HMAC-signed evidence from a private server-local file. The
+server entrypoint uses a single-primary multi-pass runtime: one attested model
+performs a lead pass, a self-critique pass, and a final synthesis pass. This is
+iterative synthesis, not an independent multi-provider council. This is
+application code, not a deployed service.
+
+## Required environment
+
+- `PORT`: port supplied by the host (defaults to 8080).
+- `JX_ALLOWED_ORIGIN`: exact origin of the hosted HQ, e.g.
+  `https://sampasonko2011-blip.github.io` only if that is the actual page origin.
+- `SUPABASE_URL`: HTTPS URL for the Supabase Auth project.
+- `SUPABASE_ANON_KEY`: publishable/anon key for that same project. Never use
+  a service-role key for this gateway.
+- `JX_ATTESTATION_HMAC_KEY`: at least 32 random bytes, held only in the host's
+  secret manager.
+- `JX_MODEL_REGISTRY_PATH`: absolute path to a controlled registry JSON file
+  containing a top-level `candidates` array.
+- `JX_ATTESTATIONS_PATH`: absolute path to a protected JSON array of signed
+  attestation records. The single-primary server path requires a valid record
+  with `stageRole: "primary"`.
+- Provider keys only for provider adapters that have been explicitly authorized
+  and approved for this environment.
+
+## Evidence source requirements
+
+The file loader does not mint attestations and must not be fed from browser
+input or model output. Each record must be signed using the same HMAC secret,
+and must represent a real, independently performed authorization, live-call,
+safety, and evidence check for the exact provider/model identity. HMAC verifies
+integrity and signer possession, not the truth of a claim. Do not create
+`WORLD_STATE_VERIFIED` records just to make the runtime run. Until a controlled
+evaluator/approval process exists and has produced real records, the correct
+outcome is a safe manual handoff.
+
+The registry and evidence files must be mounted read-only where possible, owned
+by the service account, and not writable by group/other users. The code rejects
+group/world-writable files on POSIX hosts. For production, prefer a managed
+evidence store with immutable audit history and key rotation over a local file.
+
+## Authentication and deployment
+
+The Supabase adapter sends the bearer access token to the project's Auth
+`/auth/v1/user` endpoint and uses only the verified user ID returned by Auth.
+It rejects missing, invalid, expired, and anonymous sessions. This does not
+create a login UI: the HQ must use a legitimate Supabase Auth flow and send the
+current access token to the gateway.
+
+Build/run with Node 22 or newer:
+`node server/index.mjs`
+
+Use a protected Node host with TLS, server-side secrets, health monitoring,
+log redaction, deployment rollback, and shared rate limiting if multiple
+instances run. Do not put provider keys or the HMAC secret into GitHub Pages,
+browser bundles, localStorage, or source control. GitHub Pages remains the
+static frontend and must not be treated as the backend.
+
+The built-in in-memory rate limiter is suitable only for a single instance.
+Before horizontal scaling, replace it with an atomic shared limiter. Add a
+managed evidence issuer/store and a production session setup before enabling
+provider calls. The self-critique stage uses the same configured model as the
+lead and synthesis stages, so it must never be presented as independent
+consensus. Tests use mock sessions and mock providers; they do not prove
+deployment, live credentials, factual correctness, or model quality.
+
+
+## Supabase Edge Function deployment (current route)
+
+The active Supabase project is named `JARVIS-X` in region `eu-west-1`.
+The Edge Function `hq-gateway` was deployed as version 8 on 2026-10-24 with
+JWT verification enabled. Its source of record is
+`supabase/functions/hq-gateway/index.ts` in the feature branch.
+
+The current function intentionally fails closed until the following secrets are
+configured in Supabase Edge Function secrets:
+
+- `JX_ALLOWED_EMAILS`: comma-separated allowlist of exact account email
+  addresses. Only existing, verified, explicitly authorized accounts should
+  appear here. Keep public sign-up disabled for this gateway.
+- `OPENAI_API_KEY`: server-side primary-provider key; never place it in the
+  static frontend, a commit, or a client-side environment variable.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only credential used to write trusted
+  execution-ledger records. Supabase normally injects this into Edge Function
+  environments; confirm it exists in the deployed function's environment. It
+  must never be exposed to the frontend.
+
+Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and/or
+`SUPABASE_PUBLISHABLE_KEYS` to the Edge Function. The frontend only contains
+the intended public publishable key. The gateway checks the user's bearer
+session against Supabase Auth, checks the allowlist, applies database-backed
+per-user rate limits, writes trusted execution records with server-side
+privileges (not the user's mutable client role), calls the same configured primary model for lead,
+self-critique, and synthesis, and writes a content-minimized execution record.
+The three passes are sequential self-review, not independent model consensus.
+
+The execution ledger is now append-only for authenticated users: direct client INSERT/UPDATE/DELETE grants and the corresponding write policies have been removed. The gateway uses the server-side `SUPABASE_SERVICE_ROLE_KEY` to write ledger rows. The `consume_hq_rate_limit` RPC remains callable by authenticated users because the gateway currently uses the caller's JWT for atomic per-user counters; its SECURITY DEFINER warning remains documented and requires a focused follow-up review.
+
+The public HQ changes are in the draft PR and are not live on GitHub Pages until
+that branch is merged and the static site is redeployed. The backend function
+is already deployed independently. End-to-end operation remains UNVERIFIED
+until the secrets are configured, an authorized existing user signs in, the
+frontend is deployed, and a real provider request plus audit write are tested.

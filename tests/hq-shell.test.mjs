@@ -47,11 +47,14 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
   assert.ok(icon.includes("</svg>"));
 });
 
-test("HQ documentation does not imply remote services are already implemented", async () => {
+test("HQ documentation distinguishes implemented frontend from unverified remote services", async () => {
   const docs = await read("hq/README.md");
-  assert.ok(docs.includes("not implemented or verified"));
-  assert.ok(docs.includes("cross-device sync"));
-  assert.ok(docs.includes("Never put API keys in browser JavaScript"));
+  assert.ok(docs.includes("Live provider inference"));
+  assert.ok(docs.includes("not yet independently verified"));
+  assert.ok(docs.includes("cross-platform memory"));
+  assert.ok(docs.includes("not automatically synchronized"));
+  assert.ok(docs.includes("Provider credentials must remain in Supabase Edge Function secrets"));
+  assert.ok(docs.includes("deterministic fixtures/mocks"));
 });
 
 
@@ -209,11 +212,13 @@ test("HQ upgrade center separates read-only update discovery from privileged cha
 test("HQ direct chat is a real gateway client but fails closed without authenticated backend", async () => {
   const html = await read("hq/index.html");
   for (const id of ["view-chat", "chat-thread", "chat-compose", "chat-send", "chat-check-gateway", "chat-gateway-status", "chat-connection-tag"]) assert.ok(html.includes('id="' + id + '"'));
-  assert.ok(html.includes("fetch('./api/v1/health'"));
-  assert.ok(html.includes("fetch('./api/v1/chat'"));
-  assert.ok(html.includes("health.authenticated!==true"));
+  assert.ok(html.includes("JX_GATEWAY+'/health'"));
+  assert.ok(html.includes("fetch(JX_GATEWAY"));
+  assert.ok(html.includes("health.ok!==true"));
   assert.ok(html.includes("No simulated assistant answers"));
-  assert.ok(html.includes("No message will be sent until an authenticated gateway is verified."));
+  assert.ok(html.includes("verified email link"));
+  assert.ok(html.includes("create_user:false"));
+  assert.ok(!html.includes("JX_ALLOWED_EMAILS"), "server-only email allowlist must not be exposed in the static client");
 });
 
 test("HQ upgrade proposals expose individual approve and dismiss controls and hard failure gates", async () => {
@@ -249,4 +254,14 @@ test("Mission Control is linked from the primary HQ navigation and included in t
   assert.ok(mission.includes("script-src 'self';"));
   assert.ok(mission.includes('src="./mission-control.js" defer'));
   assert.ok(script.includes("jarvis-x-portable-handoff"));
+});
+
+test("cross-platform memory is opt-in at both the HQ control and gateway boundary", async () => {
+  const html = await read("hq/index.html");
+  const gateway = await read("supabase/functions/hq-gateway/index.ts");
+  assert.ok(html.includes('id="chat-memory-consent"'));
+  assert.ok(html.includes("memory_consent:document.querySelector('#chat-memory-consent').checked"));
+  assert.ok(gateway.includes("const memoryConsent = body.memory_consent === true;"));
+  assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
+  assert.ok(gateway.includes(': "not_consented";'));
 });
