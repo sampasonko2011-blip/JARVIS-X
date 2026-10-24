@@ -20,6 +20,13 @@ export const LIVE_BENCHMARK_CASES = Object.freeze([
 
 const TEXT_KINDS = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family"]);
 
+function canonicalProvider(value) {
+  const provider = String(value ?? "").trim().toLowerCase();
+  if (provider === "gemini") return "google";
+  if (provider === "mistral") return "mistral ai";
+  return provider;
+}
+
 export async function runLiveBenchmark({ registry, adapters, candidateIds, now = () => new Date().toISOString() }) {
   if (!Array.isArray(candidateIds) || candidateIds.length === 0) throw new TypeError("candidateIds must contain at least one exact registry candidate ID");
   const report = {
@@ -68,7 +75,7 @@ export async function runLiveBenchmark({ registry, adapters, candidateIds, now =
     }
 
     const observedIds = [...new Set(cases.map(item => item.observed_model_id).filter(Boolean))];
-    const expectedProvider = String(candidate.provider ?? "").trim().toLowerCase();
+    const expectedProvider = canonicalProvider(candidate.provider);
     const observedProviders = [...new Set(cases.map(item => item.observed_provider).filter(Boolean))];
     const providerIdentityVerified = Boolean(expectedProvider) && observedProviders.length === 1 && observedProviders[0] === expectedProvider && cases.every(item => item.observed_provider === expectedProvider);
     const modelIdentityVerified = observedIds.length === 1 && observedIds[0] === candidate.model_id && cases.every(item => item.requested_model_id === candidate.model_id && item.observed_model_id === candidate.model_id);
