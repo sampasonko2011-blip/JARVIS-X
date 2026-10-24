@@ -6,7 +6,7 @@ JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It c
 
 - **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — published on GitHub Pages; the live page was fetched after deployment.
 - **Deployment:** [GitHub Pages deployment run #11](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133392364) succeeded. The duplicate deployment workflow was removed to avoid competing publishes.
-- **Automated verification:** [CI run #755](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133699384) passed on the current main revision, including unit tests, Chromium browser E2E, syntax checks, and benchmarks.
+- **Automated verification:** [CI run #762](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133699384) passed on the current main revision, including unit tests, Chromium browser E2E, syntax checks, and benchmarks.
 - **Live provider inference:** not yet independently verified end to end; use the published app's verified-email sign-in and chat gateway checks.
 - **Cross-platform memory:** explicit per-message consent is wired through the frontend and gateway; live XMemo recall/write, durable persistence, and account isolation remain user-test gates.
 - **Security follow-up:** review the rate-limit RPC permissions and confirm provider-level/global spend limits and monitoring before treating the service as production-hardened.
