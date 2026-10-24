@@ -156,7 +156,8 @@ test("rejects adapter output whose provider identity does not match", async () =
   assert.equal(result.status, "PARTIAL");
   assert.equal(result.providerCalls, 2);
 });
-\ntest("runs lead, critic and synthesis when trusted gates and exact identities pass", async () => {
+
+test("runs lead, critic and synthesis when trusted gates and exact identities pass", async () => {
   const result = await runCompositeTask({
     ...common,
     objective: "Compare strategies",
