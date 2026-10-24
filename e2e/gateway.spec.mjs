@@ -19,6 +19,25 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+async function routeGateway(page, suffix, handler) {
+  await page.route(`**/functions/v1/hq-gateway${suffix}`, async route => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, OPTIONS",
+        "access-control-allow-headers": "authorization, apikey, content-type, accept",
+      } });
+    }
+    const wrapped = {
+      request: () => route.request(),
+      fulfill: options => route.fulfill({ ...options, headers: {
+        ...(options.headers || {}), "access-control-allow-origin": "*",
+      } }),
+    };
+    return handler(wrapped);
+  });
+}
+
 test("gateway is discoverable and fails closed before a real health response", async ({ page }) => {
   await expect(page.locator('[data-view="gateway"]')).toBeVisible();
   await page.locator('[data-view="gateway"]').click();
@@ -91,7 +110,7 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
   await allowGatewayCors(page);
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.route("**/functions/v1/hq-gateway/health", route => new Promise(() => {}));
+  await routeGateway(page, "/health", route => new Promise(() => {}));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 8000 });
