@@ -164,10 +164,11 @@ export function buildCompositeProviders({
       status: REQUIRED_ATTESTATION_STATUS,
       evidenceId: attestation.evidenceId,
       verifiedAt: attestation.verifiedAt,
-      invoke: async (payload) => {
+      invoke: async (payload, { signal } = {}) => {
         const result = await adapter({
           task: JSON.stringify(payload),
           role: `council_${payload.role}`,
+          signal,
         });
         if (normalizeProvider(result?.provider) !== providerId ||
             result?.requested_model_id !== modelId ||
