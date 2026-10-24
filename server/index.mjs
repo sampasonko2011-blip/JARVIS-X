@@ -4,7 +4,7 @@ import { resolve, isAbsolute } from "node:path";
 import { createGatewayHandler } from "./gateway-handler.mjs";
 import { createSupabaseAuthenticator } from "./supabase-auth.mjs";
 import { createFileAttestationLoader } from "./file-attestation-store.mjs";
-import { createCompositeServerRuntime } from "../hq/composite-server.mjs";
+import { createSinglePrimaryRuntime } from "../hq/single-primary-runtime.mjs";
 
 function required(name) {
   const value = process.env[name];
@@ -35,7 +35,7 @@ required("JX_ATTESTATION_HMAC_KEY");
 const registry = await readPrivateJsonFile(registryPath, "MODEL_REGISTRY");
 if (!Array.isArray(registry?.candidates)) throw new Error("MODEL_REGISTRY_FORMAT_INVALID");
 const loadAttestations = createFileAttestationLoader({ path: attestationsPath });
-const runtime = createCompositeServerRuntime({ registry, loadAttestations });
+const runtime = createSinglePrimaryRuntime({ registry, loadAttestations });
 const authenticateRequest = createSupabaseAuthenticator();
 
 const server = createServer(createGatewayHandler({
