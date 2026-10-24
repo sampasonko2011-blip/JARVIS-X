@@ -187,3 +187,46 @@ test("adapter rejects HTTP errors or mismatched provider/model identities", asyn
   });
   await assert.rejects(mismatched.invoke(payload), /gateway_response_invalid/);
 });
+
+test("adapter rejects untrusted subdomains, non-council roles and missing publishable keys", () => {
+  const base = {
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
+    getAccessToken: async () => "token",
+    fetchImpl: async () => response({}),
+  };
+  assert.throws(() => createSupabaseGatewayAdapter({
+    ...base,
+    gatewayUrl: "https://xfewajxkqntflfntisut.supabase.co.attacker.example/functions/v1/hq-gateway",
+  }), /gateway_url_not_trusted/);
+  const adapter = createSupabaseGatewayAdapter(base);
+  assert.rejects(adapter.invoke({ ...payload, role: "admin" }), /council_payload_invalid/);
+  assert.throws(() => createSupabaseGatewayAdapter({
+    ...base,
+    publishableKey: "",
+  }), /publishable_key_required/);
+});
+
+test("adapter adds a bounded timeout signal to each network request", async () => {
+  let capturedSignal;
+  const adapter = createSupabaseGatewayAdapter({
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
+    getAccessToken: async () => "token",
+    fetchImpl: async (_url, options) => {
+      capturedSignal = options.signal;
+      return response({
+        ok: true,
+        provider: "openai",
+        model: "gpt-4.1-mini",
+        output: "timeout policy attached",
+        latency_ms: 5,
+      });
+    },
+  });
+  await adapter.invoke(payload);
+  assert.ok(capturedSignal instanceof AbortSignal);
+  assert.equal(capturedSignal.aborted, false);
+});
