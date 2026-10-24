@@ -82,12 +82,17 @@ configured in Supabase Edge Function secrets:
   appear here. Keep public sign-up disabled for this gateway.
 - `OPENAI_API_KEY`: server-side primary-provider key; never place it in the
   static frontend, a commit, or a client-side environment variable.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only credential used to write trusted
+  execution-ledger records. Supabase normally injects this into Edge Function
+  environments; confirm it exists in the deployed function's environment. It
+  must never be exposed to the frontend.
 
 Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and/or
 `SUPABASE_PUBLISHABLE_KEYS` to the Edge Function. The frontend only contains
 the intended public publishable key. The gateway checks the user's bearer
 session against Supabase Auth, checks the allowlist, applies database-backed
-per-user rate limits, calls the same configured primary model for lead,
+per-user rate limits, writes trusted execution records with server-side
+privileges (not the user's mutable client role), calls the same configured primary model for lead,
 self-critique, and synthesis, and writes a content-minimized execution record.
 The three passes are sequential self-review, not independent model consensus.
 
