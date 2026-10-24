@@ -8,9 +8,9 @@ const registry = { candidates: [
   { id: "image", provider: "Google", model_id: "gemini-image", kind: "image-generation-model" }
 ] };
 const answers = [
-  { text: "323", observed_model_id: "gemini-exact" },
-  { text: "NO. The sets may not overlap.", observed_model_id: "gemini-exact" },
-  { text: "UNKNOWN. No evidence was supplied.", observed_model_id: "gemini-exact" }
+  { text: "323", provider: "google", requested_model_id: "gemini-exact", observed_model_id: "gemini-exact" },
+  { text: "NO. The sets may not overlap.", provider: "google", requested_model_id: "gemini-exact", observed_model_id: "gemini-exact" },
+  { text: "UNKNOWN. No evidence was supplied.", provider: "google", requested_model_id: "gemini-exact", observed_model_id: "gemini-exact" }
 ];
 
 test("live benchmark scores exact identity and all three checks", async () => {
@@ -26,7 +26,7 @@ test("live benchmark scores exact identity and all three checks", async () => {
 test("live benchmark never scores an alias response as the requested model", async () => {
   const report = await runLiveBenchmark({
     registry, candidateIds: ["mismatch"],
-    adapters: { mismatch: async () => ({ text: "323", observed_model_id: "gemini-other" }) }
+    adapters: { mismatch: async () => ({ text: "323", provider: "google", requested_model_id: "gemini-requested", observed_model_id: "gemini-other" }) }
   });
   assert.equal(report.results[0].status, "IDENTITY_UNVERIFIED_OR_MISMATCH");
   assert.equal(report.results[0].exact_model_identity_verified, false);
@@ -40,4 +40,14 @@ test("live benchmark refuses modality-incompatible candidates", async () => {
   });
   assert.equal(report.results[0].status, "MODALITY_NOT_SUPPORTED_BY_TEXT_BENCHMARK");
   assert.equal(called, false);
+});
+
+test("live benchmark rejects provider mismatch even when model ID appears exact", async () => {
+  const report = await runLiveBenchmark({
+    registry, candidateIds: ["exact"],
+    adapters: { exact: async () => ({ text: "323", provider: "anthropic", requested_model_id: "gemini-exact", observed_model_id: "gemini-exact" }) }
+  });
+  assert.equal(report.results[0].status, "IDENTITY_UNVERIFIED_OR_MISMATCH");
+  assert.equal(report.results[0].exact_provider_identity_verified, false);
+  assert.equal(report.results[0].exact_model_identity_verified, true);
 });
