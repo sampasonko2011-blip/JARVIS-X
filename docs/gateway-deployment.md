@@ -70,7 +70,7 @@ deployment, live credentials, factual correctness, or model quality.
 ## Supabase Edge Function deployment (current route)
 
 The active Supabase project is named `JARVIS-X` in region `eu-west-1`.
-The Edge Function `hq-gateway` was deployed as version 7 on 2026-10-24 with
+The Edge Function `hq-gateway` was deployed as version 8 on 2026-10-24 with
 JWT verification enabled. Its source of record is
 `supabase/functions/hq-gateway/index.ts` in the feature branch.
 
@@ -95,6 +95,8 @@ per-user rate limits, writes trusted execution records with server-side
 privileges (not the user's mutable client role), calls the same configured primary model for lead,
 self-critique, and synthesis, and writes a content-minimized execution record.
 The three passes are sequential self-review, not independent model consensus.
+
+The execution ledger is now append-only for authenticated users: direct client INSERT/UPDATE/DELETE grants and the corresponding write policies have been removed. The gateway uses the server-side `SUPABASE_SERVICE_ROLE_KEY` to write ledger rows. The `consume_hq_rate_limit` RPC remains callable by authenticated users because the gateway currently uses the caller's JWT for atomic per-user counters; its SECURITY DEFINER warning remains documented and requires a focused follow-up review.
 
 The public HQ changes are in the draft PR and are not live on GitHub Pages until
 that branch is merged and the static site is redeployed. The backend function
