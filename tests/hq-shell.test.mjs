@@ -133,7 +133,8 @@ test("HQ security and multi-AI deployment claims stay explicit and gated", async
   assert.ok(csp, "HQ shell should define a CSP");
   assert.ok(csp[1].includes("default-src 'self'"));
   assert.ok(csp[1].includes("object-src 'none'"));
-  assert.ok(csp[1].includes("connect-src 'self'"));
+  assert.ok(csp[1].includes("connect-src 'self' https://xfewajxkqntflfntisut.supabase.co"));
+  assert.ok(!csp[1].includes("connect-src *"));
   assert.ok(csp[1].includes("base-uri 'self'"));
   assert.ok(html.includes('<meta name="referrer" content="no-referrer">'));
 
