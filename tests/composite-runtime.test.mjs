@@ -206,7 +206,7 @@ test("integrates the real provider-adapter layer end-to-end using mocked HTTP on
           }),
         };
       }
-      assert.match(url, /api\\.deepseek\\.com\\/chat\\/completions/);
+      assert.ok(url.startsWith("https://api.deepseek.com/chat/completions"));
       return {
         ok: true, status: 200,
         text: async () => JSON.stringify({
