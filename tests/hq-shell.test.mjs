@@ -51,7 +51,7 @@ test("HQ documentation distinguishes implemented frontend from unverified remote
   const docs = await read("hq/README.md");
   assert.ok(docs.includes("Live provider inference"));
   assert.ok(docs.includes("not yet independently verified"));
-  assert.ok(docs.includes("cross-device memory"));
+  assert.ok(docs.includes("cross-platform memory"));
   assert.ok(docs.includes("not automatically synchronized"));
   assert.ok(docs.includes("Never put API keys in browser code"));
   assert.ok(docs.includes("deterministic fixtures/mocks"));
