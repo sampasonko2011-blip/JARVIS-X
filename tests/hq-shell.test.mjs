@@ -53,7 +53,7 @@ test("HQ documentation distinguishes implemented frontend from unverified remote
   assert.ok(docs.includes("not yet independently verified"));
   assert.ok(docs.includes("cross-platform memory"));
   assert.ok(docs.includes("not automatically synchronized"));
-  assert.ok(docs.includes("Never put API keys in browser code"));
+  assert.ok(docs.includes("Provider credentials must remain in Supabase Edge Function secrets"));
   assert.ok(docs.includes("deterministic fixtures/mocks"));
 });
 
