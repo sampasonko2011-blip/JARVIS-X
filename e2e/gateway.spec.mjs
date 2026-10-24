@@ -56,7 +56,7 @@ test("gateway remains unavailable and chat disabled when the health endpoint is 
 test("gateway rejects invalid health schemas even when HTTP returns 200", async ({ page }) => {
   await page.route("**/api/v1/health", route => route.fulfill({
     status: 200, contentType: "application/json",
-    body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
+    body: JSON.stringify({ ok: true, auth: "verified-supabase-session" }),
   }));
   await page.locator('[data-view="gateway"]').click();
   await page.locator("#gateway-test").click();
@@ -76,32 +76,32 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 });
 
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
-  await page.route("**/api/v1/health", route => new Promise(() => {}));
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.route("**/functions/v1/hq-gateway/health", route => new Promise(() => {}));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 8000 });
-  await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 5 seconds");
+  await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 8 seconds");
   await expect(page.locator("#chat-send")).toBeDisabled();
 });
 
-test("direct chat send timeout is bounded and marked delivery-unknown", async ({ page }) => {
-  await page.route("**/api/v1/health", route => route.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ status: "ok", service: "jarvis-x-gateway", version: "0.1.0", environment: "test", authenticated: true, chat_enabled: true, providers: [] }),
-  }));
-  await page.route("**/api/v1/chat", route => new Promise(() => {}));
+test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.route("**/functions/v1/hq-gateway/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
+  await page.route("**/functions/v1/hq-gateway", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "provider_not_configured" }) }));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-compose").fill("timeout regression");
   await page.locator("#chat-send").click();
-  await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 15 seconds", { timeout: 20000 });
+  await expect(page.locator("#chat-gateway-status")).toContainText("provider_not_configured");
   await expect(page.locator("#chat-thread")).toContainText("DELIVERY UNKNOWN");
   await expect(page.locator("#chat-send")).toBeEnabled();
 });
 
 test("direct chat refuses incomplete health schemas", async ({ page }) => {
-  await page.route("**/api/v1/health", route => route.fulfill({
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.route("**/functions/v1/hq-gateway/health", route => route.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
   }));
