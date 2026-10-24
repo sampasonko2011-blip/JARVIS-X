@@ -1,18 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-async function allowGatewayCors(page) {
-  await page.route("**/functions/v1/hq-gateway**", async route => {
-    if (route.request().method() === "OPTIONS") {
-      return route.fulfill({ status: 204, headers: {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "GET, POST, OPTIONS",
-        "access-control-allow-headers": "authorization, apikey, content-type, accept",
-      }});
-    }
-    return route.fallback();
-  });
-}
-
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
   await page.evaluate(() => localStorage.clear());
@@ -138,7 +125,6 @@ test("direct chat refuses incomplete health schemas", async ({ page }) => {
     status: 200, contentType: "application/json",
     body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
   }));
-  await allowGatewayCors(page);
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
