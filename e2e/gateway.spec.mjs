@@ -97,7 +97,7 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await routeGateway(page, "/health", route => new Promise(() => {}));
+  await routeGateway(page, "/health", async route => { await new Promise(resolve => setTimeout(resolve, 9000)); return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }); });
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 8000 });
