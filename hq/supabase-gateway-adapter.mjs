@@ -31,7 +31,7 @@ function validateGatewayUrl(value) {
     url.protocol === "http:";
   const trustedSupabase =
     url.protocol === "https:" &&
-    /^[a-z0-9-]+\.supabase\.co$/i.test(url.hostname);
+    url.hostname === "xfewajxkqntflfntisut.supabase.co";
   if ((!trustedSupabase && !localDevelopment) ||
       url.username || url.password ||
       url.pathname !== "/functions/v1/hq-gateway" ||
