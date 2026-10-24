@@ -194,13 +194,13 @@ export function createProviderAdapters({
             ],
             temperature: 0
           },
-          fetchImpl, timeoutMs
+          fetchImpl, timeoutMs, signal
         });
       }
     }
 
     if (adapter) {
-      adapters[candidate.id] = async ({ task, role = "general-reasoning" }) => {
+      adapters[candidate.id] = async ({ task, role = "general-reasoning", signal }) => {
         if (typeof task !== "string" || !task.trim()) throw new TypeError("task must be a non-empty string");
         const result = await adapter({ task, role, signal });
         return {
