@@ -47,11 +47,14 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
   assert.ok(icon.includes("</svg>"));
 });
 
-test("HQ documentation does not imply remote services are already implemented", async () => {
+test("HQ documentation distinguishes implemented frontend from unverified remote services", async () => {
   const docs = await read("hq/README.md");
-  assert.ok(docs.includes("not implemented or verified"));
-  assert.ok(docs.includes("cross-device sync"));
-  assert.ok(docs.includes("Never put API keys in browser JavaScript"));
+  assert.ok(docs.includes("Live provider inference"));
+  assert.ok(docs.includes("not yet independently verified"));
+  assert.ok(docs.includes("cross-device memory"));
+  assert.ok(docs.includes("not automatically synchronized"));
+  assert.ok(docs.includes("Never put API keys in browser code"));
+  assert.ok(docs.includes("deterministic fixtures/mocks"));
 });
 
 
