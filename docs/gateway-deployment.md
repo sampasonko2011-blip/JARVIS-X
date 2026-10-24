@@ -1,8 +1,11 @@
 # JARVIS-X protected gateway deployment
 
 The gateway now has concrete adapters for Supabase Auth session verification and
-read-only loading of HMAC-signed evidence from a private server-local file.
-This is deployable Node application code, not a deployed service.
+read-only loading of HMAC-signed evidence from a private server-local file. The
+server entrypoint uses a single-primary multi-pass runtime: one attested model
+performs a lead pass, a self-critique pass, and a final synthesis pass. This is
+iterative synthesis, not an independent multi-provider council. This is
+application code, not a deployed service.
 
 ## Required environment
 
@@ -17,7 +20,8 @@ This is deployable Node application code, not a deployed service.
 - `JX_MODEL_REGISTRY_PATH`: absolute path to a controlled registry JSON file
   containing a top-level `candidates` array.
 - `JX_ATTESTATIONS_PATH`: absolute path to a protected JSON array of signed
-  attestation records.
+  attestation records. The single-primary server path requires a valid record
+  with `stageRole: "primary"`.
 - Provider keys only for provider adapters that have been explicitly authorized
   and approved for this environment.
 
@@ -26,10 +30,11 @@ This is deployable Node application code, not a deployed service.
 The file loader does not mint attestations and must not be fed from browser
 input or model output. Each record must be signed using the same HMAC secret,
 and must represent a real, independently performed authorization, live-call,
-safety, and evidence check. HMAC verifies integrity and signer possession, not
-the truth of a claim. Do not create `WORLD_STATE_VERIFIED` records just to make
-the council run. Until a controlled evaluator/approval process exists and has
-produced real records, the correct outcome is a safe manual handoff.
+safety, and evidence check for the exact provider/model identity. HMAC verifies
+integrity and signer possession, not the truth of a claim. Do not create
+`WORLD_STATE_VERIFIED` records just to make the runtime run. Until a controlled
+evaluator/approval process exists and has produced real records, the correct
+outcome is a safe manual handoff.
 
 The registry and evidence files must be mounted read-only where possible, owned
 by the service account, and not writable by group/other users. The code rejects
@@ -56,5 +61,7 @@ static frontend and must not be treated as the backend.
 The built-in in-memory rate limiter is suitable only for a single instance.
 Before horizontal scaling, replace it with an atomic shared limiter. Add a
 managed evidence issuer/store and a production session setup before enabling
-provider calls. Tests use mock sessions and mock providers; they do not prove
+provider calls. The self-critique stage uses the same configured model as the
+lead and synthesis stages, so it must never be presented as independent
+consensus. Tests use mock sessions and mock providers; they do not prove
 deployment, live credentials, factual correctness, or model quality.
