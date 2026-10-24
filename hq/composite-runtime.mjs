@@ -69,11 +69,13 @@ export function buildCompositeProviders({
   now = () => new Date(),
   maxAttestationAgeMs = DEFAULT_MAX_ATTESTATION_AGE_MS,
   verifyAttestation,
+  independencePolicy = "distinct-providers",
 } = {}) {
   if (!Array.isArray(registry?.candidates) ||
       !adapters || typeof adapters !== "object" ||
       !Array.isArray(attestations) ||
       typeof verifyAttestation !== "function" ||
+      !["distinct-providers", "local-model-diverse"].includes(independencePolicy) ||
       typeof now !== "function" ||
       !Number.isFinite(maxAttestationAgeMs) || maxAttestationAgeMs < 0) {
     throw new TypeError("COMPOSITE_INPUT_INVALID");
@@ -133,8 +135,12 @@ export function buildCompositeProviders({
       rejected.push({ candidateId: candidate.id, reason: "DUPLICATE_STAGE_ROLE" });
       continue;
     }
-    if (providerIds.has(providerId)) {
+    if (providerIds.has(providerId) && independencePolicy === "distinct-providers") {
       rejected.push({ candidateId: candidate.id, reason: "PROVIDER_NOT_INDEPENDENT" });
+      continue;
+    }
+    if (independencePolicy === "local-model-diverse" && providerId !== "ollama") {
+      rejected.push({ candidateId: candidate.id, reason: "LOCAL_MODEL_DIVERSITY_REQUIRES_OLLAMA" });
       continue;
     }
     if (modelIds.has(modelId)) {
@@ -144,9 +150,13 @@ export function buildCompositeProviders({
     stageCounts.set(attestation.stageRole, candidate.id);
     providerIds.add(providerId);
     modelIds.add(modelId);
+    const councilProviderId = independencePolicy === "local-model-diverse"
+      ? `${providerId}:${candidate.id}`
+      : providerId;
 
     providers.push({
-      id: providerId,
+      id: councilProviderId,
+      providerFamily: providerId,
       modelId,
       authorized: true,
       liveTestPassed: true,
@@ -183,6 +193,9 @@ export function buildCompositeProviders({
     providers,
     rejected,
     ready: missingStages.length === 0 && providers.length === 3,
+    independencePolicy,
+    providerDiversity: new Set(providers.map(provider => provider.providerFamily)).size,
+    modelDiversity: new Set(providers.map(provider => provider.modelId)).size,
     missingStages,
     evidenceBoundary: "Attestations are trusted-input claims. This bridge checks shape, identity, freshness, and stage diversity; it does not independently prove upstream authorization, benchmark quality, safety, or world state.",
   };
@@ -215,7 +228,9 @@ export async function runCompositeTask(options = {}) {
     composite: {
       status: council.status === "COMPLETED" ? "EXECUTED_NOT_QUALITY_PROMOTED" : "PARTIAL_OR_FAILED",
       evidenceIds: prepared.providers.map(provider => provider.evidenceId),
-      providerDiversity: prepared.providers.length,
+      providerDiversity: prepared.providerDiversity,
+      modelDiversity: prepared.modelDiversity,
+      independencePolicy: prepared.independencePolicy,
       rejectedCandidates: prepared.rejected,
       evidenceBoundary: prepared.evidenceBoundary,
     },
