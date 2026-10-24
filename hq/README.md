@@ -4,15 +4,16 @@ JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It c
 
 ## Release state
 
-- **Source:** the feature branch and draft PR are not the public installation.
-- **Automated verification:** the latest recorded CI run for the current feature-branch head passed. See [CI run #748](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40129561846).
-- **Live provider inference:** not yet independently verified end to end.
-- **Cross-device memory:** opt-in is wired through the frontend and gateway; live XMemo recall/write, durable persistence, and account isolation still require verification.
-- **Installation link:** do not treat the expected GitHub Pages URL as live until the Pages deployment workflow succeeds and the published route is checked.
+- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — published on GitHub Pages; the live page was fetched after deployment.
+- **Deployment:** [GitHub Pages deployment run #11](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133392364) succeeded. The duplicate deployment workflow was removed to avoid competing publishes.
+- **Automated verification:** [CI run #755](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133699384) passed on the current main revision, including unit tests, Chromium browser E2E, syntax checks, and benchmarks.
+- **Live provider inference:** not yet independently verified end to end; use the published app's verified-email sign-in and chat gateway checks.
+- **Cross-platform memory:** explicit per-message consent is wired through the frontend and gateway; live XMemo recall/write, durable persistence, and account isolation remain user-test gates.
+- **Security follow-up:** review the rate-limit RPC permissions and confirm provider-level/global spend limits and monitoring before treating the service as production-hardened.
 
-## Install after publication
+## Install
 
-Once the GitHub Pages deployment has succeeded, open the verified published HQ URL in Safari on iPhone or iPad, tap **Share**, choose **Add to Home Screen**, then tap **Add**. On desktop, use the browser's install option when offered. A home-screen icon is not proof that backend services or offline network calls are operational.
+Open [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) in Safari on iPhone or iPad, tap **Share**, choose **Add to Home Screen**, then tap **Add**. On desktop, use the browser's install option when offered. A home-screen icon confirms the shell is installed, not that backend inference or cross-platform memory has passed live tests.
 
 ## Architecture and privacy boundaries
 
