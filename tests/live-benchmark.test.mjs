@@ -66,7 +66,7 @@ test("canonicalizes documented provider aliases without weakening model identity
 test("allows explicitly registered local-runtime candidates in the text benchmark", async () => {
   const report = await runLiveBenchmark({
     registry, candidateIds: ["ollama-local"],
-    adapters: { "ollama-local": async () => ({ text: "323", provider: "ollama", requested_model_id: "qwen3:8b", observed_model_id: "qwen3:8b" }) }
+    adapters: { "ollama-local": async ({ task }) => ({ text: task.includes("17*19") ? "323" : task.includes("bloop") ? "NO. The premises do not entail overlap." : "UNKNOWN. No benchmark evidence was supplied.", provider: "ollama", requested_model_id: "qwen3:8b", observed_model_id: "qwen3:8b" }) }
   });
   assert.equal(report.results[0].status, "OBSERVED_PASS_NOT_BENCHMARK_PROMOTION");
   assert.equal(report.results[0].exact_provider_identity_verified, true);
