@@ -81,15 +81,18 @@ async function authenticatedUser(token: string, publishableKey: string, supabase
   return user as { id: string; is_anonymous?: boolean };
 }
 
-async function writeRun(token: string, publishableKey: string, userId: string, row: Record<string, unknown>) {
+async function writeRun(userId: string, row: Record<string, unknown>) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  if (!supabaseUrl) throw new Error("supabase_url_missing");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) throw new Error("audit_service_credentials_missing");
+  // Audit records are written only by this trusted server-side function.
+  // Never expose SUPABASE_SERVICE_ROLE_KEY to the browser or logs.
   const result = await fetch(`${supabaseUrl}/rest/v1/hq_execution_runs`, {
     method: "POST",
     signal: AbortSignal.timeout(8_000),
     headers: {
-      apikey: publishableKey,
-      Authorization: `Bearer ${token}`,
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
       "Content-Type": "application/json",
       Prefer: "return=minimal",
     },
@@ -254,7 +257,7 @@ Deno.serve(async (req: Request) => {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) {
     try {
-      await writeRun(token, publishableKey, user.id, {
+      await writeRun(user.id, {
         task_type: taskType, status: "blocked", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Primary provider secret is not configured",
@@ -269,7 +272,7 @@ Deno.serve(async (req: Request) => {
   try {
     const result = await executeMultipass(task, apiKey);
     try {
-      await writeRun(token, publishableKey, user.id, {
+      await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Final synthesis returned; response content not persisted",
@@ -294,7 +297,7 @@ Deno.serve(async (req: Request) => {
       ? error.message
       : error instanceof Error && error.message === "provider_empty_output" ? "provider_empty_output" : "provider_request_failed";
     try {
-      await writeRun(token, publishableKey, user.id, {
+      await writeRun(user.id, {
         task_type: taskType, status: "failed", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Primary multipass execution failed",
