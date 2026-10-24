@@ -74,6 +74,41 @@ test("adapter rejects unsupported providers, models and untrusted gateway URLs",
     modelId: "gpt-4.1-mini",
     gatewayUrl: "https://attacker.example/functions/v1/hq-gateway",
   }), /gateway_url_not_trusted/);
+  assert.throws(() => createSupabaseGatewayAdapter({
+    ...common,
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+    gatewayUrl: "https://xfewajxkqntflfntisut.supabase.co.attacker.example/functions/v1/hq-gateway",
+  }), /gateway_url_not_trusted/);
+  assert.throws(() => createSupabaseGatewayAdapter({
+    getAccessToken: async () => "token",
+    fetchImpl: async () => response({}),
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+  }), /publishable_key_required/);
+  const valid = createSupabaseGatewayAdapter({
+    ...common,
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+  });
+  assert.equal(valid.status, "NOT_LIVE_TESTED");
+  assert.equal(valid.authorized, false);
+});
+
+test("adapter rejects arbitrary council roles before making a network request", async () => {
+  let calls = 0;
+  const adapter = createSupabaseGatewayAdapter({
+    provider: "openai",
+    modelId: "gpt-4.1-mini",
+    publishableKey: "sb_publishable_test",
+    getAccessToken: async () => "token",
+    fetchImpl: async () => { calls++; return response({}); },
+  });
+  await assert.rejects(
+    adapter.invoke({ ...payload, role: "admin" }),
+    /council_payload_invalid/,
+  );
+  assert.equal(calls, 0);
 });
 
 test("adapter refuses missing sessions without making a network request", async () => {
