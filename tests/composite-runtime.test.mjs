@@ -108,6 +108,7 @@ test("does not count two models from the same provider as independent", () => {
     adapters: adaptersFor(candidates),
     attestations: localAttestations,
     now: () => now,
+    verifyAttestation: item => item?.signature === "valid-test-signature",
   });
   assert.equal(result.ready, false);
   assert.ok(result.rejected.some(x => x.reason === "PROVIDER_NOT_INDEPENDENT"));
