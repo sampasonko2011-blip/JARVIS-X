@@ -159,7 +159,8 @@ export function buildCompositeProviders({
           task: JSON.stringify(payload),
           role: `council_${payload.role}`,
         });
-        if (result?.requested_model_id !== modelId ||
+        if (normalizeProvider(result?.provider) !== providerId ||
+            result?.requested_model_id !== modelId ||
             result?.observed_model_id !== modelId ||
             typeof result?.text !== "string" ||
             !result.text.trim()) {
