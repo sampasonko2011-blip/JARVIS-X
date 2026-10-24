@@ -1,5 +1,18 @@
 import { test, expect } from "@playwright/test";
 
+async function allowGatewayCors(page) {
+  await page.route("**/functions/v1/hq-gateway**", async route => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, OPTIONS",
+        "access-control-allow-headers": "authorization, apikey, content-type, accept",
+      }});
+    }
+    return route.continue();
+  });
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
   await page.evaluate(() => localStorage.clear());
@@ -309,9 +322,10 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
+  await allowGatewayCors(page);
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.route("**/functions/v1/hq-gateway/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
-  await page.route("**/functions/v1/hq-gateway", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ output: "Verified gateway reply", provider: "openai", model: "gpt-4.1-mini", provider_calls: 3 }) }));
+  await page.route("**/functions/v1/hq-gateway/health", route => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
+  await page.route("**/functions/v1/hq-gateway", route => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ output: "Verified gateway reply", provider: "openai", model: "gpt-4.1-mini", provider_calls: 3 }) }));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
