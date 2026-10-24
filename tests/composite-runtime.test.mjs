@@ -178,22 +178,33 @@ test("requires valid inputs and fails closed on an invalid clock", () => {
 
 
 
-test("propagates council cancellation through the composite bridge to the adapter", async () => {
+test("aborts the adapter signal when the council stage times out", async () => {
   let observedSignal;
   const adapters = adaptersFor();
   adapters["alpha-model"] = async ({ signal }) => {
     observedSignal = signal;
-    return { text: "lead", provider: "alpha", requested_model_id: "alpha-v1", observed_model_id: "alpha-v1" };
+    return await new Promise((resolve, reject) => {
+      if (signal.aborted) {
+        reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+        return;
+      }
+      signal.addEventListener("abort", () => {
+        reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+      }, { once: true });
+    });
   };
   const result = await runCompositeTask({
     ...common,
     adapters,
     objective: "cancellation propagation test",
+    timeoutMs: 100,
     councilNow: () => "2026-10-24T12:01:00.000Z",
   });
-  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.reason, "LEAD_STAGE_FAILED");
   assert.ok(observedSignal instanceof AbortSignal);
-  assert.equal(observedSignal.aborted, false);
+  assert.equal(observedSignal.aborted, true);
+  assert.equal(result.providerCalls, 1);
 });
 
 test("integrates the real provider-adapter layer end-to-end using mocked HTTP only", async () => {
