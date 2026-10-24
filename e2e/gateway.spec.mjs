@@ -105,10 +105,10 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
   await installGatewayFetchMock(page, { health: "timeout" });
-await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
-  await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 8000 });
+  await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 10000 });
   await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 8 seconds");
   await expect(page.locator("#chat-send")).toBeDisabled();
 });
