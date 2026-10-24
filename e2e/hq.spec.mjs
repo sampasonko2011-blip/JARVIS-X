@@ -29,7 +29,7 @@ async function allowGatewayCors(page) {
         "access-control-allow-headers": "authorization, apikey, content-type, accept",
       }});
     }
-    return route.continue();
+    return route.fallback();
   });
 }
 
