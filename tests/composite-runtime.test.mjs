@@ -234,6 +234,58 @@ test("integrates the real provider-adapter layer end-to-end using mocked HTTP on
   assert.deepEqual(result.stages.map(stage => stage.status), ["EXECUTED", "EXECUTED", "EXECUTED"]);
 });
 
+
+test("supports an explicitly selected no-key Ollama model-diverse council through real adapters with mocked HTTP", async () => {
+  const localRegistry = { candidates: [
+    { id: "local-lead", provider: "Ollama", model_id: "qwen3:8b", status: "UNPROVEN" },
+    { id: "local-critic", provider: "Ollama", model_id: "deepseek-r1:8b", status: "UNPROVEN" },
+    { id: "local-synth", provider: "Ollama", model_id: "gemma3:4b", status: "UNPROVEN" },
+  ] };
+  const adapterSet = createProviderAdapters({
+    registry: localRegistry,
+    env: {},
+    fetchImpl: async (url, options) => {
+      assert.equal(url, "http://127.0.0.1:11434/api/chat");
+      const body = JSON.parse(options.body);
+      return {
+        ok: true, status: 200,
+        text: async () => JSON.stringify({
+          model: body.model,
+          message: { role: "assistant", content: body.model === "gemma3:4b" ? "Locally synthesized answer" : `Output from ${body.model}` },
+          done: true,
+          prompt_eval_count: 20,
+          eval_count: 12,
+        }),
+      };
+    },
+  });
+  assert.deepEqual(adapterSet.configured_providers, ["ollama"]);
+  const localAttestations = localRegistry.candidates.map((candidate, i) =>
+    attestation(candidate, stageRoles[i]));
+  const options = {
+    registry: localRegistry,
+    adapters: adapterSet.adapters,
+    attestations: localAttestations,
+    verifyAttestation: item => item?.signature === "valid-test-signature",
+    independencePolicy: "local-model-diverse",
+    now: () => now,
+    objective: "Evaluate a no-key local council",
+    councilNow: () => "2026-10-24T12:01:00.000Z",
+  };
+  const strictResult = await runCompositeTask({ ...options, independencePolicy: "distinct-providers" });
+  assert.equal(strictResult.status, "MANUAL_HANDOFF");
+  assert.equal(strictResult.providerCalls, 0);
+
+  const result = await runCompositeTask(options);
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.providerCalls, 3);
+  assert.equal(result.composite.providerDiversity, 1);
+  assert.equal(result.composite.modelDiversity, 3);
+  assert.equal(result.composite.independencePolicy, "local-model-diverse");
+  assert.equal(result.composite.status, "EXECUTED_NOT_QUALITY_PROMOTED");
+  assert.equal(result.answer, "Locally synthesized answer");
+});
+
 test("does not let a duplicate attestation for a candidate override the first record", () => {
   const duplicate = [...attestations, attestation(registry.candidates[0], "critic")];
   const result = buildCompositeProviders({ ...common, attestations: duplicate });
