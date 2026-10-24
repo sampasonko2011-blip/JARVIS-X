@@ -191,6 +191,18 @@ Deno.serve(async (req: Request) => {
   catch { return jsonResponse({ error: "authentication_service_unavailable" }, 503, origin); }
   if (!user) return jsonResponse({ error: "invalid_or_anonymous_session" }, 401, origin);
 
+  // Paid inference is invite-only. Fail closed until an operator configures the
+  // allowed email list in Edge Function secrets. Never allow public self-signup
+  // to become an unrestricted proxy over a billable provider key.
+  const allowedEmails = (Deno.env.get("JX_ALLOWED_EMAILS") ?? "")
+    .split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+  if (allowedEmails.length === 0) {
+    return jsonResponse({ error: "gateway_access_policy_not_configured" }, 503, origin);
+  }
+  if (typeof user.email !== "string" || !allowedEmails.includes(user.email.trim().toLowerCase())) {
+    return jsonResponse({ error: "account_not_allowlisted" }, 403, origin);
+  }
+
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
     return jsonResponse({
       ok: true,
