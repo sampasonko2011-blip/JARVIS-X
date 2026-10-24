@@ -35,13 +35,16 @@ const env = {
   GEMINI_API_KEY: "test-gemini-key",
 };
 
-function fakeFetch(_url, init) {
+function fakeFetch(url, init) {
   const body = JSON.parse(init.body);
   let response;
-  if (body.model === "model-lead") response = { model: "model-lead", choices: [{ message: { content: "lead answer" } }] };
-  else if (body.model === "model-critic") response = { model: "model-critic", choices: [{ message: { content: "independent critique" } }] };
-  else if (String(_url).includes("generativelanguage.googleapis.com")) response = { modelVersion: "model-synth", candidates: [{ content: { parts: [{ text: "synthesis answer" }] } }] };
-  else response = { model: body.model, content: [{ type: "text", text: "provider answer" }] };
+  if (String(url).includes("generativelanguage.googleapis.com")) {
+    response = { modelVersion: "model-synth", candidates: [{ content: { parts: [{ text: "synthesis answer" }] } }] };
+  } else if (String(url).includes("api.anthropic.com")) {
+    response = { model: "model-critic", content: [{ type: "text", text: "independent critique" }] };
+  } else {
+    response = { model: body.model, choices: [{ message: { content: "lead answer" } }] };
+  }
   return Promise.resolve(new Response(JSON.stringify(response), { status: 200, headers: { "content-type": "application/json" } }));
 }
 
