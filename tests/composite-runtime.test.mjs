@@ -177,6 +177,25 @@ test("requires valid inputs and fails closed on an invalid clock", () => {
 });
 
 
+
+test("propagates council cancellation through the composite bridge to the adapter", async () => {
+  let observedSignal;
+  const adapters = adaptersFor();
+  adapters["alpha-model"] = async ({ signal }) => {
+    observedSignal = signal;
+    return { text: "lead", provider: "alpha", requested_model_id: "alpha-v1", observed_model_id: "alpha-v1" };
+  };
+  const result = await runCompositeTask({
+    ...common,
+    adapters,
+    objective: "cancellation propagation test",
+    councilNow: () => "2026-10-24T12:01:00.000Z",
+  });
+  assert.equal(result.status, "COMPLETED");
+  assert.ok(observedSignal instanceof AbortSignal);
+  assert.equal(observedSignal.aborted, false);
+});
+
 test("integrates the real provider-adapter layer end-to-end using mocked HTTP only", async () => {
   const liveRegistry = { candidates: [
     { id: "google-model", provider: "Google", model_id: "google-model-v1", status: "OBSERVED" },
