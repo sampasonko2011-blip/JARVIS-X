@@ -1,5 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
-
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store",
@@ -119,7 +117,13 @@ export function createGatewayHandler({
       return send(res, 404, { error: "NOT_FOUND" });
     }
 
-    if (!sameOrigin(req, allowedOrigin)) {
+    // Browsers may omit Origin on a read-only GET. If present, it must still
+    // match. State-changing chat requests require an exact allowed origin.
+    const origin = req.headers?.origin;
+    if (url.pathname === "/api/v1/chat" && !sameOrigin(req, allowedOrigin)) {
+      return send(res, 403, { error: "ORIGIN_NOT_ALLOWED" });
+    }
+    if (url.pathname === "/api/v1/health" && origin && !sameOrigin(req, allowedOrigin)) {
       return send(res, 403, { error: "ORIGIN_NOT_ALLOWED" });
     }
 
