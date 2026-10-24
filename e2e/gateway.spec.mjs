@@ -7,23 +7,31 @@ test.beforeEach(async ({ page }) => {
 });
 
 
-async function routeGateway(page, suffix, handler) {
-  await page.route(`**/functions/v1/hq-gateway${suffix}`, async route => {
-    if (route.request().method() === "OPTIONS") {
-      return route.fulfill({ status: 204, headers: {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "GET, POST, OPTIONS",
-        "access-control-allow-headers": "authorization, apikey, content-type, accept",
-      } });
-    }
-    const wrapped = {
-      request: () => route.request(),
-      fulfill: options => route.fulfill({ ...options, headers: {
-        ...(options.headers || {}), "access-control-allow-origin": "*",
-      } }),
+async function installGatewayFetchMock(page, config) {
+  await page.addInitScript(() => {
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
+      const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
+      if (fixture === "timeout") {
+        return new Promise((resolve, reject) => {
+          const signal = init.signal;
+          if (signal?.aborted) return reject(new DOMException("Aborted", "AbortError"));
+          signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+        });
+      }
+      return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
+        status: fixture?.status ?? 200,
+        headers: { "content-type": "application/json" },
+      }));
     };
-    return handler(wrapped);
   });
+  await page.reload();
+  await page.evaluate(config => {
+    window.__jxGatewayHealth = config.health;
+    window.__jxGatewayChat = config.chat;
+  }, config);
 }
 
 test("gateway is discoverable and fails closed before a real health response", async ({ page }) => {
@@ -107,8 +115,7 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await routeGateway(page, "/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" }) }));
-  await routeGateway(page, "", route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "provider_not_configured" }) }));
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
@@ -121,10 +128,7 @@ test("direct chat send fails safely when provider is unavailable", async ({ page
 
 test("direct chat refuses incomplete health schemas", async ({ page }) => {
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await routeGateway(page, "/health", route => route.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ status: "ok", authenticated: true, chat_enabled: true }),
-  }));
+  await installGatewayFetchMock(page, { health: { status: 200, body: { status: "ok", authenticated: true, chat_enabled: true } } });
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
