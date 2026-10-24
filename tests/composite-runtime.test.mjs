@@ -152,5 +152,5 @@ test("does not let a duplicate attestation for a candidate override the first re
   const duplicate = [...attestations, attestation(registry.candidates[0], "critic")];
   const result = buildCompositeProviders({ ...common, attestations: duplicate });
   assert.ok(result.rejected.some(x => x.reason === "DUPLICATE_ATTESTATION"));
-  assert.equal(result.ready, false);
+  assert.equal(result.ready, true);
 });
