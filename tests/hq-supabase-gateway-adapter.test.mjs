@@ -188,7 +188,7 @@ test("adapter rejects HTTP errors or mismatched provider/model identities", asyn
   await assert.rejects(mismatched.invoke(payload), /gateway_response_invalid/);
 });
 
-test("adapter rejects untrusted subdomains, non-council roles and missing publishable keys", () => {
+test("adapter rejects untrusted subdomains, non-council roles and missing publishable keys", async () => {
   const base = {
     provider: "openai",
     modelId: "gpt-4.1-mini",
@@ -201,7 +201,7 @@ test("adapter rejects untrusted subdomains, non-council roles and missing publis
     gatewayUrl: "https://xfewajxkqntflfntisut.supabase.co.attacker.example/functions/v1/hq-gateway",
   }), /gateway_url_not_trusted/);
   const adapter = createSupabaseGatewayAdapter(base);
-  assert.rejects(adapter.invoke({ ...payload, role: "admin" }), /council_payload_invalid/);
+  await assert.rejects(adapter.invoke({ ...payload, role: "admin" }), /council_payload_invalid/);
   assert.throws(() => createSupabaseGatewayAdapter({
     ...base,
     publishableKey: "",
