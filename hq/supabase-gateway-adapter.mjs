@@ -16,6 +16,8 @@ const ALLOWED_MODELS = Object.freeze({
 const DEFAULT_GATEWAY_URL =
   "https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway";
 const MAX_TASK_BYTES = 12_000;
+const ALLOWED_ROLES = new Set(["lead", "critic", "synthesizer"]);
+const MAX_REQUEST_TIMEOUT_MS = 30_000;
 
 function validateGatewayUrl(value) {
   let url;
@@ -41,6 +43,7 @@ function validateGatewayUrl(value) {
 
 function stageTask(payload) {
   if (!payload || typeof payload !== "object" ||
+      !ALLOWED_ROLES.has(payload.role) ||
       typeof payload.objective !== "string" ||
       typeof payload.role !== "string" ||
       typeof payload.instructions !== "string") {
@@ -69,6 +72,7 @@ function stageTask(payload) {
 export function createSupabaseGatewayAdapter({
   provider,
   modelId,
+  publishableKey,
   getAccessToken,
   gatewayUrl = DEFAULT_GATEWAY_URL,
   fetchImpl = globalThis.fetch,
@@ -78,6 +82,9 @@ export function createSupabaseGatewayAdapter({
   }
   if (!ALLOWED_MODELS[provider].includes(modelId)) {
     throw new TypeError("model_not_allowed");
+  }
+  if (typeof publishableKey !== "string" || !publishableKey.trim()) {
+    throw new TypeError("publishable_key_required");
   }
   if (typeof getAccessToken !== "function") {
     throw new TypeError("access_token_provider_required");
@@ -99,10 +106,13 @@ export function createSupabaseGatewayAdapter({
       if (typeof accessToken !== "string" || !accessToken.trim()) {
         throw new Error("gateway_session_unavailable");
       }
+      const timeoutSignal = AbortSignal.timeout(MAX_REQUEST_TIMEOUT_MS);
+      const requestSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
       const response = await fetchImpl(endpoint, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
+          "apikey": publishableKey,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -111,7 +121,7 @@ export function createSupabaseGatewayAdapter({
           task,
           task_type: `council_${payload.role}`.slice(0, 100),
         }),
-        signal,
+        signal: requestSignal,
         cache: "no-store",
       });
       const data = await response.json().catch(() => null);
