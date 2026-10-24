@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildCompositeProviders, runCompositeTask } from "../hq/composite-runtime.mjs";
+import { createProviderAdapters } from "../evaluation/provider-adapters.mjs";
 
 const now = new Date("2026-10-24T12:00:00.000Z");
 const registry = { candidates: [
@@ -173,6 +174,64 @@ test("runs lead, critic and synthesis when trusted gates and exact identities pa
 test("requires valid inputs and fails closed on an invalid clock", () => {
   assert.throws(() => buildCompositeProviders({}), /COMPOSITE_INPUT_INVALID/);
   assert.throws(() => buildCompositeProviders({ ...common, now: () => "not-a-date" }), /COMPOSITE_CLOCK_INVALID/);
+});
+
+
+test("integrates the real provider-adapter layer end-to-end using mocked HTTP only", async () => {
+  const liveRegistry = { candidates: [
+    { id: "google-model", provider: "Google", model_id: "google-model-v1", status: "OBSERVED" },
+    { id: "anthropic-model", provider: "Anthropic", model_id: "anthropic-model-v1", status: "OBSERVED" },
+    { id: "deepseek-model", provider: "DeepSeek", model_id: "deepseek-model-v1", status: "OBSERVED" },
+  ] };
+  const adapterSet = createProviderAdapters({
+    registry: liveRegistry,
+    env: { GOOGLE_API_KEY: "test-only", ANTHROPIC_API_KEY: "test-only", DEEPSEEK_API_KEY: "test-only" },
+    fetchImpl: async (url, options) => {
+      const body = JSON.parse(options.body);
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return {
+          ok: true, status: 200,
+          text: async () => JSON.stringify({
+            modelVersion: "google-model-v1",
+            candidates: [{ content: { parts: [{ text: "Lead proposal" }] } }],
+          }),
+        };
+      }
+      if (url.includes("api.anthropic.com")) {
+        return {
+          ok: true, status: 200,
+          text: async () => JSON.stringify({
+            model: "anthropic-model-v1",
+            content: [{ type: "text", text: "Independent critique" }],
+          }),
+        };
+      }
+      assert.match(url, /api\\.deepseek\\.com\\/chat\\/completions/);
+      return {
+        ok: true, status: 200,
+        text: async () => JSON.stringify({
+          model: "deepseek-model-v1",
+          choices: [{ message: { content: "Synthesized answer" } }],
+        }),
+      };
+    },
+  });
+  const liveAttestations = liveRegistry.candidates.map((candidate, i) =>
+    attestation(candidate, stageRoles[i]));
+  const result = await runCompositeTask({
+    registry: liveRegistry,
+    adapters: adapterSet.adapters,
+    attestations: liveAttestations,
+    verifyAttestation: item => item?.signature === "valid-test-signature",
+    now: () => now,
+    objective: "Test adapter-to-council integration",
+    councilNow: () => "2026-10-24T12:01:00.000Z",
+  });
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.providerCalls, 3);
+  assert.equal(result.composite.providerDiversity, 3);
+  assert.equal(result.answer, "Synthesized answer");
+  assert.deepEqual(result.stages.map(stage => stage.status), ["EXECUTED", "EXECUTED", "EXECUTED"]);
 });
 
 test("does not let a duplicate attestation for a candidate override the first record", () => {
