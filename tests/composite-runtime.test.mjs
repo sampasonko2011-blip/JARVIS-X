@@ -30,6 +30,7 @@ const attestations = registry.candidates.map((candidate, i) => attestation(candi
 function adaptersFor(candidates = registry.candidates) {
   return Object.fromEntries(candidates.map(candidate => [candidate.id, async ({ task, role }) => ({
     text: `${role}: ${candidate.id} evaluated ${JSON.parse(task).objective}`,
+    provider: candidate.provider.toLowerCase(),
     requested_model_id: candidate.model_id,
     observed_model_id: candidate.model_id,
     latency_ms: 10,
@@ -141,7 +142,21 @@ test("rejects adapter output whose observed model identity does not match", asyn
   assert.equal(result.providerCalls, 2);
 });
 
-test("runs lead, critic and synthesis when trusted gates and exact identities pass", async () => {
+
+test("rejects adapter output whose provider identity does not match", async () => {
+  const adapters = adaptersFor();
+  adapters["beta-model"] = async () => ({
+    text: "provider identity mismatch",
+    provider: "alpha",
+    requested_model_id: "beta-v2",
+    observed_model_id: "beta-v2",
+    latency_ms: 10,
+  });
+  const result = await runCompositeTask({ ...common, adapters, objective: "provider identity test" });
+  assert.equal(result.status, "PARTIAL");
+  assert.equal(result.providerCalls, 2);
+});
+\ntest("runs lead, critic and synthesis when trusted gates and exact identities pass", async () => {
   const result = await runCompositeTask({
     ...common,
     objective: "Compare strategies",
