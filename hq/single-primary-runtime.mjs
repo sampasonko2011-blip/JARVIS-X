@@ -71,7 +71,9 @@ export function createSinglePrimaryRuntime({
       }
 
       const traceId = randomUUID();
+      let providerCalls = 0;
       const execute = async (role, task) => {
+        providerCalls++;
         const result = await adapter({ task: JSON.stringify({ role, objective: objective.trim(), task }), role, signal: undefined });
         if (norm(result?.provider) !== norm(candidate.provider) ||
             result?.requested_model_id !== candidate.model_id ||
@@ -101,7 +103,7 @@ export function createSinglePrimaryRuntime({
           },
         };
       } catch {
-        return { status: "FAILED", reason: "PRIMARY_EXECUTION_FAILED", providerCalls: 0, traceId };
+        return { status: "FAILED", reason: "PRIMARY_EXECUTION_FAILED", providerCalls, traceId };
       }
     },
   });
