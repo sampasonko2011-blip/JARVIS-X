@@ -5,6 +5,14 @@ import { readFile } from "node:fs/promises";
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
 const hq = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 
+test("roster uses the intended exact model IDs", () => {
+  assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
+  assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
+  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5-5"'));
+  assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
+  assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
+  assert.ok(gateway.includes('provider === "anthropic" ? "claude-opus-5-5"'));
+});
 test("council routes five distinct providers through their provider APIs", () => {
   assert.match(gateway, /https:\/\/api\.openai\.com\/v1/);
   assert.match(gateway, /endpoint = base \+ "\/responses"/);
