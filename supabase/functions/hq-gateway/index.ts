@@ -281,8 +281,18 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
   if (typeof output !== "string" || !output.trim()) throw new Error("provider_empty_output_" + provider);
   if (typeof returnedModel !== "string" || !returnedModel.trim()) throw new Error("provider_model_identity_missing_" + provider);
   const normalized = returnedModel.toLowerCase();
-  const family = provider === "openai" ? "gpt-6.1-sol" : provider === "deepseek" ? "deepseek" : provider === "anthropic" ? "claude-opus-5" : provider === "xai" ? "grok-4.7" : "gemini-4-argon";
-  if (!normalized.includes(family)) throw new Error("provider_model_identity_mismatch_" + provider);
+  // DeepSeek's documented alias resolves to a versioned server model ID.
+  // Accept only that documented Flash family; never accept an arbitrary DeepSeek model.
+  const identityMatches = provider === "openai"
+    ? normalized.startsWith("gpt-6.1-sol")
+    : provider === "deepseek"
+    ? normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")
+    : provider === "anthropic"
+    ? normalized === "claude-opus-5" || normalized.startsWith("claude-opus-5-")
+    : provider === "xai"
+    ? normalized.startsWith("grok-4.7")
+    : normalized.startsWith("gemini-4-argon");
+  if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider);
   return { output: output.trim(), provider, model: config.model };
 }
 async function executeMultipass(task: string, memoryContext = "") {
