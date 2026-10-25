@@ -250,14 +250,14 @@ async function callProvider(provider: "openai" | "anthropic" | "google", task: s
     returnedModel = data?.model;
   } else {
     output = Array.isArray(data?.candidates?.[0]?.content?.parts) ? data.candidates[0].content.parts.filter((part: any) => typeof part?.text === "string").map((part: any) => part.text).join("\n") : "";
-    returnedModel = config.model;
+    returnedModel = data?.modelVersion;
   }
   if (typeof output !== "string" || !output.trim()) throw new Error("provider_empty_output_" + provider);
   if (typeof returnedModel === "string" && returnedModel.trim()) {
     const normalized = returnedModel.toLowerCase();
     const family = provider === "openai" ? "gpt-4.1-mini" : provider === "anthropic" ? "claude-sonnet-4" : "gemini-2.5-flash";
     if (!normalized.includes(family)) throw new Error("provider_model_identity_mismatch_" + provider);
-  } else if (provider !== "google") throw new Error("provider_model_identity_missing_" + provider);
+  } else throw new Error("provider_model_identity_missing_" + provider);
   return { output: output.trim(), provider, model: config.model };
 }
 async function executeMultipass(task: string, memoryContext = "") {
