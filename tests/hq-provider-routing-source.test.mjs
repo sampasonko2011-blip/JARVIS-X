@@ -11,7 +11,7 @@ test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('anthropic: { model: "claude-opus-5"'));
   assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
   assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
-  assert.ok(gateway.includes('provider === "anthropic" ? "claude-opus-5"'));
+  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
 });
 test("council routes five distinct providers through their provider APIs", () => {
   assert.match(gateway, /https:\/\/api\.openai\.com\/v1/);
