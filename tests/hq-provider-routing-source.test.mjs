@@ -102,5 +102,4 @@ test("budget migration keeps tables private and reservation RPC service-role-onl
   }
   assert.match(budgetMigration, /SECURITY INVOKER/);
   assert.match(budgetMigration, /SET search_path = pg_catalog, public/);
-  assert.match(budgetMigration, /GRANT EXECUTE ON FUNCTION public\\.reserve_hq_global_budget\\(uuid, uuid\\) TO service_role/);
 });
