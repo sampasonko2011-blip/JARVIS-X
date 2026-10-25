@@ -261,7 +261,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     headers = { "x-goog-api-key": apiKey, "Content-Type": "application/json" };
     body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: task }] }], generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, thinkingConfig: { thinkingLevel: "high" } } };
   }
-  const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(60_000), body: JSON.stringify(body) });
+  const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(25_000), body: JSON.stringify(body) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("provider_http_" + response.status + "_" + provider);
   let output: unknown, returnedModel: unknown;
@@ -440,9 +440,9 @@ Deno.serve(async (req: Request) => {
       memory: { provider: "xmemo", read_status: memory.status, write_status: memoryWriteStatus },
     }, 200, origin);
   } catch (error) {
-    const code = error instanceof Error && /^provider_http_\d+$/.test(error.message)
-      ? error.message
-      : error instanceof Error && error.message === "provider_empty_output" ? "provider_empty_output" : "provider_request_failed";
+    const code = error instanceof Error && /^(provider_http_\d+_|provider_empty_output_|provider_model_identity_|provider_secret_missing_|provider_secrets_missing_)/.test(error.message)
+      ? error.message.slice(0, 120)
+      : "provider_request_failed";
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "failed", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
