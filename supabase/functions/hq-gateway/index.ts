@@ -350,7 +350,7 @@ Deno.serve(async (req: Request) => {
       provider: PRIMARY_PROVIDER,
       model: PRIMARY_MODEL,
       providersConfigured: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name))),
-      providerConfigured: ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name))),
+      providerConfigured: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name))),
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
       auth: "verified-supabase-session",
@@ -393,7 +393,7 @@ Deno.serve(async (req: Request) => {
     }, 429, origin);
   }
 
-  const missingProviderSecrets = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY"].filter((name) => !Deno.env.get(name));
+  const missingProviderSecrets = ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].filter((name) => !Deno.env.get(name));
   if (missingProviderSecrets.length > 0) {
     try {
       await writeRun(user.id, {
