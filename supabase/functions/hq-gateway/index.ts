@@ -4,7 +4,7 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:3000",
 ]);
 const PRIMARY_PROVIDER = "multi-provider-council";
-const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:claude-opus-5 + xai:grok-4.7 + google:gemini-4-argon";
+const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:claude-opus-5-5 + xai:grok-4.7 + google:gemini-4-argon";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
@@ -213,7 +213,7 @@ async function storeConversationMemory(task: string, answer: string, userId: str
 const PROVIDER_CONFIG = Object.freeze({
   openai: { model: "gpt-6.1-sol", secret: "OPENAI_API_KEY" },
   deepseek: { model: "deepseek-flash", secret: "DEEPSEEK_API_KEY" },
-  anthropic: { model: "claude-opus-5", secret: "ANTHROPIC_API_KEY" },
+  anthropic: { model: "claude-opus-5-5", secret: "ANTHROPIC_API_KEY" },
   xai: { model: "grok-4.7", secret: "XAI_API_KEY" },
   google: { model: "gemini-4-argon", secret: "GOOGLE_API_KEY" },
 });
@@ -289,7 +289,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     : provider === "deepseek"
     ? normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")
     : provider === "anthropic"
-    ? normalized === "claude-opus-5" || normalized.startsWith("claude-opus-5-")
+    ? normalized === "claude-opus-5-5" || normalized.startsWith("claude-opus-5-5-")
     : provider === "xai"
     ? normalized.startsWith("grok-4.7")
     : normalized.startsWith("gemini-4-argon");
