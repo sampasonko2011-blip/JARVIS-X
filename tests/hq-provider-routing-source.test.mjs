@@ -60,7 +60,7 @@ test("global budget guard is required, persistent, and atomic before paid infere
   assert.match(budgetMigration, /FOR UPDATE/);
   assert.match(budgetMigration, /global_daily_budget_exhausted/);
   assert.match(budgetMigration, /REVOKE ALL ON FUNCTION public\.reserve_hq_global_budget/);
-  assert.match(budgetMigration, /GRANT EXECUTE ON FUNCTION public\.reserve_hq_global_budget\(uuid, uuid\) TO service_role/);
+  assert.ok(budgetMigration.includes("GRANT EXECUTE ON FUNCTION public.reserve_hq_global_budget(uuid, uuid) TO service_role"));
 });
 
 test("council fails closed if any required provider credential is missing", () => {
