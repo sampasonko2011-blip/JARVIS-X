@@ -108,7 +108,7 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 });
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "gpt-6.1-sol + deepseek-flash + claude-opus-5-5 + grok-4.7 + gemini-4-argon", providersConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "gpt-6.1-sol + deepseek-flash + claude-opus-5-5 + grok-4.7 + gemini-4-argon", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
