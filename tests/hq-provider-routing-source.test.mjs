@@ -14,7 +14,7 @@ test("council routes five distinct providers through their provider APIs", () =>
   assert.match(gateway, /endpoint = base \+ "\/responses"/);
   assert.match(gateway, /generativelanguage\.googleapis\.com\/v1beta\/models\//);
   for (const provider of ["openai", "deepseek", "anthropic", "xai", "google"]) {
-    assert.ok(gateway.includes('callProvider("' + provider + '"'), "missing provider stage " + provider);
+    assert.match(gateway, new RegExp("callProvider\\\\(\\\\s*\\\\"" + provider + "\\\\""), "missing provider stage " + provider);
   }
   for (const secret of ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"]) {
     assert.ok(gateway.includes(secret), "missing server-side secret name " + secret);
