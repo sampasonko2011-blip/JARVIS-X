@@ -32,7 +32,7 @@ test("council routes five distinct providers through their provider APIs", () =>
 });
 
 test("provider identity validation rejects cross-model responses", () => {
-  assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4-flash") || normalized.startsWith("deepseek-v4.1-flash")'));
+  assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
   assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
   assert.ok(gateway.includes('normalized === "claude-opus-5"'));
   assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
@@ -65,5 +65,5 @@ test("HQ health check and chat UI require the five-provider council contract", (
   assert.match(hq, /health\.mode!=='five-provider-council'/);
   assert.match(hq, /health\.providersConfigured/);
   assert.match(hq, /result\.providers_used/);
-  assert.match(hq, /five distinct providers/);
+  assert.match(hq, /Configured five-provider roster/);
 });
