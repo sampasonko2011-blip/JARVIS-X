@@ -25,7 +25,7 @@ test("council routes five distinct providers through their provider APIs", () =>
 
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
   assert.match(gateway, /AbortSignal\.timeout\(25_000\)/);
-  assert.match(gateway, /provider_http_\d+_/);
+  assert.match(gateway, /"provider_http_" \+ response\.status/);
   assert.match(gateway, /provider_model_identity_mismatch_/);
   assert.match(gateway, /provider_request_failed/);
 });
