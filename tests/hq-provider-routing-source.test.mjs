@@ -63,6 +63,21 @@ test("global budget guard is required, persistent, and atomic before paid infere
   assert.ok(budgetMigration.includes("GRANT EXECUTE ON FUNCTION public.reserve_hq_global_budget(uuid, uuid) TO service_role"));
 });
 
+test("authenticated allowlist and per-user rate limits run before budget reservation", () => {
+  assert.match(gateway, /if \(allowedEmails\.length === 0\)[\s\S]*gateway_access_policy_not_configured/);
+  assert.match(gateway, /account_not_allowlisted/);
+  assert.match(gateway, /consumeRateLimit\(token, publishableKey, "minute"\)/);
+  assert.match(gateway, /consumeRateLimit\(token, publishableKey, "day"\)/);
+  assert.match(gateway, /rate_limit_service_unavailable/);
+  const minuteLimit = gateway.indexOf('consumeRateLimit(token, publishableKey, "minute")');
+  const dayLimit = gateway.indexOf('consumeRateLimit(token, publishableKey, "day")');
+  const reservation = gateway.indexOf("budgetReservation = await reserveGlobalBudget(user.id)");
+  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  assert.ok(minuteLimit >= 0 && dayLimit > minuteLimit, "both rate-limit windows must be checked");
+  assert.ok(reservation > dayLimit, "rate limits must precede paid-budget reservation");
+  assert.ok(providerExecution > reservation, "paid provider execution must follow budget reservation");
+});
+
 test("council fails closed if any required provider credential is missing", () => {
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
