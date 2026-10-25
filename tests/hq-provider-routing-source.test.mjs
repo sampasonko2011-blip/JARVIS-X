@@ -6,10 +6,12 @@ const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.t
 const hq = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 
 test("council routes five distinct providers through their provider APIs", () => {
-  assert.match(gateway, /https:\/\/api\.openai\.com\/v1\/responses/);
+  assert.match(gateway, /https:\/\/api\.openai\.com\/v1/);
+  assert.match(gateway, /endpoint = base \+ "\/responses"/);
   assert.match(gateway, /https:\/\/api\.deepseek\.com\/chat\/completions/);
   assert.match(gateway, /https:\/\/api\.anthropic\.com\/v1\/messages/);
-  assert.match(gateway, /https:\/\/api\.x\.ai\/v1\/responses/);
+  assert.match(gateway, /https:\/\/api\.x\.ai\/v1/);
+  assert.match(gateway, /endpoint = base \+ "\/responses"/);
   assert.match(gateway, /generativelanguage\.googleapis\.com\/v1beta\/models\//);
   for (const provider of ["openai", "deepseek", "anthropic", "xai", "google"]) {
     assert.ok(gateway.includes('callProvider("' + provider + '"'), "missing provider stage " + provider);
