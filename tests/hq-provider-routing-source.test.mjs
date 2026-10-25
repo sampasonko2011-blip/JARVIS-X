@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
 const hq = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+const budgetMigration = await readFile(new URL("../supabase/migrations/20261025225000_hq_global_budget_guard.sql", import.meta.url), "utf8");
 
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
@@ -44,6 +45,22 @@ test("provider calls have bounded timeouts and preserve safe failure diagnostics
   assert.match(gateway, /"provider_http_" \+ response\.status/);
   assert.match(gateway, /provider_model_identity_mismatch_/);
   assert.match(gateway, /provider_request_failed/);
+});
+
+test("global budget guard is required, persistent, and atomic before paid inference", () => {
+  assert.match(gateway, /async function reserveGlobalBudget/);
+  assert.match(gateway, /reserve_hq_global_budget/);
+  assert.match(gateway, /global_budget_guard_unavailable/);
+  assert.match(gateway, /budgetGuard,/);
+  assert.match(gateway, /chatEnabled: providersConfigured && budgetGuard\.enabled && !budgetGuard\.killSwitchEnabled/);
+  assert.match(hq, /health\.chatEnabled!==true/);
+  assert.match(hq, /global budget guard is not configured or the kill switch is active/);
+  assert.match(budgetMigration, /enabled boolean NOT NULL DEFAULT false/);
+  assert.match(budgetMigration, /kill_switch_enabled boolean NOT NULL DEFAULT false/);
+  assert.match(budgetMigration, /FOR UPDATE/);
+  assert.match(budgetMigration, /global_daily_budget_exhausted/);
+  assert.match(budgetMigration, /REVOKE ALL ON FUNCTION public\.reserve_hq_global_budget/);
+  assert.match(budgetMigration, /GRANT EXECUTE ON FUNCTION public\.reserve_hq_global_budget\(uuid, uuid\) TO service_role/);
 });
 
 test("council fails closed if any required provider credential is missing", () => {
