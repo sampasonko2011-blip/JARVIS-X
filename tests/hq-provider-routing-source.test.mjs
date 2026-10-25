@@ -34,7 +34,7 @@ test("council routes five distinct providers through their provider APIs", () =>
 test("provider identity validation rejects cross-model responses", () => {
   assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
   assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
-  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
+  assert.ok(gateway.includes('normalized === "claude-opus-5-5"'));
   assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
 });
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
