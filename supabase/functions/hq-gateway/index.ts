@@ -105,6 +105,64 @@ async function writeRun(userId: string, row: Record<string, unknown>) {
   }
 }
 
+async function readGlobalBudgetStatus() {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) throw new Error("global_budget_service_credentials_missing");
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/hq_global_budget_config?select=enabled,kill_switch_enabled,daily_limit_usd,request_reservation_usd&singleton=eq.true`,
+    {
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+      signal: AbortSignal.timeout(5_000),
+    },
+  );
+  if (!response.ok) throw new Error("global_budget_status_unavailable");
+  const rows = await response.json().catch(() => null);
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row || typeof row.enabled !== "boolean" || typeof row.kill_switch_enabled !== "boolean") {
+    throw new Error("global_budget_status_invalid");
+  }
+  return {
+    enabled: row.enabled === true && row.request_reservation_usd !== null && Number(row.request_reservation_usd) > 0,
+    killSwitchEnabled: row.kill_switch_enabled === true,
+    dailyLimitUsd: Number.isFinite(Number(row.daily_limit_usd)) ? Number(row.daily_limit_usd) : null,
+    requestReservationConfigured: Number.isFinite(Number(row.request_reservation_usd)) && Number(row.request_reservation_usd) > 0,
+  };
+}
+
+async function reserveGlobalBudget(userId: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) throw new Error("global_budget_service_credentials_missing");
+  const reservationId = crypto.randomUUID();
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_hq_global_budget`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_reservation_id: reservationId, p_user_id: userId }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) {
+    await response.text();
+    throw new Error("global_budget_reservation_unavailable");
+  }
+  const data = await response.json().catch(() => null);
+  const row = Array.isArray(data) ? data[0] : null;
+  if (!row || typeof row.allowed !== "boolean" || typeof row.reason !== "string") {
+    throw new Error("global_budget_reservation_invalid");
+  }
+  return {
+    ...row,
+    reservationId,
+    reservedUsd: Number.isFinite(Number(row.reserved_usd)) ? Number(row.reserved_usd) : null,
+    reservedTodayUsd: Number.isFinite(Number(row.reserved_today_usd)) ? Number(row.reserved_today_usd) : null,
+    dailyLimitUsd: Number.isFinite(Number(row.daily_limit_usd)) ? Number(row.daily_limit_usd) : null,
+  };
+}
+
 async function consumeRateLimit(token: string, publishableKey: string, key: "minute" | "day") {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   if (!supabaseUrl) throw new Error("supabase_url_missing");
@@ -354,14 +412,22 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
+    const providersConfigured = ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name)));
+    let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
+    try { budgetGuard = await readGlobalBudgetStatus(); }
+    catch {
+      budgetGuard = { enabled: false, killSwitchEnabled: true, dailyLimitUsd: null, requestReservationConfigured: false };
+    }
     return jsonResponse({
       ok: true,
       service: "jarvis-x-gateway",
       mode: "five-provider-council",
       provider: PRIMARY_PROVIDER,
       model: PRIMARY_MODEL,
-      providersConfigured: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name))),
-      providerConfigured: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].every((name) => Boolean(Deno.env.get(name))),
+      providersConfigured,
+      providerConfigured: providersConfigured,
+      budgetGuard,
+      chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
       auth: "verified-supabase-session",
@@ -417,6 +483,35 @@ Deno.serve(async (req: Request) => {
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
     return jsonResponse({ error: "providers_not_configured", provider: PRIMARY_PROVIDER, missing_provider_count: missingProviderSecrets.length }, 503, origin);
+  }
+
+  let budgetReservation;
+  try {
+    budgetReservation = await reserveGlobalBudget(user.id);
+  } catch {
+    return jsonResponse({ error: "global_budget_guard_unavailable", message: "Paid inference is blocked because the global budget guard could not be verified." }, 503, origin);
+  }
+  if (!budgetReservation.allowed) {
+    try {
+      await writeRun(user.id, {
+        task_type: taskType, status: "blocked", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
+        input_summary: "Prompt omitted; sensitive content not persisted",
+        output_summary: "Global inference budget guard denied the request",
+        error_code: budgetReservation.reason.slice(0, 100),
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, budget_reservation_usd: budgetReservation.reservedUsd, budget_reserved_today_usd: budgetReservation.reservedTodayUsd, budget_daily_limit_usd: budgetReservation.dailyLimitUsd },
+        completed_at: new Date().toISOString(),
+      });
+    } catch {
+      return jsonResponse({ error: "audit_logging_failed" }, 503, origin);
+    }
+    const exhausted = budgetReservation.reason === "global_daily_budget_exhausted" || budgetReservation.reason === "global_kill_switch_enabled";
+    return jsonResponse({
+      error: "global_budget_blocked",
+      reason: budgetReservation.reason,
+      message: "Paid inference is blocked by the global budget guard.",
+      reserved_today_usd: budgetReservation.reservedTodayUsd,
+      daily_limit_usd: budgetReservation.dailyLimitUsd,
+    }, exhausted ? 429 : 503, origin);
   }
 
   // Cross-platform memory is opt-in per request. No recall or write unless the user explicitly consents.
