@@ -8,6 +8,7 @@ const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
+const GEMINI_MAX_OUTPUT_TOKENS = 32_768;
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
   const headers = new Headers({
@@ -259,9 +260,9 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
   } else {
     endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + config.model + ":generateContent";
     headers = { "x-goog-api-key": apiKey, "Content-Type": "application/json" };
-    body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: task }] }], generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, thinkingConfig: { thinkingLevel: "high" } } };
+    body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: task }] }], generationConfig: { maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS, thinkingConfig: { thinkingLevel: "medium" } } };
   }
-  const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(25_000), body: JSON.stringify(body) });
+  const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(provider === "google" ? 45_000 : 25_000), body: JSON.stringify(body) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("provider_http_" + response.status + "_" + provider);
   let output: unknown, returnedModel: unknown;
