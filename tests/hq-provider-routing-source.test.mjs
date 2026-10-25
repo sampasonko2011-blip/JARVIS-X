@@ -84,3 +84,23 @@ test("HQ health check and chat UI require the five-provider council contract", (
   assert.match(hq, /result\.providers_used/);
   assert.match(hq, /Configured five-provider roster/);
 });
+
+test("paid inference cannot start before the global budget reservation succeeds", () => {
+  const reserveCall = gateway.indexOf("budgetReservation = await reserveGlobalBudget(user.id)");
+  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  const memoryRecall = gateway.indexOf("recallMemory(task, user.id)");
+  assert.ok(reserveCall >= 0, "missing global budget reservation call");
+  assert.ok(providerExecution > reserveCall, "provider execution must follow reservation");
+  assert.ok(memoryRecall > reserveCall, "memory recall must follow reservation");
+  assert.match(gateway, /global_budget_guard_unavailable/);
+});
+
+test("budget migration keeps tables private and reservation RPC service-role-only", () => {
+  for (const table of ["hq_global_budget_config", "hq_global_budget_daily", "hq_global_budget_reservations"]) {
+    assert.match(budgetMigration, new RegExp("ALTER TABLE public\\." + table + " ENABLE ROW LEVEL SECURITY", "i"));
+    assert.match(budgetMigration, new RegExp("REVOKE ALL ON TABLE public\\." + table + " FROM PUBLIC, anon, authenticated", "i"));
+  }
+  assert.match(budgetMigration, /SECURITY INVOKER/);
+  assert.match(budgetMigration, /SET search_path = pg_catalog, public/);
+  assert.match(budgetMigration, /GRANT EXECUTE ON FUNCTION public\\.reserve_hq_global_budget\\(uuid, uuid\\) TO service_role/);
+});
