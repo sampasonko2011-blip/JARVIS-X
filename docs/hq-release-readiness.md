@@ -13,6 +13,8 @@
 - Supabase Auth logs previously included HTTP 422 `otp_disabled` on the existing-account-only email OTP flow. This is an observed failure requiring configuration diagnosis; it is not proof that public signup should be enabled.
 - CI validates repository behavior, not live provider access, account allowlisting, production HTTP headers, staging migrations, cross-device sync, or physical iPad behavior.
 - A conservative **$4.00/request reservation candidate** is now derived in `docs/global-budget-guard.md` from the documented character ceilings, maximum output-token settings, and dated public prices. It is a proposed planning bound only: `request_reservation_usd` remains NULL and the budget guard remains disabled. Recheck model prices/account terms and verify the tokenization bound before any operator enables paid inference.
+- **Cutover safety update:** `docs/hq-production-cutover-runbook.md` rejects the suggested ad-hoc SQL because its table/RPC names do not match the gateway and its public `SECURITY DEFINER` function is unsafe. The repository rate-limit migration is now additive/backward-compatible and intentionally retains the legacy `(text)` overload until a separate post-cutover cleanup. This does not mean the migration has been applied.
+- The latest code change still requires its own green CI run; CI #914 is the last verified baseline, not validation for new commits.
 
 | Capability | Current status | What exists | What remains before VALIDATED |
 |---|---|---|---|
