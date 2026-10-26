@@ -72,10 +72,11 @@ No provider secret values were read, created or changed. No live paid provider c
 Keep PR #48 draft and unmerged until applicable external gates are closed and verified. Passing CI establishes repository-level behavior only. Do not describe provider inference, authenticated sync, executable plugins, image generation, or device installation as live without its own end-to-end evidence.
 
 
-## 2026-10-26 self-audit and memory preference branch
+## 2026-10-26 self-audit and memory preference
 
-- Branch `feature/hard-audit-memory-closure` adds a deterministic evidence-gated self-audit engine and regression tests.
-- The HQ browser stores the cross-platform memory preference in localStorage, does not reset it after each message, and shows the gateway-reported read/write status in the chat status line.
-- This preference change is branch code only. It has not been merged or deployed. The currently deployed Supabase gateway has not been changed by this work.
-- XMemo connector access from this ChatGPT session is observed. The HQ gateway's XMemo API secret and successful end-to-end memory read/write are not inferred from that connector status.
-- Required before marking memory VALIDATED: run CI; deploy only through an authorized reviewed cutover; check authenticated read/write status; then verify retrieval from a new session after restart. Do not claim automatic cross-device synchronization until that test passes.
+- PR #57 is merged to main at `153ed106ee189fa5e3e6b684c21a6e6e90853824`. Its branch CI passed at [run 40353757026](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40353757026). Mainline CI is also running after the merge.
+- The HQ browser stores the cross-platform memory preference in localStorage, does not reset it after each chat message, and shows gateway-reported memory read/write status in the chat status line.
+- `src/core/self-audit.ts` now provides deterministic evidence-gated promotion logic and a repeated-failure circuit breaker. It does not change model weights or self-deploy code.
+- XMemo connector access from this ChatGPT session is observed. The HQ gateway's `XMEMO_API_KEY` secret and successful deployed end-to-end memory read/write are not inferred from that connector status.
+- The merged code does not deploy Supabase, set secrets, or apply migrations. The live Supabase gateway remains on the previously observed version 11 until a separate verified cutover.
+- Required before marking remote memory VALIDATED: confirm the server-side XMemo secret exists without exposing it, deploy through an authorized reviewed cutover, verify authenticated read/write status, and retrieve a saved memory from a fresh session after restart. Do not claim automatic cross-device sync until that passes.
