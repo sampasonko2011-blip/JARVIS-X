@@ -155,12 +155,30 @@ async function reserveGlobalBudget(userId: string) {
   if (!row || typeof row.allowed !== "boolean" || typeof row.reason !== "string") {
     throw new Error("global_budget_reservation_invalid");
   }
+  const parseUsd = (value: unknown) => {
+    if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return null;
+    const amount = Number(value);
+    return Number.isFinite(amount) && amount >= 0 ? amount : null;
+  };
+  const reservedUsd = parseUsd(row.reserved_usd);
+  const reservedTodayUsd = parseUsd(row.reserved_today_usd);
+  const dailyLimitUsd = parseUsd(row.daily_limit_usd);
+  // A malformed "allowed" response must never bypass the spend guard.
+  if (row.allowed && (
+    row.reason !== "reserved" ||
+    reservedUsd === null || reservedUsd <= 0 ||
+    reservedTodayUsd === null || reservedTodayUsd < reservedUsd ||
+    dailyLimitUsd === null || dailyLimitUsd <= 0 ||
+    reservedTodayUsd > dailyLimitUsd
+  )) {
+    throw new Error("global_budget_reservation_invalid");
+  }
   return {
     ...row,
     reservationId,
-    reservedUsd: Number.isFinite(Number(row.reserved_usd)) ? Number(row.reserved_usd) : null,
-    reservedTodayUsd: Number.isFinite(Number(row.reserved_today_usd)) ? Number(row.reserved_today_usd) : null,
-    dailyLimitUsd: Number.isFinite(Number(row.daily_limit_usd)) ? Number(row.daily_limit_usd) : null,
+    reservedUsd,
+    reservedTodayUsd,
+    dailyLimitUsd,
   };
 }
 
