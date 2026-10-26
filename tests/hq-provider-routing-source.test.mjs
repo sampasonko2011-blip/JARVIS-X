@@ -58,6 +58,18 @@ test("provider calls have bounded timeouts and preserve safe failure diagnostics
   assert.match(gateway, /provider_request_failed/);
 });
 
+test("rate-limit RPC responses are validated before they can authorize inference", () => {
+  assert.match(gateway, /const expectedLimit = key === "minute" \? 10 : 100/);
+  assert.match(gateway, /row\.limit_key !== key/);
+  assert.match(gateway, /row\.request_limit !== expectedLimit/);
+  assert.match(gateway, /!Number\.isInteger\(row\.remaining\)/);
+  assert.match(gateway, /row\.remaining < 0/);
+  assert.match(gateway, /row\.remaining >= expectedLimit/);
+  assert.match(gateway, /!Number\.isFinite\(resetAt\)/);
+  assert.match(gateway, /resetAt <= Date\.now\(\)/);
+  assert.match(gateway, /throw new Error\("rate_limit_response_invalid"\)/);
+});
+
 test("global budget guard is required, persistent, and atomic before paid inference", () => {
   assert.match(gateway, /async function reserveGlobalBudget/);
   assert.match(gateway, /reserve_hq_global_budget/);
