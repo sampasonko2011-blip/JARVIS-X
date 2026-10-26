@@ -186,6 +186,23 @@ test("council validates provider model identity and records provider receipts", 
   assert.match(gateway, /five-distinct-provider-stages/);
 });
 
+test("cross-platform memory is explicitly opt-in for each chat turn", () => {
+  const consentMarkup = hqHtml.match(/<input id="chat-memory-consent"[^>]*>/)?.[0] ?? "";
+  assert.ok(consentMarkup, "chat must expose an explicit memory-consent control");
+  assert.doesNotMatch(consentMarkup, /\bchecked\b/, "memory consent must default to off");
+  assert.match(hqRuntime, /memory_consent:document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
+  assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\) : \{ status: "not_consented", context: "" \}/);
+  assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?await storeConversationMemory\(task, result\.answer, user\.id, taskType\)[\s\S]*?: "not_consented"/);
+});
+
+test("execution ledger excludes raw prompts and assistant response content", () => {
+  assert.match(gateway, /input_summary: "Prompt omitted; sensitive content not persisted"/);
+  assert.match(gateway, /output_summary: "Five-provider synthesis returned; response content not persisted"/);
+  assert.doesNotMatch(gateway, /input_summary:\s*task\b/);
+  assert.doesNotMatch(gateway, /output_summary:\s*result\.answer\b/);
+});
+
 test("invite-only OTP failure gives actionable guidance without enabling public signup", () => {
   assert.match(hq, /signups not allowed for otp/);
   assert.match(hq, /Keep public signup disabled/);
