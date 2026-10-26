@@ -240,7 +240,7 @@ test("council validates provider model identity and records provider receipts", 
   assert.match(gateway, /five-distinct-provider-stages/);
 });
 
-test("cross-platform memory is explicitly opt-in for each chat turn", () => {
+test("cross-platform memory preference persists in this browser and is user-disableable", () => {
   const consentMarkup = hqHtml.match(/<input id="chat-memory-consent"[^>]*>/)?.[0] ?? "";
   assert.ok(consentMarkup, "chat must expose an explicit memory-consent control");
   assert.doesNotMatch(consentMarkup, /\bchecked\b/, "memory consent must default to off");
