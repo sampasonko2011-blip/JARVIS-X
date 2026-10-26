@@ -36,6 +36,8 @@ test("manual smoke test covers all five providers with bounded calls and explici
   assert.match(providerSmokeWorkflow, /32,768-token Gemini output ceiling/);
   assert.match(providerSmokeWorkflow, /default: false/);
   assert.match(providerSmokeWorkflow, /inputs\.confirm_paid_api_calls == true/);
+  assert.equal((providerSmokeWorkflow.match(/inputs\\.confirm_paid_api_calls == true && inputs\\.confirm_gemini_output_budget == true/g) || []).length, 3);
+  assert.doesNotMatch(providerSmokeWorkflow, /if: \\$\\{\\{ inputs\\.confirm_paid_api_calls == true \\}\\}/);
 });
 
 test("browser gateway fixtures match the configured Anthropic model ID", () => {
