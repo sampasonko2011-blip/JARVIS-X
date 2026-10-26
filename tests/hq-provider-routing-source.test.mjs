@@ -51,7 +51,7 @@ test("provider identity validation rejects cross-model responses", () => {
 });
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
   assert.match(gateway, /AbortSignal\.timeout\(provider === "google" \? 45_000 : 25_000\)/);
-  assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = 32_768/);
+  assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = MAX_OUTPUT_TOKENS/);
   assert.match(gateway, /maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS, thinkingConfig: \{ thinkingLevel: "medium" \}/);
   assert.match(gateway, /"provider_http_" \+ response\.status/);
   assert.match(gateway, /provider_model_identity_mismatch_/);
