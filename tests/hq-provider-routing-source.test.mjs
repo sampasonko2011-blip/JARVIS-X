@@ -28,10 +28,12 @@ test("manual smoke test covers all five providers with bounded calls and explici
   }
   assert.match(providerSmoke, /max_output_tokens: 32/);
   assert.match(providerSmoke, /max_tokens: 32/);
-  assert.match(providerSmoke, /maxOutputTokens: 32/);
+  assert.match(providerSmoke, /maxOutputTokens: 32_768/);
   assert.match(providerSmoke, /AbortController/);
   assert.match(providerSmoke, /identityMatches\(config, observedModel\)/);
   assert.match(providerSmokeWorkflow, /confirm_paid_api_calls/);
+  assert.match(providerSmokeWorkflow, /confirm_gemini_output_budget/);
+  assert.match(providerSmokeWorkflow, /32,768-token Gemini output ceiling/);
   assert.match(providerSmokeWorkflow, /default: false/);
   assert.match(providerSmokeWorkflow, /inputs\.confirm_paid_api_calls == true/);
 });
