@@ -281,14 +281,14 @@ test("HQ Model Forge is reachable, offline-shell aware, and exposes evidence-gat
   const html = await read("hq/index.html");
   const sw = await read("hq/sw.js");
   const forge = await read("hq/forge.js");
-  const registry = await read("src/forge/model-registry.mjs");
+  const registry = await read("hq/model-registry.mjs");
   assert.ok(html.includes('data-view="forge"'));
   assert.ok(html.includes('id="view-forge"'));
   assert.ok(html.includes('id="forge-register"'));
   assert.ok(html.includes('id="forge-evaluate"'));
   assert.ok(html.includes('type="module" src="./forge.js"'));
   assert.ok(sw.includes("'./forge.js'"));
-  assert.ok(sw.includes("'../src/forge/model-registry.mjs'"));
+  assert.ok(sw.includes("'./model-registry.mjs'"));
   assert.ok(forge.includes("validateModelCandidate"));
   assert.ok(forge.includes("assessPromotion"));
   assert.ok(forge.includes("localStorage"));
