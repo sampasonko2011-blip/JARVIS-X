@@ -1,5 +1,14 @@
 # JARVIS-X HQ — capability closure register
 
+> **Current integration update — 2026-10-26:** PR #53 (Model Forge), PR #52 (single-identity HQ + Forge integration), and PR #54 (explicit zero-provider mock council) are merged. The mainline CI run for the mock council passed: [40350464977](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40350464977). PR #55 was closed as a duplicate of #54. The static Pages workflow succeeded for the PR #52 head; verify the current deployed URL separately after later mainline changes.
+>
+> **Critical runtime distinction:** the live Supabase project still serves `hq-gateway` version 11 with source hash `b5d081220f76bc2b5cebbc90255b4fce399e866dcf4a37166ce37c073887453b`. Read-only inspection shows that deployed function is still the OpenAI `gpt-4.1-mini` three-pass self-critique flow. It does **not** contain the merged zero-provider mock council or the Model Forge, and it is not a five-model runtime. No deployment or production migration was performed by the merged PRs.
+>
+> **Memory distinction:** the XMemo connector is observed connected with memory read/write permission. That confirms the external XMemo tool connection, not automatic cross-platform persistence by the HQ application. The HQ-to-XMemo workflow must be explicitly implemented and tested before claiming HQ memory sync is live.
+>
+> **Current status:** code integration and CI are validated for the merged commits; live HQ gateway cutover, authenticated end-to-end HQ chat, persistent cross-device sync, local GGUF inference, and live provider execution remain unvalidated. Do not set `JX_ENABLE_MOCK_MODE`, deploy the gateway, apply migrations, or enable paid inference as a side effect of documentation or code merges.
+
+
 **Snapshot:** 2026-10-26. This is a repository and read-only deployment status register, not a claim of production readiness. The current PR remains draft and unmerged. Only completed tests and observed deployment state may move a capability to VALIDATED.
 
 ## Current evidence checkpoint
