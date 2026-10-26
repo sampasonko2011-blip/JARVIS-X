@@ -4,7 +4,7 @@
 
 The migration `20261025225000_hq_global_budget_guard.sql` creates an atomic UTC-day reservation guard for the five-provider council. It is deliberately **disabled by default**. Until the migration is applied and the configuration is explicitly enabled, the gateway must refuse paid inference.
 
-The default daily ceiling is USD 10.00. This is a ceiling for **reserved worst-case request cost**, not a statement of actual billed spend. The configured per-request reservation must be a defensible upper bound for the full five-stage run, based on the exact live model IDs, maximum input/output tokens, and current provider prices. Do not choose an arbitrary reservation merely to enable chat.
+The default daily ceiling is USD 10.00. This is a ceiling for **reserved worst-case request cost**, not a statement of actual billed spend. The configured per-request reservation must be a defensible upper bound for the full five-stage run, based on the exact live model IDs, maximum input/output tokens, and current provider prices. Gemini's 32,768-token output budget is intentionally higher because its thinking tokens count against the limit. Do not choose an arbitrary reservation merely to enable chat.
 
 Reservations are not released when a provider call fails. This conservative behavior prevents retries or concurrent requests from reusing budget that may already have been spent. It can under-utilize the daily allowance. Provider dashboards and provider-side hard spending limits remain necessary as independent safeguards.
 
@@ -12,7 +12,7 @@ Reservations are not released when a provider call fails. This conservative beha
 
 1. Verify the migration against a staging project and review Supabase security advisors.
 2. Confirm each configured model ID is available to the account and verify current input/output pricing and provider-side rate/budget controls.
-3. Calculate a conservative maximum cost for one full council request, including the shared 1,024-token output ceiling for all five provider calls, maximum input tokens, and current provider prices.
+3. Calculate a conservative maximum cost for one full council request, including the 1,024-token output ceiling for the first four provider calls and Gemini's 32,768-token output ceiling (including its thinking tokens), maximum input tokens, and current provider prices.
 4. In the Supabase SQL editor, set `request_reservation_usd` to that verified upper bound and set `enabled = true` on the singleton config row. Do not enable until steps 1–3 pass.
 5. Confirm the authenticated health response reports `budgetGuard.enabled = true`, `budgetGuard.killSwitchEnabled = false`, and `chatEnabled = true`.
 6. Test the reservation RPC with a staging user, including duplicate reservation IDs, concurrent reservations near the cap, an unavailable RPC, and an exhausted budget. Confirm denied calls produce zero provider calls.
