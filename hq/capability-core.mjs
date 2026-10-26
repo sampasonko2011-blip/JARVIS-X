@@ -20,11 +20,11 @@ export const EVIDENCE_STATES = Object.freeze([
 
 export const CAPABILITIES = Object.freeze([
   Object.freeze({ id: "static-hq", label: "Static HQ and local workflows", status: "IMPLEMENTED_LOCAL" }),
-  Object.freeze({ id: "multi-ai", label: "Multi-AI live orchestration", status: "NOT_CONNECTED" }),
+  Object.freeze({ id: "multi-ai", label: "Multi-AI live orchestration", status: "IMPLEMENTED_IN_PR_48_NOT_LIVE" }),
   Object.freeze({ id: "image-generation", label: "Real image generation from HQ", status: "NOT_CONNECTED" }),
-  Object.freeze({ id: "tool-broker", label: "Executable plugin/tool broker", status: "NOT_CONNECTED" }),
+  Object.freeze({ id: "tool-broker", label: "Executable plugin/tool broker", status: "GENERIC_BOUNDARY_ONLY" }),
   Object.freeze({ id: "cross-device-sync", label: "Authenticated cross-device sync", status: "NOT_CONNECTED" }),
-  Object.freeze({ id: "security-gateway-ui", label: "Security Gateway UI", status: "IN_PR_39" }),
+  Object.freeze({ id: "security-gateway-ui", label: "Security Gateway UI", status: "IN_PR_48" }),
   Object.freeze({ id: "gateway-backend", label: "Deployed authenticated gateway backend", status: "NOT_DEPLOYED" }),
 ]);
 
