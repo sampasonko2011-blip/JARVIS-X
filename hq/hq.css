@@ -35,3 +35,6 @@
 .metricbar span.progress-width-80{width:80%}
 .metricbar span.progress-width-90{width:90%}
 .metricbar span.progress-width-100{width:100%}
+
+
+.forge-evidence-grid,.forge-benchmark-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.forge-evidence-grid>div,.forge-benchmark-grid>div{min-width:0}.forge-wide{grid-column:1/-1}.forge-approval{display:flex;gap:10px;align-items:flex-start;margin:12px 0}.forge-approval small{display:block;color:var(--muted);line-height:1.5;margin-top:4px}#view-forge input,#view-forge select{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;background:#0b1320;color:var(--text);padding:10px;font:inherit;font-size:12px;margin:0 0 10px}#view-forge input[type=checkbox]{width:auto;margin-top:4px}@media(max-width:600px){.forge-evidence-grid,.forge-benchmark-grid{grid-template-columns:1fr}.forge-wide{grid-column:auto}}
