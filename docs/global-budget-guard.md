@@ -20,9 +20,19 @@ Use the official provider pages below as a dated planning snapshot, not a durabl
 | Stress test | xAI `grok-4.7` | 2.00 | 6.00 | https://docs.x.ai/developers/models |
 | Synthesis | Google `gemini-4-argon` | 4.00 after introductory pricing | 20.00 after introductory pricing | https://ai.google.dev/gemini-api/docs/models/gemini-4-argon |
 
-At the current configured output ceilings alone (1,024 tokens for each of the first four stages and 32,768 for Gemini), the output-only estimate using the rates above is approximately **USD 0.70 per full council request**. This is a lower-bound component of the reservation analysis, **not** a safe per-request reservation or total cost estimate: input costs for all five calls, tokenizer behavior, any provider-specific reasoning/billing treatment, and changes in provider prices must also be bounded. Do not activate the guard using USD 0.70 as the reservation.
+At the current configured output ceilings alone (1,024 tokens for each of the first four stages and 32,768 for Gemini), the output-only estimate using the rates above is approximately **USD 0.70 per full council request**. This is a lower-bound component of the reservation analysis, **not** a safe per-request reservation or total cost estimate.
 
-Before setting a reservation, derive and test a conservative maximum input-token bound for every constructed prompt, including escaped JSON, prior memory, three review outputs, and synthesis inputs. If a defensible maximum cannot be established, keep the budget guard disabled and paid inference blocked. Recheck the official price pages immediately before activation.
+### Conservative reservation candidate (not activated)
+
+The gateway rejects each constructed provider-stage input above 64,000 JavaScript UTF-16 code units. For a conservative planning bound, budget up to three input tokens per code unit (covering UTF-8 byte-level tokenization) plus an extra 1,024 tokens per stage for fixed system instructions. That gives a planning ceiling of 193,024 input tokens per provider call. Using the peak/non-cached DeepSeek input price, the post-introductory Google rate, and the listed rates for the other providers:
+
+- Input ceiling across five stages: 193,024 × ($2 + $0.30 + $5 + $2 + $4) / 1,000,000 ≈ **$2.57**.
+- Output ceiling across four 1,024-token stages plus Gemini's 32,768-token stage: (1,024 × ($10 + $1.20 + $25 + $6) + 32,768 × $20) / 1,000,000 ≈ **$0.70**.
+- Combined planning ceiling: approximately **$3.27**. Applying a roughly 20% contingency and rounding upward yields a **$4.00 per-request reservation candidate**.
+
+This is a deliberately conservative estimate based on documented character/token ceilings and the dated public price snapshot, not a provider-issued quote or a guarantee against future pricing changes. It assumes standard global endpoints, no premium processing tier, no unbounded retries, and the exact configured model roster. Recheck every provider's current price and account-specific terms before activation. The migration intentionally leaves `request_reservation_usd` NULL and `enabled = false`; **the $4.00 candidate is documentation only and has not been configured or activated**. The $10.00 daily reservation ceiling would permit two such reservations; a third would trip the global kill switch. Provider-side spending controls remain necessary.
+
+Before setting a reservation, verify the maximum constructed inputs in tests, including escaped JSON, prior memory, three review outputs, synthesis inputs, and fixed system prompts. If any limit, model ID, price, endpoint tier, or retry behavior changes, recalculate the bound. If a defensible maximum cannot be established, keep the budget guard disabled and paid inference blocked. Recheck the official price pages immediately before activation.
 
 ## Activation checklist
 
