@@ -43,6 +43,12 @@ test("council routes five distinct providers through their provider APIs", () =>
   }
 });
 
+test("execution receipts preserve the provider-returned model ID after identity validation", () => {
+  assert.match(gateway, /if \(typeof returnedModel !== "string" \|\| !returnedModel\.trim\(\)\) throw new Error\("provider_model_identity_missing_" \+ provider\)/);
+  assert.match(gateway, /if \(!identityMatches\) throw new Error\("provider_model_identity_mismatch_" \+ provider\)/);
+  assert.match(gateway, /return \{ output: output\.trim\(\), provider, model: returnedModel \}/);
+});
+
 test("provider identity validation rejects cross-model responses", () => {
   assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
   assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
