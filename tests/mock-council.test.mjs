@@ -29,7 +29,7 @@ test("gateway mock route is explicit, opt-in, and fails closed without provider 
   const mockEnd = source.indexOf('const missingProviderSecrets =', mockStart);
   assert.ok(mockStart >= 0 && mockEnd > mockStart, "mock route must precede live provider-secret handling");
   const mockRoute = source.slice(mockStart, mockEnd);
-  assert.match(mockRoute, /Deno\\.env\\.get\\("JX_ENABLE_MOCK_MODE"\\)\\s*!== "true"/);
+  assert.match(mockRoute, /Deno\.env\.get\("JX_ENABLE_MOCK_MODE"\)\s*!== "true"/);
   assert.match(mockRoute, /mock_mode_disabled/);
   assert.match(mockRoute, /createMockCouncilResult\(\)/);
   assert.match(mockRoute, /provider_calls: 0/);
