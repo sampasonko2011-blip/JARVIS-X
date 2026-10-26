@@ -7,7 +7,12 @@ async function installGatewayFetchMock(page, config) {
     window.fetch = (input, init = {}) => {
       const url = typeof input === "string" ? input : input.url;
       if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
-      const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
+      const isHealthCheck = url.endsWith("/health");
+      if (!isHealthCheck && typeof init.body === "string") {
+        try { window.__jxLastGatewayChatRequest = JSON.parse(init.body); }
+        catch { window.__jxLastGatewayChatRequest = { invalidJson: true }; }
+      }
+      const fixture = isHealthCheck ? window.__jxGatewayHealth : window.__jxGatewayChat;
       if (fixture === "timeout") return Promise.reject(new DOMException("Aborted", "AbortError"));
       return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
         status: fixture?.status ?? 200,
@@ -118,10 +123,14 @@ test("service worker installs and precaches the HQ shell", async ({ page }) => {
     return {
       cacheName: shellCacheName,
       shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
+      cssResponse: Boolean(await cache.match(new URL("./hq.css", location.href).href)),
+      jsResponse: Boolean(await cache.match(new URL("./hq.js", location.href).href)),
     };
   });
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
+  expect(cached.cssResponse).toBe(true);
+  expect(cached.jsResponse).toBe(true);
 });
 
 test("cached HQ page remains navigable when the browser goes offline", async ({ page, context }) => {
@@ -131,6 +140,8 @@ test("cached HQ page remains navigable when the browser goes offline", async ({ 
   try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("body")).toContainText("JARVIS-X HQ");
+    await page.locator('[data-view="memory"]').click();
+    await expect(page.locator("#view-memory")).toBeVisible();
   } finally {
     await context.setOffline(false);
   }
@@ -243,6 +254,9 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
 test("HQ shell CSP permits only the app and its configured Supabase origin", async ({ page }) => {
   const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
   expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("script-src 'self'");
+  expect(csp).toContain("style-src 'self'");
+  expect(csp).not.toContain("unsafe-inline");
   expect(csp).toContain("object-src 'none'");
   expect(csp).toContain("base-uri 'self'");
   expect(csp).toContain("connect-src 'self' https://xfewajxkqntflfntisut.supabase.co");
@@ -331,7 +345,7 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-primary-multipass", provider: "openai", model: "gpt-4.1-mini", providerConfigured: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", provider: "openai", model: "gpt-4.1-mini", provider_calls: 3 } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "gpt-6.1-sol + deepseek-flash + claude-opus-5 + grok-4.7 + gemini-4-argon", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", provider: "five-provider-council", model: "five-model roster", providers_used: [{provider:"openai",model:"gpt-6.1-sol"},{provider:"deepseek",model:"deepseek-flash"},{provider:"anthropic",model:"claude-opus-5"},{provider:"xai",model:"grok-4.7"},{provider:"google",model:"gemini-4-argon"}], provider_calls: 5 } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
@@ -341,6 +355,50 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
   await expect(page.locator("#chat-thread")).toContainText("Verified gateway reply");
   await expect(page.locator("#chat-thread")).toContainText("JARVIS-X");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.task).toBe("Hello JARVIS-X");
+  expect(request.memory_consent).toBe(false);
+});
+
+test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "five-model roster", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "five-provider-council", providers_used: [], provider_calls: 5 } },
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("Remember this approved context");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Consent-enabled reply");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.task).toBe("Remember this approved context");
+  expect(request.memory_consent).toBe(true);
+});
+
+test("memory consent is consumed by one chat message and resets before the next", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "five-model roster", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Reply", provider: "five-provider-council", providers_used: [], provider_calls: 5 } },
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("First message with consent");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Reply");
+  await expect(page.locator("#chat-memory-consent")).not.toBeChecked();
+  expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(true);
+
+  await page.locator("#chat-compose").fill("Second message without consent");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Second message without consent");
+  expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(false);
 });
 
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
@@ -373,22 +431,43 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
 });
 
-test("multi-AI council builds distinct lead, challenge, and synthesis prompts without pretending to call models", async ({ page }) => {
+test("HQ presents JARVIS-X as one composite assistant, not separate model roles", async ({ page }) => {
   await page.locator('[data-view="console"]').click();
-  await page.locator("#council-goal").fill("Design a reliable football training tracker with evidence gates.");
-  await page.locator("#council-context").fill("Only use the supplied test data.");
-  await page.locator("#council-build").click();
-  await expect(page.locator("#council-lead")).toHaveValue(/ROLE: LEAD SOLVER/);
-  await expect(page.locator("#council-challenge")).toHaveValue(/INDEPENDENT RED-TEAM CHALLENGER/);
-  await expect(page.locator("#council-challenge")).toHaveValue(/counterexamples/);
-  await expect(page.locator("#council-synthesis")).toHaveValue(/EVIDENCE-LED SYNTHESIZER/);
-  await expect(page.locator("#council-status")).toContainText("No AI was called");
+  await expect(page.locator("#view-console")).toContainText("One assistant identity");
+  await expect(page.locator("#view-console")).toContainText("JARVIS-X is the single assistant you interact with");
+  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one composite provider");
+  await expect(page.locator("#council-build")).toHaveCount(0);
+  await expect(page.locator("#council-lead")).toHaveCount(0);
+  await expect(page.locator("#council-challenge")).toHaveCount(0);
+  await expect(page.locator("#council-synthesis")).toHaveCount(0);
 });
-
 test("encrypted vault refuses a short passphrase and documents local-only transfer", async ({ page }) => {
   await page.locator('[data-view="sync"]').click();
   await page.locator("#vault-passphrase").fill("short");
   await page.locator("#vault-export").click();
   await expect(page.locator("#vault-status")).toContainText("at least 12 characters");
   await expect(page.locator("#view-sync")).toContainText("not live synchronization");
+});
+
+
+test("strict CSP blocks injected inline scripts and style blocks", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    window.__jxInlineCspProbe = false;
+    const script = document.createElement("script");
+    script.textContent = "window.__jxInlineCspProbe = true";
+    document.body.appendChild(script);
+
+    const style = document.createElement("style");
+    style.textContent = ".jx-csp-style-probe { display: none !important; }";
+    document.head.appendChild(style);
+    const probe = document.createElement("div");
+    probe.className = "jx-csp-style-probe";
+    document.body.appendChild(probe);
+    return {
+      scriptRan: window.__jxInlineCspProbe,
+      styleDisplay: getComputedStyle(probe).display,
+    };
+  });
+  expect(result.scriptRan).toBe(false);
+  expect(result.styleDisplay).not.toBe("none");
 });

@@ -7,9 +7,7 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const html = await readFile(path.join(root, "hq/index.html"), "utf8");
-const scriptStart = html.lastIndexOf("<script>") + "<script>".length;
-const scriptEnd = html.indexOf("</script>", scriptStart);
-const appScript = html.slice(scriptStart, scriptEnd);
+const appScript = await readFile(path.join(root, "hq/hq.js"), "utf8");
 
 class FakeElement {
   constructor(id = "") {
@@ -111,7 +109,7 @@ function createApp({ initialStore = null, failWrites = false, confirms = [] } = 
   };
   context.globalThis = context;
   context.crypto = { randomUUID: (() => { let i = 0; return () => "test-id-" + (++i); })() };
-  vm.runInNewContext(appScript, context, { filename: "hq/index.html:inline-script" });
+  vm.runInNewContext(appScript, context, { filename: "hq/hq.js" });
   return { elements, store, alerts, context, navs, views };
 }
 
