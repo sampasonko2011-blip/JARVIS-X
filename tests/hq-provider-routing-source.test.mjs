@@ -9,10 +9,10 @@ const budgetMigration = await readFile(new URL("../supabase/migrations/202610252
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
   assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
-  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5-5"'));
+  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5"'));
   assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
   assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
-  assert.ok(gateway.includes('normalized === "claude-opus-5-5"'));
+  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
 });
 test("council routes five distinct providers through their provider APIs", () => {
   assert.match(gateway, /https:\/\/api\.openai\.com\/v1/);
@@ -35,7 +35,7 @@ test("council routes five distinct providers through their provider APIs", () =>
 test("provider identity validation rejects cross-model responses", () => {
   assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
   assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
-  assert.ok(gateway.includes('normalized === "claude-opus-5-5"'));
+  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
   assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
 });
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
