@@ -8,11 +8,11 @@
 - Updated the service worker shell cache to include both assets and bumped the cache key to `jarvis-x-hq-shell-v4`.
 - Removed `'unsafe-inline'` from both `script-src` and `style-src` in the HTML meta CSP.
 - Updated source and behavior tests to follow the external script and stylesheet.
-- The last CI run before strict CSP enforcement passed build, all unit tests, Chromium end-to-end tests, syntax checks, and benchmarks. The strict-CSP commit must pass CI independently before being considered validated.
+- CI run #861 passed for exact head `5df929ff592457f18675c6a7cbb8240450986a67`: build, full unit suite, Chromium HQ end-to-end tests, evaluator/Mission Control/service-worker syntax checks, and both benchmarks. This validates repository behavior under CI, not deployed response headers or iPad Safari.
 
 ## Remaining release gates
 
-1. Verify the strict-CSP revision through CI, including Chromium end-to-end tests and console/CSP violations.
+1. Repository CI validation is complete for the recorded head; rerun CI after any subsequent source change and inspect served-page console/CSP violations during staging.
 2. Stage `Content-Security-Policy-Report-Only` as an HTTP response header. Meta CSP does not provide the same reporting capabilities and is not evidence that the deployed response headers match the source.
 3. Inspect violations and confirm the exact `connect-src` origins required by Supabase Auth and the gateway. Do not use broad origin wildcards.
 4. Test sign-in callback, refresh, sign-out, chat, memory consent, service-worker update, and offline shell on iPad Safari and desktop browsers.
