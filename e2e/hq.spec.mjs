@@ -7,7 +7,12 @@ async function installGatewayFetchMock(page, config) {
     window.fetch = (input, init = {}) => {
       const url = typeof input === "string" ? input : input.url;
       if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
-      const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
+      const isHealthCheck = url.endsWith("/health");
+      if (!isHealthCheck && typeof init.body === "string") {
+        try { window.__jxLastGatewayChatRequest = JSON.parse(init.body); }
+        catch { window.__jxLastGatewayChatRequest = { invalidJson: true }; }
+      }
+      const fixture = isHealthCheck ? window.__jxGatewayHealth : window.__jxGatewayChat;
       if (fixture === "timeout") return Promise.reject(new DOMException("Aborted", "AbortError"));
       return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
         status: fixture?.status ?? 200,
@@ -350,6 +355,27 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
   await expect(page.locator("#chat-thread")).toContainText("Verified gateway reply");
   await expect(page.locator("#chat-thread")).toContainText("JARVIS-X");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.task).toBe("Hello JARVIS-X");
+  expect(request.memory_consent).toBe(false);
+});
+
+test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "five-model roster", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "five-provider-council", providers_used: [], provider_calls: 5 } },
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("Remember this approved context");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Consent-enabled reply");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.task).toBe("Remember this approved context");
+  expect(request.memory_consent).toBe(true);
 });
 
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
