@@ -259,7 +259,8 @@ async function recallMemory(task: string, userId: string) {
     const response = await xmemoRequest("/v1/recall/context", apiKey, {
       method: "POST",
       body: JSON.stringify({
-        query: task,
+        // The recall service needs a relevance query, not raw credentials or contact details.
+        query: redactForMemory(task).slice(0, MAX_TASK_CHARS),
         path: memoryPathForUser(userId),
         max_items: 6,
         max_tokens: 1200,
