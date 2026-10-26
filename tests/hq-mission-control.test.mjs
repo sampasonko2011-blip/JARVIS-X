@@ -9,13 +9,14 @@ test("Mission Control uses a same-origin external script and restrictive script 
   assert.doesNotMatch(html, /<script>\s*const \$=/);
 });
 
-test("Mission Control explicitly labels unconnected services and never exposes API key inputs", async () => {
+test("Mission Control presents one JARVIS-X identity and never exposes API key inputs", async () => {
   const html = await readFile(new URL("../hq/mission-control.html", import.meta.url), "utf8");
   const js = await readFile(new URL("../hq/mission-control.js", import.meta.url), "utf8");
-  assert.match(html, /Provider calls: not connected/);
+  assert.match(html, /JARVIS-X gateway: not verified/);
   assert.match(html, /Remote sync: not connected/);
   assert.match(html, /Defence API/);
-  assert.match(html, /NOT CONNECTED TO HQ/);
+  assert.match(html, /Single-identity contract/);
+  assert.doesNotMatch(html, /providers-select|Provider roster|href="https:\/\/(?:chatgpt\.com|claude\.ai|gemini\.google\.com)\//i);
   assert.doesNotMatch(html, /type=["']password["'][^>]*(?:api|secret)|(?:api|secret)[^>]*type=["']password["']/i);
   assert.match(js, /No model was called/);
   assert.match(js, /No remote jobs were executed/);
