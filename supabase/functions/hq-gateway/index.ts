@@ -203,7 +203,19 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
   }
   const data = await result.json().catch(() => null);
   const row = Array.isArray(data) ? data[0] : null;
-  if (!row || typeof row.allowed !== "boolean" || typeof row.reset_at !== "string") {
+  const expectedLimit = key === "minute" ? 10 : 100;
+  const resetAt = typeof row?.reset_at === "string" ? Date.parse(row.reset_at) : Number.NaN;
+  if (
+    !row ||
+    typeof row.allowed !== "boolean" ||
+    row.limit_key !== key ||
+    row.request_limit !== expectedLimit ||
+    !Number.isInteger(row.remaining) ||
+    row.remaining < 0 ||
+    row.remaining >= expectedLimit ||
+    !Number.isFinite(resetAt) ||
+    resetAt <= Date.now()
+  ) {
     throw new Error("rate_limit_response_invalid");
   }
   return row as { allowed: boolean; limit_key: string; request_limit: number; remaining: number; reset_at: string };
