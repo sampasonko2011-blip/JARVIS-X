@@ -78,6 +78,16 @@ test("authenticated allowlist and per-user rate limits run before budget reserva
   assert.ok(providerExecution > reservation, "paid provider execution must follow budget reservation");
 });
 
+test("gateway audit records omit prompt and answer content and browser never receives service-role credentials", () => {
+  assert.match(gateway, /input_summary: "Prompt omitted; sensitive content not persisted"/);
+  assert.match(gateway, /output_summary: "Five-provider synthesis returned; response content not persisted"/);
+  assert.match(gateway, /Never expose SUPABASE_SERVICE_ROLE_KEY to the browser or logs/);
+  assert.doesNotMatch(hq, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(gateway, /Cache-Control", "no-store"/);
+  assert.match(gateway, /Vary", "Origin"/);
+  assert.match(gateway, /origin_not_allowed/);
+});
+
 test("council fails closed if any required provider credential is missing", () => {
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
