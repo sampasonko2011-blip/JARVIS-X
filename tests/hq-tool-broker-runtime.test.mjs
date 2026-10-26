@@ -163,6 +163,7 @@ test("tool broker blocks before execution if the pre-execution audit fails", asy
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     async audit() { throw new Error("audit unavailable"); },
   });
   assert.equal(result.reason, "PRE_EXECUTION_AUDIT_FAILED");
