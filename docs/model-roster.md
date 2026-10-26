@@ -8,8 +8,8 @@ JARVIS-X presents one assistant identity. These providers are internal specialis
 | Stage | Provider | API model ID | API route in gateway | Public evidence |
 |---|---|---|---|---|
 | Lead solver | OpenAI | `gpt-6.1-sol` | Responses API `/v1/responses` | https://developers.openai.com/api/docs/models/gpt-6.1-sol |
-| Independent reasoning review | DeepSeek | `deepseek-flash` | Chat Completions `/chat/completions` | https://api-docs.deepseek.com/updates/ |
-| Critical review | Anthropic | `claude-opus-5` | Messages API `/v1/messages` | https://github.com/anthropics/skills/blob/main/skills/claude-api/shared/models.md |
+| Independent reasoning review | DeepSeek | `deepseek-flash` | Chat Completions `/chat/completions` | https://api-docs.deepseek.com/quick_start/pricing/ |
+| Critical review | Anthropic | `claude-opus-5` | Messages API `/v1/messages` | https://platform.claude.com/docs/en/models/opus-5/overview |
 | Adversarial stress test | xAI | `grok-4.7` | Responses API `/v1/responses` | https://docs.x.ai/developers/models |
 | Final synthesis | Google | `gemini-4-argon` | Gemini API `generateContent` | https://ai.google.dev/gemini-api/docs/models/gemini-4-argon |
 
