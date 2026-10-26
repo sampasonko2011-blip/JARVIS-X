@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 
 test("HQ shell includes the core command surfaces and transparent capability boundaries", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const marker of [
     'id="view-overview"',
     'id="view-workspace"',
@@ -41,6 +41,8 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
   const sw = await read("hq/sw.js");
   const icon = await read("hq/icon.svg");
   assert.ok(sw.includes("addEventListener('install'"));
+  assert.ok(sw.includes("'./hq.css'"));
+  assert.ok(sw.includes("'./hq.js'"));
   assert.ok(sw.includes("caches.match"));
   assert.ok(sw.includes("fetch"));
   assert.ok(icon.includes("<svg"));
@@ -59,7 +61,7 @@ test("HQ documentation distinguishes implemented frontend from unverified remote
 
 
 test("HQ backup import checks size and record arrays before replacing local data", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("file.size>2*1024*1024"));
   assert.ok(html.includes("validArray(parsed.tasks)"));
   assert.ok(html.includes("validArray(parsed.memories)"));
@@ -72,7 +74,7 @@ test("HQ backup import checks size and record arrays before replacing local data
 
 
 test("HQ protects malformed stored state and rolls back failed writes", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("Saved data has an unexpected structure"));
   assert.ok(html.includes("Saved data could not be read"));
   assert.ok(html.includes("unsaved changes were rolled back"));
@@ -82,7 +84,7 @@ test("HQ protects malformed stored state and rolls back failed writes", async ()
 });
 
 test("HQ import refuses unsafe record values and duplicate IDs", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("a.length<=5000"));
   assert.ok(html.includes("duplicate record IDs"));
   assert.ok(html.includes("Object.values(x).every"));
@@ -90,7 +92,7 @@ test("HQ import refuses unsafe record values and duplicate IDs", async () => {
 
 
 test("HQ validated backup import can recover malformed local state", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("previousProblem=loadProblem;loadProblem=''"));
   assert.ok(html.includes("loadProblem=previousProblem"));
   assert.ok(html.includes("Backup imported into this browser"));
@@ -98,7 +100,7 @@ test("HQ validated backup import can recover malformed local state", async () =>
 
 
 test("HQ includes keyboard focus indicators and accessible live status", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("button:focus-visible"));
   assert.ok(html.includes('role="status" aria-live="polite"'));
   assert.ok(html.includes("aria-current','page'"));
@@ -108,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v3'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v4'"));
   assert.ok(sw.includes("key.startsWith('jarvis-x-hq-shell-')"));
   assert.ok(sw.includes("if (request.method !== 'GET') return"));
   assert.ok(sw.includes("if (url.origin !== self.location.origin) return"));
@@ -119,7 +121,7 @@ test("HQ service worker restricts caching and only replaces shell navigation off
 
 
 test("HQ inline JavaScript has no escaped line break between declarations", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("function stamp(){return new Date().toLocaleString()}\\nfunction newId()") === false);
   assert.ok(html.includes("function stamp(){return new Date().toLocaleString()}\nfunction newId()"));
   assert.ok(html.includes("data.memories.push({id:newId()"));
@@ -128,7 +130,7 @@ test("HQ inline JavaScript has no escaped line break between declarations", asyn
 
 
 test("HQ security and multi-AI deployment claims stay explicit and gated", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/);
   assert.ok(csp, "HQ shell should define a CSP");
   assert.ok(csp[1].includes("default-src 'self'"));
@@ -152,7 +154,7 @@ test("HQ security and multi-AI deployment claims stay explicit and gated", async
 });
 
 test("HQ exposes multi-format prompt workspace and explicit manual AI handoff", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["view-console", "prompt-format", "prompt-context", "prompt-input", "copy-prompt", "open-chatgpt", "save-chat-draft", "chat-history", "chat-reply", "attach-reply"]) {
     assert.ok(html.includes('id="' + id + '"'), "Missing prompt console control: " + id);
   }
@@ -163,7 +165,7 @@ test("HQ exposes multi-format prompt workspace and explicit manual AI handoff", 
 });
 
 test("HQ integration registry clearly distinguishes proposed connectors from live access", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["view-integrations", "integration-list", "data-integration"]) assert.ok(html.includes(id));
   for (const name of ["OpenAI-compatible model gateway", "GitHub scoped connector", "Notion workspace connector", "Canva creative connector", "Airtable records connector", "Local model runtime adapter"]) assert.ok(html.includes(name));
   assert.ok(html.includes("No account is connected and no permission is granted"));
@@ -171,7 +173,7 @@ test("HQ integration registry clearly distinguishes proposed connectors from liv
 });
 
 test("HQ local chat drafts and integration requests remain backward-compatible in storage and backups", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   assert.ok(html.includes("chats:[],integrationRequests:[]"));
   assert.ok(html.includes("data={...empty(),...parsed}"));
   assert.ok(html.includes("parsed.chats||[]"));
@@ -180,13 +182,11 @@ test("HQ local chat drafts and integration requests remain backward-compatible i
   assert.ok(html.includes("validArray(parsed.integrationRequests)"));
 });
 
-test("HQ inline application script parses as valid JavaScript", async () => {
+test("HQ external application script is linked and parses as valid JavaScript", async () => {
   const html = await read("hq/index.html");
-  const opening = html.lastIndexOf("<script>");
-  const closing = html.indexOf("</script>", opening);
-  assert.ok(opening >= 0 && closing > opening, "HQ should contain its application script");
-  const source = html.slice(opening + "<script>".length, closing);
-  assert.doesNotThrow(() => new vm.Script(source, { filename: "hq/index.html:inline-script" }));
+  const source = await read("hq/hq.js");
+  assert.ok(html.includes('<script src="./hq.js"></script>'), "HQ should link its same-origin application script");
+  assert.doesNotThrow(() => new vm.Script(source, { filename: "hq/hq.js" }));
 });
 
 test("HQ release metadata is valid, pinned to stable, and forbids automatic provider permission grants", async () => {
@@ -200,7 +200,7 @@ test("HQ release metadata is valid, pinned to stable, and forbids automatic prov
 });
 
 test("HQ upgrade center separates read-only update discovery from privileged changes", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["view-upgrades", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log"]) assert.ok(html.includes('id="' + id + '"'));
   assert.ok(html.includes("fetch('./release-manifest.json'"));
   assert.ok(html.includes("registration.update()"));
@@ -211,7 +211,7 @@ test("HQ upgrade center separates read-only update discovery from privileged cha
 });
 
 test("HQ direct chat is a real gateway client but fails closed without authenticated backend", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["view-chat", "chat-thread", "chat-compose", "chat-send", "chat-check-gateway", "chat-gateway-status", "chat-connection-tag"]) assert.ok(html.includes('id="' + id + '"'));
   assert.ok(html.includes("JX_GATEWAY+'/health'"));
   assert.ok(html.includes("fetch(JX_GATEWAY"));
@@ -223,7 +223,7 @@ test("HQ direct chat is a real gateway client but fails closed without authentic
 });
 
 test("HQ upgrade proposals expose individual approve and dismiss controls and hard failure gates", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["upgrade-proposals", "proposal-status"]) assert.ok(html.includes('id="' + id + '"'));
   for (const id of ["secure-chat-gateway", "cross-device-memory", "multi-model-adapters", "closed-loop-self-audit", "plugin-broker", "cross-platform-pwa"]) assert.ok(html.includes("id:'" + id + "'"));
   assert.ok(html.includes("APPROVED FOR PLANNING"));
@@ -234,7 +234,7 @@ test("HQ upgrade proposals expose individual approve and dismiss controls and ha
 });
 
 test("HQ capability control plane has honest multi-AI and encrypted vault boundaries", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const marker of [
     'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
     'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
@@ -246,7 +246,7 @@ test("HQ capability control plane has honest multi-AI and encrypted vault bounda
 
 
 test("Mission Control is linked from the primary HQ navigation and included in the offline shell", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   const sw = await read("hq/sw.js");
   const mission = await read("hq/mission-control.html");
   const script = await read("hq/mission-control.js");
@@ -258,7 +258,7 @@ test("Mission Control is linked from the primary HQ navigation and included in t
 });
 
 test("cross-platform memory is opt-in at both the HQ control and gateway boundary", async () => {
-  const html = await read("hq/index.html");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   const gateway = await read("supabase/functions/hq-gateway/index.ts");
   assert.ok(html.includes('id="chat-memory-consent"'));
   assert.ok(html.includes("memory_consent:document.querySelector('#chat-memory-consent').checked"));
