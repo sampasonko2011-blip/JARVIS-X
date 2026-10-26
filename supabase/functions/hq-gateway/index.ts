@@ -123,11 +123,22 @@ async function readGlobalBudgetStatus() {
   if (!row || typeof row.enabled !== "boolean" || typeof row.kill_switch_enabled !== "boolean") {
     throw new Error("global_budget_status_invalid");
   }
+  const parseUsd = (value: unknown) => {
+    if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return null;
+    const amount = Number(value);
+    return Number.isFinite(amount) && amount > 0 ? amount : null;
+  };
+  const dailyLimitUsd = parseUsd(row.daily_limit_usd);
+  const requestReservationUsd = parseUsd(row.request_reservation_usd);
+  const requestReservationConfigured = requestReservationUsd !== null;
+  const reservationWithinDailyLimit = dailyLimitUsd !== null &&
+    requestReservationUsd !== null &&
+    requestReservationUsd <= dailyLimitUsd;
   return {
-    enabled: row.enabled === true && row.request_reservation_usd !== null && Number(row.request_reservation_usd) > 0,
+    enabled: row.enabled === true && reservationWithinDailyLimit,
     killSwitchEnabled: row.kill_switch_enabled === true,
-    dailyLimitUsd: Number.isFinite(Number(row.daily_limit_usd)) ? Number(row.daily_limit_usd) : null,
-    requestReservationConfigured: Number.isFinite(Number(row.request_reservation_usd)) && Number(row.request_reservation_usd) > 0,
+    dailyLimitUsd,
+    requestReservationConfigured,
   };
 }
 
