@@ -4,9 +4,9 @@ JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It c
 
 ## Release state
 
-- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — the default-branch shell is published on GitHub Pages. PR #48 is still a draft and its changes are not live until an authorized merge/deploy.
-- **Deployment:** [GitHub Pages deployment run #11](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133392364) succeeded. The duplicate deployment workflow was removed to avoid competing publishes.
-- **Automated verification:** [CI run #762](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133699384) passed on the current main revision, including unit tests, Chromium browser E2E, syntax checks, and benchmarks.
+- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — the default-branch shell is published on GitHub Pages. Integrated HQ + Model Forge source is merged to `main` in commit [`5f5129924edbf23b26f925b1e78a295c662aeb4e`](https://github.com/sampasonko2011-blip/JARVIS-X/commit/5f5129924edbf23b26f925b1e78a295c662aeb4e).
+- **Deployment:** [GitHub Pages deployment run #40349880575](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880575) succeeded for that main commit.
+- **Automated verification:** [CI run #40349880471](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880471) passed for that same main commit, including build, unit tests, Chromium browser E2E, syntax checks, and benchmarks.
 - **Live provider inference:** not yet independently verified end to end; use the published app's verified-email sign-in and chat gateway checks.
 - **Cross-platform memory:** explicit one-message consent gates XMemo recall/write in the PR branch; recall-query redaction is applied before sending user text to the memory provider. Live XMemo recall/write, durable persistence, and account isolation remain unverified.
 - **Security follow-up:** PR #48 documents the rate-limit RPC rollout order and current provider pricing. The global budget guard remains disabled by default and its reservation is unset; do not enable paid inference until input/output cost bounds and provider-side spend controls are verified.
@@ -17,7 +17,7 @@ Open [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) in Safari on
 
 ## Model Forge status
 
-The HQ includes a local Model Forge panel for registering model-candidate metadata, requiring provenance/license/digest/security evidence, recording comparable benchmark measurements, and applying human-gated promotion criteria. Candidate records and benchmark entries remain in the current browser profile. This UI does not download or execute weights, run a sandbox, perform fine-tuning, or establish measured model improvements. A separate local Ollama smoke-runner CLI is available in the repository (`npm run forge:local -- --model <installed-model>`), but it is not a hardened sandbox and is not invoked by the browser UI. True isolated execution and measured improvements remain unimplemented.
+The HQ includes a local Model Forge panel for registering model-candidate metadata, requiring provenance/license/digest/security evidence, recording comparable benchmark measurements, and applying human-gated promotion criteria. Candidate records and benchmark entries remain in the current browser profile. The browser UI itself does not download or execute weights or perform fine-tuning. A local Ollama smoke-runner CLI is available (`npm run forge:local -- --model <installed-model>`), alongside a separate Docker/llama.cpp GGUF runner (`npm run forge:sandbox -- ...`) with digest and model-hash checks and restrictive container flags. CI tests the runner with mocked Docker; actual local inference, hardened isolation on the user's machine, and measured model improvements remain unverified.
 
 ## Architecture and privacy boundaries
 
