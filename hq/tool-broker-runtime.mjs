@@ -2,8 +2,9 @@
  * JARVIS-X executable tool-broker boundary.
  *
  * This module invokes only an explicitly injected executor after exact scope
- * checks, approval gates, and durable audit callbacks are supplied by the
- * caller. It contains no connector registry, credentials, or network client.
+ * checks, trusted approval verification, and durable audit callbacks are supplied
+ * by server-side caller code. Request-supplied approval flags are not trusted.
+ * It contains no connector registry, credentials, or network client.
  */
 
 import { assessToolRequest } from "./capability-core.mjs";
