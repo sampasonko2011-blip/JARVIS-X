@@ -7,6 +7,9 @@ const PRIMARY_PROVIDER = "multi-provider-council";
 const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:claude-opus-5 + xai:grok-4.7 + google:gemini-4-argon";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
+// Bound each downstream council stage and each provider reply before it is embedded in another paid prompt.
+const MAX_STAGE_INPUT_CHARS = 64_000;
+const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
 // Gemini 4 Argon counts thinking tokens against this limit; Google's guide recommends at least 32,768.
 const GEMINI_MAX_OUTPUT_TOKENS = 32_768;
@@ -340,6 +343,7 @@ function extractResponsesText(data: any) {
   return chunks.join("\n");
 }
 async function callProvider(provider: ProviderName, task: string, stage: CouncilStage) {
+  if (task.length > MAX_STAGE_INPUT_CHARS) throw new Error("provider_input_too_large_" + provider);
   const config = PROVIDER_CONFIG[provider];
   const apiKey = Deno.env.get(config.secret);
   if (!apiKey) throw new Error("provider_secret_missing_" + provider);
@@ -383,6 +387,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     returnedModel = data?.modelVersion;
   }
   if (typeof output !== "string" || !output.trim()) throw new Error("provider_empty_output_" + provider);
+  if (output.length > MAX_PROVIDER_OUTPUT_CHARS) throw new Error("provider_output_too_large_" + provider);
   if (typeof returnedModel !== "string" || !returnedModel.trim()) throw new Error("provider_model_identity_missing_" + provider);
   const normalized = returnedModel.toLowerCase();
   // DeepSeek's documented alias resolves to a versioned server model ID.
