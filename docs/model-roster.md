@@ -17,7 +17,7 @@ JARVIS-X presents one assistant identity. These providers are internal specialis
 
 - Public documentation confirms a model identifier exists; it does not confirm that a particular API account has access, sufficient quota, or billing enabled.
 - The gateway validates the model identifier returned by each provider and records the configured provider/model receipt. This is a runtime guard, not proof that live calls have succeeded.
-- The current Gemini output limit is set to 32,768 tokens, below the documented standard synchronous maximum of 65,536. Other stages currently use a 1,024-token output ceiling.
+- All five stages currently use a shared 1,024-token output ceiling. This is a conservative output cap, not a complete request-cost guarantee; input tokens, provider pricing, and any provider-specific billing behavior must still be included in the budget reservation.
 - A full council request may make five paid provider calls. Verify each provider's current pricing, account-specific limits, and actual token usage before enabling it.
 - The global budget migration is proposed and disabled by default. Its reservation amount is unset. Do not enable paid chat until a conservative per-request upper bound has been calculated and provider-side spend controls are configured.
 - A reserved-cost ceiling is not exact billing reconciliation. Provider-side limits and dashboard monitoring remain necessary.
