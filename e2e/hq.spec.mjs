@@ -378,6 +378,29 @@ test("cross-platform memory is sent only when explicitly enabled for the message
   expect(request.memory_consent).toBe(true);
 });
 
+test("memory consent is consumed by one chat message and resets before the next", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "five-model roster", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Reply", provider: "five-provider-council", providers_used: [], provider_calls: 5 } },
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("First message with consent");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Reply");
+  await expect(page.locator("#chat-memory-consent")).not.toBeChecked();
+  expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(true);
+
+  await page.locator("#chat-compose").fill("Second message without consent");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Second message without consent");
+  expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(false);
+});
+
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
   await page.locator('[data-view="upgrades"]').click();
   await expect(page.locator("#upgrade-proposals")).toContainText("Secure live AI chat gateway");
