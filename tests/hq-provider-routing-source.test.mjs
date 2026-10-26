@@ -149,6 +149,17 @@ test("invite-only OTP failure gives actionable guidance without enabling public 
   assert.doesNotMatch(hq, /create_user:true/);
 });
 
+test("HQ CSP restricts network and embedding while preserving the current inline UI", () => {
+  assert.match(hq, /Content-Security-Policy[^>]*default-src 'self'/);
+  assert.match(hq, /script-src 'self' 'unsafe-inline'/);
+  assert.match(hq, /style-src 'self' 'unsafe-inline'/);
+  assert.match(hq, /connect-src 'self' https:\/\/xfewajxkqntflfntisut\.supabase\.co/);
+  assert.match(hq, /object-src 'none'/);
+  assert.match(hq, /base-uri 'self'/);
+  assert.match(hq, /form-action 'self'/);
+  assert.doesNotMatch(hq, /unsafe-eval/);
+});
+
 test("clearing the session removes the browser storage key instead of persisting the string null", () => {
   assert.match(hq, /function jxSaveSession\(s\)[\s\S]*?if\(s\)sessionStorage\.setItem\('jx-auth-session',JSON\.stringify\(s\)\);else sessionStorage\.removeItem\('jx-auth-session'\)/);
   assert.doesNotMatch(hq, /function jxSaveSession\(s\)\{jxSession=s;try\{sessionStorage\.setItem\('jx-auth-session',JSON\.stringify\(s\)\)/);
