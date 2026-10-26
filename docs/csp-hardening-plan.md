@@ -7,8 +7,8 @@ The current HQ document has one inline script block, one inline style block, and
 ## Safe rollout
 
 1. **Keep the current working policy during refactoring.** Do not paste a stricter policy into the HTML until inline dependencies have been inventoried.
-2. Extract the inline JavaScript into a versioned same-origin `hq.js` file. Keep provider and Supabase credentials out of this file; only the public Supabase anon/publishable key may be present in the browser.
-3. Move the inline style block to a same-origin CSS file. Replace the 22 inline style attributes with CSS classes. Keep DOM event listeners in JavaScript; avoid inline event-handler attributes.
+2. **Draft branch change:** the HQ inline JavaScript and stylesheet are now external same-origin assets (`hq/hq.js`, `hq/hq.css`). The 21 static and dynamic style attributes are converted to classes; provider secrets remain server-side.
+3. Keep the compatibility CSP until the browser end-to-end suite passes against these assets. Remove `'unsafe-inline'` only in a separate verified change; do not deploy or alter production headers from this draft PR.
 4. Prefer HTTP response headers for CSP over a meta tag, because headers support reporting and more complete directives. Start with `Content-Security-Policy-Report-Only` in staging and collect violations without blocking the app.
 5. Set the actual `connect-src` to the exact required Supabase Auth and gateway origins. Avoid broad `https:` wildcards. Permit `worker-src 'self'` only if the local service worker is required. Keep `object-src 'none'`, `base-uri 'self'`, and a deliberate `form-action`.
 6. After fixing all reported violations, enforce a policy without `'unsafe-inline'` for scripts or styles. If externalization is temporarily impossible, use a server-generated nonce or stable CSP hashes where the hosting architecture can reliably supply them; do not use a static nonce in a checked-in HTML file.
