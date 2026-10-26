@@ -215,7 +215,9 @@ test("memory storage is user-scoped, time-bounded, and redacts common secrets", 
 
 test("chat sends explicit memory consent and never reports a failed delivery as successful", () => {
   assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
-  assert.match(hqRuntime, /document\.querySelector\('#chat-memory-consent'\)\.checked=false/);
+  assert.match(hqRuntime, /MEMORY_PREFERENCE_KEY/);
+  assert.match(hqRuntime, /initializeCrossPlatformMemoryPreference/);
+  assert.doesNotMatch(hqRuntime, /checked=false/);
   assert.match(hqRuntime, /memory_consent:memoryConsent/);
   assert.match(hq, /userMessage\.delivery='DELIVERY UNKNOWN — CHECK GATEWAY BEFORE RETRYING'/);
   assert.match(hq, /Chat failed:[\s\S]*?Do not retry until delivery is checked/);
