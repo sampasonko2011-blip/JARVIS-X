@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 
 test("HQ shell includes the core command surfaces and transparent capability boundaries", async () => {
-  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css") + "\n" + await read("hq/forge.js") + "\n" + await read("package.json");
   for (const marker of [
     'id="view-overview"',
     'id="view-workspace"',
