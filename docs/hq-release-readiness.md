@@ -1,12 +1,12 @@
 # JARVIS-X HQ — capability closure register
 
-**Snapshot:** 2026-10-26. This is a repository and read-only deployment status register, not a claim of production readiness. The current PR remains draft and unmerged. Only completed tests and observed deployment state may move a capability to VALIDATED.
+**Snapshot:** 2026-10-26. This is a repository and read-only deployment status register, not a claim of production readiness. The integrated HQ + Model Forge milestone was merged in PR [#52](https://github.com/sampasonko2011-blip/JARVIS-X/pull/52) at commit `5f5129924edbf23b26f925b1e78a295c662aeb4e`. The static Pages deployment and CI passed for this commit; backend/live-integration status remains separate. Only completed tests and observed deployment state may move a capability to VALIDATED.
 
 ## Current evidence checkpoint
 
-- Repository PR: [#48](https://github.com/sampasonko2011-blip/JARVIS-X/pull/48), branch `fix/hq-real-provider-routing`.
-- The last fully verified implementation checkpoint was CI #905 on commit `3b081bc9e13c2dc40126fe99ff58b8aa79bff78a`. Later commits include documentation and regression-test changes; PR #48's verification section is the source of truth for the current branch head and exact latest CI run.
-- A green run on an older commit does not validate later commits.
+- Integrated source checkpoint: main commit [`5f5129924edbf23b26f925b1e78a295c662aeb4e`](https://github.com/sampasonko2011-blip/JARVIS-X/commit/5f5129924edbf23b26f925b1e78a295c662aeb4e).
+- CI run [#40349880471](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880471) and Pages deployment [#40349880575](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880575) both succeeded for this exact commit.
+- A green run on an older commit does not validate later commits; repeat verification after any subsequent change.
 - **Live Supabase state rechecked read-only on 2026-10-26:** project `JARVIS-X` (`xfewajxkqntflfntisut`) is `ACTIVE_HEALTHY` in `eu-west-1`; deployed `hq-gateway` is active at version 11 with deployed source hash `b5d081220f76bc2b5cebbc90255b4fce399e866dcf4a37166ce37c073887453b`. The returned deployed source identifies itself as the old `openai` / `gpt-4.1-mini` three-pass self-critique flow—not the five-provider council. This is direct deployment evidence, not inferred from CI.
 - **Live migration inventory rechecked read-only:** the database lists six migrations through `20261024185449_hq_execution_ledger_server_only_writes`. The repository filename has been aligned to that observed live version after read-only catalog checks confirmed authenticated users have only SELECT on `hq_execution_runs` and only their own-row SELECT policy remains. The global-budget migration `20261025225000_hq_global_budget_guard.sql` and server-only rate-limit migration `20261026100000_hq_rate_limit_server_only_rpc.sql` are still absent from the live migration list. No production migration was applied.
 - **Live SQL catalog rechecked read-only:** only `public.consume_hq_rate_limit(text)` exists; it is `SECURITY DEFINER` and authenticated users can execute it. The budget tables/RPC are absent. The suggested `public.request_logs` table is also absent, so Gemini's proposed `check_server_rate_limit` SQL would not work against this database.
@@ -19,10 +19,10 @@
 
 | Capability | Current status | What exists | What remains before VALIDATED |
 |---|---|---|---|
-| Static HQ/PWA shell | IMPLEMENTED IN PR; latest deployment/device state UNVERIFIED | Responsive HQ, manifest, service worker v5, local workspace and offline shell | Authorized release; verify exact deployed URL, cache update and physical iPad Safari install/reload |
+| Static HQ/PWA shell | MERGED + PAGES DEPLOYMENT SUCCEEDED; physical-device acceptance UNVERIFIED | Responsive HQ, manifest, service worker v5, local workspace and offline shell | Verify exact deployed URL, cache update and physical iPad Safari install/reload |
 | Local encrypted backup | IMPLEMENTED IN CLIENT | Web Crypto PBKDF2-SHA-256/AES-256-GCM portable backup and import validation | Independent crypto review, recovery UX, real-device restore and browser-compatibility tests |
 | Direct JARVIS-X chat | SOURCE IMPLEMENTED; LIVE FLOW BLOCKED/UNVERIFIED | Chat UI and authenticated same-origin health/chat contract; server gateway code | Resolve existing-account email OTP configuration; verify session, allowlist, deployed gateway version and a bounded authenticated request after budget gates pass |
-| Security Gateway console | IMPLEMENTED IN PR; NOT RELEASED | Health probe, timeout, schema checks, provider-claim distinctions and safe diagnostics | Authorized merge/deploy; verify actual backend claims and served HTTP CSP headers |
+| Security Gateway console | MERGED IN SOURCE; LIVE BACKEND CLAIMS/HTTP CSP UNVERIFIED | Health probe, timeout, schema checks, provider-claim distinctions and safe diagnostics | Verify actual backend claims and served HTTP CSP headers |
 | Multi-AI Council | FIVE-PROVIDER SOURCE IMPLEMENTED; LIVE EXECUTION UNPROVEN | One JARVIS-X identity with OpenAI lead, DeepSeek review, Anthropic critic, xAI stress test and Google synthesis; provider identity checks and fail-closed behavior | Verify account access/quota and current pricing; configure secrets server-side; establish full-request cost bound; run an authorized bounded smoke test and inspect usage/receipts |
 | Image Studio | PROMPT BUILDER + VALIDATION CONTRACT; GENERATION NOT CONNECTED | Local prompt builder and provider-neutral request/asset metadata validators | Authorized image provider and server adapter; cost/consent policy, generated asset retrieval/storage, integrity checks and smoke test |
 | Integrations/plugin broker | POLICY RUNTIME IMPLEMENTED; CONNECTORS NOT CONNECTED | Exact scope checks, write approval verification callback, idempotency key, timeout handling, output/world-state verifiers and audit callbacks | Real least-privilege connector registry, trusted approval store, durable audit, revocation/cancellation and connector-specific integration tests |
@@ -44,7 +44,7 @@ A capability is not complete merely because its screen, endpoint contract, adapt
 6. **Device acceptance:** on the actual iPad Safari, verify installation, sign-in, session refresh, chat, memory consent, service-worker update, offline shell and reconnect behavior.
 7. **Product integration acceptance:** test authenticated cross-device memory on two authorized accounts/devices, one permissioned connector operation including a denied write, and one real image generation with returned asset integrity. Until these tests pass, label each integration NOT_CONNECTED or UNPROVEN.
 
-No provider secret values were read, created or changed. No live paid provider calls, production migrations, production deployment, or merge were performed in this checkpoint. No hosting provider, API key, paid service, or new connector is presumed approved by this register.
+No provider secret values were read, created or changed. No live paid provider calls or production migrations were performed in this checkpoint. The static GitHub Pages shell deployment succeeded; this is not a deployment of the authenticated gateway backend. No hosting provider, API key, paid service, or new connector is presumed approved by this register.
 
 ## Mission Control and local-tooling boundaries
 
@@ -60,4 +60,4 @@ No provider secret values were read, created or changed. No live paid provider c
 
 ## Release policy
 
-Keep PR #48 draft and unmerged until applicable external gates are closed and verified. Passing CI establishes repository-level behavior only. Do not describe provider inference, authenticated sync, executable plugins, image generation, or device installation as live without its own end-to-end evidence.
+The integrated source PR #52 is merged. Keep live-provider, cross-device memory, executable connector, image-generation, production-migration and authenticated-gateway activation gated until their applicable external checks are closed and verified. Passing CI establishes repository-level behavior only. Do not describe provider inference, authenticated sync, executable plugins, image generation, or device installation as live without its own end-to-end evidence.
