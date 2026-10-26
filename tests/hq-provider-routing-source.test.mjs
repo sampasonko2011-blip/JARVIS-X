@@ -58,6 +58,13 @@ test("provider calls have bounded timeouts and preserve safe failure diagnostics
   assert.match(gateway, /provider_request_failed/);
 });
 
+test("health does not advertise paid chat when reservation exceeds the daily limit", () => {
+  assert.match(gateway, /const requestReservationUsd = parseUsd\(row\.request_reservation_usd\)/);
+  assert.match(gateway, /requestReservationUsd <= dailyLimitUsd/);
+  assert.match(gateway, /enabled: row\.enabled === true && reservationWithinDailyLimit/);
+  assert.match(gateway, /dailyLimitUsd,\s*requestReservationConfigured,/);
+});
+
 test("rate-limit RPC responses are validated before they can authorize inference", () => {
   assert.match(gateway, /const expectedLimit = key === "minute" \? 10 : 100/);
   assert.match(gateway, /row\.limit_key !== key/);
