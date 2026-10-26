@@ -76,7 +76,7 @@ This file does not authorize a production deployment, production migration, secr
 
 ## Explicit zero-provider mock mode (code-only; not deployed)
 
-The branch `fix/mock-only-council-dry-run` adds a deterministic mock path for safe integration tests.
+The branch `feature/mock-only-council-validation` adds a deterministic mock path for safe integration tests.
 
 - Mock requests must be authenticated and pass the existing database-backed minute/day rate limits before reaching the mock handler.
 - The caller must explicitly send `mode: "mock"`; the server-side `JX_ENABLE_MOCK_MODE` flag must equal `true`. If disabled, the request returns `403 mock_mode_disabled` and does not fall through to live inference.
