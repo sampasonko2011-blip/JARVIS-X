@@ -20,3 +20,10 @@ The repository Pages workflow publishes `hq/` after changes reach `main`. Verify
 
 ## Local verification
 Run `npm test` and `npm run build`. CI browser tests do not replace a real authenticated session test on the published site.
+
+## Verification status
+
+- **Live provider inference:** not yet independently verified end to end.
+- **Cross-platform memory:** not automatically synchronized; durable persistence and account isolation remain unverified.
+- Automated tests use deterministic fixtures/mocks and do not establish real provider availability, truthful model identity, or production quality.
+- Provider credentials must remain in Supabase Edge Function secrets; never put them in browser code or commit them to Git.
