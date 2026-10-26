@@ -21,6 +21,10 @@ test("HQ contains no inline script, style block, or style attributes", () => {
   assert.doesNotMatch(html, /<style\b/i);
   assert.doesNotMatch(html, /\sstyle\s*=\s*["']/i);
   assert.doesNotMatch(js, /\sstyle\s*=\s*["']/i);
+  assert.doesNotMatch(js, /\.style\s*\./);
+  assert.match(js, /setMetricBarWidth\('#bar-notes'/);
+  assert.match(js, /setMetricBarWidth\('#bar-ledger'/);
+  assert.match(css, /\.metricbar span\.progress-width-100\{width:100%\}/);
 });
 
 test("HQ enforces same-origin script and style sources without unsafe-inline", () => {
