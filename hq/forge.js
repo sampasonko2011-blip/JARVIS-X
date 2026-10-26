@@ -161,7 +161,7 @@ byId("forge-evaluate")?.addEventListener("click", () => {
     id: newId(),
     candidateId: candidate.id,
     candidateName: candidate.displayName,
-    status: promotion.status,
+    status: !comparison.eligible ? "REJECTED_BY_NUMERIC_GATES" : (humanApproved ? "APPROVAL_RECORDED_UNVERIFIED" : "UNPROVEN_MANUAL_BENCHMARKS"),
     createdAt: timestamp(),
     measurements: { baseline, candidate: result },
     comparison,
@@ -178,7 +178,7 @@ byId("forge-evaluate")?.addEventListener("click", () => {
   setStatus("forge-benchmark-status",
     "Recorded local comparison: " + run.status + ". " +
     (comparison.eligible
-      ? "The entered numbers pass the configured numeric gates, but they are manually supplied and have not been independently verified. This is not proof of model improvement."
+      ? "The entered numbers pass the numeric gates, but remain unverified manual claims. " + (humanApproved ? "Your local approval was recorded; this does not promote, install, or deploy the model." : "No approval recorded. ") + "Actual benchmark artifacts and independent verification are still required before any release decision."
       : "The candidate failed one or more gates: " + failedGates.join(", ") + "."));
 });
 render();
