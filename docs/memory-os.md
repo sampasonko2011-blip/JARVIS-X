@@ -64,3 +64,10 @@ Memory OS is not complete merely because storage exists. Verify:
 - **SUPERSEDED**: once relevant, replaced by newer evidence or a newer decision.
 
 Never describe an adapter as invoked when it was only configured, or describe a memory as persistent until restart behavior is tested.
+
+
+## HQ-to-XMemo memory integration boundary
+
+The authenticated HQ gateway contains a server-side XMemo adapter. The XMemo API key remains a Supabase Edge Function secret; requests are scoped to the authenticated user under `projects/jarvis-x-hq/users/<user-id>/conversations`; query and saved-turn text passes through credential/email redaction; and the gateway only recalls or writes when the request includes `memory_consent: true`.
+
+The HQ browser now remembers the memory preference locally instead of resetting it after each chat turn. The control is enabled by default for this user's requested HQ configuration, and can be disabled; a previously saved `false` remains disabled. The browser preference is not automatically synchronized to other devices. A connected XMemo tool in ChatGPT does not itself inject an API key into Supabase. End-to-end memory is validated only after the deployed gateway has the required secret and a successful authenticated recall/write is observed, then persistence is checked from a fresh session/device.
