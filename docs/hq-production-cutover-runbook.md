@@ -8,7 +8,7 @@
 - `check_server_rate_limit(uuid)` reads `public.request_logs`, which is not the verified rate-limit store. The gateway expects the existing `hq_rate_limits` table and `consume_hq_rate_limit(uuid, text)` RPC with 10/minute and 100/day windows.
 - `SECURITY DEFINER` does not remove security risk or silence it safely. A public-schema definer function can be executable by PUBLIC unless privileges are explicitly revoked. The existing server-only RPC has a fixed empty search path and explicit service-role-only execute grants.
 - Dropping/revoking the legacy RPC before the deployed gateway stops calling `consume_hq_rate_limit(text)` can break the old gateway. A generic `DROP FUNCTION old_legacy_rate_limit_function()` does not identify the actual overload and is not an executable migration plan.
-- The live database has migration-history drift for the execution-ledger migration. Resolve that discrepancy before applying repository migrations to production; do not mark old migrations applied by guesswork.
+- The execution-ledger migration filename was aligned in this branch to the observed live version `20261024185449_hq_execution_ledger_server_only_writes.sql` after read-only catalog checks confirmed authenticated users have only SELECT on `hq_execution_runs` and only their own-row SELECT policy remains. This repository alignment does not apply or change any production migration.
 
 ## Current verified starting point
 
@@ -16,6 +16,7 @@
 - Live gateway: `hq-gateway` version 11, legacy OpenAI three-pass implementation, JWT verification disabled at the platform edge (the handler performs its own Supabase user verification).
 - Live migration inventory: six migrations, latest `20261024185449_hq_execution_ledger_server_only_writes`.
 - The global-budget and server-only rate-limit migrations in this branch are absent from that inventory.
+- A read-only production catalog query confirmed only `public.consume_hq_rate_limit(text)` exists. It is `SECURITY DEFINER`; `authenticated` and `service_role` can execute it, while `anon` cannot. `public.hq_global_budget_config`, `hq_global_budget_daily`, `hq_global_budget_reservations`, `reserve_hq_global_budget`, and the suggested `public.request_logs` table are absent. `public.hq_rate_limits` and `public.hq_execution_runs` exist.
 - The server-only rate-limit migration has been changed to be additive/backward-compatible: it adds the service-role-only `(uuid, text)` overload while deliberately retaining the legacy `(text)` overload during transition.
 - The budget guard is designed to remain disabled until the exact models, account access, full-request reservation, and provider-side spending controls are verified. No live provider smoke test has been authorized or performed.
 
@@ -23,10 +24,9 @@
 
 ### Gate 0 — reconcile and review
 
-1. Inspect the exact deployed migration definitions and compare them with the repository, especially `hq_execution_runs` and `hq_rate_limits`.
-2. Resolve the execution-ledger migration timestamp/name drift without fabricating migration history.
-3. Review both pending migrations and confirm the Supabase service role has the intended table/RPC privileges. Run security advisors after staging changes.
-4. Confirm all five model IDs and provider accounts are actually available to the intended API keys. Public model documentation is not proof of account access.
+1. Reconfirm the observed `hq_execution_runs` grants/policies and `hq_rate_limits` definition before applying changes; the repository filename now matches the live execution-ledger migration version.
+2. Review both pending migrations and confirm the Supabase service role has the intended table/RPC privileges. Run security advisors after staging changes.
+3. Confirm all five model IDs, provider APIs, account access, and pricing are actually valid for the intended API keys. Public model documentation is not proof of account access.
 
 ### Gate 1 — staging validation
 
