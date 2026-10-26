@@ -77,7 +77,7 @@ function initializeCrossPlatformMemoryPreference(){
   const control=document.querySelector('#chat-memory-consent');
   if(!control)return;
   let enabled=true;
-  try{const saved=localStorage.getItem(MEMORY_PREFERENCE_KEY);if(saved==='false')enabled=false;else if(saved==='true')enabled=true;}catch{}
+  try{const saved=localStorage.getItem(MEMORY_PREFERENCE_KEY);if(saved==='false')enabled=false;else if(saved==='true')enabled=true;else localStorage.setItem(MEMORY_PREFERENCE_KEY,'true');}catch{}
   control.checked=enabled;
   control.addEventListener('change',()=>{try{localStorage.setItem(MEMORY_PREFERENCE_KEY,String(control.checked));}catch{}});
 }
