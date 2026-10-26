@@ -67,8 +67,8 @@ test("global budget guard is required, persistent, and atomic before paid infere
 test("authenticated allowlist and per-user rate limits run before budget reservation", () => {
   assert.match(gateway, /if \(allowedEmails\.length === 0\)[\s\S]*gateway_access_policy_not_configured/);
   assert.match(gateway, /account_not_allowlisted/);
-  assert.match(gateway, /consumeRateLimit\(token, publishableKey, "minute"\)/);
-  assert.match(gateway, /consumeRateLimit\(token, publishableKey, "day"\)/);
+  assert.match(gateway, /consumeRateLimit\(user\.id, "minute"\)/);
+  assert.match(gateway, /consumeRateLimit\(user\.id, "day"\)/);
   assert.match(gateway, /rate_limit_service_unavailable/);
   const minuteLimit = gateway.indexOf('consumeRateLimit(user.id, "minute")');
   const dayLimit = gateway.indexOf('consumeRateLimit(user.id, "day")');
