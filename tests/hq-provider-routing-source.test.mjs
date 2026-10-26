@@ -83,8 +83,8 @@ test("gateway audit records omit prompt and answer content and browser never rec
   assert.match(gateway, /output_summary: "Five-provider synthesis returned; response content not persisted"/);
   assert.match(gateway, /Never expose SUPABASE_SERVICE_ROLE_KEY to the browser or logs/);
   assert.doesNotMatch(hq, /SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(gateway, /Cache-Control", "no-store"/);
-  assert.match(gateway, /Vary", "Origin"/);
+  assert.ok(gateway.includes('"Cache-Control": "no-store"'));
+  assert.ok(gateway.includes('"Vary": "Origin"'));
   assert.match(gateway, /origin_not_allowed/);
 });
 
