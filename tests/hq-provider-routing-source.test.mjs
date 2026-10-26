@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
+const providerSmoke = await readFile(new URL("../scripts/provider-smoke.mjs", import.meta.url), "utf8");
+const providerSmokeWorkflow = await readFile(new URL("../.github/workflows/manual-provider-smoke-test.yml", import.meta.url), "utf8");
 const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 const hqRuntime = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
 const hq = hqHtml + "\n" + hqRuntime;
@@ -10,6 +12,29 @@ const budgetMigration = await readFile(new URL("../supabase/migrations/202610252
 const rateLimitMigration = await readFile(new URL("../supabase/migrations/20261026100000_hq_rate_limit_server_only_rpc.sql", import.meta.url), "utf8");
 const hqE2E = await readFile(new URL("../e2e/hq.spec.mjs", import.meta.url), "utf8");
 const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta.url), "utf8");
+
+test("manual smoke test covers all five providers with bounded calls and explicit cost confirmation", () => {
+  for (const [provider, secret, model] of [
+    ["OpenAI", "OPENAI_API_KEY", "gpt-6.1-sol"],
+    ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-flash"],
+    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5"],
+    ["xAI", "XAI_API_KEY", "grok-4.7"],
+    ["Google", "GOOGLE_API_KEY", "gemini-4-argon"],
+  ]) {
+    assert.ok(providerSmoke.includes(`provider: "${provider}"`), "smoke test missing " + provider);
+    assert.ok(providerSmoke.includes(`envKey: "${secret}"`), "smoke test missing secret name " + secret);
+    assert.ok(providerSmoke.includes(`model: "${model}"`), "smoke test missing model " + model);
+    assert.ok(providerSmokeWorkflow.includes(`${secret}: \${{ secrets.${secret} }}`), "workflow missing " + secret);
+  }
+  assert.match(providerSmoke, /max_output_tokens: 32/);
+  assert.match(providerSmoke, /max_tokens: 32/);
+  assert.match(providerSmoke, /maxOutputTokens: 32/);
+  assert.match(providerSmoke, /AbortController/);
+  assert.match(providerSmoke, /identityMatches\(config, observedModel\)/);
+  assert.match(providerSmokeWorkflow, /confirm_paid_api_calls/);
+  assert.match(providerSmokeWorkflow, /default: false/);
+  assert.match(providerSmokeWorkflow, /inputs\.confirm_paid_api_calls == true/);
+});
 
 test("browser gateway fixtures match the configured Anthropic model ID", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
