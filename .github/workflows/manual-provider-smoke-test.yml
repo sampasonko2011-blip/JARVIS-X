@@ -30,8 +30,20 @@ jobs:
         with:
           node-version: 22
 
-      - name: Run one bounded request per provider
+      - name: Validate required provider secrets
         if: ${{ inputs.confirm_paid_api_calls == true }}
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [ -z "$XAI_API_KEY" ] || [ -z "$DEEPSEEK_API_KEY" ]; then
+            echo "::error::Required provider secrets are missing or empty. Configure XAI_API_KEY and DEEPSEEK_API_KEY under Settings → Secrets and variables → Actions. No provider requests were sent."
+            exit 1
+          fi
+          echo "Required provider secrets are present. Values were not displayed."
+
+      - name: Run one bounded request per provider
+        if: ${{ success() && inputs.confirm_paid_api_calls == true }}
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
