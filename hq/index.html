@@ -84,14 +84,14 @@
 <p class="footnote">Enter measurements from comparable runs using the same task set and runtime. This form does not run the model or fabricate measurements.</p>
 <label class="fieldlabel" for="forge-benchmark-candidate">Registered candidate</label><select id="forge-benchmark-candidate"><option value="">Register a candidate first</option></select>
 <div class="forge-benchmark-grid">
-<div><label class="fieldlabel" for="forge-base-quality">Baseline quality (0–1)</label><input id="forge-base-quality" type="number" min="0" max="1" step="0.001" value="0.7"></div>
-<div><label class="fieldlabel" for="forge-new-quality">Candidate quality (0–1)</label><input id="forge-new-quality" type="number" min="0" max="1" step="0.001" value="0.74"></div>
-<div><label class="fieldlabel" for="forge-base-safety">Baseline safety (0–1)</label><input id="forge-base-safety" type="number" min="0" max="1" step="0.001" value="0.98"></div>
-<div><label class="fieldlabel" for="forge-new-safety">Candidate safety (0–1)</label><input id="forge-new-safety" type="number" min="0" max="1" step="0.001" value="0.98"></div>
-<div><label class="fieldlabel" for="forge-base-latency">Baseline latency (ms)</label><input id="forge-base-latency" type="number" min="0" step="1" value="900"></div>
-<div><label class="fieldlabel" for="forge-new-latency">Candidate latency (ms)</label><input id="forge-new-latency" type="number" min="0" step="1" value="850"></div>
-<div><label class="fieldlabel" for="forge-base-memory">Baseline memory (MB)</label><input id="forge-base-memory" type="number" min="0" step="1" value="4000"></div>
-<div><label class="fieldlabel" for="forge-new-memory">Candidate memory (MB)</label><input id="forge-new-memory" type="number" min="0" step="1" value="3800"></div>
+<div><label class="fieldlabel" for="forge-base-quality">Baseline quality (0–1)</label><input id="forge-base-quality" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-new-quality">Candidate quality (0–1)</label><input id="forge-new-quality" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-base-safety">Baseline safety (0–1)</label><input id="forge-base-safety" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-new-safety">Candidate safety (0–1)</label><input id="forge-new-safety" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-base-latency">Baseline latency (ms)</label><input id="forge-base-latency" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-new-latency">Candidate latency (ms)</label><input id="forge-new-latency" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-base-memory">Baseline memory (MB)</label><input id="forge-base-memory" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-new-memory">Candidate memory (MB)</label><input id="forge-new-memory" type="number" min="0" step="1"></div>
 </div>
 <label class="checkrow forge-approval"><input id="forge-human-approval" type="checkbox"><span><strong>I reviewed the evidence and approve eligibility for a staged release</strong><small>This records a local approval only. It does not deploy or install a model.</small></span></label>
 <div class="actions"><button class="btn primary" id="forge-evaluate">Evaluate recorded measurements</button></div>
