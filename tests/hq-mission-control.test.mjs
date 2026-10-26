@@ -9,13 +9,14 @@ test("Mission Control uses a same-origin external script and restrictive script 
   assert.doesNotMatch(html, /<script>\s*const \$=/);
 });
 
-test("Mission Control explicitly labels unconnected services and never exposes API key inputs", async () => {
+test("Mission Control presents one JARVIS-X identity and never exposes API key inputs", async () => {
   const html = await readFile(new URL("../hq/mission-control.html", import.meta.url), "utf8");
   const js = await readFile(new URL("../hq/mission-control.js", import.meta.url), "utf8");
-  assert.match(html, /Provider calls: not connected/);
+  assert.match(html, /JARVIS-X gateway: not verified/);
   assert.match(html, /Remote sync: not connected/);
   assert.match(html, /Defence API/);
-  assert.match(html, /NOT CONNECTED TO HQ/);
+  assert.match(html, /Single-identity contract/);
+  assert.doesNotMatch(html, /providers-select|Provider roster|href="https:\/\/(?:chatgpt\.com|claude\.ai|gemini\.google\.com)\//i);
   assert.doesNotMatch(html, /type=["']password["'][^>]*(?:api|secret)|(?:api|secret)[^>]*type=["']password["']/i);
   assert.match(js, /No model was called/);
   assert.match(js, /No remote jobs were executed/);
@@ -37,4 +38,13 @@ test("sensitive council tasks are blocked from external handoff and workflow que
   assert.match(js, /Sensitive data selected: export\/handoff is blocked/);
   assert.match(js, /Workflow saved locally\. No remote jobs were executed/);
   assert.match(js, /Local browser checks completed\. No malware scan or remote threat detection was performed/);
+});
+
+test("HQ chat health check matches the deployed JARVIS-X gateway contract", async () => {
+  const app = await readFile(new URL("../hq/app.js", import.meta.url), "utf8");
+  assert.match(app, /health\.mode!=='single-primary-multipass'/);
+  assert.match(app, /health\.auth!=='verified-supabase-session'/);
+  assert.match(app, /health\.providerConfigured!==true/);
+  assert.match(app, /health\.rateLimits!=='database-backed'/);
+  assert.doesNotMatch(app, /five-provider-council|providersConfigured|budgetGuard/);
 });
