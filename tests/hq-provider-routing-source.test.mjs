@@ -149,6 +149,16 @@ test("invite-only OTP failure gives actionable guidance without enabling public 
   assert.doesNotMatch(hq, /create_user:true/);
 });
 
+test("session refresh rotates tokens and clears expired sessions on failure", () => {
+  assert.match(hq, /async function jxEnsureSession\(\)/);
+  assert.match(hq, /auth\/v1\/token\?grant_type=refresh_token/);
+  assert.match(hq, /JSON\.stringify\(\{refresh_token:jxSession\.refresh_token\}\)/);
+  assert.match(hq, /if\(!r\.ok\)\{jxSaveSession\(null\)/);
+  assert.match(hq, /if\(!d\.access_token\|\|!d\.refresh_token\)\{jxSaveSession\(null\)/);
+  assert.match(hq, /jxSaveSession\(\{access_token:d\.access_token,refresh_token:d\.refresh_token/);
+  assert.match(hq, /sessionStorage\.removeItem\('jx-auth-session'\)/);
+});
+
 test("email callback stores returned tokens, cleans the URL, and verifies the gateway", () => {
   assert.match(hq, /async function jxHandleAuthCallback\(\)/);
   assert.match(hq, /const access=hash\.get\('access_token'\),refresh=hash\.get\('refresh_token'\)/);
