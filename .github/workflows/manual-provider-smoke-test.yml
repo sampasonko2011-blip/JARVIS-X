@@ -8,6 +8,11 @@ on:
         required: true
         type: boolean
         default: false
+      confirm_gemini_output_budget:
+        description: "I understand Gemini's smoke-test output ceiling is 32,768 tokens and may incur substantially higher charges."
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require explicit cost confirmation
-        if: ${{ inputs.confirm_paid_api_calls != true }}
+        if: ${{ inputs.confirm_paid_api_calls != true || inputs.confirm_gemini_output_budget != true }}
         run: |
-          echo "Not run: re-dispatch this workflow and confirm that live API calls may incur charges."
+          echo "Not run: confirm both paid API calls and the 32,768-token Gemini output ceiling before dispatching."
           exit 1
 
       - uses: actions/checkout@v4
-        if: ${{ inputs.confirm_paid_api_calls == true }}
+        if: ${{ inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
 
       - uses: actions/setup-node@v4
         if: ${{ inputs.confirm_paid_api_calls == true }}
@@ -43,7 +48,7 @@ jobs:
           node scripts/provider-smoke.mjs | tee provider-smoke-report.json
 
       - name: Upload smoke-test report
-        if: ${{ always() && inputs.confirm_paid_api_calls == true }}
+        if: ${{ always() && inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-x-provider-smoke-report
