@@ -141,6 +141,14 @@ test("council validates provider model identity and records provider receipts", 
   assert.match(gateway, /five-distinct-provider-stages/);
 });
 
+test("invite-only OTP failure gives actionable guidance without enabling public signup", () => {
+  assert.match(hq, /signups not allowed for otp/);
+  assert.match(hq, /Keep public signup disabled/);
+  assert.match(hq, /No chat message was sent/);
+  assert.match(hq, /create_user:false/);
+  assert.doesNotMatch(hq, /create_user:true/);
+});
+
 test("email sign-in remains existing-account-only and exposes OTP configuration failures", () => {
   assert.match(hq, /body:JSON\.stringify\(\{email,create_user:false\}\)/);
   assert.match(hq, /Sign-in request failed:[\s\S]*?No chat message was sent/);
