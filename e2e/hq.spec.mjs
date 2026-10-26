@@ -243,6 +243,9 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
 test("HQ shell CSP permits only the app and its configured Supabase origin", async ({ page }) => {
   const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
   expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("script-src 'self'");
+  expect(csp).toContain("style-src 'self'");
+  expect(csp).not.toContain("unsafe-inline");
   expect(csp).toContain("object-src 'none'");
   expect(csp).toContain("base-uri 'self'");
   expect(csp).toContain("connect-src 'self' https://xfewajxkqntflfntisut.supabase.co");
@@ -391,4 +394,27 @@ test("encrypted vault refuses a short passphrase and documents local-only transf
   await page.locator("#vault-export").click();
   await expect(page.locator("#vault-status")).toContainText("at least 12 characters");
   await expect(page.locator("#view-sync")).toContainText("not live synchronization");
+});
+
+
+test("strict CSP blocks injected inline scripts and style blocks", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    window.__jxInlineCspProbe = false;
+    const script = document.createElement("script");
+    script.textContent = "window.__jxInlineCspProbe = true";
+    document.body.appendChild(script);
+
+    const style = document.createElement("style");
+    style.textContent = ".jx-csp-style-probe { display: none !important; }";
+    document.head.appendChild(style);
+    const probe = document.createElement("div");
+    probe.className = "jx-csp-style-probe";
+    document.body.appendChild(probe);
+    return {
+      scriptRan: window.__jxInlineCspProbe,
+      styleDisplay: getComputedStyle(probe).display,
+    };
+  });
+  expect(result.scriptRan).toBe(false);
+  expect(result.styleDisplay).not.toBe("none");
 });
