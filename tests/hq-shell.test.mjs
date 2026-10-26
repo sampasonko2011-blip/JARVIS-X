@@ -275,3 +275,23 @@ test("HQ image prompt builder uses real line breaks, not visible backslash-n tex
   assert.ok(source.includes("'Create an original image.\\nSUBJECT AND SCENE: '"), "prompt fields should use JavaScript newline escapes");
   assert.ok(!source.includes("'Create an original image.\\\\nSUBJECT AND SCENE: '"), "prompt should not contain literal backslash-n sequences");
 });
+
+
+test("HQ Model Forge is reachable, offline-shell aware, and exposes evidence-gated local evaluation", async () => {
+  const html = await read("hq/index.html");
+  const sw = await read("hq/sw.js");
+  const forge = await read("hq/forge.js");
+  const registry = await read("src/forge/model-registry.mjs");
+  assert.ok(html.includes('data-view="forge"'));
+  assert.ok(html.includes('id="view-forge"'));
+  assert.ok(html.includes('id="forge-register"'));
+  assert.ok(html.includes('id="forge-evaluate"'));
+  assert.ok(html.includes('type="module" src="./forge.js"'));
+  assert.ok(sw.includes("'./forge.js'"));
+  assert.ok(sw.includes("'../src/forge/model-registry.mjs'"));
+  assert.ok(forge.includes("validateModelCandidate"));
+  assert.ok(forge.includes("assessPromotion"));
+  assert.ok(forge.includes("localStorage"));
+  assert.ok(registry.includes("networkAccess must be false"));
+  assert.ok(registry.includes("AWAITING_HUMAN_APPROVAL"));
+});
