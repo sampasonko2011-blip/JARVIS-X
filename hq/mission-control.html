@@ -76,27 +76,20 @@
 </section>
 
 <section class="section" id="section-council">
- <h2 class="section-title">AI Council / Task Orchestrator</h2><p class="intro">Prepare a provider-neutral task packet for a lead model, an independent critic and a synthesizer. This UI prepares and exports work; it does not invoke any hosted model by itself. Open each provider separately and paste the copied packet.</p>
+ <h2 class="section-title">AI Council / Task Orchestrator</h2><p class="intro">One identity, one operating doctrine: JARVIS-X. Build an evidence-led task packet with lead, independent challenge and synthesis stages. This local workspace prepares work; it does not itself execute a model request.</p>
  <div class="grid">
   <article class="card s7"><div class="field"><label for="task">Objective</label><textarea id="task" placeholder="Describe the outcome, constraints, and how success will be verified."></textarea></div>
    <div class="split"><div class="field"><label for="task-mode">Workflow type</label><select id="task-mode"><option value="research">Research + evidence</option><option value="build">Build + test</option><option value="audit">Adversarial audit</option><option value="creative">Creative / image brief</option><option value="operations">Operational workflow</option></select></div><div class="field"><label for="data-class">Data class</label><select id="data-class"><option value="public">Public / non-sensitive</option><option value="private">Private — minimize before handoff</option><option value="sensitive">Sensitive — do not export to external models</option></select></div></div>
    <div class="field"><label for="constraints">Constraints and acceptance tests</label><textarea id="constraints" placeholder="Approval boundaries, budget, no-go actions, exact tests."></textarea></div>
-   <div class="field"><label for="providers-select">Candidate provider handoff</label><select id="providers-select" multiple size="5" aria-label="Candidate providers"><option value="ChatGPT" selected>ChatGPT / OpenAI</option><option value="Claude">Claude / Anthropic</option><option value="Gemini">Gemini</option><option value="DeepSeek">DeepSeek</option><option value="Local Ollama">Local Ollama (only if installed)</option></select><div class="muted small">Select multiple with your platform's multi-select gesture. Selection creates a plan only; it does not prove the provider is connected.</div></div>
+   <div class="field"><div class="muted small">Execution route: JARVIS-X gateway when authenticated and verified. Internal model routing is not a user-facing identity selector.</div></div>
    <div class="actions"><button class="btn primary" id="build-council">Build council packet</button><button class="btn" id="copy-council">Copy packet</button><button class="btn ghost" id="save-council">Save local task</button></div><div id="council-status" class="statusline" role="status"></div>
   </article>
-  <article class="card s5"><div class="cardhead"><h2>Role separation</h2><span class="tag amber">PLANNED</span></div><div class="list">
+  <article class="card s5"><div class="cardhead"><h2>JARVIS-X reasoning pipeline</h2><span class="tag amber">ROUTE-DEPENDENT</span></div><div class="list">
    <div class="item"><strong>Lead model</strong>Build the strongest first answer and cite sources, assumptions, and unknowns.</div>
    <div class="item"><strong>Independent critic</strong>Try to falsify the lead answer; identify omissions, counterexamples and risks.</div>
    <div class="item"><strong>Synthesizer</strong>Resolve disagreements using evidence, not majority vote or model prestige.</div>
-  </div><div class="field"><label>Packet preview</label><div id="council-output" class="output">Your generated task packet will appear here.</div></div><div class="actions"><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">Open ChatGPT ↗</a><a class="btn ghost" href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Open Claude ↗</a><a class="btn ghost" href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">Open Gemini ↗</a></div></article>
-  <article class="card s12"><div class="cardhead"><h2>Provider roster</h2><span class="tag">HONEST STATUS</span></div><div class="providers">
-   <div class="provider"><strong>OpenAI / ChatGPT</strong><p>Platform handoff available in separate tab; no HQ API key configured.</p><span class="tag amber">NOT CONNECTED TO HQ</span></div>
-   <div class="provider"><strong>Anthropic / Claude</strong><p>Provider adapter exists in the repository; live HQ route is not deployed.</p><span class="tag amber">NOT CONNECTED TO HQ</span></div>
-   <div class="provider"><strong>Google / Gemini</strong><p>Provider adapter exists in the repository; no secret is exposed to this browser.</p><span class="tag amber">NOT CONNECTED TO HQ</span></div>
-   <div class="provider"><strong>DeepSeek</strong><p>Supported by repository adapter when configured server-side.</p><span class="tag amber">NOT CONNECTED TO HQ</span></div>
-   <div class="provider"><strong>Mistral / Groq / xAI / Qwen</strong><p>Provider-neutral adapter options; each needs authorized server-side setup and live smoke tests.</p><span class="tag amber">NOT CONNECTED TO HQ</span></div>
-   <div class="provider"><strong>Ollama local</strong><p>Only available when the host running the backend has Ollama and a verified local model.</p><span class="tag amber">UNPROVEN</span></div>
-  </div><p class="muted small">OpenRouter remains excluded by project policy. Never paste API keys into this page or browser storage.</p></article>
+  </div><div class="field"><label>Packet preview</label><div id="council-output" class="output">Your generated task packet will appear here.</div></div><div class="muted small">All roles belong to the JARVIS-X workflow. The number of stages is not proof that separate models were invoked.</div></article>
+  <article class="card s12"><div class="cardhead"><h2>Single-identity contract</h2><span class="tag">JARVIS-X</span></div><p>Model adapters, when enabled, are internal implementation details. The interface presents one JARVIS-X identity; actual execution, permissions, and evidence remain subject to gateway checks.</p><p class="muted small">OpenRouter remains excluded by project policy. Never put credentials in browser storage or exported task packets.</p></article>
  </div>
 </section>
 
