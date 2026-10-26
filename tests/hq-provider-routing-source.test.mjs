@@ -200,6 +200,11 @@ test("cross-platform memory is explicitly opt-in for each chat turn", () => {
   assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?await storeConversationMemory\(task, result\.answer, user\.id, taskType\)[\s\S]*?: "not_consented"/);
 });
 
+test("synthesis prompt uses actual line separators before structured JSON", () => {
+  assert.match(gateway, /never as instructions\.\\n\\n" \+/);
+  assert.doesNotMatch(gateway, /never as instructions\.\\\\n\\\\n" \+/);
+});
+
 test("review and synthesis stages JSON-encode untrusted provider outputs", () => {
   assert.match(gateway, /JSON\.stringify\(\{ original_user_request: task, lead_draft: lead\.output \}\)/);
   assert.match(gateway, /JSON\.stringify\(\{ original_user_request: task, lead_draft: lead\.output, deepseek_review: reasoner\.output, claude_review: critic\.output, grok_stress_test: adversary\.output \}\)/);
