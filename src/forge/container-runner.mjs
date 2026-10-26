@@ -81,7 +81,7 @@ export async function runIsolatedGguf({
   const tempDir = mkdtempSync(resolve(tempRoot, "jarvis-x-forge-"));
   const promptPath = resolve(tempDir, "prompt.txt");
   try {
-    writeFileSync(promptPath, prompt, { encoding: "utf8", mode: 0o400, flag: "wx" });
+    writeFileSync(promptPath, prompt, { encoding: "utf8", mode: 0o444, flag: "wx" });
     chmodSync(tempDir, 0o700);
     const args = [
       "run", "--pull=never", "--rm", "--network=none", "--read-only",
