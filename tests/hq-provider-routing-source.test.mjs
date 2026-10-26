@@ -138,8 +138,8 @@ test("global budget guard is required, persistent, and atomic before paid infere
 
 test("documented reservation candidate is conservative and remains inactive by default", () => {
   assert.match(budgetDocumentation, /193,024 input tokens per provider call/);
-  assert.match(budgetDocumentation, /Combined planning ceiling: approximately **\$3\.27**/);
-  assert.match(budgetDocumentation, /\*\*\$4\.00 per-request reservation candidate\*\*/);
+  assert.ok(budgetDocumentation.includes("Combined planning ceiling: approximately **$3.27**"));
+  assert.ok(budgetDocumentation.includes("**$4.00 per-request reservation candidate**"));
   assert.match(budgetDocumentation, /documentation only and has not been configured or activated/);
   assert.match(budgetMigration, /enabled boolean NOT NULL DEFAULT false/);
   assert.match(budgetMigration, /request_reservation_usd numeric\(12,6\) CHECK \(request_reservation_usd > 0\)/);
