@@ -153,8 +153,8 @@ test("invite-only OTP failure gives actionable guidance without enabling public 
 
 test("HQ CSP restricts network and embedding while preserving the current inline UI", () => {
   assert.match(hq, /Content-Security-Policy[^>]*default-src 'self'/);
-  assert.match(hq, /script-src 'self' 'unsafe-inline'/);
-  assert.match(hq, /style-src 'self' 'unsafe-inline'/);
+  assert.match(hq, /script-src 'self'/);
+  assert.match(hq, /style-src 'self'/);
   assert.match(hq, /connect-src 'self' https:\/\/xfewajxkqntflfntisut\.supabase\.co/);
   assert.match(hq, /object-src 'none'/);
   assert.match(hq, /base-uri 'self'/);
