@@ -269,3 +269,9 @@ test("cross-platform memory is opt-in at both the HQ control and gateway boundar
   assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
   assert.ok(gateway.includes(': "not_consented";'));
 });
+
+test("HQ image prompt builder uses real line breaks, not visible backslash-n text", async () => {
+  const source = await read("hq/hq.js");
+  assert.ok(source.includes("'Create an original image.\\nSUBJECT AND SCENE: '"), "prompt fields should use JavaScript newline escapes");
+  assert.ok(!source.includes("'Create an original image.\\\\nSUBJECT AND SCENE: '"), "prompt should not contain literal backslash-n sequences");
+});
