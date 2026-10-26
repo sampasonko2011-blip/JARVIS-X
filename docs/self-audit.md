@@ -158,3 +158,10 @@ See [Self-Audit Failure Recovery](self-audit-failure-recovery.md) for the operat
 Mandatory stop rule: if the same failure signature repeats twice without a meaningful intervention, or two comparable retests fail, stop repeating the action. Preserve the last known-good checkpoint, classify the failure, capture a redacted evidence packet, test a materially different hypothesis, and require an independent retest. For ambiguous side effects, mark OUTCOME_UNKNOWN and verify remote state before retrying. Never bypass authorization or widen permissions as a recovery tactic.
 
 Cross-platform recovery is a documented handoff contract, not a claim of shared memory or automatic access. Every receiving platform must revalidate current state and permissions; the handoff grants no new authority and contains no credentials.
+
+
+## Executable hard-gate evaluator
+
+`src/core/self-audit.ts` provides a deterministic candidate gate. It does not call models, mutate production, or self-promote code. A candidate is `VALIDATED / KEEP` only with a comparable baseline/retest, measurable improvement, sourced OBSERVED/VALIDATED evidence, passing required checks, independent challenge, passing regression tests, and restart-persistence evidence for memory/sync work.
+
+Hard regressions and failed required checks reject a candidate. Missing evidence remains UNPROVEN. External integrations, deployments, paid inference, and destructive changes require explicit approval. Duplicate failure signatures or two consecutive comparable retest failures trip a circuit breaker: stop retries, preserve the last known-good checkpoint, capture a redacted failure packet, and test a materially different hypothesis. A green build alone is not a performance improvement, and an unrun test is not a pass.
