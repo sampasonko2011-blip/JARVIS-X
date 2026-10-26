@@ -9,6 +9,7 @@ const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf
 const hqRuntime = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
 const hq = hqHtml + "\n" + hqRuntime;
 const budgetMigration = await readFile(new URL("../supabase/migrations/20261025225000_hq_global_budget_guard.sql", import.meta.url), "utf8");
+const budgetDocumentation = await readFile(new URL("../docs/global-budget-guard.md", import.meta.url), "utf8");
 const rateLimitMigration = await readFile(new URL("../supabase/migrations/20261026100000_hq_rate_limit_server_only_rpc.sql", import.meta.url), "utf8");
 const hqE2E = await readFile(new URL("../e2e/hq.spec.mjs", import.meta.url), "utf8");
 const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta.url), "utf8");
@@ -133,6 +134,16 @@ test("global budget guard is required, persistent, and atomic before paid infere
   assert.match(budgetMigration, /global_daily_budget_exhausted/);
   assert.match(budgetMigration, /REVOKE ALL ON FUNCTION public\.reserve_hq_global_budget/);
   assert.ok(budgetMigration.includes("GRANT EXECUTE ON FUNCTION public.reserve_hq_global_budget(uuid, uuid) TO service_role"));
+});
+
+test("documented reservation candidate is conservative and remains inactive by default", () => {
+  assert.match(budgetDocumentation, /193,024 input tokens per provider call/);
+  assert.match(budgetDocumentation, /Combined planning ceiling: approximately **\$3\.27**/);
+  assert.match(budgetDocumentation, /\*\*\$4\.00 per-request reservation candidate\*\*/);
+  assert.match(budgetDocumentation, /documentation only and has not been configured or activated/);
+  assert.match(budgetMigration, /enabled boolean NOT NULL DEFAULT false/);
+  assert.match(budgetMigration, /request_reservation_usd numeric\(12,6\) CHECK \(request_reservation_usd > 0\)/);
+  assert.match(budgetMigration, /request_reservation_usd,\s*NULL/);
 });
 
 test("allowed budget reservations require a valid positive amount within the daily ceiling", () => {
