@@ -31,6 +31,7 @@ Build JARVIS-X's own model-engineering layer. JARVIS-X remains one assistant ide
 
 - No model weights are downloaded by this code.
 - The Ollama smoke runner is not a hardened sandbox and does not isolate the Ollama daemon. Do not send secrets or treat its output as trusted code.
+- A separate Docker/llama.cpp runner requires an already-local digest-pinned image and a local `.gguf` file whose SHA-256 is verified. It uses `--network=none`, a read-only root filesystem and mounts, fixed memory/CPU/PID limits, drops Linux capabilities, and passes no host provider credentials. This is defense-in-depth, not a guarantee against container escapes; it has only been tested with mocked Docker responses in CI, not with a real model/image.
 - No model is executed locally or in a Composio sandbox.
 - No claim that Mistral, Llama, DeepSeek or any other model is legally redistributable under a particular artifact license without reviewing that exact repository/revision.
 - No fine-tuning, distillation, source-code patching or measured model improvement has occurred.
@@ -42,4 +43,4 @@ The Forge's metadata and gate tests run with Node.js and do not require inferenc
 
 ## Release gate
 
-Run `npm test` and `npm run build` in CI. Keep the Forge on a feature branch until the full test suite passes. The next execution milestone is a genuinely isolated container/VM runner with resource limits, artifact quarantine, offline execution and auditable benchmark artifacts; the current Ollama smoke runner is only a local inference adapter.
+Run `npm test` and `npm run build` in CI. Keep the Forge on a feature branch until the full test suite passes. The next milestone is a live manual run of the container runner with a reviewed digest-pinned image and a verified local GGUF artifact, followed by auditable baseline/candidate benchmark artifacts. The runner is not used by production HQ.
