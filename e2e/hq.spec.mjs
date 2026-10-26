@@ -350,6 +350,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-memory-consent").uncheck();
   await page.locator("#chat-compose").fill("Hello JARVIS-X");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
@@ -378,26 +379,34 @@ test("cross-platform memory is sent only when explicitly enabled for the message
   expect(request.memory_consent).toBe(true);
 });
 
-test("memory consent is consumed by one chat message and resets before the next", async ({ page }) => {
+test("cross-platform memory preference persists across messages and can be disabled", async ({ page }) => {
   await installGatewayFetchMock(page, {
     health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "five-model roster", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { output: "Reply", provider: "five-provider-council", providers_used: [], provider_calls: 5 } },
+    chat: { status: 200, body: { ok: true, output: "Reply", provider: "five-provider-council", providers_used: [], provider_calls: 5, memory: { read_status: "recalled", write_status: "stored" } } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  await expect(page.locator("#chat-memory-consent")).toBeChecked();
 
-  await page.locator("#chat-memory-consent").check();
-  await page.locator("#chat-compose").fill("First message with consent");
+  await page.locator("#chat-compose").fill("First message with memory enabled");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Reply");
-  await expect(page.locator("#chat-memory-consent")).not.toBeChecked();
+  expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(true);
+  await expect(page.locator("#chat-memory-consent")).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("true");
+
+  await page.locator("#chat-compose").fill("Second message with saved preference");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Second message with saved preference");
   expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(true);
 
-  await page.locator("#chat-compose").fill("Second message without consent");
+  await page.locator("#chat-memory-consent").uncheck();
+  expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("false");
+  await page.locator("#chat-compose").fill("Third message without memory");
   await page.locator("#chat-send").click();
-  await expect(page.locator("#chat-thread")).toContainText("Second message without consent");
+  await expect(page.locator("#chat-thread")).toContainText("Third message without memory");
   expect((await page.evaluate(() => window.__jxLastGatewayChatRequest)).memory_consent).toBe(false);
 });
 

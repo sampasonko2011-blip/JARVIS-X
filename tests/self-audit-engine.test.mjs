@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { runSelfAudit } from "../dist/core/self-audit.js";
+const good={objective:"Improve memory retrieval and persistence",changeClass:"internal-code",explicitApproval:true,comparableRetest:true,metrics:[{name:"precision",baseline:0.8,candidate:0.9,direction:"higher",minimumImprovement:0.05},{name:"latency",baseline:200,candidate:180,direction:"lower"}],checks:[{name:"unit",result:"pass"},{name:"schema",result:"pass"}],evidence:[{claim:"benchmark",status:"VALIDATED",source:"ci://run/123"}],independentChallenge:"pass",regressionTests:"pass",restartPersistence:"pass"};
+test("promotes only a sourced comparable improvement with all gates passing",()=>{const r=runSelfAudit(good);assert.equal(r.decision,"KEEP");assert.equal(r.status,"VALIDATED");assert.equal(r.improvementPercent.precision,12.5);assert.equal(r.improvementPercent.latency,10);});
+test("unknown evidence remains unproven, not zero or success",()=>{const r=runSelfAudit({...good,evidence:[],independentChallenge:"unknown"});assert.equal(r.decision,"UNPROVEN");assert.match(r.reasons.join(" "),/No sourced OBSERVED\/VALIDATED evidence/);});
+test("regression rejects candidate",()=>{const r=runSelfAudit({...good,metrics:[{name:"quality",baseline:0.9,candidate:0.7,direction:"higher"}]});assert.equal(r.decision,"REJECT");assert.equal(r.status,"REJECTED");});
+test("deployment requires explicit approval",()=>{const r=runSelfAudit({...good,changeClass:"deployment",explicitApproval:false});assert.equal(r.decision,"UNPROVEN");assert.match(r.reasons.join(" "),/Explicit approval/);});
+test("repeated failure trips circuit breaker and stops retries",()=>{const r=runSelfAudit({...good,recentFailureSignatures:["auth_timeout","auth_timeout"]});assert.equal(r.circuitBreaker,true);assert.equal(r.decision,"UNPROVEN");assert.match(r.nextAction,/STOP retries/);});
+test("memory objective requires persistence after restart",()=>{const r=runSelfAudit({...good,restartPersistence:"unknown"});assert.equal(r.decision,"UNPROVEN");assert.match(r.reasons.join(" "),/Persistence after restart unverified/);});

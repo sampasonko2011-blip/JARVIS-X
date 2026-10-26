@@ -70,3 +70,12 @@ No provider secret values were read, created or changed. No live paid provider c
 ## Release policy
 
 Keep PR #48 draft and unmerged until applicable external gates are closed and verified. Passing CI establishes repository-level behavior only. Do not describe provider inference, authenticated sync, executable plugins, image generation, or device installation as live without its own end-to-end evidence.
+
+
+## 2026-10-26 self-audit and memory preference branch
+
+- Branch `feature/hard-audit-memory-closure` adds a deterministic evidence-gated self-audit engine and regression tests.
+- The HQ browser stores the cross-platform memory preference in localStorage, does not reset it after each message, and shows the gateway-reported read/write status in the chat status line.
+- This preference change is branch code only. It has not been merged or deployed. The currently deployed Supabase gateway has not been changed by this work.
+- XMemo connector access from this ChatGPT session is observed. The HQ gateway's XMemo API secret and successful end-to-end memory read/write are not inferred from that connector status.
+- Required before marking memory VALIDATED: run CI; deploy only through an authorized reviewed cutover; check authenticated read/write status; then verify retrieval from a new session after restart. Do not claim automatic cross-device synchronization until that test passes.

@@ -263,7 +263,7 @@ test("cross-platform memory is opt-in at both the HQ control and gateway boundar
   const gateway = await read("supabase/functions/hq-gateway/index.ts");
   assert.ok(html.includes('id="chat-memory-consent"'));
   assert.ok(html.includes("const memoryConsent=document.querySelector('#chat-memory-consent').checked"));
-  assert.ok(html.includes("document.querySelector('#chat-memory-consent').checked=false"));
+  assert.ok(html.includes("MEMORY_PREFERENCE_KEY"));
   assert.ok(html.includes("memory_consent:memoryConsent"));
   assert.ok(gateway.includes("const memoryConsent = body.memory_consent === true;"));
   assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
