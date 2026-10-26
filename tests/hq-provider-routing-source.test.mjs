@@ -8,7 +8,15 @@ const hqRuntime = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8"
 const hq = hqHtml + "\n" + hqRuntime;
 const budgetMigration = await readFile(new URL("../supabase/migrations/20261025225000_hq_global_budget_guard.sql", import.meta.url), "utf8");
 const rateLimitMigration = await readFile(new URL("../supabase/migrations/20261026100000_hq_rate_limit_server_only_rpc.sql", import.meta.url), "utf8");
+const hqE2E = await readFile(new URL("../e2e/hq.spec.mjs", import.meta.url), "utf8");
+const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta.url), "utf8");
 
+test("browser gateway fixtures match the configured Anthropic model ID", () => {
+  for (const fixture of [hqE2E, gatewayE2E]) {
+    assert.ok(fixture.includes("claude-opus-5"), "fixture should use the configured Anthropic model ID");
+    assert.ok(!fixture.includes("claude-opus-5-5"), "fixture must not advertise a stale model ID");
+  }
+});
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
   assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
