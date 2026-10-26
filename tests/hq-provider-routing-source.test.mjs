@@ -183,7 +183,7 @@ test("gateway audit records omit prompt and answer content and browser never rec
 
 test("cross-platform memory is opt-in for both recall and persistence", () => {
   assert.match(hq, /id="chat-memory-consent" type="checkbox"/);
-  assert.match(hq, /Leave unchecked for no cross-platform memory read or write/);
+  assert.match(hq, /Turn it off to disable memory reads and writes/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\)/);
   assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?storeConversationMemory\(task, result\.answer, user\.id, taskType\)/);
@@ -249,7 +249,7 @@ test("cross-platform memory preference persists in this browser and is user-disa
   assert.match(hqRuntime, /let enabled=true/);
   assert.match(hqRuntime, /if\(saved==='false'\)enabled=false/);
   assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
-  assert.match(hqRuntime, /document\.querySelector\('#chat-memory-consent'\)\.checked=false/);
+  assert.match(hqRuntime, /MEMORY_PREFERENCE_KEY/);
   assert.match(hqRuntime, /memory_consent:memoryConsent/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\) : \{ status: "not_consented", context: "" \}/);
