@@ -350,6 +350,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-memory-consent").uncheck();
   await page.locator("#chat-compose").fill("Hello JARVIS-X");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
