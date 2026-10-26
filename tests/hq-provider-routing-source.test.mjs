@@ -74,6 +74,16 @@ test("global budget guard is required, persistent, and atomic before paid infere
   assert.ok(budgetMigration.includes("GRANT EXECUTE ON FUNCTION public.reserve_hq_global_budget(uuid, uuid) TO service_role"));
 });
 
+test("allowed budget reservations require a valid positive amount within the daily ceiling", () => {
+  assert.match(gateway, /const parseUsd = \(value: unknown\) =>/);
+  assert.match(gateway, /row\.reason !== "reserved"/);
+  assert.match(gateway, /reservedUsd === null \|\| reservedUsd <= 0/);
+  assert.match(gateway, /reservedTodayUsd === null \|\| reservedTodayUsd < reservedUsd/);
+  assert.match(gateway, /dailyLimitUsd === null \|\| dailyLimitUsd <= 0/);
+  assert.match(gateway, /reservedTodayUsd > dailyLimitUsd/);
+  assert.match(gateway, /throw new Error\("global_budget_reservation_invalid"\)/);
+});
+
 test("authenticated allowlist and per-user rate limits run before budget reservation", () => {
   assert.match(gateway, /if \(allowedEmails\.length === 0\)[\s\S]*gateway_access_policy_not_configured/);
   assert.match(gateway, /account_not_allowlisted/);
