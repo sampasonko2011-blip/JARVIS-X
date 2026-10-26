@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
-const hq = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+const hqRuntime = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+const hq = hqHtml + "\n" + hqRuntime;
 const budgetMigration = await readFile(new URL("../supabase/migrations/20261025225000_hq_global_budget_guard.sql", import.meta.url), "utf8");
 const rateLimitMigration = await readFile(new URL("../supabase/migrations/20261026100000_hq_rate_limit_server_only_rpc.sql", import.meta.url), "utf8");
 
