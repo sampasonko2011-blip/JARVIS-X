@@ -162,7 +162,9 @@ test("memory storage is user-scoped, time-bounded, and redacts common secrets", 
 });
 
 test("chat sends explicit memory consent and never reports a failed delivery as successful", () => {
-  assert.match(hq, /memory_consent:document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqRuntime, /document\.querySelector\('#chat-memory-consent'\)\.checked=false/);
+  assert.match(hqRuntime, /memory_consent:memoryConsent/);
   assert.match(hq, /userMessage\.delivery='DELIVERY UNKNOWN — CHECK GATEWAY BEFORE RETRYING'/);
   assert.match(hq, /Chat failed:[\s\S]*?Do not retry until delivery is checked/);
   assert.match(hq, /result\.ok!==true|health\.ok!==true/);
@@ -190,7 +192,9 @@ test("cross-platform memory is explicitly opt-in for each chat turn", () => {
   const consentMarkup = hqHtml.match(/<input id="chat-memory-consent"[^>]*>/)?.[0] ?? "";
   assert.ok(consentMarkup, "chat must expose an explicit memory-consent control");
   assert.doesNotMatch(consentMarkup, /\bchecked\b/, "memory consent must default to off");
-  assert.match(hqRuntime, /memory_consent:document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqRuntime, /document\.querySelector\('#chat-memory-consent'\)\.checked=false/);
+  assert.match(hqRuntime, /memory_consent:memoryConsent/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\) : \{ status: "not_consented", context: "" \}/);
   assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?await storeConversationMemory\(task, result\.answer, user\.id, taskType\)[\s\S]*?: "not_consented"/);
