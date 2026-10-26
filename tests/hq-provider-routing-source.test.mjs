@@ -88,6 +88,21 @@ test("gateway audit records omit prompt and answer content and browser never rec
   assert.match(gateway, /origin_not_allowed/);
 });
 
+test("cross-platform memory is opt-in for both recall and persistence", () => {
+  assert.match(hq, /id="chat-memory-consent" type="checkbox"/);
+  assert.match(hq, /Leave unchecked for no cross-platform memory read or write/);
+  assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
+  assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\)/);
+  assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?storeConversationMemory\(task, result\.answer, user\.id, taskType\)/);
+  assert.match(gateway, /"not_consented"/);
+  const consent = gateway.indexOf("const memoryConsent = body.memory_consent === true");
+  const recall = gateway.indexOf("const memory = memoryConsent ? await recallMemory(task, user.id)");
+  const execute = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  const write = gateway.indexOf("storeConversationMemory(task, result.answer, user.id, taskType)");
+  assert.ok(consent >= 0 && recall > consent, "memory recall must follow explicit per-request consent");
+  assert.ok(execute > recall && write > execute, "memory persistence must be in the consented post-execution path");
+});
+
 test("council fails closed if any required provider credential is missing", () => {
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
