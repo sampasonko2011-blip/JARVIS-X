@@ -1,6 +1,8 @@
--- Move the rate-limit RPC behind the trusted gateway.
--- Apply together with the gateway version that passes the verified user ID.
--- Do not apply to production until the gateway and migration are coordinated.
+-- Expand phase: add the service-role-only rate-limit RPC without breaking gateway v11.
+-- Apply this migration while v11 still uses consume_hq_rate_limit(text), then deploy
+-- the matching gateway revision and verify the new overload is being used.
+-- Revoke the legacy overload only in a separate cleanup phase after live verification.
+-- Do not put that destructive permission change into this compatibility migration.
 CREATE OR REPLACE FUNCTION public.consume_hq_rate_limit(
   p_user_id uuid,
   p_limit_key text
@@ -66,8 +68,8 @@ BEGIN
 END;
 $function$;
 
--- The old client-invoked overload must not remain executable by user roles.
-REVOKE ALL ON FUNCTION public.consume_hq_rate_limit(text) FROM PUBLIC, anon, authenticated;
+-- Compatibility phase: deliberately retain the legacy overload for the v11 -> v12 transition.
+-- Its removal is a separate release gate after the new gateway is verified in production.
 REVOKE ALL ON FUNCTION public.consume_hq_rate_limit(uuid, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.consume_hq_rate_limit(uuid, text) TO service_role;
 
