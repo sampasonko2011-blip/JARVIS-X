@@ -72,3 +72,12 @@ Only after production logs and deployed-source evidence prove the gateway exclus
 ## Explicit non-goals of this runbook
 
 This file does not authorize a production deployment, production migration, secret change, PR merge, paid API call, or budget activation. It defines a verified, reversible sequence and preserves the fail-closed behavior. Repository CI is not evidence that production gates have passed.
+
+
+## Explicit zero-provider mock mode (code-only; not deployed)
+
+- Mock requests must be authenticated, allowlisted and pass the existing database-backed minute/day rate limits.
+- Caller must explicitly send `mode: "mock"` and the server-side `JX_ENABLE_MOCK_MODE` flag must equal `true`. Disabled mock returns `403 mock_mode_disabled` and never falls through to live inference.
+- The deterministic module simulates five clearly labeled stages and declares `provider_calls: 0`. It has no network or environment access.
+- The mock path does not read provider keys, reserve paid-inference budget, contact providers, or access/write memory. The execution ledger records `provider: mock`; audit-write failure returns 503.
+- This is code and CI coverage only, not proof of deployed authenticated behavior. Do not enable the flag or deploy before reviewing auth, allowlist, rate-limit and budget prerequisites. Keep live inference disabled under the $0 constraint.
