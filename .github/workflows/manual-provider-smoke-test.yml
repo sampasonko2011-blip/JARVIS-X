@@ -1,10 +1,15 @@
-name: Manual provider smoke test
+name: Manual five-provider smoke test
 
 on:
   workflow_dispatch:
     inputs:
       confirm_paid_api_calls:
-        description: "I understand these live API requests may incur provider charges."
+        description: "I authorize one bounded live API request to each configured provider; charges may occur."
+        required: true
+        type: boolean
+        default: false
+      confirm_gemini_output_budget:
+        description: "I understand Gemini's smoke-test output ceiling is 32,768 tokens and may incur substantially higher charges."
         required: true
         type: boolean
         default: false
@@ -17,30 +22,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require explicit cost confirmation
-        if: ${{ inputs.confirm_paid_api_calls != true }}
+        if: ${{ inputs.confirm_paid_api_calls != true || inputs.confirm_gemini_output_budget != true }}
         run: |
-          echo "Not run: re-dispatch this workflow and confirm that live API calls may incur charges."
+          echo "Not run: confirm both paid API calls and the 32,768-token Gemini output ceiling before dispatching."
           exit 1
 
       - uses: actions/checkout@v4
-        if: ${{ inputs.confirm_paid_api_calls == true }}
+        if: ${{ inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
 
       - uses: actions/setup-node@v4
-        if: ${{ inputs.confirm_paid_api_calls == true }}
+        if: ${{ inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
         with:
           node-version: 22
 
-      - name: Run one bounded request per provider
-        if: ${{ inputs.confirm_paid_api_calls == true }}
+      - name: Run one bounded request per each of five providers
+        if: ${{ inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
         env:
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           set -o pipefail
           node scripts/provider-smoke.mjs | tee provider-smoke-report.json
 
       - name: Upload smoke-test report
-        if: ${{ always() && inputs.confirm_paid_api_calls == true }}
+        if: ${{ always() && inputs.confirm_paid_api_calls == true && inputs.confirm_gemini_output_budget == true }}
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-x-provider-smoke-report

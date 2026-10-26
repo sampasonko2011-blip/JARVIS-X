@@ -15,11 +15,11 @@ import {
 test("capability register preserves current live-state boundaries", () => {
   const byId = Object.fromEntries(CAPABILITIES.map((item) => [item.id, item.status]));
   assert.equal(byId["static-hq"], "IMPLEMENTED_LOCAL");
-  assert.equal(byId["multi-ai"], "NOT_CONNECTED");
+  assert.equal(byId["multi-ai"], "IMPLEMENTED_IN_PR_48_NOT_LIVE");
   assert.equal(byId["image-generation"], "NOT_CONNECTED");
-  assert.equal(byId["tool-broker"], "NOT_CONNECTED");
+  assert.equal(byId["tool-broker"], "GENERIC_BOUNDARY_ONLY");
   assert.equal(byId["cross-device-sync"], "NOT_CONNECTED");
-  assert.equal(byId["security-gateway-ui"], "IN_PR_39");
+  assert.equal(byId["security-gateway-ui"], "IN_PR_48");
   assert.equal(byId["gateway-backend"], "NOT_DEPLOYED");
 });
 

@@ -43,6 +43,7 @@ test("tool broker executes only after scope, approval, audit, output, and world-
     },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async (candidate, binding) => candidate.approved === true && candidate.requestId === binding.requestId && candidate.toolId === binding.toolId && candidate.action === binding.action && JSON.stringify([...candidate.scope].sort()) === JSON.stringify([...binding.scope].sort()),
     async audit(event) { events.push(event.event); },
   });
   assert.equal(result.status, "EXECUTED");
@@ -59,6 +60,7 @@ test("tool broker blocks ungranted scope, missing approval, or unavailable verif
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     audit: auditOk,
   };
   const scope = await executeAuthorizedTool({ ...base, request: request({ scope: ["record:999:delete"] }) });
@@ -78,6 +80,7 @@ test("tool broker rejects approvals bound to a different action or request", asy
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     audit: auditOk,
   };
   const wrongRequest = await executeAuthorizedTool({
@@ -105,6 +108,7 @@ test("tool broker never claims success when output or world state cannot be veri
     async executor() { return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     audit: auditOk,
   };
   const badOutput = await executeAuthorizedTool({ ...base, validateOutput: async () => false });
@@ -125,6 +129,7 @@ test("tool broker treats timeouts as unknown outcomes and explicitly forbids aut
     },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     audit: auditOk,
     timeoutMs: 100,
   });
@@ -132,6 +137,22 @@ test("tool broker treats timeouts as unknown outcomes and explicitly forbids aut
   assert.match(result.reason, /NO_RETRY/);
   assert.equal(calls, 1);
   assert.equal(JSON.stringify(result).includes("private connector details"), false);
+});
+
+test("tool broker rejects a forged approval when the trusted approval verifier denies it", async () => {
+  let calls = 0;
+  const result = await executeAuthorizedTool({
+    request: request(),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    verifyApproval: async () => false,
+    audit: auditOk,
+  });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.reason, "APPROVAL_VERIFICATION_FAILED");
+  assert.equal(calls, 0);
 });
 
 test("tool broker blocks before execution if the pre-execution audit fails", async () => {
@@ -142,6 +163,7 @@ test("tool broker blocks before execution if the pre-execution audit fails", asy
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
     async audit() { throw new Error("audit unavailable"); },
   });
   assert.equal(result.reason, "PRE_EXECUTION_AUDIT_FAILED");

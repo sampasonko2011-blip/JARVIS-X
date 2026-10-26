@@ -1,8 +1,24 @@
 # JARVIS-X HQ — implementation roadmap
 
-**Status:** proposed plan; not an implementation claim.  
-**Current artifact:** static local-first PWA shell in `hq/`.  
-**Current review lane:** pull request #32. Keep `main` unchanged until review/approval.
+**Status:** staged roadmap plus the current evidence snapshot below.  
+**Current artifact:** published static PWA on the default branch; PR #48 adds the five-provider direct-chat gateway path, memory-consent hardening, budget/rate-limit safeguards, and release-cache fixes.  
+**Current review lane:** pull request #48. Keep `main` unchanged until review/approval.
+
+## Current evidence snapshot — 2026-10-26
+
+The historical stage notes below describe the intended gates; use this snapshot for the current branch state.
+
+| Capability | Current status | Evidence / boundary |
+|---|---|---|
+| Static HQ PWA | PUBLISHED on the default branch | The public GitHub Pages shell is installable; feature-branch commits are not published until an authorized merge/deploy. |
+| Single JARVIS-X chat identity | IMPLEMENTED in PR #48 | Five specialist providers are internal stages, not a user-facing model picker. |
+| Hosted five-provider gateway | IMPLEMENTED in source; live execution UNPROVEN | Server-side secret names, verified Supabase user, email allowlist, timeouts, provider identity checks, rate limits and budget reservation path are present. Account access and deployment remain unverified. |
+| Cross-platform memory | CONSENTED code path implemented; live behavior UNPROVEN | Per-message consent gates recall and write; user-scoped XMemo paths and secret redaction exist. Live recall/write, durability and account isolation need staging tests. |
+| Tool broker | GENERIC EXECUTION BOUNDARY implemented; connector execution UNBUILT | `hq/tool-broker-runtime.mjs` requires an injected executor, exact scopes, approval for writes, pre/post audit, output validation and world-state verification. No real connector registry or connector executor is wired into the HQ interface. |
+| Composite runtime | IMPLEMENTED as a separate guarded runtime; deployment UNPROVEN | Provider adapters require trusted, fresh attestations. Do not confuse this runtime with the direct five-provider gateway. |
+| Budget and rate-limit migrations | PROPOSED in PR #48 | Do not apply the rate-limit migration before deploying the matching gateway signature. Budget guard defaults disabled and its reservation remains unset. |
+| Offline shell | Service-worker implementation and browser tests present | PR #48 bumps the shell cache to v5; latest branch CI must pass, and real iPad Safari behavior remains untested. |
+| Release / live provider verification | UNPROVEN for PR #48 | No live provider calls, production migration, secret changes, or deployment are included in this branch work. |
 
 ## Product invariants
 

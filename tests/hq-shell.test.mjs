@@ -9,16 +9,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 
 test("HQ shell includes the core command surfaces and transparent capability boundaries", async () => {
-  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css") + "\n" + await read("hq/forge.js") + "\n" + await read("package.json");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const marker of [
     'id="view-overview"',
     'id="view-workspace"',
     'id="view-memory"',
     'id="view-audit"',
     'id="view-settings"',
-    'id="view-forge"',
-    'forge-local-runner',
-    'UNPROVEN_MANUAL_BENCHMARKS',
     "localStorage",
     "export-data",
     "clear-data",
@@ -277,4 +274,35 @@ test("HQ image prompt builder uses real line breaks, not visible backslash-n tex
   const source = await read("hq/hq.js");
   assert.ok(source.includes("'Create an original image.\\nSUBJECT AND SCENE: '"), "prompt fields should use JavaScript newline escapes");
   assert.ok(!source.includes("'Create an original image.\\\\nSUBJECT AND SCENE: '"), "prompt should not contain literal backslash-n sequences");
+});
+
+
+test("HQ Model Forge is reachable, offline-shell aware, and exposes evidence-gated local evaluation", async () => {
+  const html = await read("hq/index.html");
+  const sw = await read("hq/sw.js");
+  const forge = await read("hq/forge.js");
+  const registry = await read("hq/model-registry.mjs");
+  assert.ok(html.includes('data-view="forge"'));
+  assert.ok(html.includes('id="view-forge"'));
+  assert.ok(html.includes('id="forge-register"'));
+  assert.ok(html.includes('id="forge-evaluate"'));
+  assert.ok(html.includes('type="module" src="./forge.js"'));
+  assert.ok(sw.includes("'./forge.js'"));
+  assert.ok(sw.includes("'./model-registry.mjs'"));
+  assert.ok(forge.includes("validateModelCandidate"));
+  assert.ok(forge.includes("assessPromotion"));
+  assert.ok(forge.includes("localStorage"));
+  assert.ok(registry.includes("networkAccess must be false"));
+  assert.ok(registry.includes("AWAITING_HUMAN_APPROVAL"));
+});
+
+
+test("HQ mainline keeps the isolated container runner command wired", async () => {
+  const packageJson = JSON.parse(await read("package.json"));
+  const runner = await read("scripts/forge-sandbox-runner.mjs");
+  const containerRunner = await read("src/forge/container-runner.mjs");
+  assert.equal(packageJson.scripts["forge:sandbox"], "node scripts/forge-sandbox-runner.mjs");
+  assert.ok(runner.includes("runIsolatedGguf"));
+  assert.ok(containerRunner.includes("--network=none"));
+  assert.ok(containerRunner.includes("--pull=never"));
 });

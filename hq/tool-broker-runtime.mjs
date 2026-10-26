@@ -2,8 +2,9 @@
  * JARVIS-X executable tool-broker boundary.
  *
  * This module invokes only an explicitly injected executor after exact scope
- * checks, approval gates, and durable audit callbacks are supplied by the
- * caller. It contains no connector registry, credentials, or network client.
+ * checks, trusted approval verification, and durable audit callbacks are supplied
+ * by server-side caller code. Request-supplied approval flags are not trusted.
+ * It contains no connector registry, credentials, or network client.
  */
 
 import { assessToolRequest } from "./capability-core.mjs";
@@ -38,6 +39,7 @@ export async function executeAuthorizedTool({
   executor,
   validateOutput,
   verifyWorldState,
+  verifyApproval,
   audit,
   timeoutMs = 30000,
 } = {}) {
@@ -53,7 +55,8 @@ export async function executeAuthorizedTool({
     return { status: "BLOCKED", reason: "INVALID_TIMEOUT", requestId };
   }
   if (typeof executor !== "function" || typeof validateOutput !== "function" ||
-      typeof verifyWorldState !== "function" || typeof audit !== "function") {
+      typeof verifyWorldState !== "function" || typeof verifyApproval !== "function" ||
+      typeof audit !== "function") {
     return { status: "BLOCKED", reason: "EXECUTOR_VERIFIERS_AND_AUDIT_REQUIRED", requestId };
   }
 
@@ -71,9 +74,25 @@ export async function executeAuthorizedTool({
   if (!policy.allowed) {
     return { status: "BLOCKED", reason: policy.reason, requestId, toolId: tool.id, risk: policy.risk };
   }
-  if (WRITE_ACTIONS.has(String(request.action).toLowerCase()) &&
-      !(request.approval?.approved === true && request.approval.approvalId)) {
-    return { status: "BLOCKED", reason: "EXPLICIT_APPROVAL_REQUIRED", requestId, toolId: tool.id };
+  if (WRITE_ACTIONS.has(String(request.action).toLowerCase())) {
+    if (!(request.approval?.approved === true && request.approval.approvalId)) {
+      return { status: "BLOCKED", reason: "EXPLICIT_APPROVAL_REQUIRED", requestId, toolId: tool.id };
+    }
+    // The approval object in the request is untrusted. The caller must verify it
+    // against a trusted server-side approval record/signature bound to this exact operation.
+    let approvalVerified = false;
+    try {
+      approvalVerified = await verifyApproval(request.approval, {
+        requestId,
+        toolId: tool.id,
+        action: policy.action,
+        scope: policy.scope,
+        idempotencyKey,
+      }) === true;
+    } catch { approvalVerified = false; }
+    if (!approvalVerified) {
+      return { status: "BLOCKED", reason: "APPROVAL_VERIFICATION_FAILED", requestId, toolId: tool.id };
+    }
   }
 
   try {
