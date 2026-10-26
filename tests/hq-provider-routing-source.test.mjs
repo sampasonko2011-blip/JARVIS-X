@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
 const hq = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 const budgetMigration = await readFile(new URL("../supabase/migrations/20261025225000_hq_global_budget_guard.sql", import.meta.url), "utf8");
+const rateLimitMigration = await readFile(new URL("../supabase/migrations/20261026100000_hq_rate_limit_server_only_rpc.sql", import.meta.url), "utf8");
 
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
@@ -69,8 +70,8 @@ test("authenticated allowlist and per-user rate limits run before budget reserva
   assert.match(gateway, /consumeRateLimit\(token, publishableKey, "minute"\)/);
   assert.match(gateway, /consumeRateLimit\(token, publishableKey, "day"\)/);
   assert.match(gateway, /rate_limit_service_unavailable/);
-  const minuteLimit = gateway.indexOf('consumeRateLimit(token, publishableKey, "minute")');
-  const dayLimit = gateway.indexOf('consumeRateLimit(token, publishableKey, "day")');
+  const minuteLimit = gateway.indexOf('consumeRateLimit(user.id, "minute")');
+  const dayLimit = gateway.indexOf('consumeRateLimit(user.id, "day")');
   const reservation = gateway.indexOf("budgetReservation = await reserveGlobalBudget(user.id)");
   const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
   assert.ok(minuteLimit >= 0 && dayLimit > minuteLimit, "both rate-limit windows must be checked");
@@ -155,6 +156,19 @@ test("paid inference cannot start before the global budget reservation succeeds"
   assert.ok(providerExecution > reserveCall, "provider execution must follow reservation");
   assert.ok(memoryRecall > reserveCall, "memory recall must follow reservation");
   assert.match(gateway, /global_budget_guard_unavailable/);
+});
+
+test("rate-limit RPC is server-only and receives only the verified user ID", () => {
+  assert.match(gateway, /async function consumeRateLimit\(userId: string, key: "minute" \| "day"\)/);
+  assert.match(gateway, /body: JSON\.stringify\(\{ p_user_id: userId, p_limit_key: key \}\)/);
+  assert.match(gateway, /consumeRateLimit\(user\.id, "minute"\)/);
+  assert.match(gateway, /consumeRateLimit\(user\.id, "day"\)/);
+  assert.doesNotMatch(gateway, /consumeRateLimit\(token, publishableKey/);
+  assert.match(rateLimitMigration, /SECURITY DEFINER/);
+  assert.match(rateLimitMigration, /SET search_path TO ''/);
+  assert.match(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(uuid, text\) FROM PUBLIC, anon, authenticated/);
+  assert.match(rateLimitMigration, /GRANT EXECUTE ON FUNCTION public\.consume_hq_rate_limit\(uuid, text\) TO service_role/);
+  assert.match(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(text\) FROM PUBLIC, anon, authenticated/);
 });
 
 test("budget migration keeps tables private and reservation RPC service-role-only", () => {
