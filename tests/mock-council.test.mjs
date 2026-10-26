@@ -22,7 +22,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
-test("gateway mock route is explicit, opt-in, and fails closed without provider fallback", async () => {
+test("gateway mock route is explicit, opt-in, and fails closed without provider fallback (source guard)", async () => {
   const sourcePath = resolve(dirname(fileURLToPath(import.meta.url)), "../supabase/functions/hq-gateway/index.ts");
   const source = await readFile(sourcePath, "utf8");
   const mockStart = source.indexOf('if (body.mode === "mock")');
