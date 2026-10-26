@@ -143,7 +143,7 @@ test("documented reservation candidate is conservative and remains inactive by d
   assert.match(budgetDocumentation, /documentation only and has not been configured or activated/);
   assert.match(budgetMigration, /enabled boolean NOT NULL DEFAULT false/);
   assert.match(budgetMigration, /request_reservation_usd numeric\(12,6\) CHECK \(request_reservation_usd > 0\)/);
-  assert.match(budgetMigration, /request_reservation_usd,\s*NULL/);
+  assert.match(budgetMigration, /VALUES \(true, false, false, 10\.000000, NULL\)/);
 });
 
 test("allowed budget reservations require a valid positive amount within the daily ceiling", () => {
