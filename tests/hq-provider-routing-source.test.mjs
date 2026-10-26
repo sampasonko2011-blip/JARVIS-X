@@ -115,6 +115,16 @@ test("memory storage is user-scoped, time-bounded, and redacts common secrets", 
   assert.match(gateway, /path: memoryPathForUser\(userId\)/);
 });
 
+test("chat sends explicit memory consent and never reports a failed delivery as successful", () => {
+  assert.match(hq, /memory_consent:document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hq, /userMessage\.delivery='DELIVERY UNKNOWN — CHECK GATEWAY BEFORE RETRYING'/);
+  assert.match(hq, /Chat failed:[\s\S]*?Do not retry until delivery is checked/);
+  assert.match(hq, /result\.ok!==true|health\.ok!==true/);
+  assert.match(hq, /health\.mode!=='five-provider-council'/);
+  assert.match(hq, /health\.budgetGuard\.enabled!==true/);
+  assert.match(hq, /health\.budgetGuard\.killSwitchEnabled===true/);
+});
+
 test("council fails closed if any required provider credential is missing", () => {
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
