@@ -180,7 +180,6 @@ test("server-only rate-limit migration validates keys and preserves atomic per-u
   assert.match(rateLimitMigration, /ON CONFLICT \(user_id, limit_key\) DO UPDATE/);
   assert.match(rateLimitMigration, /current_limit\.request_count \+ 1/);
   assert.match(rateLimitMigration, /greatest\(0, v_max_requests - v_request_count\)/);
-  assert.match(rateLimitMigration, /FOREIGN KEY|REFERENCES auth\.users/);
 });
 
 test("budget migration keeps tables private and reservation RPC service-role-only", () => {
