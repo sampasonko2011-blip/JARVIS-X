@@ -149,6 +149,15 @@ test("invite-only OTP failure gives actionable guidance without enabling public 
   assert.doesNotMatch(hq, /create_user:true/);
 });
 
+test("email callback stores returned tokens, cleans the URL, and verifies the gateway", () => {
+  assert.match(hq, /async function jxHandleAuthCallback\(\)/);
+  assert.match(hq, /const access=hash\.get\('access_token'\),refresh=hash\.get\('refresh_token'\)/);
+  assert.match(hq, /jxSaveSession\(\{access_token:access,refresh_token:refresh/);
+  assert.match(hq, /history\.replaceState\(null,'',location\.pathname\+location\.search\)/);
+  assert.match(hq, /jxHandleAuthCallback\(\)\.then\(\(\)=>\{if\(jxSession\)checkChatGateway\(\);\}\)/);
+  assert.match(hq, /if\(jxSession\)checkChatGateway\(\)/);
+});
+
 test("email sign-in remains existing-account-only and exposes OTP configuration failures", () => {
   assert.match(hq, /body:JSON\.stringify\(\{email,create_user:false\}\)/);
   assert.match(hq, /Sign-in request failed:[\s\S]*?No chat message was sent/);
