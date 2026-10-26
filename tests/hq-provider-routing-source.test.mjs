@@ -149,6 +149,11 @@ test("cross-platform memory is opt-in for both recall and persistence", () => {
   assert.ok(execute > recall && write > execute, "memory persistence must be in the consented post-execution path");
 });
 
+test("memory recall query redacts common secrets before sending user text to the memory provider", () => {
+  assert.match(gateway, /query: redactForMemory\(task\)\.slice\(0, MAX_TASK_CHARS\)/);
+  assert.match(gateway, /The recall service needs a relevance query, not raw credentials or contact details/);
+});
+
 test("memory storage is user-scoped, time-bounded, and redacts common secrets", () => {
   assert.match(gateway, /function memoryPathForUser\(userId: string\)[\s\S]*?users\/" \+ userId \+ "\/conversations/);
   assert.match(gateway, /signal: AbortSignal\.timeout\(6_000\)/);
