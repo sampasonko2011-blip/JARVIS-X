@@ -9,13 +9,16 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFile(path.join(root, relativePath), "utf8");
 
 test("HQ shell includes the core command surfaces and transparent capability boundaries", async () => {
-  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
+  const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css") + "\n" + await read("hq/forge.js") + "\n" + await read("package.json");
   for (const marker of [
     'id="view-overview"',
     'id="view-workspace"',
     'id="view-memory"',
     'id="view-audit"',
     'id="view-settings"',
+    'id="view-forge"',
+    'forge-local-runner',
+    'UNPROVEN_MANUAL_BENCHMARKS',
     "localStorage",
     "export-data",
     "clear-data",
@@ -110,7 +113,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v5'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v6'"));
   assert.ok(sw.includes("'./mission-control.js'"), "offline shell must cache Mission Control runtime JS");
   assert.ok(sw.includes("key.startsWith('jarvis-x-hq-shell-')"));
   assert.ok(sw.includes("if (request.method !== 'GET') return"));

@@ -471,3 +471,41 @@ test("strict CSP blocks injected inline scripts and style blocks", async ({ page
   expect(result.scriptRan).toBe(false);
   expect(result.styleDisplay).not.toBe("none");
 });
+
+
+test("Model Forge registers a pinned candidate and keeps manual benchmark claims unproven", async ({ page }) => {
+  await page.locator('[data-view="forge"]').click();
+  await expect(page.locator("#view-forge")).toBeVisible();
+  await page.locator("#forge-id").fill("e2e-open-model-candidate");
+  await page.locator("#forge-name").fill("E2E open-weight candidate");
+  await page.locator("#forge-source").fill("https://huggingface.co/example/model");
+  await page.locator("#forge-revision").fill("0123456789abcdef");
+  await page.locator("#forge-license").fill("Apache-2.0-reviewed");
+  await page.locator("#forge-digest").fill("a".repeat(64));
+  await page.locator("#forge-capabilities").fill("reasoning, summarization");
+  await page.locator("#forge-baseline-id").fill("baseline-e2e-001");
+  await page.locator("#forge-candidate-id").fill("candidate-e2e-001");
+  await page.locator("#forge-security-id").fill("security-review-e2e-001");
+  await page.locator("#forge-register").click();
+  await expect(page.locator("#forge-intake-status")).toContainText("registered locally");
+  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
+
+  await page.locator("#forge-benchmark-candidate").selectOption("e2e-open-model-candidate");
+  await page.locator("#forge-base-quality").fill("0.70");
+  await page.locator("#forge-new-quality").fill("0.74");
+  await page.locator("#forge-base-safety").fill("0.98");
+  await page.locator("#forge-new-safety").fill("0.98");
+  await page.locator("#forge-base-latency").fill("900");
+  await page.locator("#forge-new-latency").fill("850");
+  await page.locator("#forge-base-memory").fill("4000");
+  await page.locator("#forge-new-memory").fill("3800");
+  await page.locator("#forge-evaluate").click();
+  await expect(page.locator("#forge-benchmark-status")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
+  await expect(page.locator("#forge-run-list")).toContainText("manually entered measurements");
+
+  await page.reload();
+  await page.locator('[data-view="forge"]').click();
+  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
+  await expect(page.locator("#forge-run-list")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
+});
+

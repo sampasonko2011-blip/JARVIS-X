@@ -11,7 +11,9 @@
     "evaluate:orbit": "node scripts/orbit-evaluate.mjs",
     "scout:models": "node scripts/model-scout.mjs",
     "benchmark:live": "node scripts/run-live-benchmark.mjs",
-    "test:e2e": "playwright test --config=playwright.config.mjs"
+    "test:e2e": "playwright test --config=playwright.config.mjs",
+    "forge:local": "node scripts/forge-local-runner.mjs",
+    "forge:sandbox": "node scripts/forge-sandbox-runner.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
