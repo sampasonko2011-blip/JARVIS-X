@@ -12,6 +12,7 @@ test("HQ loads same-origin external CSS and JavaScript assets", () => {
   assert.match(html, /<link\s+rel="stylesheet"\s+href="\.\/hq\.css"/i);
   assert.match(html, /<script\s+src="\.\/hq\.js"><\/script>/i);
   assert.match(css, /:root\s*\{/);
+  assert.match(css, /\.csp-inline-10\{min-height:220px !important;max-height:48vh !important;overflow:auto !important\}/);
   assert.match(js, /\brender\(\);\s*$/);
 });
 
