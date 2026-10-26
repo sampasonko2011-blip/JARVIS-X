@@ -4,11 +4,12 @@ JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It c
 
 ## Release state
 
-- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — the default-branch shell is published on GitHub Pages. Integrated HQ + Model Forge source is merged to `main` in commit [`5f5129924edbf23b26f925b1e78a295c662aeb4e`](https://github.com/sampasonko2011-blip/JARVIS-X/commit/5f5129924edbf23b26f925b1e78a295c662aeb4e).
-- **Deployment:** [GitHub Pages deployment run #40349880575](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880575) succeeded for that main commit.
-- **Automated verification:** [CI run #40349880471](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40349880471) passed for that same main commit, including build, unit tests, Chromium browser E2E, syntax checks, and benchmarks.
-- **Live provider inference:** not yet independently verified end to end; use the published app's verified-email sign-in and chat gateway checks.
-- **Cross-platform memory:** explicit one-message consent gates XMemo recall/write in the PR branch; recall-query redaction is applied before sending user text to the memory provider. Live XMemo recall/write, durable persistence, and account isolation remain unverified.
+- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — PR #58 is merged to `main` at commit [`b24881664e8d3951ae1ec1455601e06be474460a`](https://github.com/sampasonko2011-blip/JARVIS-X/commit/b24881664e8d3951ae1ec1455601e06be474460a).
+- **Latest Pages deployment:** [run #40367978570](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40367978570) succeeded for that exact commit.
+- **Latest CI:** [run #40365038423](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40365038423) passed build, unit tests, Chromium browser E2E, syntax checks, and benchmarks.
+- **Production gateway state (observed):** Supabase `hq-gateway` is ACTIVE version 11 and reports `openai` / `gpt-4.1-mini`, `single-primary-multipass`. The repository's five-provider/XMemo gateway source is not the deployed function.
+- **Live provider inference:** not independently verified end to end. A successful Pages deployment is not proof of authenticated inference.
+- **Cross-platform memory:** XMemo consent/recall/write exists in repository source only; deployed v11 has no XMemo memory path. Live recall/write, durable persistence, and account isolation remain unverified.
 - **Security follow-up:** PR #48 documents the rate-limit RPC rollout order and current provider pricing. The global budget guard remains disabled by default and its reservation is unset; do not enable paid inference until input/output cost bounds and provider-side spend controls are verified.
 
 ## Install
@@ -23,7 +24,7 @@ The HQ includes a local Model Forge panel for registering model-candidate metada
 
 - The static frontend is hosted separately from server-side inference.
 - Provider credentials must remain in Supabase Edge Function secrets; never put them in browser code or commit them to Git.
-- The gateway validates an authenticated Supabase session and checks a server-side email allowlist before billable inference.
+- The deployed v11 gateway validates an authenticated Supabase session and checks a server-side email allowlist before billable inference. The newer five-provider source is not live; do not assume it has the same runtime state.
 - Cross-platform memory is opt-in per chat request. With consent off, the gateway must neither recall nor write cross-platform memory.
 - The local workspace's browser storage is not a secure backup and is not automatically synchronized.
 - The council/composite runtime and the direct-chat gateway are distinct paths. The generic tool-broker boundary exists, but real connector executors are not wired into the HQ UI. A three-pass call to one provider is not independent multi-model consensus.
