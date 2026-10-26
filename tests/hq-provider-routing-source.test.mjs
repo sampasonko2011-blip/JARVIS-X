@@ -103,6 +103,18 @@ test("cross-platform memory is opt-in for both recall and persistence", () => {
   assert.ok(execute > recall && write > execute, "memory persistence must be in the consented post-execution path");
 });
 
+test("memory storage is user-scoped, time-bounded, and redacts common secrets", () => {
+  assert.match(gateway, /function memoryPathForUser\(userId: string\)[\s\S]*?users\/" \+ userId \+ "\/conversations/);
+  assert.match(gateway, /signal: AbortSignal\.timeout\(6_000\)/);
+  assert.match(gateway, /function redactForMemory\(text: string\)/);
+  assert.match(gateway, /REDACTED_SECRET/);
+  assert.match(gateway, /REDACTED_EMAIL/);
+  assert.match(gateway, /REDACTED_CREDENTIAL/);
+  assert.match(gateway, /redactForMemory\(task\)/);
+  assert.match(gateway, /redactForMemory\(answer\)/);
+  assert.match(gateway, /path: memoryPathForUser\(userId\)/);
+});
+
 test("council fails closed if any required provider credential is missing", () => {
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
