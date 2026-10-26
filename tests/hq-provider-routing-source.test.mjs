@@ -141,6 +141,16 @@ test("council validates provider model identity and records provider receipts", 
   assert.match(gateway, /five-distinct-provider-stages/);
 });
 
+test("email sign-in remains existing-account-only and exposes OTP configuration failures", () => {
+  assert.match(hq, /body:JSON\.stringify\(\{email,create_user:false\}\)/);
+  assert.match(hq, /Sign-in request failed:[\s\S]*?No chat message was sent/);
+  assert.match(hq, /If the address belongs to an existing account, Supabase has sent a sign-in link/);
+  assert.match(gateway, /const allowedEmails = \(Deno\.env\.get\("JX_ALLOWED_EMAILS"\) \?\? ""\)/);
+  assert.match(gateway, /gateway_access_policy_not_configured/);
+  assert.match(gateway, /account_not_allowlisted/);
+  assert.doesNotMatch(hq, /SUPABASE_SERVICE_ROLE_KEY/);
+});
+
 test("HQ health check and chat UI require the five-provider council contract", () => {
   assert.match(hq, /health\.mode!=='five-provider-council'/);
   assert.match(hq, /health\.providersConfigured/);
