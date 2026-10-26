@@ -41,7 +41,7 @@ Run `npm test` and `npm run build`. CI additionally runs the Chromium browser E2
 
 ## Deployment workflow
 
-The workflow is `.github/workflows/deploy-pages.yml`. It is configured to deploy the `hq/` directory after changes reach `main` or on a manual dispatch. A feature-branch commit alone does not publish the site. Before the first release, verify the repository's Pages source and `github-pages` environment settings, then confirm the workflow output URL.
+The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to deploy the `hq/` directory after changes reach `main` or on a manual dispatch. A feature-branch commit alone does not publish the site. Before the first release, verify the repository's Pages source and `github-pages` environment settings, then confirm the workflow output URL.
 
 ## Troubleshooting
 
