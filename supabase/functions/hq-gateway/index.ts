@@ -163,17 +163,19 @@ async function reserveGlobalBudget(userId: string) {
   };
 }
 
-async function consumeRateLimit(token: string, publishableKey: string, key: "minute" | "day") {
+async function consumeRateLimit(userId: string, key: "minute" | "day") {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  if (!supabaseUrl) throw new Error("supabase_url_missing");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) throw new Error("rate_limit_service_credentials_missing");
+  // This RPC is service-role-only. The browser never receives this key.
   const result = await fetch(`${supabaseUrl}/rest/v1/rpc/consume_hq_rate_limit`, {
     method: "POST",
     headers: {
-      apikey: publishableKey,
-      Authorization: `Bearer ${token}`,
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ p_limit_key: key }),
+    body: JSON.stringify({ p_user_id: userId, p_limit_key: key }),
     signal: AbortSignal.timeout(8_000),
   });
   if (!result.ok) {
@@ -452,8 +454,8 @@ Deno.serve(async (req: Request) => {
   let minuteLimit;
   let dayLimit;
   try {
-    minuteLimit = await consumeRateLimit(token, publishableKey, "minute");
-    dayLimit = await consumeRateLimit(token, publishableKey, "day");
+    minuteLimit = await consumeRateLimit(user.id, "minute");
+    dayLimit = await consumeRateLimit(user.id, "day");
   } catch {
     return jsonResponse({ error: "rate_limit_service_unavailable" }, 503, origin);
   }
