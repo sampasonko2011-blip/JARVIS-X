@@ -59,7 +59,7 @@ async function smokeTest(config) {
       body = { model: config.model, max_tokens: 32, messages: [{ role: "user", content: "Compute 17*19. Return only the integer." }] };
     } else {
       headers["x-goog-api-key"] = apiKey;
-      body = { contents: [{ role: "user", parts: [{ text: "Compute 17*19. Return only the integer." }] }], generationConfig: { maxOutputTokens: 32, thinkingConfig: { thinkingLevel: "low" } } };
+      body = { contents: [{ role: "user", parts: [{ text: "Compute 17*19. Return only the integer." }] }], generationConfig: { maxOutputTokens: 32_768, thinkingConfig: { thinkingLevel: "medium" } } };
     }
     const response = await fetch(config.url, {
       method: "POST", headers, body: JSON.stringify(body), signal: controller.signal
