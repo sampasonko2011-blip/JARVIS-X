@@ -1,8 +1,8 @@
 # JARVIS-X HQ — implementation roadmap
 
-**Status:** staged roadmap plus the current evidence snapshot below.  
-**Current artifact:** published static PWA on the default branch; PR #48 adds the five-provider direct-chat gateway path, memory-consent hardening, budget/rate-limit safeguards, and release-cache fixes.  
-**Current review lane:** pull request #48. Keep `main` unchanged until review/approval.
+**Status:** staged roadmap plus a read-only audit of source, deployment, and backend state.  
+**Current artifact:** PR #58 is merged; GitHub Pages deployment run #40367978570 succeeded for commit `b24881664e8d3951ae1ec1455601e06be474460a`.  
+**Current release blocker:** production Supabase `hq-gateway` is still version 11 (`openai` / `gpt-4.1-mini`, three passes of the same model). The five-provider/XMemo implementation in repository source is not the deployed function. Do not describe multi-provider inference or cross-platform memory as live.
 
 ## Current evidence snapshot — 2026-10-26
 
@@ -10,15 +10,15 @@ The historical stage notes below describe the intended gates; use this snapshot 
 
 | Capability | Current status | Evidence / boundary |
 |---|---|---|
-| Static HQ PWA | PUBLISHED on the default branch | The public GitHub Pages shell is installable; feature-branch commits are not published until an authorized merge/deploy. |
-| Single JARVIS-X chat identity | IMPLEMENTED in PR #48 | Five specialist providers are internal stages, not a user-facing model picker. |
-| Hosted five-provider gateway | IMPLEMENTED in source; live execution UNPROVEN | Server-side secret names, verified Supabase user, email allowlist, timeouts, provider identity checks, rate limits and budget reservation path are present. Account access and deployment remain unverified. |
-| Cross-platform memory | CONSENTED code path implemented; live behavior UNPROVEN | Per-message consent gates recall and write; user-scoped XMemo paths and secret redaction exist. Live recall/write, durability and account isolation need staging tests. |
+| Static HQ PWA | PUBLISHED on the default branch | PR #58 commit `b24881664e8d3951ae1ec1455601e06be474460a`; Pages run #40367978570 completed successfully. This validates static deployment only. |
+| Single JARVIS-X chat identity | VALIDATED in static UI | PR #58 removed the user-facing provider roster. The live backend remains single-primary multipass; identity presentation is not model fusion. |
+| Hosted five-provider gateway | SOURCE ONLY / NOT DEPLOYED | Repository source `supabase/functions/hq-gateway/index.ts` contains five-provider orchestration. Live Supabase `hq-gateway` is ACTIVE version 11 with `openai` / `gpt-4.1-mini` and `single-primary-multipass`. The source/deployment mismatch is directly observed. |
+| Cross-platform memory | SOURCE ONLY / NOT DEPLOYED | Five-provider source contains per-message consent, user-scoped XMemo paths and redaction. Deployed v11 contains no XMemo recall/write path. The `hq_memory_items` table exists with RLS enabled but has 0 rows; live sync, durability and isolation are unvalidated. |
 | Tool broker | GENERIC EXECUTION BOUNDARY implemented; connector execution UNBUILT | `hq/tool-broker-runtime.mjs` requires an injected executor, exact scopes, approval for writes, pre/post audit, output validation and world-state verification. No real connector registry or connector executor is wired into the HQ interface. |
 | Composite runtime | IMPLEMENTED as a separate guarded runtime; deployment UNPROVEN | Provider adapters require trusted, fresh attestations. Do not confuse this runtime with the direct five-provider gateway. |
-| Budget and rate-limit migrations | PROPOSED in PR #48 | Do not apply the rate-limit migration before deploying the matching gateway signature. Budget guard defaults disabled and its reservation remains unset. |
+| Budget and rate-limit controls | DEPLOYMENT DRIFT / RELEASE BLOCKER | Live database has migrations only through `20261024185449`; repo also contains `20261026100000_hq_rate_limit_server_only_rpc.sql`, which is not applied. The live v11 gateway calls the older user-scoped RPC. Do not deploy the newer gateway or apply migrations out of sequence. Global spend controls and provider secrets must be verified before billable inference. |
 | Offline shell | Service-worker implementation and browser tests present | PR #48 bumps the shell cache to v5; latest branch CI must pass, and real iPad Safari behavior remains untested. |
-| Release / live provider verification | UNPROVEN for PR #48 | No live provider calls, production migration, secret changes, or deployment are included in this branch work. |
+| Release / live provider verification | UNPROVEN | Static Pages deployment is confirmed. No successful authenticated provider inference, XMemo write/read, or current five-provider gateway deployment is verified. Secret values were not read or changed. |
 
 ## Product invariants
 
