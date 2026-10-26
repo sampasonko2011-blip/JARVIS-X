@@ -12,7 +12,7 @@ Reservations are not released when a provider call fails. This conservative beha
 
 1. Verify the migration against a staging project and review Supabase security advisors.
 2. Confirm each configured model ID is available to the account and verify current input/output pricing and provider-side rate/budget controls.
-3. Calculate a conservative maximum cost for one full council request, including Gemini's 32,768-token output ceiling and all other provider calls.
+3. Calculate a conservative maximum cost for one full council request, including the shared 1,024-token output ceiling for all five provider calls, maximum input tokens, and current provider prices.
 4. In the Supabase SQL editor, set `request_reservation_usd` to that verified upper bound and set `enabled = true` on the singleton config row. Do not enable until steps 1–3 pass.
 5. Confirm the authenticated health response reports `budgetGuard.enabled = true`, `budgetGuard.killSwitchEnabled = false`, and `chatEnabled = true`.
 6. Test the reservation RPC with a staging user, including duplicate reservation IDs, concurrent reservations near the cap, an unavailable RPC, and an exhausted budget. Confirm denied calls produce zero provider calls.
