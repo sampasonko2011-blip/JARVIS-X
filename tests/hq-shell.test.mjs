@@ -238,9 +238,9 @@ test("HQ capability control plane has honest multi-AI and encrypted vault bounda
   for (const marker of [
     'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
     'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
-    'id="council-build"', 'id="council-lead"', 'id="council-challenge"',
-    'id="council-synthesis"', 'No AI was called', 'not live synchronization',
-    'never leaves this page', 'No provider was called'
+    'One assistant identity', 'JARVIS-X is the single assistant you interact with',
+    'not exposed as separate assistants', 'not live synchronization',
+    'never leaves this page'
   ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
 });
 
