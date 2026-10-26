@@ -15,7 +15,7 @@
 <aside class="side">
 <div class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>HQ / FIELD SYSTEM</small></div></div>
 <div class="csp-inline-1"><div class="navlabel">COMMAND</div><nav class="nav" aria-label="Main navigation">
-<button class="active" data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="chat"><span class="ico">◉</span>Chat</button><button data-view="console"><span class="ico">✳</span>AI console</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
+<button class="active" data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="chat"><span class="ico">◉</span>Chat</button><button data-view="console"><span class="ico">✳</span>AI console</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="forge"><span class="ico">⚒</span>Model Forge</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
 </nav><a class="hq-mission-link" href="./mission-control.html"><span class="ico">◈</span>Mission Control <span class="tag green">NEW</span></a></div>
 <div class="sidefoot"><span class="led"></span><strong class="csp-inline-2">LOCAL SHELL READY</strong><br>Private-by-default workspace<br>Direct chat requires verified Supabase sign-in.</div>
 </aside>
@@ -77,7 +77,61 @@
 <div class="card span12"><div class="cardhead"><h2>Last diagnostic report</h2><span class="tag">NO SECRETS</span></div><div id="gateway-report" class="gateway-report">No check performed. Select “Test gateway connection” to perform a real same-origin request.</div></div>
 </div>
 </section>
+<section id="view-forge" class="view hide">
+<h2 class="section-title">JARVIS-X Model Forge</h2>
+<p class="section-intro">Register open-weight model candidates, record comparable benchmark results, and gate promotion. This panel performs local metadata validation only: it does not download weights, execute models, fine-tune them, or contact providers.</p>
+<div class="grid">
+<div class="card span7">
+<div class="cardhead"><h2>Candidate intake</h2><span class="tag amber">MANUAL · LOCAL</span></div>
+<label class="fieldlabel" for="forge-id">Candidate ID</label><input id="forge-id" maxlength="100" placeholder="e.g. mistral-small-candidate">
+<label class="fieldlabel" for="forge-name">Display name</label><input id="forge-name" maxlength="160" placeholder="Model family and size">
+<label class="fieldlabel" for="forge-source">Official repository URL (HTTPS)</label><input id="forge-source" type="url" maxlength="500" placeholder="https://huggingface.co/organization/model">
+<label class="fieldlabel" for="forge-revision">Immutable revision / commit</label><input id="forge-revision" maxlength="120" placeholder="Commit SHA or immutable revision">
+<label class="fieldlabel" for="forge-license">Reviewed license identifier</label><input id="forge-license" maxlength="120" placeholder="Exact license after reviewing this model revision">
+<label class="fieldlabel" for="forge-digest">Artifact SHA-256</label><input id="forge-digest" maxlength="64" placeholder="64 hexadecimal characters">
+<label class="fieldlabel" for="forge-capabilities">Intended capabilities (comma-separated)</label><input id="forge-capabilities" maxlength="300" placeholder="reasoning, coding, summarization">
+<div class="forge-evidence-grid">
+<div><label class="fieldlabel" for="forge-baseline-id">Baseline benchmark ID</label><input id="forge-baseline-id" maxlength="100" placeholder="baseline-run-id"></div>
+<div><label class="fieldlabel" for="forge-candidate-id">Candidate benchmark ID</label><input id="forge-candidate-id" maxlength="100" placeholder="candidate-run-id"></div>
+<div class="forge-wide"><label class="fieldlabel" for="forge-security-id">Security review evidence ID</label><input id="forge-security-id" maxlength="100" placeholder="security-review-id"></div>
+</div>
+<div class="actions"><button class="btn primary" id="forge-register">Validate and register locally</button><button class="btn ghost" id="forge-clear">Clear form</button></div>
+<p id="forge-intake-status" class="footnote" role="status" aria-live="polite">Unknown or unreviewed licenses are ineligible. Candidate records stay in this browser only.</p>
+</div>
+<div class="card span5">
+<div class="cardhead"><h2>Isolation contract</h2><span class="tag">FAIL-CLOSED</span></div>
+<div class="rows">
+<div class="rowitem"><span class="statusdot"></span><div><strong>Network access</strong><p>Denied by default for future evaluation workers.</p></div><span class="tag green">DENY</span></div>
+<div class="rowitem"><span class="statusdot"></span><div><strong>Production secrets</strong><p>Never mounted into an untrusted model runner.</p></div><span class="tag green">DENY</span></div>
+<div class="rowitem"><span class="statusdot"></span><div><strong>Artifact pinning</strong><p>Require exact revision and SHA-256 digest.</p></div><span class="tag amber">REQUIRED</span></div>
+<div class="rowitem"><span class="statusdot"></span><div><strong>Promotion</strong><p>Benchmarks can recommend eligibility; only an explicit human approval can authorize staged release.</p></div><span class="tag amber">MANUAL</span></div>
+</div>
+<p class="footnote">An open-weight model is not automatically open-source, legally redistributable, safe, or free to run. Review the exact artifact's license and resource requirements.</p>
+</div>
+<div class="card span12">
+<div class="cardhead"><h2>Comparable benchmark gate</h2><span class="tag amber">MANUAL EVIDENCE ENTRY</span></div>
+<p class="footnote">Enter measurements from comparable runs using the same task set and runtime. This form does not run the model or fabricate measurements.</p>
+<label class="fieldlabel" for="forge-benchmark-candidate">Registered candidate</label><select id="forge-benchmark-candidate"><option value="">Register a candidate first</option></select>
+<div class="forge-benchmark-grid">
+<div><label class="fieldlabel" for="forge-base-quality">Baseline quality (0–1)</label><input id="forge-base-quality" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-new-quality">Candidate quality (0–1)</label><input id="forge-new-quality" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-base-safety">Baseline safety (0–1)</label><input id="forge-base-safety" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-new-safety">Candidate safety (0–1)</label><input id="forge-new-safety" type="number" min="0" max="1" step="0.001"></div>
+<div><label class="fieldlabel" for="forge-base-latency">Baseline latency (ms)</label><input id="forge-base-latency" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-new-latency">Candidate latency (ms)</label><input id="forge-new-latency" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-base-memory">Baseline memory (MB)</label><input id="forge-base-memory" type="number" min="0" step="1"></div>
+<div><label class="fieldlabel" for="forge-new-memory">Candidate memory (MB)</label><input id="forge-new-memory" type="number" min="0" step="1"></div>
+</div>
+<label class="checkrow forge-approval"><input id="forge-human-approval" type="checkbox"><span><strong>I reviewed the evidence and approve eligibility for a staged release</strong><small>This records a local approval only. It does not deploy or install a model.</small></span></label>
+<div class="actions"><button class="btn primary" id="forge-evaluate">Evaluate recorded measurements</button></div>
+<p id="forge-benchmark-status" class="footnote" role="status" aria-live="polite">No benchmark comparison recorded.</p>
+</div>
+<div class="card span6"><div class="cardhead"><h2>Registered candidates</h2><span class="tag">LOCAL REGISTRY</span></div><div id="forge-candidate-list" class="loglist"><p class="empty">No candidates registered.</p></div></div>
+<div class="card span6"><div class="cardhead"><h2>Evaluation history</h2><span class="tag">LOCAL EVIDENCE</span></div><div id="forge-run-list" class="loglist"><p class="empty">No evaluations recorded.</p></div></div>
+</div>
+</section>
 <footer class="footnote csp-inline-16">JARVIS-X HQ · FOUNDATION PROTOTYPE · Local UI and browser storage only. No account security, remote sync, model calls, or backend execution is implied.</footer>
 </main></div>
 <script src="./hq.js"></script>
+<script type="module" src="./forge.js"></script>
 </body></html>
