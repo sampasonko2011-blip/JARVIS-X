@@ -23,7 +23,8 @@ test("HQ contains no inline script, style block, or style attributes", () => {
   assert.doesNotMatch(js, /\sstyle\s*=\s*["']/i);
 });
 
-test("HQ retains the compatibility CSP until browser verification completes", () => {
-  assert.match(html, /Content-Security-Policy[^>]*script-src 'self' 'unsafe-inline'/);
-  assert.match(html, /Content-Security-Policy[^>]*style-src 'self' 'unsafe-inline'/);
+test("HQ enforces same-origin script and style sources without unsafe-inline", () => {
+  assert.match(html, /Content-Security-Policy[^>]*script-src 'self'(?! 'unsafe-inline')/);
+  assert.match(html, /Content-Security-Policy[^>]*style-src 'self'(?! 'unsafe-inline')/);
+  assert.doesNotMatch(html, /unsafe-inline/);
 });
