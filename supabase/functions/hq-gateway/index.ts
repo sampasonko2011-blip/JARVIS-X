@@ -1,3 +1,4 @@
+import { createMockCouncilResult } from "./mock-council.mjs";
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
   "http://localhost:3000",
@@ -484,6 +485,7 @@ Deno.serve(async (req: Request) => {
       chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
+      mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       auth: "verified-supabase-session",
       rateLimits: "database-backed",
     }, 200, origin);
@@ -522,6 +524,49 @@ Deno.serve(async (req: Request) => {
       reset_at: denied.reset_at,
       retry_after_seconds: retryAfter,
     }, 429, origin);
+  }
+
+  // Explicit mock mode is opt-in, authenticated, allowlisted, and rate-limited.
+  // It never reads provider keys, reserves budget, or calls external model APIs.
+  // A mock request is rejected (never downgraded to live inference) unless the server flag is enabled.
+  if (body.mode === "mock") {
+    if (Deno.env.get("JX_ENABLE_MOCK_MODE") !== "true") {
+      return jsonResponse({ error: "mock_mode_disabled", provider_calls: 0 }, 403, origin);
+    }
+    const mockResult = createMockCouncilResult();
+    try {
+      await writeRun(user.id, {
+        task_type: taskType, status: "succeeded", provider: "mock", model: "mock-v1",
+        input_summary: "Prompt omitted; sensitive content not persisted",
+        output_summary: "Deterministic mock result; no provider inference executed",
+        error_code: null,
+        metadata: {
+          execution_mode: "mock-five-stage-council",
+          mock: true,
+          provider_calls: 0,
+          simulated_stages: mockResult.providersUsed.map((stage) => stage.stage),
+          latency_ms: Date.now() - started,
+        },
+        completed_at: new Date().toISOString(),
+      });
+    } catch {
+      return jsonResponse({ error: "audit_logging_failed", execution_mode: "mock-five-stage-council" }, 503, origin);
+    }
+    return jsonResponse({
+      ok: true,
+      provider: "mock",
+      model: "mock-v1",
+      execution_mode: "mock-five-stage-council",
+      mock: true,
+      provider_calls: 0,
+      providers_used: mockResult.providersUsed,
+      output: mockResult.answer,
+      latency_ms: Date.now() - started,
+      memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" },
+    }, 200, origin);
+  }
+  if (body.mode !== undefined && body.mode !== "live") {
+    return jsonResponse({ error: "invalid_execution_mode" }, 400, origin);
   }
 
   const missingProviderSecrets = ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"].filter((name) => !Deno.env.get(name));
