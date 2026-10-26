@@ -55,6 +55,13 @@ test("provider identity validation rejects cross-model responses", () => {
   assert.ok(gateway.includes('normalized === "claude-opus-5"'));
   assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
 });
+test("provider stage inputs and outputs are bounded before downstream paid calls", () => {
+  assert.match(gateway, /const MAX_STAGE_INPUT_CHARS = 64_000/);
+  assert.match(gateway, /const MAX_PROVIDER_OUTPUT_CHARS = 12_000/);
+  assert.match(gateway, /if \(task\.length > MAX_STAGE_INPUT_CHARS\) throw new Error\("provider_input_too_large_" \+ provider\)/);
+  assert.match(gateway, /if \(output\.length > MAX_PROVIDER_OUTPUT_CHARS\) throw new Error\("provider_output_too_large_" \+ provider\)/);
+});
+
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
   assert.match(gateway, /AbortSignal\.timeout\(provider === "google" \? 45_000 : 25_000\)/);
   assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = 32_768/);
