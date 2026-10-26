@@ -358,7 +358,8 @@ test("rate-limit RPC is server-only and receives only the verified user ID", () 
   assert.match(rateLimitMigration, /SET search_path TO ''/);
   assert.match(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(uuid, text\) FROM PUBLIC, anon, authenticated/);
   assert.match(rateLimitMigration, /GRANT EXECUTE ON FUNCTION public\.consume_hq_rate_limit\(uuid, text\) TO service_role/);
-  assert.match(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(text\) FROM PUBLIC, anon, authenticated/);
+  assert.match(rateLimitMigration, /Compatibility phase: deliberately retain the legacy overload/);
+  assert.doesNotMatch(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(text\) FROM PUBLIC, anon, authenticated/);
 });
 
 test("server-only rate-limit migration validates keys and preserves atomic per-user windows", () => {
