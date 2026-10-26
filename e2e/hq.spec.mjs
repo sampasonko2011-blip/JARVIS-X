@@ -118,10 +118,14 @@ test("service worker installs and precaches the HQ shell", async ({ page }) => {
     return {
       cacheName: shellCacheName,
       shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
+      cssResponse: Boolean(await cache.match(new URL("./hq.css", location.href).href)),
+      jsResponse: Boolean(await cache.match(new URL("./hq.js", location.href).href)),
     };
   });
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
+  expect(cached.cssResponse).toBe(true);
+  expect(cached.jsResponse).toBe(true);
 });
 
 test("cached HQ page remains navigable when the browser goes offline", async ({ page, context }) => {
@@ -131,6 +135,8 @@ test("cached HQ page remains navigable when the browser goes offline", async ({ 
   try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("body")).toContainText("JARVIS-X HQ");
+    await page.locator('[data-view="memory"]').click();
+    await expect(page.locator("#view-memory")).toBeVisible();
   } finally {
     await context.setOffline(false);
   }
