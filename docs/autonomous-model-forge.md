@@ -21,6 +21,7 @@ Build JARVIS-X's own model-engineering layer. JARVIS-X remains one assistant ide
 ## Implemented in this change
 
 - A deterministic candidate schema with HTTPS and publisher-host checks.
+- A local Ollama smoke runner (`npm run forge:local -- --model qwen2.5:3b`) that accepts prompts on stdin, only runs models already installed locally, never downloads weights, bounds runtime and prompt size, passes a reduced environment, and labels outputs unverified.
 - Required reviewed license identifier, pinned artifact SHA-256, benchmark references and security-review reference.
 - Explicit denial of network and secrets access in the evaluation contract.
 - Deterministic benchmark comparison and a human approval gate.
@@ -29,6 +30,7 @@ Build JARVIS-X's own model-engineering layer. JARVIS-X remains one assistant ide
 ## Not implemented / not claimed
 
 - No model weights are downloaded by this code.
+- The Ollama smoke runner is not a hardened sandbox and does not isolate the Ollama daemon. Do not send secrets or treat its output as trusted code.
 - No model is executed locally or in a Composio sandbox.
 - No claim that Mistral, Llama, DeepSeek or any other model is legally redistributable under a particular artifact license without reviewing that exact repository/revision.
 - No fine-tuning, distillation, source-code patching or measured model improvement has occurred.
@@ -40,4 +42,4 @@ The Forge's metadata and gate tests run with Node.js and do not require inferenc
 
 ## Release gate
 
-Run `npm test` and `npm run build` in CI. Keep the Forge on a feature branch until the full test suite passes. Later execution work must add a separate runner contract and sandbox tests before downloading or loading artifacts.
+Run `npm test` and `npm run build` in CI. Keep the Forge on a feature branch until the full test suite passes. The next execution milestone is a genuinely isolated container/VM runner with resource limits, artifact quarantine, offline execution and auditable benchmark artifacts; the current Ollama smoke runner is only a local inference adapter.
