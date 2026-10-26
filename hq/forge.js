@@ -2,7 +2,7 @@ import {
   validateModelCandidate,
   compareBenchmarkRuns,
   assessPromotion
-} from "../src/forge/model-registry.mjs";
+} from "./model-registry.mjs";
 
 const STORE_KEY = "jarvis-x-hq-v0";
 const FORGE_KEY = "jarvis-x-model-forge-v1";
