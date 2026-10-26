@@ -1,7 +1,7 @@
 # Five-provider JARVIS-X model roster
 
-**Evidence date:** 2026-10-25  
-**State:** model identifiers verified against public provider documentation; account-level access and live execution remain unverified.
+**Evidence date:** 2026-10-26  
+**State:** model identifiers checked against public provider documentation; Anthropic ID corrected to `claude-opus-5`. Account-level access and live execution remain unverified.
 
 JARVIS-X presents one assistant identity. These providers are internal specialist stages, not a user-facing model picker.
 
@@ -9,7 +9,7 @@ JARVIS-X presents one assistant identity. These providers are internal specialis
 |---|---|---|---|---|
 | Lead solver | OpenAI | `gpt-6.1-sol` | Responses API `/v1/responses` | https://developers.openai.com/api/docs/models/gpt-6.1-sol |
 | Independent reasoning review | DeepSeek | `deepseek-flash` | Chat Completions `/chat/completions` | https://api-docs.deepseek.com/updates/ |
-| Critical review | Anthropic | `claude-opus-5-5` | Messages API `/v1/messages` | https://github.com/anthropics/skills/blob/main/skills/claude-api/shared/models.md |
+| Critical review | Anthropic | `claude-opus-5` | Messages API `/v1/messages` | https://github.com/anthropics/skills/blob/main/skills/claude-api/shared/models.md |
 | Adversarial stress test | xAI | `grok-4.7` | Responses API `/v1/responses` | https://docs.x.ai/developers/models |
 | Final synthesis | Google | `gemini-4-argon` | Gemini API `generateContent` | https://ai.google.dev/gemini-api/docs/models/gemini-4-argon |
 
