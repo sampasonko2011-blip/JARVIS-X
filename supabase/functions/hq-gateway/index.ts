@@ -8,7 +8,8 @@ const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
-const GEMINI_MAX_OUTPUT_TOKENS = MAX_OUTPUT_TOKENS;
+// Gemini 4 Argon counts thinking tokens against this limit; Google's guide recommends at least 32,768.
+const GEMINI_MAX_OUTPUT_TOKENS = 32_768;
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
   const headers = new Headers({
