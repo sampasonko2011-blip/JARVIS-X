@@ -4,12 +4,12 @@ JARVIS-X HQ is a progressive web app (PWA) served from the `hq/` directory. It c
 
 ## Release state
 
-- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — published on GitHub Pages; the live page was fetched after deployment.
+- **Public PWA:** [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) — the default-branch shell is published on GitHub Pages. PR #48 is still a draft and its changes are not live until an authorized merge/deploy.
 - **Deployment:** [GitHub Pages deployment run #11](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133392364) succeeded. The duplicate deployment workflow was removed to avoid competing publishes.
 - **Automated verification:** [CI run #762](https://github.com/sampasonko2011-blip/JARVIS-X/actions/runs/40133699384) passed on the current main revision, including unit tests, Chromium browser E2E, syntax checks, and benchmarks.
 - **Live provider inference:** not yet independently verified end to end; use the published app's verified-email sign-in and chat gateway checks.
-- **Cross-platform memory:** explicit per-message consent is wired through the frontend and gateway; live XMemo recall/write, durable persistence, and account isolation remain user-test gates.
-- **Security follow-up:** review the rate-limit RPC permissions and confirm provider-level/global spend limits and monitoring before treating the service as production-hardened.
+- **Cross-platform memory:** explicit one-message consent gates XMemo recall/write in the PR branch; recall-query redaction is applied before sending user text to the memory provider. Live XMemo recall/write, durable persistence, and account isolation remain unverified.
+- **Security follow-up:** PR #48 documents the rate-limit RPC rollout order and current provider pricing. The global budget guard remains disabled by default and its reservation is unset; do not enable paid inference until input/output cost bounds and provider-side spend controls are verified.
 
 ## Install
 
@@ -22,7 +22,7 @@ Open [JARVIS-X HQ](https://sampasonko2011-blip.github.io/JARVIS-X/) in Safari on
 - The gateway validates an authenticated Supabase session and checks a server-side email allowlist before billable inference.
 - Cross-platform memory is opt-in per chat request. With consent off, the gateway must neither recall nor write cross-platform memory.
 - The local workspace's browser storage is not a secure backup and is not automatically synchronized.
-- The council/composite runtime and the direct-chat gateway are distinct paths. A three-pass call to one provider is not independent multi-model consensus.
+- The council/composite runtime and the direct-chat gateway are distinct paths. The generic tool-broker boundary exists, but real connector executors are not wired into the HQ UI. A three-pass call to one provider is not independent multi-model consensus.
 - Automated tests use deterministic fixtures/mocks; they do not establish real provider availability, truthful model identity, durable memory, or production quality.
 
 ## Required release gates
