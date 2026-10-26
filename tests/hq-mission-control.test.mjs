@@ -39,3 +39,12 @@ test("sensitive council tasks are blocked from external handoff and workflow que
   assert.match(js, /Workflow saved locally\. No remote jobs were executed/);
   assert.match(js, /Local browser checks completed\. No malware scan or remote threat detection was performed/);
 });
+
+test("HQ chat health check matches the deployed JARVIS-X gateway contract", async () => {
+  const app = await readFile(new URL("../hq/app.js", import.meta.url), "utf8");
+  assert.match(app, /health\.mode!=='single-primary-multipass'/);
+  assert.match(app, /health\.auth!=='verified-supabase-session'/);
+  assert.match(app, /health\.providerConfigured!==true/);
+  assert.match(app, /health\.rateLimits!=='database-backed'/);
+  assert.doesNotMatch(app, /five-provider-council|providersConfigured|budgetGuard/);
+});
