@@ -382,18 +382,16 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
 });
 
-test("multi-AI council builds distinct lead, challenge, and synthesis prompts without pretending to call models", async ({ page }) => {
+test("HQ presents JARVIS-X as one composite assistant, not separate model roles", async ({ page }) => {
   await page.locator('[data-view="console"]').click();
-  await page.locator("#council-goal").fill("Design a reliable football training tracker with evidence gates.");
-  await page.locator("#council-context").fill("Only use the supplied test data.");
-  await page.locator("#council-build").click();
-  await expect(page.locator("#council-lead")).toHaveValue(/ROLE: LEAD SOLVER/);
-  await expect(page.locator("#council-challenge")).toHaveValue(/INDEPENDENT RED-TEAM CHALLENGER/);
-  await expect(page.locator("#council-challenge")).toHaveValue(/counterexamples/);
-  await expect(page.locator("#council-synthesis")).toHaveValue(/EVIDENCE-LED SYNTHESIZER/);
-  await expect(page.locator("#council-status")).toContainText("No AI was called");
+  await expect(page.locator("#view-console")).toContainText("One assistant identity");
+  await expect(page.locator("#view-console")).toContainText("JARVIS-X is the single assistant you interact with");
+  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one composite provider");
+  await expect(page.locator("#council-build")).toHaveCount(0);
+  await expect(page.locator("#council-lead")).toHaveCount(0);
+  await expect(page.locator("#council-challenge")).toHaveCount(0);
+  await expect(page.locator("#council-synthesis")).toHaveCount(0);
 });
-
 test("encrypted vault refuses a short passphrase and documents local-only transfer", async ({ page }) => {
   await page.locator('[data-view="sync"]').click();
   await page.locator("#vault-passphrase").fill("short");
