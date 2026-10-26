@@ -171,6 +171,18 @@ test("rate-limit RPC is server-only and receives only the verified user ID", () 
   assert.match(rateLimitMigration, /REVOKE ALL ON FUNCTION public\.consume_hq_rate_limit\(text\) FROM PUBLIC, anon, authenticated/);
 });
 
+test("server-only rate-limit migration validates keys and preserves atomic per-user windows", () => {
+  assert.match(rateLimitMigration, /IF p_user_id IS NULL THEN[\s\S]*?user_id_required/);
+  assert.match(rateLimitMigration, /IF p_limit_key = 'minute' THEN[\s\S]*?v_window_seconds := 60;[\s\S]*?v_max_requests := 10/);
+  assert.match(rateLimitMigration, /ELSIF p_limit_key = 'day' THEN[\s\S]*?v_window_seconds := 86400;[\s\S]*?v_max_requests := 100/);
+  assert.match(rateLimitMigration, /RAISE EXCEPTION 'invalid_limit_key'/);
+  assert.match(rateLimitMigration, /INSERT INTO public\.hq_rate_limits AS current_limit/);
+  assert.match(rateLimitMigration, /ON CONFLICT \(user_id, limit_key\) DO UPDATE/);
+  assert.match(rateLimitMigration, /current_limit\.request_count \+ 1/);
+  assert.match(rateLimitMigration, /greatest\(0, v_max_requests - v_request_count\)/);
+  assert.match(rateLimitMigration, /FOREIGN KEY|REFERENCES auth\.users/);
+});
+
 test("budget migration keeps tables private and reservation RPC service-role-only", () => {
   for (const table of ["hq_global_budget_config", "hq_global_budget_daily", "hq_global_budget_reservations"]) {
     assert.match(budgetMigration, new RegExp("ALTER TABLE public\\." + table + " ENABLE ROW LEVEL SECURITY", "i"));
