@@ -149,6 +149,11 @@ test("invite-only OTP failure gives actionable guidance without enabling public 
   assert.doesNotMatch(hq, /create_user:true/);
 });
 
+test("clearing the session removes the browser storage key instead of persisting the string null", () => {
+  assert.match(hq, /function jxSaveSession\(s\)[\s\S]*?if\(s\)sessionStorage\.setItem\('jx-auth-session',JSON\.stringify\(s\)\);else sessionStorage\.removeItem\('jx-auth-session'\)/);
+  assert.doesNotMatch(hq, /function jxSaveSession\(s\)\{jxSession=s;try\{sessionStorage\.setItem\('jx-auth-session',JSON\.stringify\(s\)\)/);
+});
+
 test("session refresh rotates tokens and clears expired sessions on failure", () => {
   assert.match(hq, /async function jxEnsureSession\(\)/);
   assert.match(hq, /auth\/v1\/token\?grant_type=refresh_token/);
