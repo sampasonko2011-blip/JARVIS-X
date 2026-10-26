@@ -8,6 +8,22 @@ The default daily ceiling is USD 10.00. This is a ceiling for **reserved worst-c
 
 Reservations are not released when a provider call fails. This conservative behavior prevents retries or concurrent requests from reusing budget that may already have been spent. It can under-utilize the daily allowance. Provider dashboards and provider-side hard spending limits remain necessary as independent safeguards.
 
+## Public pricing snapshot (reviewed 2026-10-26)
+
+Use the official provider pages below as a dated planning snapshot, not a durable price guarantee. Use the highest listed non-batch rate where a provider varies rates by time or mode. Gemini's introductory rate is scheduled to end on 2026-11-30, so the conservative output-only comparison below uses its published post-intro rate.
+
+| Stage | Model | Input USD / 1M tokens | Output USD / 1M tokens used for conservative estimate | Source |
+|---|---|---:|---:|---|
+| Lead | OpenAI `gpt-6.1-sol` | 2.00 | 10.00 | https://developers.openai.com/api/docs/models/gpt-6.1-sol |
+| Review | DeepSeek `deepseek-flash` | 0.30 peak (cache-miss) | 1.20 peak | https://api-docs.deepseek.com/quick_start/pricing/ |
+| Critic | Anthropic `claude-opus-5` | 5.00 | 25.00 | https://platform.claude.com/docs/en/models/opus-5/overview |
+| Stress test | xAI `grok-4.7` | 2.00 | 6.00 | https://docs.x.ai/developers/models |
+| Synthesis | Google `gemini-4-argon` | 4.00 after introductory pricing | 20.00 after introductory pricing | https://ai.google.dev/gemini-api/docs/models/gemini-4-argon |
+
+At the current configured output ceilings alone (1,024 tokens for each of the first four stages and 32,768 for Gemini), the output-only estimate using the rates above is approximately **USD 0.70 per full council request**. This is a lower-bound component of the reservation analysis, **not** a safe per-request reservation or total cost estimate: input costs for all five calls, tokenizer behavior, any provider-specific reasoning/billing treatment, and changes in provider prices must also be bounded. Do not activate the guard using USD 0.70 as the reservation.
+
+Before setting a reservation, derive and test a conservative maximum input-token bound for every constructed prompt, including escaped JSON, prior memory, three review outputs, and synthesis inputs. If a defensible maximum cannot be established, keep the budget guard disabled and paid inference blocked. Recheck the official price pages immediately before activation.
+
 ## Activation checklist
 
 1. Verify the migration against a staging project and review Supabase security advisors.
