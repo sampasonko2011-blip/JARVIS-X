@@ -155,6 +155,7 @@ test("session refresh rotates tokens and clears expired sessions on failure", ()
   assert.match(hq, /JSON\.stringify\(\{refresh_token:jxSession\.refresh_token\}\)/);
   assert.match(hq, /if\(!r\.ok\)\{jxSaveSession\(null\)/);
   assert.match(hq, /if\(!d\.access_token\|\|!d\.refresh_token\)\{jxSaveSession\(null\)/);
+  assert.match(hq, /function jxSaveSession\(s\)\{jxSession=s;try\{if\(s\)sessionStorage\.setItem\('jx-auth-session',JSON\.stringify\(s\)\);else sessionStorage\.removeItem\('jx-auth-session'\)/);
   assert.match(hq, /jxSaveSession\(\{access_token:d\.access_token,refresh_token:d\.refresh_token/);
   assert.match(hq, /sessionStorage\.removeItem\('jx-auth-session'\)/);
 });
