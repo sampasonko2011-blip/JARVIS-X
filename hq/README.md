@@ -24,7 +24,7 @@ Run `npm test` and `npm run build`. CI browser tests do not replace a real authe
 ## Verification status
 
 - **Live provider inference:** not yet independently verified end to end.
-- **Cross-platform memory:** not automatically synchronized; durable persistence and account isolation remain unverified.
+- **cross-platform memory:** not automatically synchronized; durable persistence and account isolation remain unverified.
 - Cross-platform memory is not yet live-connected to the HQ UI; local notes remain device-local.
 - Automated tests use deterministic fixtures/mocks and do not establish real provider availability, truthful model identity, or production quality.
 - Provider credentials must remain in Supabase Edge Function secrets; never put them in browser code or commit them to Git.
