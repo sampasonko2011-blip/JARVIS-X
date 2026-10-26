@@ -178,7 +178,7 @@ byId("forge-evaluate")?.addEventListener("click", () => {
   setStatus("forge-benchmark-status",
     "Recorded local comparison: " + run.status + ". " +
     (comparison.eligible
-      ? "The entered numbers pass the numeric gates, but remain unverified manual claims. " + (humanApproved ? "Your local approval was recorded; this does not promote, install, or deploy the model." : "No approval recorded. ") + "Actual benchmark artifacts and independent verification are still required before any release decision."
+      ? "The entered numbers pass the numeric gates, but remain unverified manual claims. " + (humanApproved ? "Your local approval was recorded; this does not promote, install, or deploy the model." : "No approval recorded. ") + "This is not proof of model improvement; actual benchmark artifacts and independent verification are still required before any release decision."
       : "The candidate failed one or more gates: " + failedGates.join(", ") + "."));
 });
 render();
