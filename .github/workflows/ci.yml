@@ -25,6 +25,8 @@ jobs:
         run: node --check scripts/orbit-evaluate.mjs
       - name: Validate Mission Control script syntax
         run: node --check hq/mission-control.js
+      - name: Validate provider smoke-test script syntax
+        run: node --check scripts/provider-smoke.mjs
       - name: Validate HQ service worker syntax
         run: node --check hq/sw.js
       - run: npm run benchmark
