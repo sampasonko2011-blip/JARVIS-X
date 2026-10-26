@@ -396,7 +396,8 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     ? normalized.startsWith("grok-4.7")
     : normalized.startsWith("gemini-4-argon");
   if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider);
-  return { output: output.trim(), provider, model: config.model };
+  // Preserve the actual provider-returned model ID in the execution receipt.
+  return { output: output.trim(), provider, model: returnedModel };
 }
 async function executeMultipass(task: string, memoryContext = "") {
   const providers = ["openai", "deepseek", "anthropic", "xai", "google"] as const;
