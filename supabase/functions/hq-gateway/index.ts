@@ -366,9 +366,17 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     headers = { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" };
     body = { model: config.model, system, messages: [{ role: "user", content: task }], max_tokens: MAX_OUTPUT_TOKENS };
   } else {
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + config.model + ":generateContent";
+    // Gemini 4 Argon is routed through the current Interactions API.
+    // store:false avoids retaining these HQ prompts in provider-side interaction history.
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions";
     headers = { "x-goog-api-key": apiKey, "Content-Type": "application/json" };
-    body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: task }] }], generationConfig: { maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS, thinkingConfig: { thinkingLevel: "medium" } } };
+    body = {
+      model: config.model,
+      input: task,
+      system_instruction: system,
+      generation_config: { max_output_tokens: GEMINI_MAX_OUTPUT_TOKENS, thinking_level: "medium" },
+      store: false,
+    };
   }
   const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(provider === "google" ? 45_000 : 25_000), body: JSON.stringify(body) });
   const data = await response.json().catch(() => ({}));
@@ -384,8 +392,18 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     output = Array.isArray(data?.content) ? data.content.filter((part: any) => part?.type === "text").map((part: any) => part.text).join("\n") : "";
     returnedModel = data?.model;
   } else {
-    output = Array.isArray(data?.candidates?.[0]?.content?.parts) ? data.candidates[0].content.parts.filter((part: any) => typeof part?.text === "string").map((part: any) => part.text).join("\n") : "";
-    returnedModel = data?.modelVersion;
+    if (data?.status && data.status !== "completed") {
+      throw new Error("provider_interaction_status_" + String(data.status).slice(0, 40) + "_google");
+    }
+    output = typeof data?.output_text === "string"
+      ? data.output_text
+      : Array.isArray(data?.steps)
+      ? data.steps.filter((step: any) => step?.type === "model_output")
+          .flatMap((step: any) => Array.isArray(step?.content) ? step.content : [])
+          .filter((part: any) => part?.type === "text" && typeof part?.text === "string")
+          .map((part: any) => part.text).join("\n")
+      : "";
+    returnedModel = data?.model;
   }
   if (typeof output !== "string" || !output.trim()) throw new Error("provider_empty_output_" + provider);
   if (output.length > MAX_PROVIDER_OUTPUT_CHARS) throw new Error("provider_output_too_large_" + provider);
