@@ -54,3 +54,16 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 - **Chat tests pass but live chat fails:** deterministic E2E tests mock the gateway. Test authenticated live inference and audit writes separately.
 - **Memory appears empty:** confirm consent was explicitly enabled for the relevant requests and verify the XMemo API contract and user-scoped data path.
 - **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
+
+## Gemini orchestration modes (PR #60)
+
+The authenticated chat UI offers two request modes:
+
+- `support` (default): constructive assistance with uncertainty made explicit.
+- `master_control`: a more proactive planning directive that asks the five-stage council to decompose and prioritize the objective.
+
+This is a **prompt-level routing preference**, not a privileged execution role. It does not grant autonomous tool access or bypass authentication, allowlisting, rate limits, budget controls, audit logging, or human approval. Gemini remains the existing final-synthesis provider in the five-provider council; this change does not copy Gemini's model weights or proprietary internals into JARVIS-X.
+
+The gateway accepts `JARVIS_X_GEMINI_API_KEY` as the preferred server-side Gemini credential and retains `GOOGLE_API_KEY` as a compatibility fallback. Configure secrets only in the Supabase Edge Function environment, never in the static PWA or a committed file.
+
+The new mode selector and request wiring are staged in PR #60. Source-level assertions are included, but CI, production secrets, live Gemini inference, and deployment remain unverified until independently checked.
