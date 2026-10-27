@@ -64,6 +64,6 @@ The authenticated chat UI offers two request modes:
 
 This is a **prompt-level routing preference**, not a privileged execution role. It does not grant autonomous tool access or bypass authentication, allowlisting, rate limits, budget controls, audit logging, or human approval. Gemini remains the existing final-synthesis provider in the five-provider council; this change does not copy Gemini's model weights or proprietary internals into JARVIS-X.
 
-The gateway accepts `JARVIS_X_GEMINI_API_KEY` as the preferred server-side Gemini credential and retains `GOOGLE_API_KEY` as a compatibility fallback. Configure secrets only in the Supabase Edge Function environment, never in the static PWA or a committed file.
+The gateway accepts `JARVIS_X_GEMINI_API_KEY` as the preferred server-side Gemini credential and retains `GOOGLE_API_KEY` as a compatibility fallback. Gemini 4 Argon uses Google's Interactions API with medium thinking and `store: false` for this stateless council call. Configure secrets only in the Supabase Edge Function environment, never in the static PWA or a committed file. Official API documentation: [Gemini 4 Argon](https://ai.google.dev/gemini-api/docs/models/gemini-4-argon) and [Interactions API](https://ai.google.dev/gemini-api/docs/interactions-overview).
 
 The new mode selector and request wiring are staged in PR #60. Source-level assertions are included, but CI, production secrets, live Gemini inference, and deployment remain unverified until independently checked.
