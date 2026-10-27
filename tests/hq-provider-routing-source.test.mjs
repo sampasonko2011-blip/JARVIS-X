@@ -95,7 +95,10 @@ test("provider stage inputs and outputs are bounded before downstream paid calls
 test("provider calls have bounded timeouts and preserve safe failure diagnostics", () => {
   assert.match(gateway, /AbortSignal\.timeout\(provider === "google" \? 45_000 : 25_000\)/);
   assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = 32_768/);
-  assert.match(gateway, /maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS, thinkingConfig: \{ thinkingLevel: "medium" \}/);
+  assert.ok(gateway.includes("https://generativelanguage.googleapis.com/v1beta/interactions"));
+  assert.match(gateway, /max_output_tokens: GEMINI_MAX_OUTPUT_TOKENS, thinking_level: "medium"/);
+  assert.match(gateway, /store: false/);
+  assert.match(gateway, /returnedModel = data\?\.model/);
   assert.match(gateway, /"provider_http_" \+ response\.status/);
   assert.match(gateway, /provider_model_identity_mismatch_/);
   assert.match(gateway, /provider_request_failed/);
