@@ -13,14 +13,14 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:3000",
 ]);
 const PRIMARY_PROVIDER = "multi-provider-council";
-const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:claude-opus-5 + xai:grok-4.7 + google:gemini-4-argon";
+const PRIMARY_MODEL = "openai:gpt-6.1-sol + deepseek:deepseek-flash + anthropic:claude-opus-5 + xai:grok-4.7 + google:gemini-3.6-flash";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 // Bound each downstream council stage and each provider reply before it is embedded in another paid prompt.
 const MAX_STAGE_INPUT_CHARS = 64_000;
 const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
-// Gemini 4 Argon counts thinking tokens against this limit; Google's guide recommends at least 32,768.
+// Gemini 3.6 Flash counts thinking tokens against this limit; Google's guide recommends at least 32,768.
 const GEMINI_MAX_OUTPUT_TOKENS = 32_768;
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
@@ -330,7 +330,7 @@ const PROVIDER_CONFIG = Object.freeze({
   deepseek: { model: "deepseek-flash", secret: "DEEPSEEK_API_KEY" },
   anthropic: { model: "claude-opus-5", secret: "ANTHROPIC_API_KEY" },
   xai: { model: "grok-4.7", secret: "XAI_API_KEY" },
-  google: { model: "gemini-4-argon", secret: "GOOGLE_API_KEY" },
+  google: { model: "gemini-3.6-flash", secret: "GOOGLE_API_KEY" },
   mistral: { model: "mistral-large-latest", secret: "MISTRAL_API_KEY" },
   llama: { model: Deno.env.get("LLAMA_MODEL") || "llama3.3:70b", secret: "LLAMA_API_KEY" },
 });
@@ -385,7 +385,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     headers = { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" };
     body = { model: config.model, system, messages: [{ role: "user", content: task }], max_tokens: MAX_OUTPUT_TOKENS };
   } else {
-    // Gemini 4 Argon is routed through the current Interactions API.
+    // Gemini 3.6 Flash is routed through the current Interactions API.
     // store:false avoids retaining these HQ prompts in provider-side interaction history.
     endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions";
     headers = { "x-goog-api-key": apiKey, "Content-Type": "application/json" };
@@ -442,7 +442,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     ? normalized === "mistral-large-latest" || normalized.startsWith("mistral-large-")
     : provider === "llama"
     ? normalized === config.model.toLowerCase()
-    : normalized.startsWith("gemini-4-argon");
+    : normalized.startsWith("gemini-3.6-flash");
   if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider);
   // Preserve the actual provider-returned model ID in the execution receipt.
   return { output: output.trim(), provider, model: returnedModel };
