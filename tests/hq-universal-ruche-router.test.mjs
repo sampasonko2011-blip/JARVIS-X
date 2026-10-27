@@ -24,7 +24,7 @@ test("Mistral and Llama routes require server-side credentials and Llama endpoin
   assert.match(router, /MISTRAL_API_KEY/);
   assert.match(router, /LLAMA_API_KEY/);
   assert.match(router, /LLAMA_BASE_URL/);
-  assert.match(gateway, /https:\\/\\/api\.mistral\.ai/);
+  assert.match(gateway, /https:\/\/api\.mistral\.ai/);
   assert.match(gateway, /provider_endpoint_not_configured_/);
   assert.match(gateway, /selected_provider: rucheRoute.selection/);
 });
@@ -32,4 +32,15 @@ test("Mistral and Llama routes require server-side credentials and Llama endpoin
 test("selected provider is audited as a direct call, never misreported as multi-provider consensus", () => {
   assert.match(gateway, /single-provider-no-cross-review/);
   assert.match(gateway, /execution_mode: rucheRoute.provider \? "single-provider" : "five-provider-council"/);
+});
+
+test("HQ sends the selected provider and mode to the versioned gateway", async () => {
+  const hqJs = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+  const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+  assert.match(hqJs, /functions\/v1\/hq-gateway-v12/);
+  assert.match(hqJs, /ia_selectionnee:selectedProvider/);
+  assert.match(hqJs, /orchestration_mode:orchestrationMode/);
+  assert.match(hqJs, /healthUrl=JX_GATEWAY\+'\/health\?provider='/);
+  assert.match(hqHtml, /id="chat-ai-selection"/);
+  assert.match(hqHtml, /id="chat-orchestration-mode"/);
 });
