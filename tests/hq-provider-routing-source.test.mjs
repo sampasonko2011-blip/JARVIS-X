@@ -337,7 +337,8 @@ test("email sign-in remains existing-account-only and exposes OTP configuration 
 });
 
 test("HQ health check and chat UI require the selected Ruche route contract", () => {
-  assert.match(hq, /health\.mode!=='five-provider-council'/);
+  assert.match(hq, /health\.mode!==expectedMode/);
+  assert.match(hq, /health\.selectedProvider!==selectedProvider/);
   assert.match(hq, /health\.providersConfigured/);
   assert.match(hq, /result\.providers_used/);
   assert.match(hq, /Configured Ruche route/);
