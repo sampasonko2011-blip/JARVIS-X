@@ -1,5 +1,6 @@
 // JARVIS-X HQ gateway v12 deployment candidate.
 // Versioned copy of the reviewed five-provider council gateway.
+// v12 source candidate; no production deployment or traffic switch is implied.
 // This is source control only; do not route production traffic here until the
 // database migrations, server secrets, allowlist, budget guard and authenticated
 // live inference have been verified. The gateway intentionally fails closed if guards are absent.
