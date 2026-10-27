@@ -21,7 +21,7 @@ test("v12 preserves authentication, allowlisting, rate limits, and fail-closed b
   assert.match(gateway, /account_not_allowlisted/);
   assert.match(gateway, /consume_hq_rate_limit/);
   assert.match(gateway, /reserve_hq_global_budget/);
-  assert.match(gateway, /budget_guard_not_configured/);
+  assert.match(gateway, /global_budget_guard_unavailable/);
   assert.match(gateway, /global_kill_switch_enabled/);
 });
 
