@@ -23,7 +23,7 @@ test("router supports French aliases while keeping canonical internal modes", ()
 test("Mistral and Llama routes require server-side credentials and Llama endpoint configuration", () => {
   assert.match(router, /MISTRAL_API_KEY/);
   assert.match(router, /LLAMA_API_KEY/);
-  assert.match(router, /LLAMA_BASE_URL/);
+  assert.match(gateway, /LLAMA_BASE_URL/);
   assert.match(gateway, /https:\/\/api\.mistral\.ai/);
   assert.match(gateway, /provider_endpoint_not_configured_/);
   assert.match(gateway, /selected_provider: rucheRoute.selection/);
