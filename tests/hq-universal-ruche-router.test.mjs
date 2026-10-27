@@ -17,7 +17,7 @@ test("router supports French aliases while keeping canonical internal modes", ()
   assert.match(router, /epaulement/);
   assert.match(router, /domination/);
   assert.match(router, /master_control/);
-  assert.match(gateway, /invalid_ia_selection/);
+  assert.match(router, /invalid_ia_selection/);
 });
 
 test("Mistral and Llama routes require server-side credentials and Llama endpoint configuration", () => {
