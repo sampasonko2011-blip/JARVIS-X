@@ -13,7 +13,7 @@ async function installGatewayFetchMock(page, config) {
     window.fetch = (input, init = {}) => {
       const url = typeof input === "string" ? input : input.url;
       if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
-      const fixture = url.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
+      const fixture = new URL(url, window.location.href).pathname.endsWith("/health") ? window.__jxGatewayHealth : window.__jxGatewayChat;
       if (fixture === "timeout") return Promise.reject(new DOMException("Aborted", "AbortError"));
       return Promise.resolve(new Response(JSON.stringify(fixture?.body ?? {}), {
         status: fixture?.status ?? 200,
@@ -108,7 +108,7 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 });
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", provider: "five-provider-council", model: "gpt-6.1-sol + deepseek-flash + claude-opus-5 + grok-4.7 + gemini-4-argon", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", selectedProvider: "composite", provider: "five-provider-council", model: "gpt-6.1-sol + deepseek-flash + claude-opus-5 + grok-4.7 + gemini-4-argon", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
