@@ -165,7 +165,7 @@ test("authenticated allowlist and per-user rate limits run before budget reserva
   const minuteLimit = gateway.indexOf('consumeRateLimit(user.id, "minute")');
   const dayLimit = gateway.indexOf('consumeRateLimit(user.id, "day")');
   const reservation = gateway.indexOf("budgetReservation = await reserveGlobalBudget(user.id)");
-  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context, orchestrationMode)");
   assert.ok(minuteLimit >= 0 && dayLimit > minuteLimit, "both rate-limit windows must be checked");
   assert.ok(reservation > dayLimit, "rate limits must precede paid-budget reservation");
   assert.ok(providerExecution > reservation, "paid provider execution must follow budget reservation");
@@ -190,7 +190,7 @@ test("cross-platform memory is opt-in for both recall and persistence", () => {
   assert.match(gateway, /"not_consented"/);
   const consent = gateway.indexOf("const memoryConsent = body.memory_consent === true");
   const recall = gateway.indexOf("const memory = memoryConsent ? await recallMemory(task, user.id)");
-  const execute = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  const execute = gateway.indexOf("const result = await executeMultipass(task, memory.context, orchestrationMode)");
   const write = gateway.indexOf("storeConversationMemory(task, result.answer, user.id, taskType)");
   assert.ok(consent >= 0 && recall > consent, "memory recall must follow explicit per-request consent");
   assert.ok(execute > recall && write > execute, "memory persistence must be in the consented post-execution path");
@@ -344,7 +344,7 @@ test("HQ health check and chat UI require the five-provider council contract", (
 
 test("paid inference cannot start before the global budget reservation succeeds", () => {
   const reserveCall = gateway.indexOf("budgetReservation = await reserveGlobalBudget(user.id)");
-  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context)");
+  const providerExecution = gateway.indexOf("const result = await executeMultipass(task, memory.context, orchestrationMode)");
   const memoryRecall = gateway.indexOf("recallMemory(task, user.id)");
   assert.ok(reserveCall >= 0, "missing global budget reservation call");
   assert.ok(providerExecution > reserveCall, "provider execution must follow reservation");
