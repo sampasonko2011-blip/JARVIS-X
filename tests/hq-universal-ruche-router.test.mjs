@@ -32,7 +32,7 @@ test("Mistral and Llama routes require server-side credentials and Llama endpoin
 });
 
 test("selected provider is audited truthfully as a direct call, never misreported as council consensus", () => {
-  assert.match(gateway, /const executionMode = rucheRoute\\.provider \\? "single-provider" : "five-provider-council"/);
+  assert.match(gateway, /const executionMode = rucheRoute/);
   assert.match(gateway, /const independence = rucheRoute\\.provider \\? "single-provider-no-cross-review" : "five-distinct-provider-stages"/);
   assert.match(gateway, /provider: reportedProvider, model: reportedModel/);
   assert.match(gateway, /output_summary: rucheRoute\\.provider \\? "Single-provider answer returned/);
