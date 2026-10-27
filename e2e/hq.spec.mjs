@@ -7,7 +7,7 @@ async function installGatewayFetchMock(page, config) {
     window.fetch = (input, init = {}) => {
       const url = typeof input === "string" ? input : input.url;
       if (!url.includes("/functions/v1/hq-gateway")) return nativeFetch(input, init);
-      const isHealthCheck = url.endsWith("/health");
+      const isHealthCheck = new URL(url, window.location.href).pathname.endsWith("/health");
       if (!isHealthCheck && typeof init.body === "string") {
         try { window.__jxLastGatewayChatRequest = JSON.parse(init.body); }
         catch { window.__jxLastGatewayChatRequest = { invalidJson: true }; }
