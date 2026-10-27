@@ -11,7 +11,7 @@ test("universal router exposes the composite council and six selectable AI provi
   }
   assert.match(gateway, /resolveRucheRoute/);
   assert.match(gateway, /executeSingleProvider/);
-  assert.match(gateway, /model: "gemini-3\\.6-flash"/, "Gemini model ID must match current official API docs");
+  assert.match(gateway, /model: "gemini-3[.]6-flash"/, "Gemini model ID must match current official API docs");
   assert.doesNotMatch(gateway, /gemini-4-argon/, "Do not ship an unverified Gemini model ID");
 });
 
