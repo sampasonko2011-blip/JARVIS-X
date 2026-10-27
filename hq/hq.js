@@ -59,7 +59,7 @@ document.querySelector('#gateway-reset')?.addEventListener('click',gatewayReset)
 document.querySelector('#gateway-copy')?.addEventListener('click',async()=>{if(!gatewayLastReport)return;const textValue=JSON.stringify(gatewayLastReport,null,2);try{await navigator.clipboard.writeText(textValue);document.querySelector('#gateway-result').textContent='Safe diagnostic report copied. It contains no prompt text or credentials.';}catch{const reportEl=document.querySelector('#gateway-report');const range=document.createRange();range.selectNodeContents(reportEl);const selection=getSelection();selection.removeAllRanges();selection.addRange(range);document.querySelector('#gateway-result').textContent='Clipboard access unavailable. The safe diagnostic report is selected for manual copy.';}});
 const JX_SUPABASE_URL='https://xfewajxkqntflfntisut.supabase.co';
 const JX_SUPABASE_KEY='sb_publishable_QBs3Y2uByK2kSWXCPg54CQ_oEYapzLg';
-const JX_GATEWAY=JX_SUPABASE_URL+'/functions/v1/hq-gateway';
+const JX_GATEWAY=JX_SUPABASE_URL+'/functions/v1/hq-gateway-v12';
 let jxSession=null;
 let gatewayReady=false;
 function jxReadSession(){try{const s=JSON.parse(sessionStorage.getItem('jx-auth-session')||'null');if(s&&typeof s.access_token==='string'&&typeof s.refresh_token==='string'&&Number(s.expires_at)>Math.floor(Date.now()/1000))return s;}catch{}return null;}
