@@ -385,3 +385,15 @@ test("budget migration keeps tables private and reservation RPC service-role-onl
   assert.match(budgetMigration, /SECURITY INVOKER/);
   assert.match(budgetMigration, /SET search_path = pg_catalog, public/);
 });
+
+test("Gemini orchestration modes are wired through HQ and remain behind server guards", () => {
+  assert.ok(gateway.includes('Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get(config.secret)'));
+  assert.ok(gateway.includes('body.orchestration_mode === undefined || body.orchestration_mode === "support"'));
+  assert.ok(gateway.includes('body.orchestration_mode === "master_control"'));
+  assert.ok(gateway.includes('mode === "master_control" ? " Orchestration mode: MASTER CONTROL.'));
+  assert.ok(gateway.includes("executeMultipass(task, memory.context, orchestrationMode)"));
+  assert.ok(gateway.includes("orchestration_mode: orchestrationMode"));
+  assert.ok(gateway.includes("reserveGlobalBudget(user.id)"));
+  assert.ok(hq.includes('id="chat-orchestration-mode"'));
+  assert.ok(hqRuntime.includes("orchestration_mode:document.querySelector('#chat-orchestration-mode').value"));
+});
