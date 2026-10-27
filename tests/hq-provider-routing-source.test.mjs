@@ -339,7 +339,7 @@ test("HQ health check and chat UI require the five-provider council contract", (
   assert.match(hq, /health\.mode!=='five-provider-council'/);
   assert.match(hq, /health\.providersConfigured/);
   assert.match(hq, /result\.providers_used/);
-  assert.match(hq, /Configured five-provider roster/);
+  assert.match(hq, /Configured Ruche route/);
 });
 
 test("paid inference cannot start before the global budget reservation succeeds", () => {
