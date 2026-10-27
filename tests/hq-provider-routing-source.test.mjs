@@ -222,7 +222,8 @@ test("chat sends explicit memory consent and never reports a failed delivery as 
   assert.match(hq, /userMessage\.delivery='DELIVERY UNKNOWN — CHECK GATEWAY BEFORE RETRYING'/);
   assert.match(hq, /Chat failed:[\s\S]*?Do not retry until delivery is checked/);
   assert.match(hq, /result\.ok!==true|health\.ok!==true/);
-  assert.match(hq, /health\.mode!=='five-provider-council'/);
+  assert.match(hq, /health\.mode!==expectedMode/);
+  assert.match(hq, /health\.selectedProvider!==selectedProvider/);
   assert.match(hq, /health\.budgetGuard\.enabled!==true/);
   assert.match(hq, /health\.budgetGuard\.killSwitchEnabled===true/);
 });
@@ -335,7 +336,7 @@ test("email sign-in remains existing-account-only and exposes OTP configuration 
   assert.doesNotMatch(hq, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test("HQ health check and chat UI require the five-provider council contract", () => {
+test("HQ health check and chat UI require the selected Ruche route contract", () => {
   assert.match(hq, /health\.mode!=='five-provider-council'/);
   assert.match(hq, /health\.providersConfigured/);
   assert.match(hq, /result\.providers_used/);
