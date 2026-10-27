@@ -31,11 +31,12 @@ test("Mistral and Llama routes require server-side credentials and Llama endpoin
   assert.match(gateway, /selected_provider: rucheRoute.selection/);
 });
 
-test("selected provider is audited as a direct call, never misreported as multi-provider consensus", () => {
-  assert.match(gateway, /single-provider-no-cross-review/);
-  assert.match(gateway, /execution_mode: rucheRoute.provider \? "single-provider" : "five-provider-council"/);
+test("selected provider is audited truthfully as a direct call, never misreported as council consensus", () => {
+  assert.match(gateway, /const executionMode = rucheRoute\\.provider \\? "single-provider" : "five-provider-council"/);
+  assert.match(gateway, /const independence = rucheRoute\\.provider \\? "single-provider-no-cross-review" : "five-distinct-provider-stages"/);
+  assert.match(gateway, /provider: reportedProvider, model: reportedModel/);
+  assert.match(gateway, /output_summary: rucheRoute\\.provider \\? "Single-provider answer returned/);
 });
-
 test("HQ sends the selected provider and mode to the versioned gateway", async () => {
   const hqJs = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
   const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
