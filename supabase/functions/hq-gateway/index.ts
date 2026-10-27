@@ -668,7 +668,7 @@ Deno.serve(async (req: Request) => {
       memory: { provider: "xmemo", read_status: memory.status, write_status: memoryWriteStatus },
     }, 200, origin);
   } catch (error) {
-    const code = error instanceof Error && /^(provider_http_\d+_|provider_empty_output_|provider_model_identity_|provider_secret_missing_|provider_secrets_missing_)/.test(error.message)
+    const code = error instanceof Error && /^(provider_http_\d+_|provider_empty_output_|provider_model_identity_|provider_secret_missing_|provider_secrets_missing_|provider_interaction_status_)/.test(error.message)
       ? error.message.slice(0, 120)
       : "provider_request_failed";
     try {
