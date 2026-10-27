@@ -3,6 +3,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
+const mockCouncil = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+
+test("v12 includes every local runtime dependency", () => {
+  assert.match(gateway, /from "\.\/mock-council\.mjs"/);
+  assert.match(mockCouncil, /export function createMockCouncilResult/);
+  assert.match(mockCouncil, /Deterministic mock only/);
+});
 
 test("v12 is a separately versioned gateway with server-side provider secrets", () => {
   assert.match(gateway, /JARVIS_X_GEMINI_API_KEY/);
