@@ -214,7 +214,7 @@ test("HQ upgrade center separates read-only update discovery from privileged cha
 test("HQ direct chat is a real gateway client but fails closed without authenticated backend", async () => {
   const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["view-chat", "chat-thread", "chat-compose", "chat-send", "chat-check-gateway", "chat-gateway-status", "chat-connection-tag"]) assert.ok(html.includes('id="' + id + '"'));
-  assert.ok(html.includes("JX_GATEWAY+'/health'"));
+  assert.ok(html.includes("healthUrl=JX_GATEWAY+'/health?provider='"));
   assert.ok(html.includes("fetch(JX_GATEWAY"));
   assert.ok(html.includes("health.ok!==true"));
   assert.ok(html.includes("No simulated assistant answers"));
