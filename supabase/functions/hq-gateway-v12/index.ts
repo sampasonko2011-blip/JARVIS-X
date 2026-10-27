@@ -685,15 +685,19 @@ Deno.serve(async (req: Request) => {
     const result = rucheRoute.provider
       ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
       : await executeMultipass(task, memory.context, orchestrationMode);
+    const executionMode = rucheRoute.provider ? "single-provider" : "five-provider-council";
+    const independence = rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages";
+    const reportedProvider = rucheRoute.provider ? result.providersUsed[0]?.provider ?? rucheRoute.selection : PRIMARY_PROVIDER;
+    const reportedModel = rucheRoute.provider ? result.providersUsed[0]?.model ?? "unknown" : PRIMARY_MODEL;
     const memoryWriteStatus = memoryConsent
       ? await storeConversationMemory(task, result.answer, user.id, taskType)
       : "not_consented";
     try {
       await writeRun(user.id, {
-        task_type: taskType, status: "succeeded", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
+        task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: "Five-provider synthesis returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, execution_mode: rucheRoute.provider ? "single-provider" : "five-provider-council", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages", providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted" : "Five-provider synthesis returned; response content not persisted",
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -701,12 +705,12 @@ Deno.serve(async (req: Request) => {
     }
     return jsonResponse({
       ok: true,
-      provider: PRIMARY_PROVIDER,
-      model: PRIMARY_MODEL,
-      execution_mode: rucheRoute.provider ? "single-provider" : "five-provider-council",
+      provider: reportedProvider,
+      model: reportedModel,
+      execution_mode: executionMode,
       selected_provider: rucheRoute.selection,
       orchestration_mode: orchestrationMode,
-      independence: "five-distinct-provider-stages",
+      independence,
       providers_used: result.providersUsed,
       provider_calls: result.providerCalls,
       output: result.answer,
