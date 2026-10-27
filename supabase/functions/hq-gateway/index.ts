@@ -630,7 +630,7 @@ Deno.serve(async (req: Request) => {
         task_type: taskType, status: "succeeded", provider: PRIMARY_PROVIDER, model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Five-provider synthesis returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, execution_mode: "five-provider-council", independence: "five-distinct-provider-stages", providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, execution_mode: "five-provider-council", orchestration_mode: orchestrationMode, independence: "five-distinct-provider-stages", providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -641,6 +641,7 @@ Deno.serve(async (req: Request) => {
       provider: PRIMARY_PROVIDER,
       model: PRIMARY_MODEL,
       execution_mode: "five-provider-council",
+      orchestration_mode: orchestrationMode,
       independence: "five-distinct-provider-stages",
       providers_used: result.providersUsed,
       provider_calls: result.providerCalls,
@@ -658,7 +659,7 @@ Deno.serve(async (req: Request) => {
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Five-provider council execution failed",
         error_code: code,
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "five-provider-council" },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "five-provider-council", orchestration_mode: orchestrationMode },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
