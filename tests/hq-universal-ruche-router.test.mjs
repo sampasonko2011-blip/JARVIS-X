@@ -41,6 +41,6 @@ test("HQ sends the selected provider and mode to the versioned gateway", async (
   assert.match(hqJs, /ia_selectionnee:selectedProvider/);
   assert.match(hqJs, /orchestration_mode:orchestrationMode/);
   assert.match(hqJs, /healthUrl=JX_GATEWAY\+'\/health\?provider='/);
-  assert.match(hqHtml, /id="chat-ai-selection"/);
+  assert.doesNotMatch(hqHtml, /id="chat-ai-selection"/, "HQ keeps one composite assistant identity");
   assert.match(hqHtml, /id="chat-orchestration-mode"/);
 });
