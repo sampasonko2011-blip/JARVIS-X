@@ -400,3 +400,8 @@ test("Gemini orchestration modes are wired through HQ and remain behind server g
   assert.ok(hq.includes('id="chat-orchestration-mode"'));
   assert.ok(hqRuntime.includes("orchestration_mode:document.querySelector('#chat-orchestration-mode').value"));
 });
+
+
+test("HQ targets the separately deployed v12 gateway rather than the legacy endpoint", () => {
+  assert.match(hqRuntime, /const JX_GATEWAY=JX_SUPABASE_URL\+'\/functions\/v1\/hq-gateway-v12'/);
+});
