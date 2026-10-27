@@ -515,7 +515,12 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
-    const providersConfigured = ["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY"].every((name) => Boolean(Deno.env.get(name))) && Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY"));
+    const healthRouteResult = resolveRucheRoute(url.searchParams.get("provider"), url.searchParams.get("orchestration_mode"));
+    if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
+    const healthRoute = healthRouteResult.route;
+    const providersConfigured = healthRoute.requiredSecrets.every((name) => name === "GEMINI_API_KEY"
+      ? Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY"))
+      : Boolean(Deno.env.get(name))) && (!healthRoute.needsLlamaEndpoint || Boolean(Deno.env.get("LLAMA_BASE_URL")));
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -524,11 +529,13 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       ok: true,
       service: "jarvis-x-gateway",
-      mode: "five-provider-council",
+      mode: healthRoute.provider ? "single-provider" : "five-provider-council",
+      selectedProvider: healthRoute.selection,
       provider: PRIMARY_PROVIDER,
       model: PRIMARY_MODEL,
       providersConfigured,
       providerConfigured: providersConfigured,
+      providers: healthRoute.provider ? [healthRoute.provider] : ["openai", "deepseek", "anthropic", "xai", "google"],
       budgetGuard,
       chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
