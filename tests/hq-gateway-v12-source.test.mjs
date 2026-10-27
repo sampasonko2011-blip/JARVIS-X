@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
 const mockCouncil = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 
 test("v12 includes every local runtime dependency", () => {
   assert.match(gateway, /from "\.\/mock-council\.mjs"/);
@@ -35,7 +36,7 @@ test("v12 preserves authentication, allowlisting, rate limits, and fail-closed b
 test("v12 supports explicit orchestration modes and stateless Gemini synthesis", () => {
   assert.match(gateway, /orchestration_mode/);
   assert.match(gateway, /master_control/);
-  assert.match(gateway, /invalid_orchestration_mode/);
+  assert.match(router, /invalid_orchestration_mode/);
   assert.match(gateway, /generativelanguage\.googleapis\.com\/v1beta\/interactions/);
   assert.match(gateway, /store: false/);
   assert.match(gateway, /provider_model_identity_mismatch/);
