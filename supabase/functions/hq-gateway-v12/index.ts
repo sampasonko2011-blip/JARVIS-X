@@ -593,7 +593,7 @@ Deno.serve(async (req: Request) => {
       memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" },
     }, 200, origin);
   }
-  if (body.mode !== undefined && body.mode !== "live") {
+  if (body.mode !== undefined && !["live", "mock", "support", "master_control", "epaulement", "domination"].includes(body.mode)) {
     return jsonResponse({ error: "invalid_execution_mode" }, 400, origin);
   }
 
