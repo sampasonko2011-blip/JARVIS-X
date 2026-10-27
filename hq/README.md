@@ -54,3 +54,16 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 - **Chat tests pass but live chat fails:** deterministic E2E tests mock the gateway. Test authenticated live inference and audit writes separately.
 - **Memory appears empty:** confirm consent was explicitly enabled for the relevant requests and verify the XMemo API contract and user-scoped data path.
 - **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
+
+
+## Universal Ruche routing (PR candidate)
+
+The HQ chat can request either the existing **composite five-provider council** or a direct provider route: Gemini, Claude, DeepSeek, Grok, Mistral, Llama, or OpenAI. The UI sends only the route name and mode; provider credentials remain server-side.
+
+- `ia_selectionnee`: `composite` (default), `gemini`, `claude`, `deepseek`, `grok`, `mistral`, `llama`, or `openai`.
+- `orchestration_mode`: `support` or `master_control`. French aliases `epaulement` and `domination` are accepted by the route parser.
+- A direct provider route is a **single-provider answer**, not a multi-model consensus. The composite route retains the five-stage council.
+- Mistral requires server-side `MISTRAL_API_KEY`. Llama requires `LLAMA_API_KEY`, `LLAMA_BASE_URL` pointing to a trusted HTTPS OpenAI-compatible endpoint, and optionally `LLAMA_MODEL`. A model running only on a personal iPad is not automatically reachable from Supabase; do not expose an unauthenticated local server to the internet.
+- The router never pretends that a registry entry means the provider is connected. Missing credentials/endpoints fail closed. No provider API keys belong in the browser or Git.
+- Paid inference remains blocked until an operator explicitly configures and enables the global budget guard. A zero/unconfigured budget is not bypassed by mock mode or provider selection.
+- This is API orchestration, not merging model weights, copying proprietary model internals, or granting the system independent abilities. Each provider contributes only when it is actually called and returns a validated response.
