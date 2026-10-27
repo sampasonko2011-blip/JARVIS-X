@@ -31,11 +31,13 @@ test("Mistral and Llama routes require server-side credentials and Llama endpoin
   assert.match(gateway, /selected_provider: rucheRoute.selection/);
 });
 
-test("selected provider is audited truthfully as a direct call, never misreported as council consensus", () => {
-  assert.match(gateway, /const executionMode = rucheRoute/);
-  assert.match(gateway, /const independence = rucheRoute\\.provider \\? "single-provider-no-cross-review" : "five-distinct-provider-stages"/);
-  assert.match(gateway, /provider: reportedProvider, model: reportedModel/);
-  assert.match(gateway, /output_summary: rucheRoute\\.provider \\? "Single-provider answer returned/);
+test("selected provider is audited truthfully in successful and failed runs", () => {
+  assert.ok(gateway.includes('const executionMode = rucheRoute.provider ? "single-provider" : "five-provider-council";'));
+  assert.ok(gateway.includes('const independence = rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages";'));
+  assert.ok(gateway.includes("provider: reportedProvider, model: reportedModel"));
+  assert.ok(gateway.includes('output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted"'));
+  assert.ok(gateway.includes('output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted"'));
+  assert.ok(gateway.includes('selected_provider: rucheRoute.selection'));
 });
 test("HQ sends the selected provider and mode to the versioned gateway", async () => {
   const hqJs = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
