@@ -13,6 +13,8 @@ test("universal router exposes the composite council and six selectable AI provi
   assert.match(gateway, /executeSingleProvider/);
   assert.match(gateway, /model: "gemini-3[.]6-flash"/, "Gemini model ID must match current official API docs");
   assert.doesNotMatch(gateway, /gemini-4-argon/, "Do not ship an unverified Gemini model ID");
+  assert.match(gateway, /model: "claude-opus-5"/, "Use documented active Claude Opus model ID");
+  assert.doesNotMatch(gateway, /claude-opus-5-5/, "Do not ship an unverified Claude model ID");
 });
 
 test("router supports French aliases while keeping canonical internal modes", () => {
