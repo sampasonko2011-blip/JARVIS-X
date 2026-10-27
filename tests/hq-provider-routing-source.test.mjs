@@ -62,7 +62,7 @@ test("council routes five distinct providers through their provider APIs", () =>
   assert.match(gateway, /https:\/\/api\.anthropic\.com\/v1\/messages/);
   assert.match(gateway, /https:\/\/api\.x\.ai\/v1/);
   assert.match(gateway, /endpoint = base \+ "\/responses"/);
-  assert.match(gateway, /generativelanguage\\.googleapis\\.com\\/v1beta\\/interactions/);
+  assert.ok(gateway.includes("https://generativelanguage.googleapis.com/v1beta/interactions"));
   assert.match(gateway, /callProvider\(\s*"openai"/);
   assert.match(gateway, /callProvider\(\s*"deepseek"/);
   assert.match(gateway, /callProvider\(\s*"anthropic"/);
