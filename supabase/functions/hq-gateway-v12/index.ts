@@ -13,7 +13,7 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:3000",
 ]);
 const PRIMARY_PROVIDER = "openai";
-const PRIMARY_MODEL = "gpt-6.1-sol";
+const PRIMARY_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-6.1-sol";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 // Bound each downstream council stage and each provider reply before it is embedded in another paid prompt.
