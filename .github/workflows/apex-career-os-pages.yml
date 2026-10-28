@@ -33,6 +33,7 @@ jobs:
           mkdir -p _site
           cp apex-career-os/index.html _site/index.html
           cp apex-career-os/README.md _site/README.md
+          cp -R apex-career-os/performance-archive _site/performance-archive
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
