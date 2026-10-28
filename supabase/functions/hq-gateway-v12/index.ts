@@ -679,8 +679,8 @@ Deno.serve(async (req: Request) => {
       : await executeCompositePrompt(task, memory.context, orchestrationMode);
     const executionMode = rucheRoute.provider ? "single-provider" : "single-engine-composite-prompt";
     const independence = rucheRoute.provider ? "single-provider-no-cross-review" : "single-model-multi-perspective-prompt-not-independent-models";
-    const reportedProvider = rucheRoute.provider ? result.providersUsed[0]?.provider ?? rucheRoute.selection : PRIMARY_PROVIDER;
-    const reportedModel = rucheRoute.provider ? result.providersUsed[0]?.model ?? "unknown" : PRIMARY_MODEL;
+    const reportedProvider = result.providersUsed[0]?.provider ?? (rucheRoute.provider ?? PRIMARY_PROVIDER);
+    const reportedModel = result.providersUsed[0]?.model ?? (rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL);
     const memoryWriteStatus = memoryConsent
       ? await storeConversationMemory(task, result.answer, user.id, taskType)
       : "not_consented";
