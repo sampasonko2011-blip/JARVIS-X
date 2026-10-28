@@ -1,5 +1,5 @@
 // JARVIS-X HQ gateway v12 deployment candidate.
-// Versioned copy of the reviewed five-provider council gateway from PR #60.
+// Versioned gateway using one authenticated model call with a multi-perspective reasoning prompt.
 // This is source control only; it does not deploy or route production traffic.
 // Before deployment, verify DB migrations/RPCs, server-side provider secrets,
 // access allowlist, budget guard state, and authenticated live inference.
