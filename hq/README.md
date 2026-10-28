@@ -54,3 +54,15 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 - **Chat tests pass but live chat fails:** deterministic E2E tests mock the gateway. Test authenticated live inference and audit writes separately.
 - **Memory appears empty:** confirm consent was explicitly enabled for the relevant requests and verify the XMemo API contract and user-scoped data path.
 - **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
+
+
+## Universal Ruche routing (PR candidate)
+
+HQ presents one assistant identity: **JARVIS-X**. The default composite route makes one authenticated OpenAI API call using a structured multi-perspective prompt (solve, re-check, critique, adversarially test, synthesize). These are reasoning lenses within one model call—not five independent models, not access to this ChatGPT session, and not proof of external consensus. One provider call is intentional so the request-level budget reservation matches execution.
+
+- `ia_selectionnee`: `composite` (default), `openai`, `gemini`, `claude`, `deepseek`, `grok`, `mistral`, or `llama`. Optional direct-provider routes are dormant until their own server-side API key and explicit provider model ID are configured; configuration presence alone does not prove live inference.
+- `orchestration_mode`: `support` or `master_control`. French aliases `epaulement` and `domination` are accepted. Master Control changes the planning prompt only; it cannot bypass authorization, budget, rate limits, or human approval.
+- The default composite route requires server-side `OPENAI_API_KEY`; `OPENAI_MODEL` can override the documented default `gpt-6.1-sol`. The HQ browser never receives provider keys.
+- Optional direct routes require the relevant server-side provider key **and** an explicit model ID setting: `DEEPSEEK_MODEL`, `ANTHROPIC_MODEL`, `XAI_MODEL`, `GEMINI_MODEL`, `MISTRAL_MODEL`, or `LLAMA_MODEL`. These model IDs are not guessed. Llama also requires `LLAMA_BASE_URL` pointing to a trusted HTTPS OpenAI-compatible endpoint. A model running only on a personal iPad is not automatically reachable from Supabase.
+- Missing provider keys, model IDs, endpoints, authentication policy, rate-limit RPCs, audit storage, or budget reservation fail closed. Mock mode is a deterministic placeholder only: it makes no model call and does not demonstrate capability.
+- This is API orchestration, not model-weight fusion, copying proprietary internals, or importing this ChatGPT session into the HQ. A real provider contributes only when the gateway calls it and validates the returned response.
