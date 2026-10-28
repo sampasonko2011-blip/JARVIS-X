@@ -41,10 +41,12 @@ test("manual smoke test covers all five providers with bounded calls and explici
   assert.doesNotMatch(providerSmokeWorkflow, /if: \$\{\{ inputs\.confirm_paid_api_calls == true \}\}/);
 });
 
-test("browser gateway fixtures match the configured Anthropic model ID", () => {
+test("browser gateway fixtures model the versioned single-engine contract", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
-    assert.ok(fixture.includes("claude-opus-5"), "fixture should use the configured Anthropic model ID");
-    assert.ok(!fixture.includes("claude-opus-5-5"), "fixture must not advertise a stale model ID");
+    assert.ok(fixture.includes('mode: "single-engine-composite-prompt"'), "fixture should use the current composite health mode");
+    assert.ok(fixture.includes('provider: "openai"'), "fixture should report the actual default provider");
+    assert.ok(!fixture.includes("five-provider-council"), "fixture must not imply unexecuted multi-provider consensus");
+    assert.ok(!fixture.includes("provider_calls: 5"), "fixture must report one inference call");
   }
 });
 test("roster uses the intended exact model IDs", () => {
