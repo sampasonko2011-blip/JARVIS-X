@@ -326,13 +326,15 @@ async function storeConversationMemory(task: string, answer: string, userId: str
 }
 
 const PROVIDER_CONFIG = Object.freeze({
-  openai: { model: "gpt-6.1-sol", secret: "OPENAI_API_KEY" },
-  deepseek: { model: "deepseek-flash", secret: "DEEPSEEK_API_KEY" },
-  anthropic: { model: "claude-opus-5", secret: "ANTHROPIC_API_KEY" },
-  xai: { model: "grok-4.7", secret: "XAI_API_KEY" },
-  google: { model: "gemini-3.6-flash", secret: "GOOGLE_API_KEY" },
-  mistral: { model: "mistral-large-latest", secret: "MISTRAL_API_KEY" },
-  llama: { model: Deno.env.get("LLAMA_MODEL") || "llama3.3:70b", secret: "LLAMA_API_KEY" },
+  // OpenAI's model ID is documented in the official API catalog. Optional adapters
+  // require an operator-supplied model ID because provider catalogs vary by account.
+  openai: { model: Deno.env.get("OPENAI_MODEL") || "gpt-6.1-sol", secret: "OPENAI_API_KEY" },
+  deepseek: { model: Deno.env.get("DEEPSEEK_MODEL") || "", secret: "DEEPSEEK_API_KEY" },
+  anthropic: { model: Deno.env.get("ANTHROPIC_MODEL") || "", secret: "ANTHROPIC_API_KEY" },
+  xai: { model: Deno.env.get("XAI_MODEL") || "", secret: "XAI_API_KEY" },
+  google: { model: Deno.env.get("GEMINI_MODEL") || "", secret: "GOOGLE_API_KEY" },
+  mistral: { model: Deno.env.get("MISTRAL_MODEL") || "", secret: "MISTRAL_API_KEY" },
+  llama: { model: Deno.env.get("LLAMA_MODEL") || "", secret: "LLAMA_API_KEY" },
 });
 function stageInstructions(stage: "lead" | "reasoner" | "critic" | "adversary" | "synthesis") {
   if (stage === "lead") return "You are JARVIS-X, the lead solver. Solve the user's objective with strong reasoning. Separate facts, inferences, assumptions, and unknowns. Never invent sources, tool calls, or results.";
@@ -428,21 +430,11 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
   if (output.length > MAX_PROVIDER_OUTPUT_CHARS) throw new Error("provider_output_too_large_" + provider);
   if (typeof returnedModel !== "string" || !returnedModel.trim()) throw new Error("provider_model_identity_missing_" + provider);
   const normalized = returnedModel.toLowerCase();
-  // DeepSeek's documented alias resolves to a versioned server model ID.
-  // Accept only that documented Flash family; never accept an arbitrary DeepSeek model.
-  const identityMatches = provider === "openai"
-    ? normalized.startsWith("gpt-6.1-sol")
-    : provider === "deepseek"
-    ? normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")
-    : provider === "anthropic"
-    ? normalized === "claude-opus-5" || normalized.startsWith("claude-opus-5-")
-    : provider === "xai"
-    ? normalized.startsWith("grok-4.7")
-    : provider === "mistral"
-    ? normalized === "mistral-large-latest" || normalized.startsWith("mistral-large-")
-    : provider === "llama"
-    ? normalized === config.model.toLowerCase()
-    : normalized.startsWith("gemini-3.6-flash");
+  // Match the provider-returned ID to the operator-configured model family.
+  // Optional provider IDs are never guessed or hard-coded as if already validated.
+  const configuredModel = config.model.toLowerCase();
+  const identityMatches = normalized === configuredModel || normalized.startsWith(configuredModel + "-") ||
+    (provider === "openai" && normalized.startsWith(configuredModel));
   if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider);
   // Preserve the actual provider-returned model ID in the execution receipt.
   return { output: output.trim(), provider, model: returnedModel };
@@ -512,9 +504,12 @@ Deno.serve(async (req: Request) => {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("provider"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
     const healthRoute = healthRouteResult.route;
+    const healthProvider = healthRoute.provider ?? "openai";
     const providersConfigured = healthRoute.requiredSecrets.every((name) => name === "GEMINI_API_KEY"
       ? Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY"))
-      : Boolean(Deno.env.get(name))) && (!healthRoute.needsLlamaEndpoint || Boolean(Deno.env.get("LLAMA_BASE_URL")));
+      : Boolean(Deno.env.get(name))) &&
+      Boolean(PROVIDER_CONFIG[healthProvider].model) &&
+      (!healthRoute.needsLlamaEndpoint || Boolean(Deno.env.get("LLAMA_BASE_URL")));
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -628,6 +623,7 @@ Deno.serve(async (req: Request) => {
     return !Deno.env.get(name);
   });
   if (rucheRoute.needsLlamaEndpoint && !Deno.env.get("LLAMA_BASE_URL")) missingProviderSecrets.push("LLAMA_BASE_URL");
+  if (!PROVIDER_CONFIG[rucheRoute.provider ?? "openai"].model) missingProviderSecrets.push("provider_model_id_not_configured");
   if (missingProviderSecrets.length > 0) {
     const requestedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
     const requestedModel = rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL;
