@@ -58,12 +58,11 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 
 ## Universal Ruche routing (PR candidate)
 
-The HQ chat can request either the existing **composite five-provider council** or a direct provider route: Gemini, Claude, DeepSeek, Grok, Mistral, Llama, or OpenAI. The UI sends only the route name and mode; provider credentials remain server-side.
+HQ presents one assistant identity: **JARVIS-X**. The default composite route makes one authenticated OpenAI API call using a structured multi-perspective prompt (solve, re-check, critique, adversarially test, synthesize). These are reasoning lenses within one model call—not five independent models, not access to this ChatGPT session, and not proof of external consensus. One provider call is intentional so the request-level budget reservation matches execution.
 
-- `ia_selectionnee`: `composite` (default), `gemini`, `claude`, `deepseek`, `grok`, `mistral`, `llama`, or `openai`.
-- `orchestration_mode`: `support` or `master_control`. French aliases `epaulement` and `domination` are accepted by the route parser.
-- A direct provider route is a **single-provider answer**, not a multi-model consensus. The composite route retains the five-stage council.
-- Mistral requires server-side `MISTRAL_API_KEY`. Llama requires `LLAMA_API_KEY`, `LLAMA_BASE_URL` pointing to a trusted HTTPS OpenAI-compatible endpoint, and optionally `LLAMA_MODEL`. A model running only on a personal iPad is not automatically reachable from Supabase; do not expose an unauthenticated local server to the internet.
-- The router never pretends that a registry entry means the provider is connected. Missing credentials/endpoints fail closed. No provider API keys belong in the browser or Git.
-- Paid inference remains blocked until an operator explicitly configures and enables the global budget guard. A zero/unconfigured budget is not bypassed by mock mode or provider selection.
-- This is API orchestration, not merging model weights, copying proprietary model internals, or granting the system independent abilities. Each provider contributes only when it is actually called and returns a validated response.
+- `ia_selectionnee`: `composite` (default), `openai`, `gemini`, `claude`, `deepseek`, `grok`, `mistral`, or `llama`. Optional direct-provider routes are dormant until their own server-side API key and explicit provider model ID are configured; configuration presence alone does not prove live inference.
+- `orchestration_mode`: `support` or `master_control`. French aliases `epaulement` and `domination` are accepted. Master Control changes the planning prompt only; it cannot bypass authorization, budget, rate limits, or human approval.
+- The default composite route requires server-side `OPENAI_API_KEY`; `OPENAI_MODEL` can override the documented default `gpt-6.1-sol`. The HQ browser never receives provider keys.
+- Optional direct routes require the relevant server-side provider key **and** an explicit model ID setting: `DEEPSEEK_MODEL`, `ANTHROPIC_MODEL`, `XAI_MODEL`, `GEMINI_MODEL`, `MISTRAL_MODEL`, or `LLAMA_MODEL`. These model IDs are not guessed. Llama also requires `LLAMA_BASE_URL` pointing to a trusted HTTPS OpenAI-compatible endpoint. A model running only on a personal iPad is not automatically reachable from Supabase.
+- Missing provider keys, model IDs, endpoints, authentication policy, rate-limit RPCs, audit storage, or budget reservation fail closed. Mock mode is a deterministic placeholder only: it makes no model call and does not demonstrate capability.
+- This is API orchestration, not model-weight fusion, copying proprietary internals, or importing this ChatGPT session into the HQ. A real provider contributes only when the gateway calls it and validates the returned response.
