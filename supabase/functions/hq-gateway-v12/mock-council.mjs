@@ -1,4 +1,4 @@
-// Deterministic placeholder only. No network or environment access; no model is called.
+// Deterministic mock only. This placeholder has no network or environment access; no model is called.
 export function createMockCouncilResult() {
   return {
     answer: [
