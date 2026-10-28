@@ -56,7 +56,7 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 - **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
 
 
-## Universal Ruche routing (PR candidate)
+## Universal Ruche routing (merged to main; deployed gateway v12)
 
 HQ presents one assistant identity: **JARVIS-X**. The default composite route makes one authenticated OpenAI API call using a structured multi-perspective prompt (solve, re-check, critique, adversarially test, synthesize). These are reasoning lenses within one model call—not five independent models, not access to this ChatGPT session, and not proof of external consensus. One provider call is intentional so the request-level budget reservation matches execution.
 
