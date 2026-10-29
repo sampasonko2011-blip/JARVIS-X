@@ -14,6 +14,8 @@ test("Performance Archive validates imported records before replacing local stat
   assert.match(archive, /new Set\(ids\)\.size!==ids\.length/);
   assert.match(archive, /if\(!validArchive\(x\)\)throw new Error/);
   assert.match(archive, /f\.size>5\*1024\*1024/);
+  assert.match(archive, /The in-memory view is not a recovery copy/);
+  assert.match(archive, /if\(loadProblem\)\{state=\{matches:\[\],training:\[\],videos:\[\]\}/);
 });
 
 test("Performance Archive restricts imported video links to safe HTTP(S) URLs", () => {
