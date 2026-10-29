@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - "hq/**"
+      - "apex-career-os/**"
       - ".github/workflows/deploy-hq-pages.yml"
+      - ".github/workflows/apex-career-os-pages.yml"
   workflow_dispatch:
 
 permissions:
