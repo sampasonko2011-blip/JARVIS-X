@@ -76,8 +76,17 @@ const MEMORY_PREFERENCE_KEY='jarvis-x-hq-cross-platform-memory-v1';
 function initializeCrossPlatformMemoryPreference(){
   const control=document.querySelector('#chat-memory-consent');
   if(!control)return;
-  let enabled=true;
-  try{const saved=localStorage.getItem(MEMORY_PREFERENCE_KEY);if(saved==='false')enabled=false;else if(saved==='true')enabled=true;else localStorage.setItem(MEMORY_PREFERENCE_KEY,'true');}catch{}
+  // Prior releases persisted "true" by default, so migrate that legacy value to OFF once.
+  // After migration, preserve only the user's subsequent explicit choice.
+  const migrationKey='jarvis-x-hq-memory-consent-v2-migrated';
+  let enabled=false;
+  try{
+    if(localStorage.getItem(migrationKey)!=='true'){
+      localStorage.setItem(MEMORY_PREFERENCE_KEY,'false');
+      localStorage.setItem(migrationKey,'true');
+    }
+    enabled=localStorage.getItem(MEMORY_PREFERENCE_KEY)==='true';
+  }catch{enabled=false}
   control.checked=enabled;
   control.addEventListener('change',()=>{try{localStorage.setItem(MEMORY_PREFERENCE_KEY,String(control.checked));}catch{}});
 }
