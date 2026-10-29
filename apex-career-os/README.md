@@ -1,17 +1,9 @@
-# APEX CAREER OS — SAMPA.CO
+# Apex Career OS moved to its standalone repository
 
-A mobile-first, local-first prototype for football career operations: opportunity pipeline, player dossier, evidence library, contact CRM, outreach drafts, tasks, readiness checklist, team roles, budget, audit and data portability.
+The Command Center app source now lives in the independent repository:
 
-## Run it
-Open \`index.html\` in a modern browser, or serve this folder with any static file server. It has no build step or external dependencies.
+https://github.com/sampasonko2011-blip/apex-career-os
 
-## Important limitations
-- This first version stores data in browser \`localStorage\`; it is not encrypted, does not sync between devices, and has no sign-in or server-side access control.
-- Do not store passwords, identity document numbers, sensitive medical data, or detailed guardian contacts here.
-- No club database, messaging, AI agent, or external integrations are connected.
-- The audit center checks entered records only. Manual checklist ticks are user attestations, not independent verification.
-- Not legal advice. Minors' transfers, registration, representation and contracts require guardian involvement and qualified, case-specific advice.
-- The player pack is a preview based on records entered by the user. Review all claims and permissions before sharing.
+The standalone `index.html` was copied byte-for-byte and verified against the original source before this removal was proposed. This README preserves the pointer from JARVIS-X without embedding the separate app implementation.
 
-## Evidence statuses
-OBSERVED · VERIFIED · PROPOSED · UNPROVEN · REJECTED · SUPERSEDED. Unknown is not zero.
+The standalone app is local-first: records remain in the browser's local storage unless exported. This repository does not provide authenticated cross-device sync or encrypted cloud storage for the app.
