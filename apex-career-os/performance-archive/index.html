@@ -32,9 +32,46 @@
 </main>
 <script>
 (()=>{'use strict';
-const KEY='sampaco.performance.archive.v1';const $=id=>document.getElementById(id);let state={matches:[],training:[],videos:[]};
-const safeLoad=()=>{try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&Array.isArray(x.matches)&&Array.isArray(x.training)&&Array.isArray(x.videos))state=x}catch(e){}};
-const persist=()=>{localStorage.setItem(KEY,JSON.stringify(state));render()};
+const KEY='sampaco.performance.archive.v1';const $=id=>document.getElementById(id);let state={matches:[],training:[],videos:[]};let loadProblem='';
+const RECORD_LIMIT=5000, TEXT_LIMIT=10000;
+const SCHEMAS={
+  matches:{required:['id','opponent'],numeric:['minutes','goals','assists','rating'],boolean:['verified'],fields:['id','date','type','opponent','team','position','minutes','result','goals','assists','rating','ratingBasis','stats','notes','video','verified']},
+  training:{required:['id','title'],numeric:['duration','rpe'],boolean:[],fields:['id','date','type','title','duration','rpe','focus','outcome','video']},
+  videos:{required:['id','title','url'],numeric:[],boolean:[],fields:['id','title','date','kind','url','related','access','tags','notes']}
+};
+function safeHttpUrl(value){try{const u=new URL(String(value));return (u.protocol==='https:'||u.protocol==='http:')&&!u.username&&!u.password?u.href:''}catch{return ''}}
+function validRecord(record,schema){
+  if(!record||typeof record!=='object'||Array.isArray(record))return false;
+  if(Object.keys(record).some(k=>!schema.fields.includes(k)))return false;
+  if(!schema.required.every(k=>record[k]!==undefined&&record[k]!==null&&String(record[k]).trim()!==''))return false;
+  if(!(typeof record.id==='string'||(typeof record.id==='number'&&Number.isFinite(record.id)))||String(record.id).length>128)return false;
+  for(const [key,value] of Object.entries(record)){
+    if(key==='id')continue;
+    if(schema.numeric.includes(key)){if(value!==null&&(typeof value!=='number'||!Number.isFinite(value)))return false;continue}
+    if(schema.boolean.includes(key)){if(typeof value!=='boolean')return false;continue}
+    if(value!==null&&(typeof value!=='string'||value.length>TEXT_LIMIT))return false;
+  }
+  if(schema.numeric.includes('rating')&&record.rating!==null&&record.rating!==undefined&&(record.rating<0||record.rating>10))return false;
+  if(record.minutes!==null&&record.minutes!==undefined&&(record.minutes<0||record.minutes>150))return false;
+  if(record.goals!==null&&record.goals!==undefined&&(record.goals<0||!Number.isInteger(record.goals)))return false;
+  if(record.assists!==null&&record.assists!==undefined&&(record.assists<0||!Number.isInteger(record.assists)))return false;
+  if(record.duration!==null&&record.duration!==undefined&&(record.duration<0||record.duration>600))return false;
+  if(record.rpe!==null&&record.rpe!==undefined&&(record.rpe<1||record.rpe>10))return false;
+  if(record.url!==undefined&&record.url!==null&&!safeHttpUrl(record.url))return false;
+  if(record.video!==undefined&&record.video!==null&&record.video!==''&&!safeHttpUrl(record.video))return false;
+  return true;
+}
+function validArchive(value){
+  if(!value||!Array.isArray(value.matches)||!Array.isArray(value.training)||!Array.isArray(value.videos))return false;
+  for(const key of ['matches','training','videos']){
+    const rows=value[key],schema=SCHEMAS[key];
+    if(rows.length>RECORD_LIMIT||!rows.every(x=>validRecord(x,schema)))return false;
+    const ids=rows.map(x=>String(x.id));if(new Set(ids).size!==ids.length)return false;
+  }
+  return true;
+}
+const safeLoad=()=>{try{const raw=localStorage.getItem(KEY);if(raw===null)return;const x=JSON.parse(raw);if(validArchive(x))state=x;else loadProblem='Saved archive data failed validation. Existing browser data was left untouched; export or inspect it before clearing.'}catch(e){loadProblem='Saved archive data could not be read. Existing browser data was left untouched.'}};
+const persist=()=>{if(loadProblem){alert(loadProblem+' Import a valid backup or explicitly clear the archive before saving.');return false}try{localStorage.setItem(KEY,JSON.stringify(state));render();return true}catch(e){alert('Could not save archive data in this browser. No successful save is claimed.');return false}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateFmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'Date not set';
 const val=(f,n)=>String(new FormData(f).get(n)||'').trim();
@@ -43,9 +80,9 @@ const id=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
 function empty(msg){return '<div class="empty">'+esc(msg)+'</div>'}
 function removeBtn(type,idv){return '<button class="danger small" data-remove="'+type+'" data-id="'+esc(idv)+'">Delete</button>'}
 function recordCard(type,x){let title='',sub='',body='',meta='';
-if(type==='match'){title=x.opponent;sub=dateFmt(x.date)+' · '+x.type+(x.team?' · '+x.team:'')+(x.position?' · '+x.position:'');meta=(x.rating!==null&&x.rating!==''?'<span class="score">'+esc(x.rating)+'/10</span> ':'')+(x.goals!==null&&x.goals!==''?'⚽ '+esc(x.goals)+' goals ':'')+(x.assists!==null&&x.assists!==''?'🎯 '+esc(x.assists)+' assists ':'');body=[x.result?'Result: '+x.result:'',x.minutes!==null&&x.minutes!==''?'Minutes: '+x.minutes:'',x.stats,x.notes].filter(Boolean).map(esc).join('<br>')}
-if(type==='training'){title=x.title;sub=dateFmt(x.date)+' · '+x.type;meta=(x.duration!==null&&x.duration!==''?esc(x.duration)+' min ':'')+(x.rpe!==null&&x.rpe!==''?'RPE '+esc(x.rpe):'');body=[x.focus,x.outcome].filter(Boolean).map(esc).join('<br>')}
-if(type==='video'){title=x.title;sub=dateFmt(x.date)+' · '+x.kind;meta='<a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">Open video ↗</a> · '+esc(x.access);body=[x.tags?'Tags: '+esc(x.tags):'',x.notes?esc(x.notes):'',x.related?'Linked record: '+esc(labelFor(x.related)):''].filter(Boolean).join('<br>')}
+if(type==='match'){title=x.opponent;sub=esc(dateFmt(x.date))+' · '+esc(x.type)+(x.team?' · '+esc(x.team):'')+(x.position?' · '+esc(x.position):'');meta=(x.rating!==null&&x.rating!==''?'<span class="score">'+esc(x.rating)+'/10</span> ':'')+(x.goals!==null&&x.goals!==''?'⚽ '+esc(x.goals)+' goals ':'')+(x.assists!==null&&x.assists!==''?'🎯 '+esc(x.assists)+' assists ':'');body=[x.result?'Result: '+x.result:'',x.minutes!==null&&x.minutes!==''?'Minutes: '+x.minutes:'',x.stats,x.notes].filter(Boolean).map(esc).join('<br>')}
+if(type==='training'){title=x.title;sub=esc(dateFmt(x.date))+' · '+esc(x.type);meta=(x.duration!==null&&x.duration!==''?esc(x.duration)+' min ':'')+(x.rpe!==null&&x.rpe!==''?'RPE '+esc(x.rpe):'');body=[x.focus,x.outcome].filter(Boolean).map(esc).join('<br>')}
+if(type==='video'){title=x.title;sub=esc(dateFmt(x.date))+' · '+esc(x.kind);const safeUrl=safeHttpUrl(x.url);meta=(safeUrl?'<a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer">Open video ↗</a>':'Invalid video URL')+' · '+esc(x.access);body=[x.tags?'Tags: '+esc(x.tags):'',x.notes?esc(x.notes):'',x.related?'Linked record: '+esc(labelFor(x.related)):''].filter(Boolean).join('<br>')}
 return '<article class="item"><div class="itemhead"><div><strong>'+esc(title)+'</strong><div class="muted small">'+sub+'</div></div>'+removeBtn(type,x.id)+'</div>'+(meta?'<div class="small" style="margin-top:5px">'+meta+'</div>':'')+(body?'<div class="small" style="margin-top:7px;white-space:normal">'+body+'</div>':'')+'</article>'}
 function labelFor(idv){let x=state.matches.find(v=>v.id===idv);if(x)return 'Match: '+x.opponent; x=state.training.find(v=>v.id===idv);return x?'Training: '+x.title:'Record'}
 function fillRelated(){const s=$('videoRelated');const current=s.value;s.innerHTML='<option value="">No linked record</option>'+state.matches.map(x=>'<option value="'+esc(x.id)+'">Match · '+esc(x.date||'No date')+' · '+esc(x.opponent)+'</option>').join('')+state.training.map(x=>'<option value="'+esc(x.id)+'">Training · '+esc(x.date||'No date')+' · '+esc(x.title)+'</option>').join('');if([...s.options].some(o=>o.value===current))s.value=current}
@@ -57,7 +94,7 @@ $('videoList').innerHTML=state.videos.length?[...state.videos].sort((a,b)=>(b.da
 fillRelated();const sorted=state.matches.filter(x=>x.rating!==null&&x.rating!=='').sort((a,b)=>(a.date||'').localeCompare(b.date||''));$('ratingTrend').innerHTML=sorted.length?'<div class="small">'+sorted.map(x=>'<div class="item"><span>'+esc(dateFmt(x.date))+' · '+esc(x.opponent)+'</span><strong class="score" style="float:right">'+esc(x.rating)+'/10</strong><div style="height:6px;background:#2b3342;border-radius:9px;margin-top:7px"><div style="height:6px;width:'+Math.max(0,Math.min(100,Number(x.rating)*10))+'%;background:var(--accent);border-radius:9px"></div></div></div>').join('')+'</div>':empty('Add match ratings to build a trend.');
 const goal=state.matches.reduce((s,x)=>s+(Number(x.goals)||0),0),ass=state.matches.reduce((s,x)=>s+(Number(x.assists)||0),0);$('outputTrend').innerHTML='<div class="grid"><div class="card span6"><div class="muted small">Goals recorded</div><div class="metric">'+goal+'</div></div><div class="card span6"><div class="muted small">Assists recorded</div><div class="metric">'+ass+'</div></div><div class="card span12"><p class="muted small">Totals reflect only entered values. Blank stats are not treated as verified zeros.</p></div></div>';
 const missingDate=state.matches.filter(x=>!x.date).length,unrated=state.matches.filter(x=>x.rating===null||x.rating==='').length,unlinked=state.videos.filter(x=>!x.related).length,unverified=state.matches.filter(x=>!x.verified).length;$('quality').innerHTML='<ul><li>'+missingDate+' matches missing a date</li><li>'+unrated+' matches without a rating</li><li>'+unlinked+' videos not linked to a match/session</li><li>'+unverified+' matches not marked as source-reviewed</li></ul><p class="muted small">“Source-reviewed” is your own checkbox, not an independent verification by this app.</p>';
-$('storageInfo').textContent=state.matches.length+' matches · '+state.training.length+' training sessions · '+state.videos.length+' video references stored in this browser.'}
+$('storageInfo').textContent=state.matches.length+' matches · '+state.training.length+' training sessions · '+state.videos.length+' video references stored in this browser.'+(loadProblem?' WARNING: '+loadProblem:'')}
 function show(tab){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hide',v.id!==tab));document.querySelectorAll('[data-tab]').forEach(b=>{if(b.dataset.tab===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});}
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)show(b.dataset.tab)});
 document.addEventListener('click',e=>{const go=e.target.closest('[data-go]');if(go)show(go.dataset.go);const rm=e.target.closest('[data-remove]');if(rm){const type=rm.dataset.remove;const key=type==='match'?'matches':type==='training'?'training':'videos';if(confirm('Delete this '+type+' record?')){state[key]=state[key].filter(x=>x.id!==rm.dataset.id);persist()}}});
@@ -65,8 +102,8 @@ $('matchForm').addEventListener('submit',e=>{e.preventDefault();const f=e.curren
 $('trainingForm').addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget;state.training.push({id:id(),date:val(f,'date'),type:val(f,'type'),title:val(f,'title'),duration:num(f,'duration'),rpe:num(f,'rpe'),focus:val(f,'focus'),outcome:val(f,'outcome'),video:val(f,'video')});persist();f.reset();show('training')});
 $('videoForm').addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget;const url=val(f,'url');if(!/^https?:\/\//i.test(url)){alert('Enter a valid http or https video link.');return}state.videos.push({id:id(),title:val(f,'title'),date:val(f,'date'),kind:val(f,'kind'),url,related:val(f,'related'),access:val(f,'access'),tags:val(f,'tags'),notes:val(f,'notes')});persist();f.reset();show('videos')});
 $('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({app:'Apex Performance Archive',version:1,exportedAt:new Date().toISOString(),...state},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sampaco-performance-archive-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)});
-$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!Array.isArray(x.matches)||!Array.isArray(x.training)||!Array.isArray(x.videos))throw new Error('Invalid archive format');if(confirm('Import and replace all current archive records?')){state={matches:x.matches,training:x.training,videos:x.videos};persist();alert('Archive imported.')} }catch(err){alert('Could not import this file: '+err.message)}e.target.value=''});
-$('clearBtn').addEventListener('click',()=>{if(confirm('Permanently delete all archive data stored by this app in this browser? Export a backup first if needed.')){state={matches:[],training:[],videos:[]};persist()}});
+$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>5*1024*1024)throw new Error('Backup exceeds the 5 MB safety limit');const x=JSON.parse(await f.text());if(!validArchive(x))throw new Error('Archive schema, field values, record count, IDs, or video URL failed validation');if(confirm('Import and replace all current archive records? Export a backup first if needed.')){const previous=state,previousProblem=loadProblem;state={matches:x.matches,training:x.training,videos:x.videos};loadProblem='';if(persist())alert('Archive imported.');else{state=previous;loadProblem=previousProblem;render()}}}catch(err){alert('Could not import this file: '+err.message)}e.target.value=''});
+$('clearBtn').addEventListener('click',()=>{if(confirm('Permanently delete all archive data stored by this app in this browser? Export a backup first if needed.')){const previousProblem=loadProblem;loadProblem='';state={matches:[],training:[],videos:[]};if(!persist())loadProblem=previousProblem;render()}});
 safeLoad();render();
 })();
 </script></body></html>
