@@ -1,4 +1,4 @@
-name: Deploy JARVIS-X HQ to GitHub Pages
+name: Deploy JARVIS-X and Apex Career OS
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
       - "hq/**"
       - "apex-career-os/**"
       - ".github/workflows/deploy-hq-pages.yml"
-      - ".github/workflows/apex-career-os-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -32,10 +31,17 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload HQ static site
+      - name: Build combined site artifact
+        run: |
+          mkdir -p _site/hq
+          cp apex-career-os/index.html _site/index.html
+          cp apex-career-os/README.md _site/README.md
+          if [ -d apex-career-os/performance-archive ]; then cp -R apex-career-os/performance-archive _site/performance-archive; fi
+          cp -R hq/. _site/hq/
+      - name: Upload combined site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: hq
-      - name: Deploy HQ
+          path: _site
+      - name: Deploy combined site
         id: deployment
         uses: actions/deploy-pages@v4
