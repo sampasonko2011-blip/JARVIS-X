@@ -24,7 +24,7 @@ test("Performance Archive restricts imported video links to safe HTTP(S) URLs", 
 });
 
 test("Performance Archive escapes user-controlled display fields", () => {
-  assert.match(archive, /const esc=s=>String\(s\?\?'\'\)\.replace/);
+  assert.ok(archive.includes("const esc=s=>String(s??'').replace"));
   assert.match(archive, /sub=esc\(dateFmt\(x\.date\)\)\+' · '\+esc\(x\.type\)/);
   assert.match(archive, /'<strong>'\+esc\(title\)\+'<\/strong>'/);
   assert.match(archive, /body=\[x\.focus,x\.outcome\]\.filter\(Boolean\)\.map\(esc\)/);
