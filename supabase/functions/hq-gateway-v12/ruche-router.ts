@@ -21,7 +21,7 @@ const ROUTES: Record<RucheSelection, { provider: RucheProvider | null; requiredS
   deepseek: { provider: "deepseek", requiredSecrets: ["DEEPSEEK_API_KEY"], needsLlamaEndpoint: false },
   claude: { provider: "anthropic", requiredSecrets: ["ANTHROPIC_API_KEY"], needsLlamaEndpoint: false },
   grok: { provider: "xai", requiredSecrets: ["XAI_API_KEY"], needsLlamaEndpoint: false },
-  gemini: { provider: "google", requiredSecrets: ["GEMINI_API_KEY"], needsLlamaEndpoint: false },
+  gemini: { provider: "google", requiredSecrets: ["GOOGLE_API_KEY"], needsLlamaEndpoint: false },
   mistral: { provider: "mistral", requiredSecrets: ["MISTRAL_API_KEY"], needsLlamaEndpoint: false },
   llama: { provider: "llama", requiredSecrets: ["LLAMA_API_KEY"], needsLlamaEndpoint: true },
 };
