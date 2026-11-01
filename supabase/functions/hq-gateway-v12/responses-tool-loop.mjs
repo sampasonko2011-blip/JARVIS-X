@@ -5,6 +5,7 @@ const MAX_TOOL_OUTPUT_CHARS = 20_000;
 const MAX_MODEL_CALLS = 2;
 const MAX_TOOL_CALLS = 1;
 
+/** @returns {never} */
 function fail(code) { throw new TypeError(code); }
 
 function extractText(response) {
