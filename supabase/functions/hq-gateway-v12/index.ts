@@ -1,29 +1,28 @@
 // JARVIS-X HQ gateway v12 deployment candidate.
-// Versioned gateway with a five-provider specialist council on the default composite route.
+// Versioned gateway with one executive cognitive core and deterministic governance.
 // This is source control only; it does not deploy or route production traffic.
 // Before deployment, verify DB migrations/RPCs, server-side provider secrets,
 // access allowlist, budget guard state, and authenticated live inference.
 // Keep fail-closed behavior; never bypass auth, allowlisting, rate limits, or budget checks.
 
 import { createMockCouncilResult } from "./mock-council.mjs";
-import { executeFiveProviderCouncil } from "./council-runtime.mjs";
+import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
-const PRIMARY_PROVIDER = "multi-provider-council";
-const PRIMARY_MODEL = "five-provider-composite";
-const COMPOSITE_PROVIDERS = ["openai", "deepseek", "anthropic", "xai", "google"] as const;
+const PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel";
+const PRIMARY_MODEL = "single-executive-core";
+const COMPOSITE_PROVIDERS = ["openai"] as const;
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
-// Bound each downstream council stage and each provider reply before it is embedded in another paid prompt.
+// Bound the single executive-core input and output.
 const MAX_STAGE_INPUT_CHARS = 64_000;
 const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
-// Keep Gemini synthesis output bounded; never assume model availability or account quota.
-const GEMINI_MAX_OUTPUT_TOKENS = 1_024;
+
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
   const headers = new Headers({
@@ -517,12 +516,12 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       ok: true,
       service: "jarvis-x-gateway",
-      mode: healthRoute.provider ? "single-provider" : "five-provider-council",
+      mode: healthRoute.provider ? "single-provider" : "single-core-cognitive-kernel",
       selectedProvider: healthRoute.selection,
       provider: healthRoute.provider ?? PRIMARY_PROVIDER,
       model: healthRoute.provider
         ? PROVIDER_CONFIG[healthRoute.provider].model
-        : COMPOSITE_PROVIDERS.map(provider => provider + ":" + PROVIDER_CONFIG[provider].model).join(" + "),
+        : PRIMARY_MODEL,
       providersConfigured,
       providerConfigured: providersConfigured,
       providers: healthRoute.provider ? [healthRoute.provider] : [...COMPOSITE_PROVIDERS],
@@ -690,17 +689,17 @@ Deno.serve(async (req: Request) => {
   try {
     const result: CouncilExecutionResult = rucheRoute.provider
       ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
-      : await executeFiveProviderCouncil({
+      : await executeCognitiveKernel({
           objective: task,
           memoryContext: memory.context,
           mode: orchestrationMode,
-          invokeProvider: async (provider: string, stageTask: string, stage: string, mode: "support" | "master_control") => {
-            const invoked = await callProvider(provider as ProviderName, stageTask, stage as CouncilStage, mode);
+          invokeCore: async (stageTask: string, mode: "support" | "master_control") => {
+            const invoked = await callProvider("openai", stageTask, "lead", mode);
             return { provider: invoked.provider, model: invoked.model, output: invoked.output };
           },
         });
-    const executionMode = result.executionMode ?? (rucheRoute.provider ? "single-provider" : "five-provider-council");
-    const independence = result.independence ?? (rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages");
+    const executionMode = result.executionMode ?? (rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel");
+    const independence = result.independence ?? (rucheRoute.provider ? "single-provider-no-cross-review" : "one-executive-core-with-deterministic-governance");
     const reportedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
     const reportedModel = result.providersUsed.map(item => item.provider + ":" + item.model).join(" + ");
     const memoryWriteStatus = memoryConsent
@@ -710,7 +709,7 @@ Deno.serve(async (req: Request) => {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted" : "Five-provider council synthesis returned; response content not persisted",
+        output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted" : "Single-core cognitive kernel answer returned; response content not persisted",
         metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
@@ -741,9 +740,9 @@ Deno.serve(async (req: Request) => {
         provider: rucheRoute.provider ? rucheRoute.provider : PRIMARY_PROVIDER,
         model: rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Five-provider council execution failed; response content not persisted",
+        output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Single-core cognitive kernel execution failed; response content not persisted",
         error_code: code,
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: rucheRoute.provider ? "single-provider" : "five-provider-council", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages" },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: rucheRoute.provider ? "single-provider-no-cross-review" : "one-executive-core-with-deterministic-governance" },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
