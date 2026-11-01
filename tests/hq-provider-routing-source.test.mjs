@@ -14,48 +14,44 @@ const rateLimitMigration = await readFile(new URL("../supabase/migrations/202610
 const hqE2E = await readFile(new URL("../e2e/hq.spec.mjs", import.meta.url), "utf8");
 const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta.url), "utf8");
 
-test("manual smoke test covers all five providers with bounded calls and explicit cost confirmation", () => {
-  for (const [provider, secret, model] of [
-    ["OpenAI", "OPENAI_API_KEY", "gpt-6.1-sol"],
-    ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-flash"],
-    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5"],
-    ["xAI", "XAI_API_KEY", "grok-4.7"],
-    ["Google", "GOOGLE_API_KEY", "gemini-4-argon"],
+test("manual smoke test preflights all five credentials and model IDs before bounded requests", () => {
+  for (const [provider, secret, modelEnv] of [
+    ["OpenAI", "OPENAI_API_KEY", "OPENAI_MODEL"],
+    ["DeepSeek", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL"],
+    ["Anthropic", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"],
+    ["xAI", "XAI_API_KEY", "XAI_MODEL"],
+    ["Google", "GOOGLE_API_KEY", "GEMINI_MODEL"],
   ]) {
     assert.ok(providerSmoke.includes(`provider: "${provider}"`), "smoke test missing " + provider);
     assert.ok(providerSmoke.includes(`envKey: "${secret}"`), "smoke test missing secret name " + secret);
-    assert.ok(providerSmoke.includes(`model: "${model}"`), "smoke test missing model " + model);
-    assert.ok(providerSmokeWorkflow.includes(`${secret}: \${{ secrets.${secret} }}`), "workflow missing " + secret);
+    assert.ok(providerSmoke.includes(`modelEnv: "${modelEnv}"`), "smoke test missing model variable " + modelEnv);
+    assert.ok(providerSmokeWorkflow.includes(secret + ": ${{ secrets." + secret + " }}"), "workflow missing " + secret);
+    assert.ok(providerSmokeWorkflow.includes(modelEnv + ": ${{ vars." + modelEnv + " }}"), "workflow missing model variable " + modelEnv);
   }
-  assert.match(providerSmoke, /max_output_tokens: 32/);
-  assert.match(providerSmoke, /max_tokens: 32/);
-  assert.match(providerSmoke, /maxOutputTokens: 32_768/);
-  assert.match(providerSmoke, /AbortController/);
-  assert.match(providerSmoke, /identityMatches\(config, observedModel\)/);
+  assert.match(providerSmoke, /MAX_OUTPUT_TOKENS = 32/);
+  assert.match(providerSmoke, /max_output_tokens: MAX_OUTPUT_TOKENS/);
+  assert.match(providerSmoke, /max_tokens: MAX_OUTPUT_TOKENS/);
+  assert.match(providerSmoke, /PREFLIGHT_BLOCKED_NO_PROVIDER_CALLS/);
+  assert.match(providerSmoke, /v1beta\/interactions/);
+  assert.match(providerSmoke, /identityMatches\(observedModel, model\)/);
   assert.match(providerSmokeWorkflow, /confirm_paid_api_calls/);
-  assert.match(providerSmokeWorkflow, /confirm_gemini_output_budget/);
-  assert.match(providerSmokeWorkflow, /32,768-token Gemini output ceiling/);
   assert.match(providerSmokeWorkflow, /default: false/);
-  assert.match(providerSmokeWorkflow, /inputs\.confirm_paid_api_calls == true/);
-  assert.equal((providerSmokeWorkflow.match(/inputs\.confirm_paid_api_calls == true && inputs\.confirm_gemini_output_budget == true/g) || []).length, 4);
-  assert.doesNotMatch(providerSmokeWorkflow, /if: \$\{\{ inputs\.confirm_paid_api_calls == true \}\}/);
+  assert.doesNotMatch(providerSmokeWorkflow, /confirm_gemini_output_budget/);
 });
-
-test("browser gateway fixtures model the versioned single-engine contract", () => {
+test("browser gateway fixtures model the versioned five-provider composite contract", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
-    assert.ok(fixture.includes('mode: "single-engine-composite-prompt"'), "fixture should use the current composite health mode");
-    assert.ok(fixture.includes('provider: "openai"'), "fixture should report the actual default provider");
-    assert.ok(!fixture.includes("five-provider-council"), "fixture must not imply unexecuted multi-provider consensus");
-    assert.ok(!fixture.includes("provider_calls: 5"), "fixture must report one inference call");
+    assert.ok(fixture.includes('mode: "five-provider-council"'), "fixture should use the five-provider composite health mode");
+    assert.ok(fixture.includes('provider: "multi-provider-council"'), "fixture should report the single JARVIS-X composite identity");
+    assert.ok(!fixture.includes("single-engine-composite-prompt"), "fixture must not advertise the obsolete one-model composite route");
   }
+  assert.ok(hqE2E.includes("provider_calls: 5"), "successful HQ fixture must record five provider calls");
+  assert.ok(hqE2E.includes('stage:"synthesis"'), "successful HQ fixture must include the Gemini synthesis stage");
 });
-test("roster uses the intended exact model IDs", () => {
-  assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
-  assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
-  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5"'));
-  assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
-  assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
-  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
+test("manual smoke model IDs are operator-configured, not guessed", () => {
+  for (const modelEnv of ["OPENAI_MODEL", "DEEPSEEK_MODEL", "ANTHROPIC_MODEL", "XAI_MODEL", "GEMINI_MODEL"]) {
+    assert.ok(providerSmoke.includes(`modelEnv: "${modelEnv}"`));
+  }
+  assert.doesNotMatch(providerSmoke, /gpt-[0-9]|deepseek-v[0-9]|claude-opus-[0-9]|grok-[0-9]|gemini-[0-9]/);
 });
 test("council routes five distinct providers through their provider APIs", () => {
   assert.match(gateway, /https:\/\/api\.openai\.com\/v1/);
@@ -81,11 +77,9 @@ test("execution receipts preserve the provider-returned model ID after identity 
   assert.match(gateway, /return \{ output: output\.trim\(\), provider, model: returnedModel \}/);
 });
 
-test("provider identity validation rejects cross-model responses", () => {
-  assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
-  assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
-  assert.ok(gateway.includes('normalized === "claude-opus-5"'));
-  assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
+test("smoke test validates returned model identity against the configured ID", () => {
+  assert.match(providerSmoke, /function identityMatches\(observed, requested\)/);
+  assert.match(providerSmoke, /actual === expected \|\| actual\.startsWith\(expected \+ "-"/);
 });
 test("provider stage inputs and outputs are bounded before downstream paid calls", () => {
   assert.match(gateway, /const MAX_STAGE_INPUT_CHARS = 64_000/);

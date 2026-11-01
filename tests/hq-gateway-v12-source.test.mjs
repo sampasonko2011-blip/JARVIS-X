@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
 const mockCouncil = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+const councilRuntime = await readFile(new URL("../supabase/functions/hq-gateway-v12/council-runtime.mjs", import.meta.url), "utf8");
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 
 test("v12 includes every local runtime dependency", () => {
@@ -41,4 +42,34 @@ test("v12 supports explicit orchestration modes and stateless Gemini synthesis",
   assert.match(gateway, /store: false/);
   assert.match(gateway, /provider_model_identity_mismatch/);
   assert.match(gateway, /provider_empty_output/);
+});
+
+test("provider adapters reject incomplete or truncated responses before counting a stage as executed", () => {
+  assert.ok(gateway.includes('data?.status !== "completed"'));
+  assert.ok(gateway.includes('data?.choices?.[0]?.finish_reason !== "stop"'));
+  assert.ok(gateway.includes('!["end_turn", "stop_sequence"].includes(data?.stop_reason)'));
+  assert.ok(gateway.includes("provider_incomplete_response_"));
+  assert.ok(gateway.includes("provider_nonterminal_finish_"));
+});
+
+test("v12 composite route uses five distinct providers with parallel reviews and Gemini synthesis", () => {
+  assert.match(gateway, /executeFiveProviderCouncil/);
+  assert.match(gateway, /five-provider-council/);
+  assert.match(gateway, /five-distinct-provider-stages/);
+  assert.match(councilRuntime, /"openai",\s*stage: "lead"/);
+  assert.match(councilRuntime, /"deepseek",\s*stage: "reasoner"/);
+  assert.match(councilRuntime, /"anthropic",\s*stage: "critic"/);
+  assert.match(councilRuntime, /"xai",\s*stage: "adversary"/);
+  assert.match(councilRuntime, /"google",\s*stage: "synthesis"/);
+  assert.match(councilRuntime, /Promise\.all\(reviewSpecs\.map/);
+  assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
+  assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/);
+});
+
+test("v12 requires exact operator-configured model IDs and bounds Gemini output", () => {
+  for (const [provider, env] of [["openai", "OPENAI_MODEL"], ["deepseek", "DEEPSEEK_MODEL"], ["anthropic", "ANTHROPIC_MODEL"], ["xai", "XAI_MODEL"], ["google", "GEMINI_MODEL"]]) {
+    assert.match(gateway, new RegExp(provider + ': \\{ model: Deno\\.env\\.get\\("' + env + '"\\) \\|\\| ""'));
+  }
+  assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = 1_024/);
+  assert.doesNotMatch(gateway, /gpt-6\\.1-sol|deepseek-v[0-9]|claude-opus-[0-9]|grok-[0-9]|gemini-[0-9]/);
 });

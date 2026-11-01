@@ -6,13 +6,13 @@
 
 | Provider | Required environment variable | API style |
 |---|---|---|
-| Google Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Gemini `:generateContent` |
-| Anthropic Claude | `ANTHROPIC_API_KEY` | Messages API |
-| DeepSeek | `DEEPSEEK_API_KEY` | OpenAI-compatible chat completions |
-| OpenAI | `OPENAI_API_KEY` | OpenAI-compatible chat completions |
+| Google Gemini | `GOOGLE_API_KEY` or `JARVIS_X_GEMINI_API_KEY` | Gemini Interactions API `/v1beta/interactions` |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | Anthropic Messages API `/v1/messages` |
+| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek chat completions `/chat/completions` |
+| OpenAI | `OPENAI_API_KEY` | OpenAI Responses API `/v1/responses` in the five-provider gateway |
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
-| xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
+| xAI | `XAI_API_KEY` | xAI Responses API `/v1/responses` in the five-provider gateway |
 | Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
 | Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
 
@@ -64,3 +64,15 @@ For a real smoke test, configure a secret in the trusted runtime, use a currentl
 - The current provider adapters return response text and basic usage metadata; provider-specific structured output, tool calls, image inputs, embeddings, reranking, audio, and video need their own typed adapters.
 - Anthropic API failures must be distinguished from failures in the connected integration layer. A Composio encoding failure does not establish that the direct Messages API is broken.
 - OpenRouter is intentionally unsupported by the active adapter layer due to the explicit provider exclusion policy.
+
+## Versioned HQ gateway model configuration
+
+The five-provider gateway does not guess provider model IDs. Set these exact, account-enabled model IDs as server-side Edge Function environment variables:
+
+- `OPENAI_MODEL`
+- `DEEPSEEK_MODEL`
+- `ANTHROPIC_MODEL`
+- `XAI_MODEL`
+- `GEMINI_MODEL`
+
+All five are required for the composite route. Health reports the route unavailable if any secret or model ID is missing. The candidate source intentionally has no fallback model IDs; verify each ID against the provider account's live model catalogue before configuring it. The manual smoke workflow reads the corresponding GitHub Actions repository variables and preflights all five model IDs and API credentials before making its first request. It uses a maximum 32 output tokens per provider; the smoke test is still potentially billable and is not run by CI.
