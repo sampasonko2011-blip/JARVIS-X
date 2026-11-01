@@ -52,12 +52,20 @@ function stagePayload(role, objective, fields = {}, memoryContext = "") {
  * trusted server gateway; this module never reads secrets or creates network
  * connections. The default route is all-or-nothing: no GPT-only downgrade.
  */
-export async function executeFiveProviderCouncil({
-  objective,
-  memoryContext = "",
-  mode = "support",
-  invokeProvider,
-} = {}) {
+/**
+ * @typedef {Object} CouncilOptions
+ * @property {string} objective
+ * @property {string} [memoryContext]
+ * @property {"support" | "master_control"} [mode]
+ * @property {(provider: string, task: string, stage: string, mode: "support" | "master_control") => Promise<{provider: string, model: string, output: string}>} invokeProvider
+ */
+
+/**
+ * @param {CouncilOptions} options
+ * @returns {Promise<{answer: string, providerCalls: number, providersUsed: Array<{provider: string, model: string, stage: string}>, stages: Array<{provider: string, model: string, stage: string, status: string}>, independence: string, executionMode: string}>}
+ */
+export async function executeFiveProviderCouncil(options) {
+  const { objective, memoryContext = "", mode = "support", invokeProvider } = options;
   const task = requireText(objective, "council_objective_required", MAX_OBJECTIVE_CHARS);
   if (typeof invokeProvider !== "function") throw new TypeError("council_invoker_required");
   if (mode !== "support" && mode !== "master_control") throw new TypeError("council_mode_invalid");
