@@ -328,8 +328,7 @@ async function storeConversationMemory(task: string, answer: string, userId: str
 }
 
 const PROVIDER_CONFIG = Object.freeze({
-  // OpenAI's model ID is documented in the official API catalog. Optional adapters
-  // require an operator-supplied model ID because provider catalogs vary by account.
+  // Every provider model ID is operator-supplied and account-specific; never guess defaults.
   openai: { model: Deno.env.get("OPENAI_MODEL") || "", secret: "OPENAI_API_KEY" },
   deepseek: { model: Deno.env.get("DEEPSEEK_MODEL") || "", secret: "DEEPSEEK_API_KEY" },
   anthropic: { model: Deno.env.get("ANTHROPIC_MODEL") || "", secret: "ANTHROPIC_API_KEY" },
@@ -611,7 +610,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const requiredProviders: readonly ProviderName[] = rucheRoute.provider ? [rucheRoute.provider] : COMPOSITE_PROVIDERS;
-  const missingProviderSecrets = requiredProviders.flatMap(provider => {
+  const missingProviderConfig = requiredProviders.flatMap(provider => {
     const config = PROVIDER_CONFIG[provider];
     const secretConfigured = provider === "google"
       ? Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get(config.secret))
@@ -622,7 +621,7 @@ Deno.serve(async (req: Request) => {
     if (provider === "llama" && !Deno.env.get("LLAMA_BASE_URL")) missing.push("LLAMA_BASE_URL");
     return missing;
   });
-  if (missingProviderSecrets.length > 0) {
+  if (missingProviderConfig.length > 0) {
     const requestedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
     const requestedModel = rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL;
     const requestedMode = rucheRoute.provider ? "single-provider" : "five-provider-council";
@@ -631,8 +630,8 @@ Deno.serve(async (req: Request) => {
         task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: rucheRoute.provider ? "Selected provider is not configured; no inference executed" : "One or more of the five required specialist providers is not configured; no inference executed",
-        error_code: "provider_secrets_missing",
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, execution_mode: requestedMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderSecrets.length },
+        error_code: "provider_configuration_missing",
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, execution_mode: requestedMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
