@@ -56,15 +56,17 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 - **Install option missing:** open the HTTPS published URL in a supported browser and check the manifest/service worker; verify the deployment actually succeeded first.
 
 
-## Five-provider Ruche council (PR #72 candidate; not deployed)
+## Single-core Cognitive Kernel (feature branch; not deployed)
 
-HQ presents one assistant identity: **JARVIS-X**. In the PR #72 gateway candidate, the default composite route executes five distinct provider APIs: OpenAI leads, DeepSeek independently re-checks, Claude critiques, Grok stress-tests, and Gemini synthesizes. The three review stages run concurrently between the lead and synthesis stages. Provider-returned identities are checked and recorded. If any required provider, model ID, or stage fails, the council fails closed; it never silently downgrades to GPT-only.
+HQ presents one identity: **JARVIS-X**. The new `feature/jarvis-x-cognitive-kernel` branch changes the default `composite` route to one executive model invocation wrapped by the Cognitive Kernel. The kernel supplies a structured objective envelope, a shared evidence/uncertainty contract, explicit memory trust boundaries, capability-availability rules, and deterministic validation. It returns one JARVIS-X answer.
 
-This is provider orchestration, not model-weight fusion, copying proprietary internals, or importing this ChatGPT session into HQ. A provider contributes only when the gateway actually calls it and validates its returned response. The current production gateway remains v11 according to the cutover runbook; PR #72 is source-only and does not deploy the candidate.
+This is a software-level cognitive architecture, not a new trained neural network, model-weight fusion, or proof that the result is universally smarter than the underlying model. The model's weights remain those of the configured OpenAI model. Optional direct-provider routes and adapters remain available for controlled diagnostics; they are not part of the default composite execution.
 
-- `ia_selectionnee`: `composite` (default), `openai`, `gemini`, `claude`, `deepseek`, `grok`, `mistral`, or `llama`. Optional direct-provider routes are dormant until their own server-side API key and explicit provider model ID are configured; configuration presence alone does not prove live inference.
-- `orchestration_mode`: `support` or `master_control`. French aliases `epaulement` and `domination` are accepted. Master Control changes the planning prompt only; it cannot bypass authorization, budget, rate limits, or human approval.
-- The default composite route requires all five server-side provider credentials: `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `XAI_API_KEY`, and `GOOGLE_API_KEY` (or the supported `JARVIS_X_GEMINI_API_KEY` alias). It also requires explicit model IDs in `OPENAI_MODEL`, `DEEPSEEK_MODEL`, `ANTHROPIC_MODEL`, `XAI_MODEL`, and `GEMINI_MODEL`. The HQ browser never receives provider keys.
-- Optional direct diagnostic routes remain available for individual providers, including Mistral and Llama. Each requires its own server-side credential and exact model ID; Llama also requires `LLAMA_BASE_URL` pointing to a trusted HTTPS OpenAI-compatible endpoint. A model running only on a personal iPad is not automatically reachable from Supabase.
-- Missing provider keys, model IDs, endpoints, authentication policy, rate-limit RPCs, audit storage, or budget reservation fail closed. The global budget guard remains disabled and its reservation unset; therefore paid live inference remains blocked. Mock mode is a deterministic placeholder only: it makes no model call and does not demonstrate capability.
-- This is API orchestration, not model-weight fusion, copying proprietary internals, or importing this ChatGPT session into the HQ. A real provider contributes only when the gateway calls it and validates the returned response.
+- The default composite route requires only `OPENAI_API_KEY` and the exact operator-configured `OPENAI_MODEL`. Other provider keys and model IDs are not required for the default route.
+- The browser still selects only the `composite` identity; no user-facing provider picker is introduced.
+- `support` and `master_control` change the orchestration instructions only. Neither bypasses authorization, rate limits, cost controls, or human approval.
+- The gateway continues to require authenticated allowlisting, database-backed rate limits, execution-ledger writes, and a global budget reservation before hosted inference.
+- Mock mode remains a deterministic placeholder and makes zero model calls. Passing mock tests does not establish live inference.
+- External tools and plugin executors are not yet integrated into the Cognitive Kernel invocation. The kernel must not claim those tools are available until an authorized executor is actually wired in and invoked.
+- The current production gateway remains separate. This feature branch is source-only; no production settings, provider secrets, deployments, or paid API calls were changed.
+
