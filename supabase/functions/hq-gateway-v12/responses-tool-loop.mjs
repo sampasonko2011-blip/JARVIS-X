@@ -1,4 +1,5 @@
 const MAX_INPUT_ITEMS = 64;
+const MAX_SERIALIZED_INPUT_CHARS = 80_000;
 const MAX_TOOL_ARGUMENT_CHARS = 16_000;
 const MAX_TOOL_OUTPUT_CHARS = 20_000;
 const MAX_MODEL_CALLS = 2;
@@ -38,6 +39,14 @@ export async function executeResponsesToolLoop(options = {}) {
   let input = typeof initialInput === "string" ? [{ role: "user", content: initialInput }]
     : Array.isArray(initialInput) ? [...initialInput] : null;
   if (!input || input.length < 1 || input.length > MAX_INPUT_ITEMS) fail("responses_tool_input_invalid");
+  try {
+    const serialized = JSON.stringify(input);
+    if (typeof serialized !== "string" || serialized.length > MAX_SERIALIZED_INPUT_CHARS) fail("responses_tool_input_too_large");
+    input = JSON.parse(serialized);
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "responses_tool_input_too_large") throw error;
+    fail("responses_tool_input_invalid");
+  }
   const tools = registry.toOpenAITools();
   if (!Array.isArray(tools) || tools.length > 16) fail("responses_tool_registry_too_large");
   let modelCalls = 0;
@@ -45,6 +54,8 @@ export async function executeResponsesToolLoop(options = {}) {
   const capabilitiesUsed = [];
   let returnedModel = "";
   while (modelCalls < MAX_MODEL_CALLS) {
+    const serializedInput = JSON.stringify(input);
+    if (typeof serializedInput !== "string" || serializedInput.length > MAX_SERIALIZED_INPUT_CHARS) fail("responses_tool_input_too_large");
     const canCallTool = tools.length > 0 && toolCalls < MAX_TOOL_CALLS && modelCalls === 0;
     const response = await invokeResponse({
       instructions, input, tools: canCallTool ? tools : [],
@@ -91,6 +102,8 @@ export async function executeResponsesToolLoop(options = {}) {
     }
     input = [...input, ...output, ...outputs];
     if (input.length > MAX_INPUT_ITEMS) fail("responses_tool_input_limit_exceeded");
+    const appendedInput = JSON.stringify(input);
+    if (typeof appendedInput !== "string" || appendedInput.length > MAX_SERIALIZED_INPUT_CHARS) fail("responses_tool_input_too_large");
   }
   fail("responses_tool_loop_limit_exceeded");
 }
