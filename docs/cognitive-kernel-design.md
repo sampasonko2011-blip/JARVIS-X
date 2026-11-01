@@ -73,7 +73,7 @@ On source commit `25a749a5dbb1d559d7f98f533c74c37210ea3816`, GitHub Actions CI c
 
 The deterministic runtime comparison used 30 iterations after 5 warmups across 4 authored fixtures. It recorded 100% fixture pass rates for both paths; median local orchestration time was 0.018 ms for the single-organ runtime and 0.044 ms for the multi-organ synthesis runtime (p95 0.102 ms vs 0.179 ms). This measures local mock orchestration overhead only. It does not measure model intelligence, answer quality, live API latency, or tool usefulness, and is not evidence of neural fusion or a better model.
 
-The later Responses tool-loop integration adds a new CI surface and is **not yet validated by a successful CI run**. The first integration run failed at Deno type-check because the loop's terminal guard was inferred as possibly returning; a non-returning type annotation was added, and additional bounded-loop tests were added. Recheck the latest branch head before describing this integration as validated. The local tool flag remains off by default.
+The first integration CI run caught a Deno type-check issue (the loop's terminal guard was inferred as possibly returning) and a stale source-contract assertion. Both were corrected. The integrated branch then passed GitHub Actions on source commit `95801a774b4cee221792f2b9d5064f1c3c4c0448`: build, Deno gateway type-check, `npm test` (363 passed, 0 failed), HQ browser E2E, static syntax checks, and deterministic runtime benchmark. The local tool flag remains off by default. This validates source contracts and mocks, not live inference or external tool access.
 
 ## Known limits
 
