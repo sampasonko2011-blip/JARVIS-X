@@ -22,8 +22,8 @@ const MAX_TASK_CHARS = 12_000;
 const MAX_STAGE_INPUT_CHARS = 64_000;
 const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
-// Gemini 3.6 Flash counts thinking tokens against this limit; Google's guide recommends at least 32,768.
-const GEMINI_MAX_OUTPUT_TOKENS = 32_768;
+// Keep Gemini synthesis output bounded; never assume model availability or account quota.
+const GEMINI_MAX_OUTPUT_TOKENS = 1_024;
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
   const headers = new Headers({
@@ -330,7 +330,7 @@ async function storeConversationMemory(task: string, answer: string, userId: str
 const PROVIDER_CONFIG = Object.freeze({
   // OpenAI's model ID is documented in the official API catalog. Optional adapters
   // require an operator-supplied model ID because provider catalogs vary by account.
-  openai: { model: Deno.env.get("OPENAI_MODEL") || "gpt-6.1-sol", secret: "OPENAI_API_KEY" },
+  openai: { model: Deno.env.get("OPENAI_MODEL") || "", secret: "OPENAI_API_KEY" },
   deepseek: { model: Deno.env.get("DEEPSEEK_MODEL") || "", secret: "DEEPSEEK_API_KEY" },
   anthropic: { model: Deno.env.get("ANTHROPIC_MODEL") || "", secret: "ANTHROPIC_API_KEY" },
   xai: { model: Deno.env.get("XAI_MODEL") || "", secret: "XAI_API_KEY" },
