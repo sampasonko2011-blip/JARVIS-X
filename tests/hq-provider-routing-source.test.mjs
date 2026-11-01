@@ -44,8 +44,8 @@ test("browser gateway fixtures model the versioned single-core composite contrac
     assert.ok(fixture.includes('provider: "jarvis-x-cognitive-kernel"'), "fixture should report the single JARVIS-X composite identity");
     assert.ok(!fixture.includes("single-engine-composite-prompt"), "fixture must not advertise the obsolete one-model composite route");
   }
-  assert.ok(hqE2E.includes("provider_calls: 1"), "successful HQ fixture must record five provider calls");
-  assert.ok(hqE2E.includes('stage:"executive_core"'), "successful HQ fixture must include the Gemini synthesis stage");
+  assert.ok(hqE2E.includes("provider_calls: 1"), "successful HQ fixture must record one executive-core call");
+  assert.ok(hqE2E.includes('stage:"executive_core"'), "successful HQ fixture must include the executive-core stage");
 });
 test("manual smoke model IDs are operator-configured, not guessed", () => {
   for (const modelEnv of ["OPENAI_MODEL", "DEEPSEEK_MODEL", "ANTHROPIC_MODEL", "XAI_MODEL", "GEMINI_MODEL"]) {
