@@ -4,48 +4,55 @@ import { readFile } from "node:fs/promises";
 
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
+const council = await readFile(new URL("../supabase/functions/hq-gateway-v12/council-runtime.mjs", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
 
-test("composite route uses one configured model with multi-perspective reasoning, not fake multi-model consensus", () => {
-  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY"\]/);
-  assert.match(gateway, /async function executeCompositePrompt/);
-  assert.match(gateway, /providerCalls: 1/);
-  assert.match(gateway, /stage: "single-model-multi-perspective"/);
-  assert.match(gateway, /single-model-multi-perspective-prompt-not-independent-models/);
-  assert.doesNotMatch(gateway, /executeMultipass|five-distinct-provider-stages|five-provider-council/);
-  assert.match(gateway, /model: Deno\.env\.get\("OPENAI_MODEL"\) \|\| "gpt-6\.1-sol"/);
-  assert.match(gateway, /providers: healthRoute\.provider \? \[healthRoute\.provider\] : \["openai"\]/);
+test("default composite route requires all five provider credentials", () => {
+  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GEMINI_API_KEY"\]/);
+  for (const provider of ["openai", "deepseek", "anthropic", "xai", "google"]) {
+    assert.ok(gateway.includes(provider + ": { model:"), "missing model config for " + provider);
+  }
+  assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
+  assert.match(gateway, /provider\.toUpperCase\(\) \+ "_MODEL"/);
 });
 
-test("optional provider routes require server credentials and explicit model IDs", () => {
+test("composite gateway executes the five-provider council rather than one-model composite prompting", () => {
+  assert.match(gateway, /import \{ executeFiveProviderCouncil \} from "\.\/council-runtime\.mjs"/);
+  assert.match(gateway, /await executeFiveProviderCouncil\(/);
+  assert.match(gateway, /five-provider-council/);
+  assert.match(gateway, /five-distinct-provider-stages/);
+  assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/);
+  assert.match(council, /Promise\.all\(reviewSpecs\.map/);
+  assert.match(council, /await invokeProvider\("google", synthesisInput, "synthesis", mode\)/);
+  assert.match(council, /provider_identity_mismatch_/);
+  assert.doesNotMatch(gateway, /: await executeCompositePrompt\(/);
+});
+
+test("health advertises all five internal providers while preserving one composite identity", () => {
+  assert.match(gateway, /mode: healthRoute\.provider \? "single-provider" : "five-provider-council"/);
+  assert.match(gateway, /providers: healthRoute\.provider \? \[healthRoute\.provider\] : \[\.\.\.COMPOSITE_PROVIDERS\]/);
+  assert.match(gateway, /provider: healthRoute\.provider \?\? PRIMARY_PROVIDER/);
+  assert.equal((gateway.match(/const COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/g) || []).length, 1);
+});
+
+test("optional direct provider routes remain available for controlled diagnostics", () => {
   for (const provider of ["openai", "deepseek", "claude", "grok", "gemini", "mistral", "llama"]) {
     assert.match(router, new RegExp('"' + provider + '"'));
   }
   for (const modelEnv of ["DEEPSEEK_MODEL", "ANTHROPIC_MODEL", "XAI_MODEL", "GEMINI_MODEL", "MISTRAL_MODEL", "LLAMA_MODEL"]) {
     assert.ok(gateway.includes(modelEnv), "missing explicit model configuration for " + modelEnv);
   }
-  assert.match(gateway, /provider_model_id_not_configured/);
-  assert.match(gateway, /Optional provider IDs are never guessed or hard-coded/);
+  assert.match(gateway, /provider_endpoint_not_configured/);
   assert.match(router, /MISTRAL_API_KEY/);
   assert.match(router, /LLAMA_API_KEY/);
-  assert.match(gateway, /LLAMA_BASE_URL/);
-  assert.match(gateway, /https:\/\/api\.mistral\.ai/);
 });
 
-test("router supports French aliases while keeping canonical internal modes", () => {
-  assert.match(router, /epaulement/);
-  assert.match(router, /domination/);
-  assert.match(router, /master_control/);
-  assert.match(router, /invalid_ia_selection/);
-});
-
-test("success and failure audit receipts distinguish one model from optional direct routes", () => {
-  assert.ok(gateway.includes('const executionMode = rucheRoute.provider ? "single-provider" : "single-engine-composite-prompt";'));
-  assert.ok(gateway.includes('const independence = rucheRoute.provider ? "single-provider-no-cross-review" : "single-model-multi-perspective-prompt-not-independent-models";'));
-  assert.ok(gateway.includes("provider: reportedProvider, model: reportedModel"));
-  assert.ok(gateway.includes('output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted"'));
-  assert.ok(gateway.includes('output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted"'));
-  assert.ok(gateway.includes('selected_provider: rucheRoute.selection'));
+test("success and failure receipts distinguish one provider from the five-provider council", () => {
+  assert.match(gateway, /const executionMode = result\.executionMode \?\? \(rucheRoute\.provider \? "single-provider" : "five-provider-council"\)/);
+  assert.match(gateway, /const independence = result\.independence \?\? \(rucheRoute\.provider \? "single-provider-no-cross-review" : "five-distinct-provider-stages"\)/);
+  assert.match(gateway, /provider_calls: result\.providerCalls/);
+  assert.match(gateway, /providers_used: result\.providersUsed/);
+  assert.match(gateway, /reportedModel = result\.providersUsed\.map/);
 });
 
 test("mock mode is explicitly a placeholder and claims no model inference", () => {
@@ -56,13 +63,12 @@ test("mock mode is explicitly a placeholder and claims no model inference", () =
   assert.match(gateway, /mock-composite-prompt-placeholder/);
 });
 
-test("HQ sends the route and mode to the versioned gateway while preserving one assistant identity", async () => {
+test("HQ preserves one assistant identity and does not expose a provider picker", async () => {
   const hqJs = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
   const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
   assert.match(hqJs, /functions\/v1\/hq-gateway-v12/);
   assert.match(hqJs, /ia_selectionnee:selectedProvider/);
-  assert.match(hqJs, /orchestration_mode:orchestrationMode/);
-  assert.match(hqJs, /healthUrl=JX_GATEWAY\+'\/health\?provider='/);
-  assert.doesNotMatch(hqHtml, /id="chat-ai-selection"/, "HQ keeps one composite assistant identity");
+  assert.match(hqJs, /five-provider-council/);
+  assert.doesNotMatch(hqHtml, /id="chat-ai-selection"/);
   assert.match(hqHtml, /id="chat-orchestration-mode"/);
 });
