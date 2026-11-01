@@ -83,6 +83,7 @@ function normalizeSchema(schema, depth = 0) {
   } else if (schema.type === "number" || schema.type === "integer") {
     if (schema.minimum !== undefined && !Number.isFinite(schema.minimum)) fail("capability_schema_minimum_invalid");
     if (schema.maximum !== undefined && !Number.isFinite(schema.maximum)) fail("capability_schema_maximum_invalid");
+    if (schema.minimum !== undefined && schema.maximum !== undefined && schema.minimum > schema.maximum) fail("capability_schema_range_invalid");
     if (schema.minimum !== undefined) normalized.minimum = schema.minimum;
     if (schema.maximum !== undefined) normalized.maximum = schema.maximum;
   }
@@ -244,20 +245,24 @@ export function createCapabilityRegistry(options = {}) {
       const controller = new AbortController();
       const deadlineAt = clock() + definition.timeoutMs;
       try {
-        const result = await Promise.race([
-          Promise.resolve().then(() => definition.handler(Object.freeze({
-            input: request.input,
-            userId: context.userId,
-            requestId: context.requestId,
-            signal: controller.signal
-          }))),
-          new Promise((_, reject) => {
-            timer = setTimeout(() => {
-              controller.abort();
-              reject(new Error("capability_timeout"));
-            }, definition.timeoutMs);
-          })
-        ]);
+        const handlerExecution = Promise.resolve().then(() => definition.handler(Object.freeze({
+        input: request.input,
+        userId: context.userId,
+        requestId: context.requestId,
+        signal: controller.signal
+      })));
+      // Keep the concurrency slot occupied until the handler actually settles,
+      // even if it ignores AbortSignal after the deadline.
+      const trackedExecution = handlerExecution.finally(() => { active--; });
+      const result = await Promise.race([
+        trackedExecution,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error("capability_timeout"));
+          }, definition.timeoutMs);
+        })
+      ]);
         boundedJson(result, MAX_RESULT_CHARS, "capability_result_too_large");
         return makeReceipt({
           ...base,
@@ -275,7 +280,6 @@ export function createCapabilityRegistry(options = {}) {
         return makeReceipt({ ...base, status: "failed", code, finishedAt: clock() });
       } finally {
         if (timer !== undefined) clearTimeout(timer);
-        active--;
       }
     }
   });
