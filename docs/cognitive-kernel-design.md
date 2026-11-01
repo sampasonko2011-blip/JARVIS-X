@@ -60,6 +60,17 @@ LangGraph's official documentation distinguishes thread-scoped checkpoints from 
 - Live provider smoke tests only after separate explicit authorization and a verified spend cap. Under the current €0 boundary, do not run them.
 - Production deployment and merge require separate owner authorization and a coordinated gateway/frontend cutover.
 
+
+## Current automated verification
+
+On source commit `25a749a5dbb1d559d7f98f533c74c37210ea3816`, GitHub Actions CI completed successfully:
+- TypeScript build and Deno gateway type-check passed.
+- `npm test`: 349 passed, 0 failed.
+- HQ Playwright end-to-end suite passed.
+- Static syntax checks and deterministic benchmarks passed.
+
+The deterministic runtime comparison used 30 iterations after 5 warmups across 4 authored fixtures. It recorded 100% fixture pass rates for both paths; median local orchestration time was 0.018 ms for the single-organ runtime and 0.044 ms for the multi-organ synthesis runtime (p95 0.102 ms vs 0.179 ms). This measures local mock orchestration overhead only. It does not measure model intelligence, answer quality, live API latency, or tool usefulness, and is not evidence of neural fusion or a better model.
+
 ## Known limits
 
 The current implementation wraps one existing model. It does not train a new model, combine neural weights, guarantee superiority over the underlying model, or provide live tools to the model invocation. The next measurable improvement must come from implemented capability execution and comparable evaluation—not branding or architecture claims.
