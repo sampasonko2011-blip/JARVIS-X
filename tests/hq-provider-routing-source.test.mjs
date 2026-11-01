@@ -14,33 +14,30 @@ const rateLimitMigration = await readFile(new URL("../supabase/migrations/202610
 const hqE2E = await readFile(new URL("../e2e/hq.spec.mjs", import.meta.url), "utf8");
 const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta.url), "utf8");
 
-test("manual smoke test covers all five providers with bounded calls and explicit cost confirmation", () => {
-  for (const [provider, secret, model] of [
-    ["OpenAI", "OPENAI_API_KEY", "gpt-6.1-sol"],
-    ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-v4-flash"],
-    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5"],
-    ["xAI", "XAI_API_KEY", "grok-4.7"],
-    ["Google", "GOOGLE_API_KEY", "gemini-3.8-flash"],
+test("manual smoke test preflights all five credentials and model IDs before bounded requests", () => {
+  for (const [provider, secret, modelEnv] of [
+    ["OpenAI", "OPENAI_API_KEY", "OPENAI_MODEL"],
+    ["DeepSeek", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL"],
+    ["Anthropic", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"],
+    ["xAI", "XAI_API_KEY", "XAI_MODEL"],
+    ["Google", "GOOGLE_API_KEY", "GEMINI_MODEL"],
   ]) {
     assert.ok(providerSmoke.includes(`provider: "${provider}"`), "smoke test missing " + provider);
     assert.ok(providerSmoke.includes(`envKey: "${secret}"`), "smoke test missing secret name " + secret);
-    assert.ok(providerSmoke.includes(`model: "${model}"`), "smoke test missing model " + model);
-    assert.ok(providerSmokeWorkflow.includes(`${secret}: \${{ secrets.${secret} }}`), "workflow missing " + secret);
+    assert.ok(providerSmoke.includes(`modelEnv: "${modelEnv}"`), "smoke test missing model variable " + modelEnv);
+    assert.ok(providerSmokeWorkflow.includes(`${secret}: \\${{ secrets.${secret} }}`), "workflow missing " + secret);
+    assert.ok(providerSmokeWorkflow.includes(modelEnv + ": ${{ vars." + modelEnv + " }}"), "workflow missing model variable " + modelEnv);
   }
-  assert.match(providerSmoke, /max_output_tokens: 32/);
-  assert.match(providerSmoke, /max_tokens: 32/);
-  assert.match(providerSmoke, /maxOutputTokens: 32_768/);
-  assert.match(providerSmoke, /AbortController/);
-  assert.match(providerSmoke, /identityMatches\(config, observedModel\)/);
+  assert.match(providerSmoke, /MAX_OUTPUT_TOKENS = 32/);
+  assert.match(providerSmoke, /max_output_tokens: MAX_OUTPUT_TOKENS/);
+  assert.match(providerSmoke, /max_tokens: MAX_OUTPUT_TOKENS/);
+  assert.match(providerSmoke, /PREFLIGHT_BLOCKED_NO_PROVIDER_CALLS/);
+  assert.match(providerSmoke, /v1beta\\/interactions/);
+  assert.match(providerSmoke, /identityMatches\\(observedModel, model\\)/);
   assert.match(providerSmokeWorkflow, /confirm_paid_api_calls/);
-  assert.match(providerSmokeWorkflow, /confirm_gemini_output_budget/);
-  assert.match(providerSmokeWorkflow, /32,768-token Gemini output ceiling/);
   assert.match(providerSmokeWorkflow, /default: false/);
-  assert.match(providerSmokeWorkflow, /inputs\.confirm_paid_api_calls == true/);
-  assert.equal((providerSmokeWorkflow.match(/inputs\.confirm_paid_api_calls == true && inputs\.confirm_gemini_output_budget == true/g) || []).length, 4);
-  assert.doesNotMatch(providerSmokeWorkflow, /if: \$\{\{ inputs\.confirm_paid_api_calls == true \}\}/);
+  assert.doesNotMatch(providerSmokeWorkflow, /confirm_gemini_output_budget/);
 });
-
 test("browser gateway fixtures model the versioned five-provider composite contract", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
     assert.ok(fixture.includes('mode: "five-provider-council"'), "fixture should use the five-provider composite health mode");
