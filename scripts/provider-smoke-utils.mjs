@@ -8,3 +8,7 @@ export function identityMatches(observed, requested) {
 export function hasExpectedArithmeticResult(output) {
   return typeof output === "string" && /(^|\D)323(\D|$)/.test(output);
 }
+
+export function isCompletedInteraction(payload) {
+  return payload !== null && typeof payload === "object" && payload.status === "completed";
+}
