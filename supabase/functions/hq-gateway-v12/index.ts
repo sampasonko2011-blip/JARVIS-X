@@ -635,7 +635,7 @@ Deno.serve(async (req: Request) => {
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
-    return jsonResponse({ error: "providers_not_configured", provider: requestedProvider, selected_provider: rucheRoute.selection, execution_mode: requestedMode, missing_provider_count: missingProviderSecrets.length }, 503, origin);
+    return jsonResponse({ error: "providers_not_configured", provider: requestedProvider, selected_provider: rucheRoute.selection, execution_mode: requestedMode, missing_provider_count: missingProviderConfig.length }, 503, origin);
   }
 
   let budgetReservation;
