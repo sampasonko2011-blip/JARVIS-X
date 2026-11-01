@@ -38,14 +38,14 @@ test("manual smoke test preflights all five credentials and model IDs before bou
   assert.match(providerSmokeWorkflow, /default: false/);
   assert.doesNotMatch(providerSmokeWorkflow, /confirm_gemini_output_budget/);
 });
-test("browser gateway fixtures model the versioned single-core composite contract", () => {
+test("browser gateway fixtures model the versioned five-provider composite contract", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
-    assert.ok(fixture.includes('mode: "single-core-cognitive-kernel"'), "fixture should use the single-core composite health mode");
-    assert.ok(fixture.includes('provider: "jarvis-x-cognitive-kernel"'), "fixture should report the single JARVIS-X composite identity");
+    assert.ok(fixture.includes('mode: "five-provider-council"'), "fixture should use the five-provider composite health mode");
+    assert.ok(fixture.includes('provider: "multi-provider-council"'), "fixture should report the single JARVIS-X composite identity");
     assert.ok(!fixture.includes("single-engine-composite-prompt"), "fixture must not advertise the obsolete one-model composite route");
   }
-  assert.ok(hqE2E.includes("provider_calls: 1"), "successful HQ fixture must record one executive-core call");
-  assert.ok(hqE2E.includes('stage:"executive_core"'), "successful HQ fixture must include the executive-core stage");
+  assert.ok(hqE2E.includes("provider_calls: 5"), "successful HQ fixture must record five provider calls");
+  assert.ok(hqE2E.includes('stage:"synthesis"'), "successful HQ fixture must include the Gemini synthesis stage");
 });
 test("manual smoke model IDs are operator-configured, not guessed", () => {
   for (const modelEnv of ["OPENAI_MODEL", "DEEPSEEK_MODEL", "ANTHROPIC_MODEL", "XAI_MODEL", "GEMINI_MODEL"]) {
@@ -228,7 +228,7 @@ test("council fails closed if any required provider credential is missing", () =
   assert.match(gateway, /missingProviderSecrets/);
   assert.match(gateway, /providers_not_configured/);
   assert.match(gateway, /provider_secret_missing_/);
-  assert.match(gateway, /single-core-cognitive-kernel/);
+  assert.match(gateway, /five-provider-council/);
 });
 
 test("council validates provider model identity and records provider receipts", () => {
