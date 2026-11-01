@@ -19,8 +19,9 @@ function extractText(response) {
 }
 
 function normalizeToolOutput(receipt) {
-  const safe = { status: receipt?.status ?? "rejected", code: receipt?.code ?? null };
-  if (receipt?.status === "succeeded") safe.result = receipt.result;
+  const safe = receipt?.status === "succeeded"
+    ? { status: receipt.status, code: receipt.code ?? null, result: receipt.result }
+    : { status: receipt?.status ?? "rejected", code: receipt?.code ?? null };
   const output = JSON.stringify(safe);
   return output.length <= MAX_TOOL_OUTPUT_CHARS
     ? output
