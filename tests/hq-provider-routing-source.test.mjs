@@ -25,7 +25,7 @@ test("manual smoke test preflights all five credentials and model IDs before bou
     assert.ok(providerSmoke.includes(`provider: "${provider}"`), "smoke test missing " + provider);
     assert.ok(providerSmoke.includes(`envKey: "${secret}"`), "smoke test missing secret name " + secret);
     assert.ok(providerSmoke.includes(`modelEnv: "${modelEnv}"`), "smoke test missing model variable " + modelEnv);
-    assert.ok(providerSmokeWorkflow.includes(`${secret}: \\${{ secrets.${secret} }}`), "workflow missing " + secret);
+    assert.ok(providerSmokeWorkflow.includes(secret + ": ${{ secrets." + secret + " }}"), "workflow missing " + secret);
     assert.ok(providerSmokeWorkflow.includes(modelEnv + ": ${{ vars." + modelEnv + " }}"), "workflow missing model variable " + modelEnv);
   }
   assert.match(providerSmoke, /MAX_OUTPUT_TOKENS = 32/);
