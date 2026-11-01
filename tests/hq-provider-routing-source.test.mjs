@@ -17,10 +17,10 @@ const gatewayE2E = await readFile(new URL("../e2e/gateway.spec.mjs", import.meta
 test("manual smoke test covers all five providers with bounded calls and explicit cost confirmation", () => {
   for (const [provider, secret, model] of [
     ["OpenAI", "OPENAI_API_KEY", "gpt-6.1-sol"],
-    ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-flash"],
-    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5-5"],
+    ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-v4-flash"],
+    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5"],
     ["xAI", "XAI_API_KEY", "grok-4.7"],
-    ["Google", "GOOGLE_API_KEY", "gemini-4-argon"],
+    ["Google", "GOOGLE_API_KEY", "gemini-3.8-flash"],
   ]) {
     assert.ok(providerSmoke.includes(`provider: "${provider}"`), "smoke test missing " + provider);
     assert.ok(providerSmoke.includes(`envKey: "${secret}"`), "smoke test missing secret name " + secret);
@@ -52,10 +52,10 @@ test("browser gateway fixtures model the versioned five-provider composite contr
 });
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
-  assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
+  assert.ok(gateway.includes('deepseek: { model: "deepseek-v4-flash"'));
   assert.ok(gateway.includes('anthropic: { model: "claude-opus-5"'));
   assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
-  assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
+  assert.ok(gateway.includes('google: { model: "gemini-3.8-flash"'));
   assert.ok(gateway.includes('normalized === "claude-opus-5"'));
 });
 test("council routes five distinct providers through their provider APIs", () => {
@@ -83,7 +83,7 @@ test("execution receipts preserve the provider-returned model ID after identity 
 });
 
 test("provider identity validation rejects cross-model responses", () => {
-  assert.ok(gateway.includes('normalized === "deepseek-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
+  assert.ok(gateway.includes('normalized === "deepseek-v4-flash" || normalized.startsWith("deepseek-v4.1-flash")'));
   assert.ok(gateway.includes('normalized.startsWith("grok-4.7")'));
   assert.ok(gateway.includes('normalized === "claude-opus-5"'));
   assert.ok(gateway.includes('if (!identityMatches) throw new Error("provider_model_identity_mismatch_" + provider)'));
