@@ -36,14 +36,16 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
         "Do not expose private hidden reasoning. Provide concise conclusions, evidence, assumptions, and verification."
       ],
       tool_access: "Only the explicitly listed local capabilities may be called. They are not external browsing or account integrations. Do not claim access beyond the listed capabilities.",
-      available_capabilities: availableCapabilities
+      available_capabilities: availableCapabilities,
+      execution_limits: { max_model_calls: 2, max_sequential_tool_calls: 1, parallel_tool_calls: false }
     },
     runtime_controls: {
       authenticated_gateway: true,
       rate_limit_checked: true,
       global_budget_gate_checked: true,
       memory_consent_required: true,
-      provider_calls_planned: 1
+      provider_calls_max: 2,
+      tool_calls_max: 1
     },
     ...(memoryContext.trim()
       ? {
