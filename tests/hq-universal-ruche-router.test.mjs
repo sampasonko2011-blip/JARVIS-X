@@ -8,7 +8,7 @@ const council = await readFile(new URL("../supabase/functions/hq-gateway-v12/cou
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
 
 test("default composite route requires all five provider credentials", () => {
-  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GEMINI_API_KEY"\]/);
+  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"\]/);
   for (const provider of ["openai", "deepseek", "anthropic", "xai", "google"]) {
     assert.ok(gateway.includes(provider + ": { model:"), "missing model config for " + provider);
   }
