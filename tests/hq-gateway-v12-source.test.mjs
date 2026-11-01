@@ -63,3 +63,16 @@ test("provider adapters reject incomplete responses before treating them as comp
   assert.ok(gateway.includes("provider_incomplete_response_"));
   assert.ok(gateway.includes("provider_nonterminal_finish_"));
 });
+
+test("cross-platform memory is explicit opt-in and consent is sent per request", async () => {
+  const client = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+  const html = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+  assert.match(client, /let enabled=false/);
+  assert.match(client, /enabled=saved==='true'/);
+  assert.match(client, /memory_consent:memoryConsent/);
+  assert.match(gateway, /body\.memory_consent === true/);
+  assert.match(gateway, /memoryConsent \? await recallMemory/);
+  assert.match(gateway, /memoryConsent\s*\?\s*await storeConversationMemory/);
+  assert.match(html, /Off by default/);
+  assert.match(html, /other devices have their own consent setting/);
+});
