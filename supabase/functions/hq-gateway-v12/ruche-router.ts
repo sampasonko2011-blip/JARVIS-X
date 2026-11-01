@@ -1,7 +1,7 @@
 /**
  * JARVIS-X Universal Ruche Router.
  * Provider selection is server-side; credentials never enter the browser payload.
- * "composite" is the authenticated five-provider specialist council with a distinct synthesis model.
+ * "composite" is one authenticated executive Cognitive Kernel invocation. Optional direct-provider routes are diagnostic only.
  */
 export type RucheProvider = "openai" | "deepseek" | "anthropic" | "xai" | "google" | "mistral" | "llama";
 export type RucheSelection = "composite" | "openai" | "deepseek" | "claude" | "grok" | "gemini" | "mistral" | "llama";
