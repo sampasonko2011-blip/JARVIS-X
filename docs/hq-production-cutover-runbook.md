@@ -32,6 +32,7 @@
 1. Confirm whether a zero-cost staging project exists. If not, stop before production mutation under the current €0 constraint.
 2. Review the pending additive rate-limit migration against the live catalog. The budget schema is already applied; do not reapply it.
 3. For the default Cognitive Kernel, verify the configured OpenAI model ID, account access, pricing, and provider-side spending controls. Optional diagnostic providers require their own independent verification. Public model documentation is not proof of account access.
+4. Keep `JX_ENABLE_LOCAL_TOOL_CALLS` unset/false during the €0 phase. If it is ever enabled, verify that the single per-request reservation covers the maximum two sequential Responses calls; do not infer coverage from a daily cap alone.
 
 ### Gate 1 — staging validation
 
