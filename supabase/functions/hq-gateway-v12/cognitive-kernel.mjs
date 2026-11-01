@@ -58,8 +58,9 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
 }
 
 /**
- * One executive inference with deterministic governance around it.
- * The injected core is the only model invocation. This module has no network,
+ * One executive core with deterministic governance and a bounded tool follow-up.
+ * The injected core is the only model identity; its adapter may make a bounded
+ * second inference after an authorized local tool call. This module has no network,
  * credential, storage, or hidden provider access.
  */
 export async function executeCognitiveKernel(options) {
