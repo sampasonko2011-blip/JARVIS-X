@@ -18,7 +18,7 @@ test("default composite is one executive core, not a five-model council", () => 
   assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY"\]/);
   assert.match(gateway, /await executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
-  assert.match(gateway, /callProvider\("openai", stageTask, "lead", mode\)/);
+  assert.match(gateway, /invokeOpenAIResponses\(request\.input, request\.instructions, request\.tools\)/);
   assert.match(gateway, /single-core-cognitive-kernel/);
   assert.doesNotMatch(gateway, /executeFiveProviderCouncil/);
 });
