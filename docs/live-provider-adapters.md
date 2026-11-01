@@ -7,12 +7,12 @@
 | Provider | Required environment variable | API style |
 |---|---|---|
 | Google Gemini | `GOOGLE_API_KEY` or `JARVIS_X_GEMINI_API_KEY` | Gemini Interactions API `/v1beta/interactions` |
-| Anthropic Claude | `ANTHROPIC_API_KEY` | Messages API |
-| DeepSeek | `DEEPSEEK_API_KEY` | OpenAI-compatible chat completions |
-| OpenAI | `OPENAI_API_KEY` | OpenAI-compatible chat completions |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | Anthropic Messages API `/v1/messages` |
+| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek chat completions `/chat/completions` |
+| OpenAI | `OPENAI_API_KEY` | OpenAI Responses API `/v1/responses` in the five-provider gateway |
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
-| xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
+| xAI | `XAI_API_KEY` | xAI Responses API `/v1/responses` in the five-provider gateway |
 | Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
 | Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
 
