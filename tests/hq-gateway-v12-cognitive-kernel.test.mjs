@@ -51,7 +51,8 @@ test("kernel explicitly forbids claims of unavailable tools", async () => {
       return coreResult();
     }
   });
-  assert.match(payload.control_contract.tool_access, /No callable external tools/);
+  assert.match(payload.control_contract.tool_access, /explicitly listed local capabilities/);
+  assert.deepEqual(payload.control_contract.available_capabilities, []);
   assert.match(payload.control_contract.constraints.join(" "), /Never claim a tool/);
 });
 
@@ -74,4 +75,32 @@ test("kernel rejects wrong provider identity and empty output", async () => {
     objective: "valid",
     invokeCore: async () => coreResult({ output: " " })
   }), /cognitive_kernel_output_invalid/);
+});
+
+test("kernel advertises only the local capabilities explicitly supplied by the runtime", async () => {
+  let payload;
+  const capabilities = [{ name: "text.analyze", description: "Count text statistics" }];
+  const result = await executeCognitiveKernel({
+    objective: "Analyze this paragraph",
+    availableCapabilities: capabilities,
+    invokeCore: async input => {
+      payload = JSON.parse(input);
+      return coreResult({ providerCalls: 2, toolCalls: 1, capabilitiesUsed: ["text.analyze"] });
+    }
+  });
+  assert.deepEqual(payload.control_contract.available_capabilities, capabilities);
+  assert.equal(result.providerCalls, 2);
+  assert.equal(result.toolCalls, 1);
+  assert.deepEqual(result.capabilitiesUsed, ["text.analyze"]);
+  assert.ok(result.kernel.controlsApplied.includes("bounded_local_tool_execution"));
+});
+
+test("kernel rejects malformed capability declarations before model invocation", async () => {
+  let calls = 0;
+  await assert.rejects(executeCognitiveKernel({
+    objective: "Valid objective",
+    availableCapabilities: [{ name: "bad" }],
+    invokeCore: async () => { calls++; return coreResult(); }
+  }), /cognitive_kernel_capabilities_invalid/);
+  assert.equal(calls, 0);
 });
