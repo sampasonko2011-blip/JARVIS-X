@@ -243,8 +243,9 @@ test("cross-platform memory preference persists in this browser and is user-disa
   const consentMarkup = hqHtml.match(/<input id="chat-memory-consent"[^>]*>/)?.[0] ?? "";
   assert.ok(consentMarkup, "chat must expose an explicit memory-consent control");
   assert.doesNotMatch(consentMarkup, /\bchecked\b/, "preference is applied by runtime code, not hardcoded into markup");
-  assert.match(hqRuntime, /let enabled=true/);
-  assert.match(hqRuntime, /if\(saved==='false'\)enabled=false/);
+  assert.match(hqRuntime, /let enabled=false/);
+  assert.match(hqRuntime, /enabled=saved==='true'/);
+  assert.match(hqRuntime, /if\(saved!=='true'&&saved!=='false'\)localStorage\.setItem\(MEMORY_PREFERENCE_KEY,'false'\)/);
   assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
   assert.match(hqRuntime, /MEMORY_PREFERENCE_KEY/);
   assert.match(hqRuntime, /memory_consent:memoryConsent/);
