@@ -1,4 +1,4 @@
-import { hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
+import { hasExpectedArithmeticResult, isCompletedInteraction } from "./provider-smoke-utils.mjs";
 
 function identityMatches(observed, requested) {
   if (typeof observed !== "string" || !observed.trim() || typeof requested !== "string" || !requested.trim()) return false;
@@ -69,6 +69,9 @@ async function smokeTest(config, apiKey, model) {
     if (!response.ok) {
       const message = String(payload?.error?.message ?? payload?.message ?? "Provider returned a non-JSON error");
       return { provider: config.provider, requested_model_id: model, status: "HTTP_ERROR", http_status: response.status, latency_ms: Date.now() - started, error: message.split(apiKey).join("[REDACTED]").slice(0, 300) };
+    }
+    if (config.kind === "gemini" && !isCompletedInteraction(payload)) {
+      return { provider: config.provider, requested_model_id: model, status: "INTERACTION_NOT_COMPLETED", interaction_status: payload?.status ?? null, http_status: response.status, latency_ms: Date.now() - started };
     }
     const output = extractText(config, payload);
     const observedModel = payload?.model;
