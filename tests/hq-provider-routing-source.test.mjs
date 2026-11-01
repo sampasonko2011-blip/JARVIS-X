@@ -32,8 +32,8 @@ test("manual smoke test preflights all five credentials and model IDs before bou
   assert.match(providerSmoke, /max_output_tokens: MAX_OUTPUT_TOKENS/);
   assert.match(providerSmoke, /max_tokens: MAX_OUTPUT_TOKENS/);
   assert.match(providerSmoke, /PREFLIGHT_BLOCKED_NO_PROVIDER_CALLS/);
-  assert.match(providerSmoke, /v1beta\\/interactions/);
-  assert.match(providerSmoke, /identityMatches\\(observedModel, model\\)/);
+  assert.match(providerSmoke, /v1beta\/interactions/);
+  assert.match(providerSmoke, /identityMatches\(observedModel, model\)/);
   assert.match(providerSmokeWorkflow, /confirm_paid_api_calls/);
   assert.match(providerSmokeWorkflow, /default: false/);
   assert.doesNotMatch(providerSmokeWorkflow, /confirm_gemini_output_budget/);
