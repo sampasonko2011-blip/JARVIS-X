@@ -564,6 +564,7 @@ Deno.serve(async (req: Request) => {
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
+      localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",
       rateLimits: "database-backed",
     }, 200, origin);
@@ -726,7 +727,9 @@ Deno.serve(async (req: Request) => {
     const result: CouncilExecutionResult = rucheRoute.provider
       ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
       : await (() => {
-          const registry = createDefaultCapabilityRegistry();
+          const registry = createDefaultCapabilityRegistry({
+            enabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
+          });
           return executeCognitiveKernel({
             objective: task,
             memoryContext: memory.context,
