@@ -10,7 +10,7 @@ function requireText(value, code, maxLength) {
   return value.trim();
 }
 
-function buildExecutiveEnvelope(objective, memoryContext, mode) {
+function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabilities) {
   const envelope = {
     kernel: "JARVIS-X Cognitive Kernel",
     kernel_version: "1.0.0",
@@ -35,7 +35,8 @@ function buildExecutiveEnvelope(objective, memoryContext, mode) {
         "Respect authorization, privacy, safety, cost, rate-limit, and budget boundaries.",
         "Do not expose private hidden reasoning. Provide concise conclusions, evidence, assumptions, and verification."
       ],
-      tool_access: "No callable external tools are attached to this model invocation. Do not claim browsing, code execution, or external actions."
+      tool_access: "Only the explicitly listed local capabilities may be called. They are not external browsing or account integrations. Do not claim access beyond the listed capabilities.",
+      available_capabilities: availableCapabilities
     },
     runtime_controls: {
       authenticated_gateway: true,
@@ -62,7 +63,7 @@ function buildExecutiveEnvelope(objective, memoryContext, mode) {
  * credential, storage, or hidden provider access.
  */
 export async function executeCognitiveKernel(options) {
-  const { objective, memoryContext = "", mode = "support", invokeCore } = options ?? {};
+  const { objective, memoryContext = "", mode = "support", invokeCore, availableCapabilities = [] } = options ?? {};
   const task = requireText(objective, "cognitive_kernel_objective_required", MAX_OBJECTIVE_CHARS);
   if (typeof memoryContext !== "string" || memoryContext.length > MAX_MEMORY_CHARS) {
     throw new TypeError("cognitive_kernel_memory_invalid");
@@ -71,8 +72,11 @@ export async function executeCognitiveKernel(options) {
     throw new TypeError("cognitive_kernel_mode_invalid");
   }
   if (typeof invokeCore !== "function") throw new TypeError("cognitive_kernel_core_required");
+  if (!Array.isArray(availableCapabilities) || availableCapabilities.length > 16 || availableCapabilities.some(item => !item || typeof item.name !== "string" || typeof item.description !== "string")) {
+    throw new TypeError("cognitive_kernel_capabilities_invalid");
+  }
 
-  const input = buildExecutiveEnvelope(task, memoryContext, mode);
+  const input = buildExecutiveEnvelope(task, memoryContext, mode, availableCapabilities);
   const raw = await invokeCore(input, mode);
   if (!raw || raw.provider !== "openai") throw new Error("cognitive_kernel_core_identity_invalid");
   const model = requireText(raw.model, "cognitive_kernel_model_identity_missing", 200);
@@ -80,7 +84,9 @@ export async function executeCognitiveKernel(options) {
 
   return {
     answer,
-    providerCalls: 1,
+    providerCalls: Number.isInteger(raw.providerCalls) && raw.providerCalls > 0 ? raw.providerCalls : 1,
+    toolCalls: Number.isInteger(raw.toolCalls) && raw.toolCalls >= 0 ? raw.toolCalls : 0,
+    capabilitiesUsed: Array.isArray(raw.capabilitiesUsed) ? raw.capabilitiesUsed.filter(item => typeof item === "string").slice(0, 16) : [],
     providersUsed: [{ provider: raw.provider, model, stage: "executive_core" }],
     executionMode: "single-core-cognitive-kernel",
     independence: "one-executive-core-with-deterministic-governance",
@@ -91,6 +97,7 @@ export async function executeCognitiveKernel(options) {
         "request_normalization",
         "memory_trust_boundary",
         "capability_authorization_contract",
+        ...(raw.toolCalls > 0 ? ["bounded_local_tool_execution"] : []),
         "evidence_and_verification_contract",
         "single_response_validation"
       ]
