@@ -30,16 +30,20 @@ The deterministic mock path is not an AI execution path and must report zero pro
 - Material claims use `OBSERVED`, `VALIDATED`, `PROPOSED`, `UNPROVEN`, `REJECTED`, or `SUPERSEDED`.
 - Private hidden reasoning is not persisted or exposed; the runtime records concise execution metadata and evidence references.
 
+## Capability registry milestone
+
+**Implemented as an isolated source module; not yet connected to model tool-calling or the gateway.** `capability-registry.mjs` provides a static server-owned registry with strict JSON schemas, permission checks, explicit approval verification for consequential actions, bounded input/output, timeouts, concurrency limits, abort signals, and content-minimized execution receipts. The registry must be sealed before execution. It has no default capabilities and performs no network access. Tests cover denied permissions, approval failures, malformed schemas, timeout handling, concurrency retention, and empty-registry behavior.
+
+The current gateway does not instantiate this registry, and the executive model cannot invoke its handlers. This is intentional: no capability is advertised as available until a trusted adapter and authorization policy are connected. The first integration must include durable idempotency for consequential operations; the current in-memory registry is not a cross-instance idempotency guarantee.
+
 ## Next capability milestones
 
-These are proposed, not implemented by this first kernel slice:
-
-1. **Typed capability registry:** stable names, input/output schemas, permission scopes, cost class, timeout, idempotency and provenance.
-2. **Tool broker:** dispatch only registered capabilities; enforce least privilege, explicit user authorization for consequential actions, and audit receipts.
-3. **Stateful task graph:** preserve task state, dependencies, retries, cancellation and resumability without exposing multiple assistants to the user.
-4. **Evidence ledger:** attach source/tool receipts to claims and block fabricated or stale evidence.
-5. **Verification engine:** deterministic schema/security checks plus independent holdout evaluation for important outputs.
-6. **Learning loop:** baseline → intervention → comparable retest → measured keep/modify/reject decision. No self-modification or production rollout without review.
+1. **Tool-calling adapter:** connect the executive model's structured function-call protocol to the sealed registry; bound tool rounds, call count, and total cost; ensure tool output is returned as untrusted data.
+2. **Trusted capability adapters:** add only explicitly approved read-only capabilities first, with server-owned credentials and least-privilege scopes.
+3. **Durable authorization and idempotency:** bind approval tokens to user, exact capability, exact normalized input, expiry, and one-time use; persist replay protection before consequential actions.
+4. **Stateful task graph:** preserve task state, dependencies, retries, cancellation and resumability without exposing multiple assistants to the user.
+5. **Evidence ledger:** attach source/tool receipts to claims and block fabricated or stale evidence.
+6. **Verification engine and learning loop:** deterministic schema/security checks plus independent holdout evaluation; baseline → intervention → comparable retest → measured keep/modify/reject. No self-modification or production rollout without review.
 
 ## Research inspiration and licensing
 
