@@ -108,7 +108,7 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 });
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-engine-composite-prompt", selectedProvider: "composite", provider: "openai", model: "gpt-6.1-sol", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "five-provider-council", selectedProvider: "composite", provider: "multi-provider-council", model: "five-provider-composite", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
