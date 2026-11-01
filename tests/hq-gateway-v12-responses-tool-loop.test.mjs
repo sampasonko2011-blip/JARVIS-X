@@ -128,3 +128,29 @@ test("default capability registry exposes no tools unless explicitly enabled", (
   const enabled = createDefaultCapabilityRegistry({ enabled: true });
   assert.deepEqual(enabled.describe().map(item => item.name), ["text.analyze"]);
 });
+
+test("serialized input bounds reject oversized requests before model invocation", async () => {
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
+  let calls = 0;
+  await assert.rejects(executeResponsesToolLoop({
+    registry, context, instructions, initialInput: "x".repeat(80_001),
+    invokeResponse: async () => { calls++; return { status: "completed", model: "configured-openai-model", output_text: "No." }; }
+  }), /responses_tool_input_too_large/);
+  assert.equal(calls, 0);
+});
+
+test("second tool request is rejected and the loop never exceeds two model calls", async () => {
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
+  let calls = 0;
+  await assert.rejects(executeResponsesToolLoop({
+    registry, context, instructions, initialInput: "Analyze text",
+    invokeResponse: async request => {
+      calls++;
+      return {
+        status: "completed", model: "configured-openai-model",
+        output: [{ type: "function_call", call_id: "call-" + calls, name: "text_analyze", arguments: JSON.stringify({ text: "A." }) }]
+      };
+    }
+  }), /responses_tool_loop_limit_exceeded/);
+  assert.equal(calls, 2);
+});
