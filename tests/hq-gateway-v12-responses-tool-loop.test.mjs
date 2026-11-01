@@ -84,15 +84,24 @@ test("parallel tool calls are rejected and never dispatched", async () => {
   assert.equal(JSON.parse(secondCall.input.at(-1).output).code, "parallel_tool_calls_not_supported");
 });
 
-test("loop rejects malformed arguments and incomplete model responses", async () => {
+test("loop rejects malformed arguments without dispatching and rejects incomplete model responses", async () => {
   const registry = createDefaultCapabilityRegistry();
-  await assert.rejects(executeResponsesToolLoop({
+  let secondRequest;
+  const result = await executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Analyze",
-    invokeResponse: async request => request.tools.length
-      ? { status: "completed", model: "configured-openai-model", output: [{ type: "function_call", call_id: "x", name: "text_analyze", arguments: "{" }] }
-      : { status: "completed", model: "configured-openai-model", output_text: "Rejected.", output: [] }
-  }), /responses_tool_model_incomplete/).catch(error => {
-    if (/responses_tool_model_incomplete/.test(error.message)) throw error;
+    invokeResponse: async request => {
+      if (request.tools.length) return {
+        status: "completed", model: "configured-openai-model",
+        output: [{ type: "function_call", call_id: "x", name: "text_analyze", arguments: "{" }]
+      };
+      secondRequest = request;
+      return { status: "completed", model: "configured-openai-model", output_text: "Rejected malformed arguments.", output: [] };
+    }
+  });
+  assert.equal(result.toolCalls, 1);
+  assert.deepEqual(result.capabilitiesUsed, []);
+  assert.deepEqual(JSON.parse(secondRequest.input.at(-1).output), {
+    status: "rejected", code: "tool_arguments_invalid"
   });
   await assert.rejects(executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Analyze",
