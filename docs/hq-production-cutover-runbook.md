@@ -64,7 +64,7 @@ Only after staging passes and the owner explicitly authorizes a production chang
 1. Verify exact provider model IDs, account permissions, API compatibility, current pricing and provider-side hard spending controls.
 2. Recheck the documented $4.00/request candidate. It is an estimate, not a provider quote. Confirm input-token bounds, endpoint pricing tiers, output-token ceilings, and reasoning-token billing for every stage.
 3. Set a reservation and enable the guard only after the full bound is verified. Keep the daily cap at or below the reviewed limit.
-4. Only with a separate explicit authorization, run one bounded smoke request per provider, including the 32,768-token Gemini output ceiling. Check actual returned model IDs, usage, costs, execution ledger and failure behavior. No repeated retries.
+4. Only with a separate explicit authorization, run one bounded smoke request per provider, with a 1,024-token maximum output ceiling for Gemini. Check actual returned model IDs, usage, costs, execution ledger and failure behavior. No repeated retries.
 
 ### Gate 5 — remove the legacy overload
 
