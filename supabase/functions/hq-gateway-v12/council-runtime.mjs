@@ -1,4 +1,4 @@
-const PROVIDER_STAGES = Object.freeze([
+// LEGACY EXPERIMENT: retained for historical tests only. The default HQ route uses cognitive-kernel.mjs.\nconst PROVIDER_STAGES = Object.freeze([
   { provider: "openai", stage: "lead" },
   { provider: "deepseek", stage: "reasoner" },
   { provider: "anthropic", stage: "critic" },
