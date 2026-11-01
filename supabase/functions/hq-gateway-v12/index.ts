@@ -732,7 +732,7 @@ Deno.serve(async (req: Request) => {
         provider: rucheRoute.provider ? rucheRoute.provider : PRIMARY_PROVIDER,
         model: rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Single-engine composite-prompt execution failed",
+        output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Five-provider council execution failed; response content not persisted",
         error_code: code,
         metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: rucheRoute.provider ? "single-provider" : "five-provider-council", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: rucheRoute.provider ? "single-provider-no-cross-review" : "five-distinct-provider-stages" },
         completed_at: new Date().toISOString(),
