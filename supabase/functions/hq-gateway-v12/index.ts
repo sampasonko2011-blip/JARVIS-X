@@ -403,6 +403,16 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
   const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(provider === "google" ? 45_000 : 25_000), body: JSON.stringify(body) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("provider_http_" + response.status + "_" + provider);
+  // Never treat a non-terminal or truncated provider response as a completed council stage.
+  if ((provider === "openai" || provider === "xai") && data?.status !== "completed") {
+    throw new Error("provider_incomplete_response_" + provider);
+  }
+  if (provider === "deepseek" && data?.choices?.[0]?.finish_reason !== "stop") {
+    throw new Error("provider_nonterminal_finish_" + provider);
+  }
+  if (provider === "anthropic" && !["end_turn", "stop_sequence"].includes(data?.stop_reason)) {
+    throw new Error("provider_nonterminal_finish_" + provider);
+  }
   let output: unknown, returnedModel: unknown;
   if (provider === "openai" || provider === "xai") {
     output = extractResponsesText(data);
