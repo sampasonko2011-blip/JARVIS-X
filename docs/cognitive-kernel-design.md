@@ -78,3 +78,13 @@ The first integration CI run caught a Deno type-check issue (the loop's terminal
 ## Known limits
 
 The current implementation wraps one existing model. It does not train a new model, combine neural weights, guarantee superiority over the underlying model, or provide live external integrations. One deterministic local capability is wired in code but remains disabled by default. The next measurable improvement must come from authorized read-only adapters, controlled tests, and comparable evaluation—not branding or architecture claims.
+
+
+## Cross-device memory consent and verification boundary
+
+- The HQ browser preference for cross-platform memory is opt-in: a first visit initializes the checkbox to OFF. Enabling it persists the choice in that browser's local storage; each other browser/device must opt in independently.
+- The gateway independently enforces the request-level `memory_consent === true` gate before either recall or write. A modified client cannot enable memory merely by changing its local preference; the request must carry the explicit boolean and the gateway must authenticate the user.
+- Remote memory paths are namespaced by the authenticated Supabase user ID (`projects/jarvis-x-hq/users/<user-id>/conversations`). This is the intended cross-device identity boundary; it is not proof of XMemo-side isolation. The remote service must enforce path-level access under its service credential, and that contract still needs review.
+- The consent control authorizes saving the current turn as well as recalling prior context. Users should leave it off for conversations they do not want persisted. Credential/email redaction exists, but is not a comprehensive sensitive-data classifier.
+- No remote XMemo availability, account-isolation, deletion/retention, or write-then-recall smoke test is claimed. These require a separately authorized, no-cost test environment and documented deletion semantics.
+- GitHub Actions run `41363171109` on commit `27b57ea33449804300c2ba9be5960f400e079e05` completed successfully: build, Deno gateway type-check, `npm test`, HQ Playwright E2E, configured syntax checks, and deterministic benchmarks. The E2E memory test explicitly enables consent before testing persistence.
