@@ -94,7 +94,7 @@ async function authenticatedUser(token: string, publishableKey: string, supabase
   if (!response.ok) return null;
   const user = await response.json().catch(() => null);
   if (typeof user?.id !== "string" || !user.id.trim() || user.is_anonymous === true) return null;
-  return user as { id: string; is_anonymous?: boolean };
+  return user as { id: string; is_anonymous?: boolean; email?: string };
 }
 
 async function writeRun(userId: string, row: Record<string, unknown>) {
@@ -538,7 +538,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
   }
   const task = body.task.trim();
-  const modeAlias = ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
+  const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
   const routeResult = resolveRucheRoute(body.ia_selectionnee ?? body.selected_provider, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);
   const rucheRoute: RucheRoute = routeResult.route;
@@ -606,7 +606,7 @@ Deno.serve(async (req: Request) => {
       memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" },
     }, 200, origin);
   }
-  if (body.mode !== undefined && !["live", "mock", "support", "master_control", "epaulement", "domination"].includes(body.mode)) {
+  if (body.mode !== undefined && (typeof body.mode !== "string" || !["live", "mock", "support", "master_control", "epaulement", "domination"].includes(body.mode))) {
     return jsonResponse({ error: "invalid_execution_mode" }, 400, origin);
   }
 
