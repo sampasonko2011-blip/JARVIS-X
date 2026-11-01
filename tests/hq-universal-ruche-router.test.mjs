@@ -13,13 +13,14 @@ test("default composite route requires only the executive core credential", () =
   assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
 });
 
-test("default composite gateway invokes one cognitive kernel with one model call", () => {
+test("default composite gateway uses one executive model with bounded local tool calling", () => {
   assert.match(gateway, /import \{ executeCognitiveKernel \} from "\.\/cognitive-kernel\.mjs"/);
-  assert.match(gateway, /await executeCognitiveKernel\(/);
+  assert.match(gateway, /return executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
-  assert.match(gateway, /callProvider\("openai", stageTask, "lead", mode\)/);
+  assert.match(gateway, /executeResponsesToolLoop\(/);
+  assert.match(gateway, /invokeOpenAIResponses\(request\.input, request\.instructions, request\.tools\)/);
   assert.match(gateway, /single-core-cognitive-kernel/);
-  assert.match(kernel, /providerCalls: 1/);
+  assert.match(kernel, /providerCalls: Number\.isInteger\(raw\.providerCalls\)/);
   assert.doesNotMatch(gateway, /executeFiveProviderCouncil/);
 });
 
@@ -50,8 +51,10 @@ test("optional direct provider routes remain available for controlled diagnostic
   assert.match(router, /invalid_orchestration_mode/);
 });
 
-test("success receipts report one executive-core call", () => {
+test("success receipts report actual executive-model and local tool-call counts", () => {
   assert.match(gateway, /provider_calls: result\.providerCalls/);
+  assert.match(gateway, /tool_calls: result\.toolCalls \?\? 0/);
+  assert.match(gateway, /capabilities_used: result\.capabilitiesUsed \?\? \[\]/);
   assert.match(gateway, /providers_used: result\.providersUsed/);
   assert.match(gateway, /one-executive-core-with-deterministic-governance/);
 });
