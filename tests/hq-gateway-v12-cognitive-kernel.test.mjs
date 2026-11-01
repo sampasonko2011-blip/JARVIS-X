@@ -104,3 +104,23 @@ test("kernel rejects malformed capability declarations before model invocation",
   }), /cognitive_kernel_capabilities_invalid/);
   assert.equal(calls, 0);
 });
+
+test("kernel publishes the actual bounded model and tool-call ceilings", async () => {
+  let payload;
+  await executeCognitiveKernel({
+    objective: "Use a local capability only if useful",
+    availableCapabilities: [{ name: "text.analyze", description: "Count supplied text" }],
+    invokeCore: async input => {
+      payload = JSON.parse(input);
+      return coreResult({ providerCalls: 2, toolCalls: 1, capabilitiesUsed: ["text.analyze"] });
+    }
+  });
+  assert.deepEqual(payload.control_contract.execution_limits, {
+    max_model_calls: 2,
+    max_sequential_tool_calls: 1,
+    parallel_tool_calls: false
+  });
+  assert.equal(payload.runtime_controls.provider_calls_max, 2);
+  assert.equal(payload.runtime_controls.tool_calls_max, 1);
+  assert.equal(payload.runtime_controls.provider_calls_planned, undefined);
+});
