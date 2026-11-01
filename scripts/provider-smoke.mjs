@@ -6,7 +6,7 @@
 const checks = [
   { provider: "OpenAI", envKey: "OPENAI_API_KEY", model: "gpt-6.1-sol", kind: "responses", url: "https://api.openai.com/v1/responses" },
   { provider: "DeepSeek", envKey: "DEEPSEEK_API_KEY", model: "deepseek-flash", kind: "chat", url: "https://api.deepseek.com/chat/completions" },
-  { provider: "Anthropic", envKey: "ANTHROPIC_API_KEY", model: "claude-opus-5", kind: "anthropic", url: "https://api.anthropic.com/v1/messages" },
+  { provider: "Anthropic", envKey: "ANTHROPIC_API_KEY", model: "claude-opus-5-5", kind: "anthropic", url: "https://api.anthropic.com/v1/messages" },
   { provider: "xAI", envKey: "XAI_API_KEY", model: "grok-4.7", kind: "responses", url: "https://api.x.ai/v1/responses" },
   { provider: "Google", envKey: "GOOGLE_API_KEY", model: "gemini-4-argon", kind: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-argon:generateContent" }
 ];
