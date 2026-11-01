@@ -1,3 +1,5 @@
+import { identityMatches, hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
+
 /**
  * Bounded, manually dispatched smoke test. All five API keys and exact model IDs
  * are preflighted before the first request. No model IDs are guessed.
@@ -32,13 +34,6 @@ function extractText(config, payload) {
     .map((part) => part.text).join("\n").trim();
 }
 
-function identityMatches(observed, requested) {
-  if (typeof observed !== "string" || !observed.trim()) return false;
-  const actual = observed.toLowerCase();
-  const expected = requested.toLowerCase();
-  return actual === expected || actual.startsWith(expected + "-");
-}
-
 async function smokeTest(config, apiKey, model) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutFor(config));
@@ -71,7 +66,7 @@ async function smokeTest(config, apiKey, model) {
     const output = extractText(config, payload);
     const observedModel = payload?.model;
     const modelMatch = identityMatches(observedModel, model);
-    const arithmeticCheck = /(^|\\D)323(\\D|$)/.test(output);
+    const arithmeticCheck = hasExpectedArithmeticResult(output);
     return { provider: config.provider, requested_model_id: model, observed_model_id: observedModel ?? null, exact_model_identity_verified: modelMatch, status: modelMatch && arithmeticCheck && output.length <= 12_000 ? "OBSERVED_PASS_SINGLE_SMOKE_TEST" : "OBSERVED_PARTIAL_OR_MISMATCH", arithmetic_check: arithmeticCheck, response_text: output.slice(0, 160), latency_ms: Date.now() - started, usage: payload?.usage ?? payload?.usageMetadata ?? null };
   } catch (error) {
     return { provider: config.provider, requested_model_id: model, status: error?.name === "AbortError" ? "TIMEOUT" : "REQUEST_ERROR", latency_ms: Date.now() - started, error: String(error?.message ?? error).split(apiKey).join("[REDACTED]").slice(0, 300) };
