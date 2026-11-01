@@ -73,6 +73,8 @@ On source commit `25a749a5dbb1d559d7f98f533c74c37210ea3816`, GitHub Actions CI c
 
 The deterministic runtime comparison used 30 iterations after 5 warmups across 4 authored fixtures. It recorded 100% fixture pass rates for both paths; median local orchestration time was 0.018 ms for the single-organ runtime and 0.044 ms for the multi-organ synthesis runtime (p95 0.102 ms vs 0.179 ms). This measures local mock orchestration overhead only. It does not measure model intelligence, answer quality, live API latency, or tool usefulness, and is not evidence of neural fusion or a better model.
 
+The later Responses tool-loop integration adds a new CI surface and is **not yet validated by a successful CI run**. The first integration run failed at Deno type-check because the loop's terminal guard was inferred as possibly returning; a non-returning type annotation was added, and additional bounded-loop tests were added. Recheck the latest branch head before describing this integration as validated. The local tool flag remains off by default.
+
 ## Known limits
 
 The current implementation wraps one existing model. It does not train a new model, combine neural weights, guarantee superiority over the underlying model, or provide live external integrations. One deterministic local capability is wired in code but remains disabled by default. The next measurable improvement must come from authorized read-only adapters, controlled tests, and comparable evaluation—not branding or architecture claims.
