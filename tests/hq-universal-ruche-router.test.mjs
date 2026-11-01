@@ -29,17 +29,19 @@ test("composite gateway executes the five-provider council rather than one-model
 });
 
 test("five-provider adapters use the documented provider APIs and canonical Google secret", () => {
-  assert.match(router, /GOOGLE_API_KEY/);
-  assert.doesNotMatch(router, /GEMINI_API_KEY/);
-  assert.match(gateway, /https:\\/\\/api\\.openai\\.com\\/v1/);
-  assert.match(gateway, /https:\\/\\/api\\.deepseek\\.com\\/chat\\/completions/);
-  assert.match(gateway, /https:\\/\\/api\\.anthropic\\.com\\/v1\\/messages/);
-  assert.match(gateway, /https:\\/\\/api\\.x\\.ai\\/v1/);
-  assert.match(gateway, /https:\\/\\/generativelanguage\\.googleapis\\.com\\/v1beta\\/interactions/);
-  assert.match(gateway, /store: false/);
-  assert.match(gateway, /thinking_level: "medium"/);
-  assert.match(gateway, /GOOGLE_API_KEY/);
-  assert.match(gateway, /JARVIS_X_GEMINI_API_KEY/);
+  assert.ok(router.includes("GOOGLE_API_KEY"));
+  assert.ok(!router.includes("GEMINI_API_KEY"));
+  for (const endpoint of [
+    "https://api.openai.com/v1",
+    "https://api.deepseek.com/chat/completions",
+    "https://api.anthropic.com/v1/messages",
+    "https://api.x.ai/v1",
+    "https://generativelanguage.googleapis.com/v1beta/interactions",
+  ]) assert.ok(gateway.includes(endpoint), "missing provider endpoint " + endpoint);
+  assert.ok(gateway.includes("store: false"));
+  assert.ok(gateway.includes('thinking_level: "medium"'));
+  assert.ok(gateway.includes("GOOGLE_API_KEY"));
+  assert.ok(gateway.includes("JARVIS_X_GEMINI_API_KEY"));
 });
 
 test("health advertises all five internal providers while preserving one composite identity", () => {
