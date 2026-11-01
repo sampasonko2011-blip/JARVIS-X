@@ -13,8 +13,8 @@
 ## Current verified starting point — read-only audit, 2026-11-01
 
 - Supabase project: `xfewajxkqntflfntisut`, name `JARVIS-X`, status `ACTIVE_HEALTHY`, region `eu-west-1`, Postgres 17.11.
-- Deployed Edge Functions: `hq-gateway` v11 and `hq-gateway-v12` v2 are both present. The deployed v12 source was fetched and inspected: it still contains the single-OpenAI composite route, not `executeFiveProviderCouncil`. The existence of a v12 deployment is not evidence that PR #72 is deployed.
-- The live `main` HQ frontend calls `hq-gateway-v12` but still expects the old `single-engine-composite-prompt` health contract. PR #72's candidate frontend expects `five-provider-council`. The frontend and gateway must be cut over as a coordinated pair; deploying only one side will break health/chat.
+- Deployed Edge Functions: `hq-gateway` v11 and `hq-gateway-v12` v2 are both present. The deployed v12 source was fetched and inspected before this feature branch; it still contains the old single-OpenAI route. The Cognitive Kernel branch is a separate source candidate and is not deployed. The existence of a v12 deployment is not evidence that PR #72 is deployed.
+- The live `main` HQ frontend calls `hq-gateway-v12` but still expects the old `single-engine-composite-prompt` health contract. The cognitive-kernel branch frontend expects `single-core-cognitive-kernel`. The frontend and gateway must be cut over as a coordinated pair; deploying only one side will break health/chat.
 - Applied migration inventory has seven entries; latest is `20261027220313_hq_global_budget_guard`. The budget migration is already applied in production. The additive server-only rate-limit migration `20261026100000_hq_rate_limit_server_only_rpc` is not in the live migration inventory.
 - Live RPC catalog: `consume_hq_rate_limit(text)` exists as `SECURITY DEFINER`; `anon` cannot execute it, but `authenticated` and `service_role` can. The new `consume_hq_rate_limit(uuid, text)` overload is absent. `reserve_hq_global_budget(uuid, uuid)` exists as `SECURITY INVOKER`, executable only by `service_role`.
 - Live table grants: `hq_global_budget_config`, `hq_global_budget_daily`, `hq_global_budget_reservations`, and `hq_rate_limits` have RLS enabled, no anon/authenticated table privileges, and service-role access. `hq_execution_runs` has RLS enabled, no anon privileges, authenticated SELECT only, and service-role access.
@@ -23,7 +23,7 @@
 - Performance advisor: three unused-index INFO findings; no performance change is justified by this release.
 - No live provider smoke test has been run. Provider credentials, exact model IDs, account access, and provider-side spend controls are not verified. Public model documentation is not proof of account access.
 - No zero-cost staging project has been verified. Under the strict €0 constraint, the production cutover cannot be fully validated against a staging environment; keep production unchanged until a genuine no-cost staging route or separately authorized controlled cutover exists.
-- PR #72 is an open, reviewable source candidate, not merged or deployed. Its CI uses mocked provider responses; passing CI proves orchestration logic, not real provider access or live inference.
+- PR #72 remains the earlier five-provider council candidate. The new `feature/jarvis-x-cognitive-kernel` branch is separate source-only work and is not merged or deployed. Mock-based CI can verify local contracts, not live provider access or inference.
 
 ## Required order — do not skip gates
 
@@ -31,7 +31,7 @@
 
 1. Confirm whether a zero-cost staging project exists. If not, stop before production mutation under the current €0 constraint.
 2. Review the pending additive rate-limit migration against the live catalog. The budget schema is already applied; do not reapply it.
-3. Confirm all five model IDs, provider APIs, account access, pricing, and provider-side spending controls for the intended API keys. Public model documentation is not proof of account access.
+3. For the default Cognitive Kernel, verify the configured OpenAI model ID, account access, pricing, and provider-side spending controls. Optional diagnostic providers require their own independent verification. Public model documentation is not proof of account access.
 
 ### Gate 1 — staging validation
 
