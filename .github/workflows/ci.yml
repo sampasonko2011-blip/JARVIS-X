@@ -34,6 +34,8 @@ jobs:
         run: node --check scripts/provider-smoke.mjs
       - name: Validate HQ service worker syntax
         run: node --check hq/sw.js
+      - name: Validate HQ chat client syntax
+        run: node --check hq/hq.js
       - run: npm run benchmark
       - name: Runtime comparison benchmark
         run: npm run benchmark:runtime
