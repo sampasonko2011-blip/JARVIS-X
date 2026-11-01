@@ -67,6 +67,7 @@ function normalizeSchema(schema, depth = 0) {
     }
     const required = schema.required ?? [];
     if (!Array.isArray(required) || required.some(key => typeof key !== "string" || !Object.hasOwn(properties, key))) fail("capability_schema_required_invalid");
+    if (new Set(required).size !== Object.keys(properties).length) fail("capability_schema_all_properties_must_be_required");
     if (schema.additionalProperties !== false) fail("capability_schema_must_be_closed");
     return Object.freeze({ type: "object", properties: Object.freeze(properties), required: Object.freeze([...new Set(required)]), additionalProperties: false });
   }
@@ -262,10 +263,12 @@ export function createCapabilityRegistry(options = {}) {
         }
         if (approved !== true) return makeReceipt({ ...base, status: "rejected", code: "capability_approval_invalid" });
       }
+      // Recheck after async policy evaluation to prevent concurrent requests
+      // from racing past the configured active-handler limit.
+      if (active >= maxConcurrent) return makeReceipt({ ...base, status: "rejected", code: "capability_concurrency_limit" });
       active++;
       let timer;
       const controller = new AbortController();
-      const deadlineAt = clock() + definition.timeoutMs;
       try {
         const handlerExecution = Promise.resolve().then(() => definition.handler(Object.freeze({
         input: request.input,
