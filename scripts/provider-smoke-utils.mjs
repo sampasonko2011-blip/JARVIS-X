@@ -6,5 +6,5 @@ export function identityMatches(observed, requested) {
 }
 
 export function hasExpectedArithmeticResult(output) {
-  return typeof output === "string" && /(^|\\D)323(\\D|$)/.test(output);
+  return typeof output === "string" && /(^|\D)323(\D|$)/.test(output);
 }
