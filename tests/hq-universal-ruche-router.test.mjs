@@ -7,7 +7,7 @@ const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/ind
 const council = await readFile(new URL("../supabase/functions/hq-gateway-v12/council-runtime.mjs", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
 
-test("default composite route requires all five provider credentials", () => {
+test("default composite route requires only the executive core credential", () => {
   assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY", "DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY"\]/);
   for (const provider of ["openai", "deepseek", "anthropic", "xai", "google"]) {
     assert.ok(gateway.includes(provider + ": { model:"), "missing model config for " + provider);
@@ -16,11 +16,11 @@ test("default composite route requires all five provider credentials", () => {
   assert.match(gateway, /provider\.toUpperCase\(\) \+ "_MODEL"/);
 });
 
-test("composite gateway executes the five-provider council rather than one-model composite prompting", () => {
+test("composite gateway executes the single-core cognitive kernel", () => {
   assert.match(gateway, /import \{ executeFiveProviderCouncil \} from "\.\/council-runtime\.mjs"/);
   assert.match(gateway, /await executeFiveProviderCouncil\(/);
-  assert.match(gateway, /five-provider-council/);
-  assert.match(gateway, /five-distinct-provider-stages/);
+  assert.match(gateway, /single-core-cognitive-kernel/);
+  assert.match(gateway, /one-executive-core-with-deterministic-governance/);
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/);
   assert.match(council, /Promise\.all\(reviewSpecs\.map/);
   assert.match(council, /await invokeProvider\("google", synthesisInput, "synthesis", mode\)/);
@@ -44,7 +44,7 @@ test("five-provider adapters use the documented provider APIs and canonical Goog
   assert.ok(gateway.includes("JARVIS_X_GEMINI_API_KEY"));
 });
 
-test("health advertises all five internal providers while preserving one composite identity", () => {
+test("health advertises one executive core while preserving one composite identity", () => {
   assert.match(gateway, /mode: healthRoute\.provider \? "single-provider" : "five-provider-council"/);
   assert.match(gateway, /providers: healthRoute\.provider \? \[healthRoute\.provider\] : \[\.\.\.COMPOSITE_PROVIDERS\]/);
   assert.match(gateway, /provider: healthRoute\.provider \?\? PRIMARY_PROVIDER/);
@@ -84,7 +84,7 @@ test("HQ preserves one assistant identity and does not expose a provider picker"
   const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
   assert.match(hqJs, /functions\/v1\/hq-gateway-v12/);
   assert.match(hqJs, /ia_selectionnee:selectedProvider/);
-  assert.match(hqJs, /five-provider-council/);
+  assert.match(hqJs, /single-core-cognitive-kernel/);
   assert.doesNotMatch(hqHtml, /id="chat-ai-selection"/);
   assert.match(hqHtml, /id="chat-orchestration-mode"/);
 });
