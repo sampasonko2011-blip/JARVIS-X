@@ -18,7 +18,7 @@ test("manual smoke test covers all five providers with bounded calls and explici
   for (const [provider, secret, model] of [
     ["OpenAI", "OPENAI_API_KEY", "gpt-6.1-sol"],
     ["DeepSeek", "DEEPSEEK_API_KEY", "deepseek-flash"],
-    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5"],
+    ["Anthropic", "ANTHROPIC_API_KEY", "claude-opus-5-5"],
     ["xAI", "XAI_API_KEY", "grok-4.7"],
     ["Google", "GOOGLE_API_KEY", "gemini-4-argon"],
   ]) {
