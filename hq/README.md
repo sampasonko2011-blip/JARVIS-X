@@ -26,7 +26,7 @@ The HQ includes a local Model Forge panel for registering model-candidate metada
 - The gateway validates an authenticated Supabase session and checks a server-side email allowlist before billable inference.
 - Cross-platform memory is opt-in per chat request. With consent off, the gateway must neither recall nor write cross-platform memory.
 - The local workspace's browser storage is not a secure backup and is not automatically synchronized.
-- PR #72 adds a default five-provider council to the versioned gateway candidate: OpenAI lead, DeepSeek reasoning review, Claude critique, Grok adversarial review, and Gemini synthesis. The three reviews run concurrently; synthesis waits for all three. The generic tool-broker boundary exists, but real connector executors are not wired into the HQ UI.
+- PR #72 is the earlier five-provider council candidate. PR #73 is the superseding single-core Cognitive Kernel candidate; it wires a bounded Responses function-call loop to a sealed registry and one deterministic local `text.analyze` capability. The capability is disabled unless the server-side `JX_ENABLE_LOCAL_TOOL_CALLS` flag is explicitly enabled. No external connector executor is currently registered.
 - Automated tests use deterministic fixtures/mocks; they do not establish real provider availability, truthful model identity, durable memory, or production quality.
 
 ## Required release gates
@@ -67,6 +67,6 @@ This is a software-level cognitive architecture, not a new trained neural networ
 - `support` and `master_control` change the orchestration instructions only. Neither bypasses authorization, rate limits, cost controls, or human approval.
 - The gateway continues to require authenticated allowlisting, database-backed rate limits, execution-ledger writes, and a global budget reservation before hosted inference.
 - Mock mode remains a deterministic placeholder and makes zero model calls. Passing mock tests does not establish live inference.
-- External tools and plugin executors are not yet integrated into the Cognitive Kernel invocation. The kernel must not claim those tools are available until an authorized executor is actually wired in and invoked.
+- One deterministic local read-only capability (`text.analyze`) is wired through a bounded two-call Responses loop, but is disabled by default. External browsing, connected apps, and plugin executors are not integrated into the gateway. The kernel must not claim any capability was used without a successful execution receipt.
 - The current production gateway remains separate. This feature branch is source-only; no production settings, provider secrets, deployments, or paid API calls were changed.
 
