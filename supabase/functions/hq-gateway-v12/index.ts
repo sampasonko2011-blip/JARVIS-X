@@ -633,7 +633,7 @@ Deno.serve(async (req: Request) => {
   if (missingProviderConfig.length > 0) {
     const requestedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
     const requestedModel = rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL;
-    const requestedMode = rucheRoute.provider ? "single-provider" : "five-provider-council";
+    const requestedMode = rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel";
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
