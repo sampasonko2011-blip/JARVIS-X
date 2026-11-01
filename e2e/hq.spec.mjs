@@ -388,6 +388,8 @@ test("cross-platform memory preference persists across messages and can be disab
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  // Memory is now opt-in: explicitly enable it for this persistence scenario.
+  await page.locator("#chat-memory-consent").check();
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
 
   await page.locator("#chat-compose").fill("First message with memory enabled");
