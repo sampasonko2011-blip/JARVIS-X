@@ -16,7 +16,7 @@ test("v12 imports the cognitive kernel and deterministic mock dependency", () =>
 test("default composite is one executive core, not a five-model council", () => {
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
   assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY"\]/);
-  assert.match(gateway, /await executeCognitiveKernel\(/);
+  assert.match(gateway, /return executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
   assert.match(gateway, /invokeOpenAIResponses\(request\.input, request\.instructions, request\.tools\)/);
   assert.match(gateway, /single-core-cognitive-kernel/);
