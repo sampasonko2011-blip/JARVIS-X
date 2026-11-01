@@ -57,3 +57,11 @@ test("v12 composite route uses five distinct providers with parallel reviews and
   assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/);
 });
+
+test("v12 requires exact operator-configured model IDs and bounds Gemini output", () => {
+  for (const [provider, env] of [["openai", "OPENAI_MODEL"], ["deepseek", "DEEPSEEK_MODEL"], ["anthropic", "ANTHROPIC_MODEL"], ["xai", "XAI_MODEL"], ["google", "GEMINI_MODEL"]]) {
+    assert.match(gateway, new RegExp(provider + ': \\{ model: Deno\\.env\\.get\\("' + env + '"\\) \\|\\| ""'));
+  }
+  assert.match(gateway, /const GEMINI_MAX_OUTPUT_TOKENS = 1_024/);
+  assert.doesNotMatch(gateway, /gpt-6\\.1-sol|deepseek-v[0-9]|claude-opus-[0-9]|grok-[0-9]|gemini-[0-9]/);
+});
