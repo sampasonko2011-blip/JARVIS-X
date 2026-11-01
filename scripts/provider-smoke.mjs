@@ -1,7 +1,10 @@
-import { identityMatches as importedIdentityMatches, hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
+import { hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
 
 function identityMatches(observed, requested) {
-  return importedIdentityMatches(observed, requested);
+  if (typeof observed !== "string" || !observed.trim() || typeof requested !== "string" || !requested.trim()) return false;
+  const actual = observed.toLowerCase();
+  const expected = requested.toLowerCase();
+  return actual === expected || actual.startsWith(expected + "-");
 }
 
 /**
