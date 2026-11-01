@@ -35,7 +35,7 @@ export function createDefaultCapabilityRegistry(options = {}) {
       const sentences = text.trim() ? (text.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? []).filter(part => part.trim()).length : 0;
       const paragraphs = text.trim() ? text.trim().split(/\n\s*\n/u).filter(part => part.trim()).length : 0;
       return {
-        characters: text.length,
+        characters: [...text].length,
         words,
         sentences,
         paragraphs
