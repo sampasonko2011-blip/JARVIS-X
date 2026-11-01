@@ -22,6 +22,8 @@ const MAX_TASK_CHARS = 12_000;
 const MAX_STAGE_INPUT_CHARS = 64_000;
 const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
+// Retained only for explicitly selected Gemini diagnostics, not the default composite route.
+const GEMINI_MAX_OUTPUT_TOKENS = 1_024;
 
 
 function jsonResponse(body: unknown, status = 200, origin = "") {
