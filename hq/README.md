@@ -58,7 +58,7 @@ The workflow is `.github/workflows/deploy-hq-pages.yml`. It is configured to dep
 
 ## Single-core Cognitive Kernel (feature branch; not deployed)
 
-HQ presents one identity: **JARVIS-X**. The new `feature/jarvis-x-cognitive-kernel` branch changes the default `composite` route to one executive model invocation wrapped by the Cognitive Kernel. The kernel supplies a structured objective envelope, a shared evidence/uncertainty contract, explicit memory trust boundaries, capability-availability rules, and deterministic validation. It returns one JARVIS-X answer.
+HQ presents one identity: **JARVIS-X**. The new `feature/jarvis-x-cognitive-kernel` branch changes the default `composite` route to one executive model identity wrapped by the Cognitive Kernel. It normally makes one model call and may make a second call to the same model only when the explicitly enabled local capability is invoked. The kernel supplies a structured objective envelope, a shared evidence/uncertainty contract, explicit memory trust boundaries, capability-availability rules, and deterministic validation. It returns one JARVIS-X answer.
 
 This is a software-level cognitive architecture, not a new trained neural network, model-weight fusion, or proof that the result is universally smarter than the underlying model. The model's weights remain those of the configured OpenAI model. Optional direct-provider routes and adapters remain available for controlled diagnostics; they are not part of the default composite execution.
 
