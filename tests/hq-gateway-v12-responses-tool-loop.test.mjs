@@ -7,7 +7,7 @@ const context = { userId: "allowlisted-user-fixture", requestId: "request-fixtur
 const instructions = "You are JARVIS-X. Use local tools only when helpful.";
 
 test("Responses loop executes one approved local tool then returns one executive answer", async () => {
-  const registry = createDefaultCapabilityRegistry();
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
   const requests = [];
   const result = await executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Count the words in: Hi there. Good day.",
@@ -41,7 +41,7 @@ test("Responses loop executes one approved local tool then returns one executive
 });
 
 test("unregistered function names fail closed and are not executed", async () => {
-  const registry = createDefaultCapabilityRegistry();
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
   const requests = [];
   const result = await executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Do something",
@@ -62,7 +62,7 @@ test("unregistered function names fail closed and are not executed", async () =>
 });
 
 test("parallel tool calls are rejected and never dispatched", async () => {
-  const registry = createDefaultCapabilityRegistry();
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
   let secondCall;
   const result = await executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Analyze text",
@@ -85,7 +85,7 @@ test("parallel tool calls are rejected and never dispatched", async () => {
 });
 
 test("loop rejects malformed arguments without dispatching and rejects incomplete model responses", async () => {
-  const registry = createDefaultCapabilityRegistry();
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
   let secondRequest;
   const result = await executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Analyze",
@@ -110,7 +110,7 @@ test("loop rejects malformed arguments without dispatching and rejects incomplet
 });
 
 test("loop rejects missing model identity and empty final output", async () => {
-  const registry = createDefaultCapabilityRegistry();
+  const registry = createDefaultCapabilityRegistry({ enabled: true });
   await assert.rejects(executeResponsesToolLoop({
     registry, context, instructions, initialInput: "Hi",
     invokeResponse: async () => ({ status: "completed", output_text: "No identity", output: [] })
@@ -119,4 +119,12 @@ test("loop rejects missing model identity and empty final output", async () => {
     registry, context, instructions, initialInput: "Hi",
     invokeResponse: async () => ({ status: "completed", model: "configured-openai-model", output: [] })
   }), /responses_tool_final_output_empty/);
+});
+
+test("default capability registry exposes no tools unless explicitly enabled", () => {
+  const disabled = createDefaultCapabilityRegistry();
+  assert.deepEqual(disabled.describe(), []);
+  assert.deepEqual(disabled.toOpenAITools(), []);
+  const enabled = createDefaultCapabilityRegistry({ enabled: true });
+  assert.deepEqual(enabled.describe().map(item => item.name), ["text.analyze"]);
 });
