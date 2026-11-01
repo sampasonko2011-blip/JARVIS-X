@@ -52,20 +52,15 @@ test("provider adapters reject incomplete or truncated responses before counting
   assert.ok(gateway.includes("provider_nonterminal_finish_"));
 });
 
-test("v12 composite route uses five distinct providers with parallel reviews and Gemini synthesis", () => {
-  assert.match(gateway, /executeFiveProviderCouncil/);
-  assert.match(gateway, /five-provider-council/);
-  assert.match(gateway, /five-distinct-provider-stages/);
-  assert.match(councilRuntime, /"openai",\s*stage: "lead"/);
-  assert.match(councilRuntime, /"deepseek",\s*stage: "reasoner"/);
-  assert.match(councilRuntime, /"anthropic",\s*stage: "critic"/);
-  assert.match(councilRuntime, /"xai",\s*stage: "adversary"/);
-  assert.match(councilRuntime, /"google",\s*stage: "synthesis"/);
-  assert.match(councilRuntime, /Promise\.all\(reviewSpecs\.map/);
-  assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
-  assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai", "deepseek", "anthropic", "xai", "google"\]/);
+test("v12 default composite route is one executive cognitive kernel", () => {
+  assert.match(gateway, /executeCognitiveKernel/);
+  assert.match(gateway, /single-core-cognitive-kernel/);
+  assert.match(gateway, /one-executive-core-with-deterministic-governance/);
+  assert.match(gateway, /COMPOSITE_PROVIDERS = \\[\\"openai\\"\\]/);
+  assert.match(gateway, /invokeCore: async/);
+  assert.match(gateway, /callProvider\(\\"openai\\", stageTask, \\"lead\\"/);
+  assert.doesNotMatch(gateway, /executeFiveProviderCouncil/);
 });
-
 test("v12 requires exact operator-configured model IDs and bounds Gemini output", () => {
   for (const [provider, env] of [["openai", "OPENAI_MODEL"], ["deepseek", "DEEPSEEK_MODEL"], ["anthropic", "ANTHROPIC_MODEL"], ["xai", "XAI_MODEL"], ["google", "GEMINI_MODEL"]]) {
     assert.match(gateway, new RegExp(provider + ': \\{ model: Deno\\.env\\.get\\("' + env + '"\\) \\|\\| ""'));
