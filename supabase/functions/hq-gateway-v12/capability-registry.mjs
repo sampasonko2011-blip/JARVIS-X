@@ -192,8 +192,30 @@ export function createCapabilityRegistry(options = {}) {
         description: item.description,
         permission: item.permission,
         consequence: item.consequence,
-        timeoutMs: item.timeoutMs
+        timeoutMs: item.timeoutMs,
+        inputSchema: item.inputSchema
       })));
+    },
+    toOpenAITools() {
+      const names = new Set();
+      return Object.freeze([...definitions.values()].map(item => {
+        // Responses function names use a conservative portable identifier.
+        const toolName = item.name.replaceAll(".", "_");
+        if (names.has(toolName)) fail("capability_tool_name_collision");
+        names.add(toolName);
+        return Object.freeze({
+          type: "function",
+          name: toolName,
+          description: item.description,
+          parameters: item.inputSchema,
+          strict: true
+        });
+      }));
+    },
+    resolveToolName(toolName) {
+      if (typeof toolName !== "string") return null;
+      const matches = [...definitions.values()].filter(item => item.name.replaceAll(".", "_") === toolName);
+      return matches.length === 1 ? matches[0].name : null;
     },
     async execute(request) {
       const startedAt = clock();
