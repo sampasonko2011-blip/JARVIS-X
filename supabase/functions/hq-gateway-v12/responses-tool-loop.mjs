@@ -42,6 +42,7 @@ export async function executeResponsesToolLoop(options = {}) {
   let modelCalls = 0;
   let toolCalls = 0;
   const capabilitiesUsed = [];
+  let returnedModel = "";
   while (modelCalls < MAX_MODEL_CALLS) {
     const canCallTool = tools.length > 0 && toolCalls < MAX_TOOL_CALLS && modelCalls === 0;
     const response = await invokeResponse({
@@ -50,12 +51,14 @@ export async function executeResponsesToolLoop(options = {}) {
     });
     modelCalls++;
     if (!response || response.status !== "completed") fail("responses_tool_model_incomplete");
+    if (typeof response.model !== "string" || !response.model.trim()) fail("responses_tool_model_identity_missing");
+    returnedModel = response.model;
     const output = Array.isArray(response.output) ? response.output : [];
     const calls = output.filter(item => item?.type === "function_call");
     if (calls.length === 0) {
       const answer = extractText(response);
       if (!answer) fail("responses_tool_final_output_empty");
-      return Object.freeze({ answer, modelCalls, toolCalls, capabilitiesUsed: Object.freeze([...capabilitiesUsed]) });
+      return Object.freeze({ answer, model: returnedModel, modelCalls, toolCalls, capabilitiesUsed: Object.freeze([...capabilitiesUsed]) });
     }
     const outputs = [];
     for (const call of calls) {
