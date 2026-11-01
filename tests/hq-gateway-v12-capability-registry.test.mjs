@@ -105,6 +105,37 @@ test("schemas and data trees reject prototype keys, unsupported values, and unbo
   const circular = {};
   circular.self = circular;
   return registry.execute({ name: "notes.search", input: circular, context }).then(result => {
-    assert.equal(result.code, "capability_object_key_invalid");
+    assert.equal(result.code, "capability_circular_data");
   });
+});
+
+test("timed-out handlers retain their concurrency slot until they actually settle", async () => {
+  let release;
+  let secondCalls = 0;
+  const registry = createCapabilityRegistry({
+    permissionCheck: async () => true,
+    maxConcurrent: 1
+  });
+  registry.register(baseDefinition({
+    name: "notes.hang",
+    timeoutMs: 100,
+    handler: async () => new Promise(resolve => { release = resolve; })
+  }));
+  registry.register(baseDefinition({
+    name: "notes.second",
+    handler: async () => { secondCalls++; return { ok: true }; }
+  }));
+  registry.seal();
+  const first = registry.execute({ name: "notes.hang", input: { query: "x" }, context });
+  await new Promise(resolve => setTimeout(resolve, 120));
+  const timeout = await first;
+  assert.equal(timeout.code, "capability_timeout");
+  const blocked = await registry.execute({ name: "notes.second", input: { query: "x" }, context });
+  assert.equal(blocked.code, "capability_concurrency_limit");
+  assert.equal(secondCalls, 0);
+  release({ settled: true });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const afterSettle = await registry.execute({ name: "notes.second", input: { query: "x" }, context });
+  assert.equal(afterSettle.status, "succeeded");
+  assert.equal(secondCalls, 1);
 });
