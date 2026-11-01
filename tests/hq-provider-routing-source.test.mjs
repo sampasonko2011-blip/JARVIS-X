@@ -53,7 +53,7 @@ test("browser gateway fixtures model the versioned five-provider composite contr
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
   assert.ok(gateway.includes('deepseek: { model: "deepseek-flash"'));
-  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5"'));
+  assert.ok(gateway.includes('anthropic: { model: "claude-opus-5-5"'));
   assert.ok(gateway.includes('xai: { model: "grok-4.7"'));
   assert.ok(gateway.includes('google: { model: "gemini-4-argon"'));
   assert.ok(gateway.includes('normalized === "claude-opus-5"'));
