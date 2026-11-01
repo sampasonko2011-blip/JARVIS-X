@@ -671,8 +671,15 @@ Deno.serve(async (req: Request) => {
   // Cross-platform memory is opt-in per request. No recall or write unless the user explicitly consents.
   const memoryConsent = body.memory_consent === true;
   const memory = memoryConsent ? await recallMemory(task, user.id) : { status: "not_consented", context: "" };
+  type CouncilExecutionResult = {
+    answer: string;
+    providerCalls: number;
+    providersUsed: Array<{ provider: string; model: string; stage: string }>;
+    executionMode?: string;
+    independence?: string;
+  };
   try {
-    const result = rucheRoute.provider
+    const result: CouncilExecutionResult = rucheRoute.provider
       ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
       : await executeFiveProviderCouncil({
           objective: task,
