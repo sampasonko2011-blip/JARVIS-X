@@ -41,13 +41,14 @@ test("manual smoke test covers all five providers with bounded calls and explici
   assert.doesNotMatch(providerSmokeWorkflow, /if: \$\{\{ inputs\.confirm_paid_api_calls == true \}\}/);
 });
 
-test("browser gateway fixtures model the versioned single-engine contract", () => {
+test("browser gateway fixtures model the versioned five-provider composite contract", () => {
   for (const fixture of [hqE2E, gatewayE2E]) {
-    assert.ok(fixture.includes('mode: "single-engine-composite-prompt"'), "fixture should use the current composite health mode");
-    assert.ok(fixture.includes('provider: "openai"'), "fixture should report the actual default provider");
-    assert.ok(!fixture.includes("five-provider-council"), "fixture must not imply unexecuted multi-provider consensus");
-    assert.ok(!fixture.includes("provider_calls: 5"), "fixture must report one inference call");
+    assert.ok(fixture.includes('mode: "five-provider-council"'), "fixture should use the five-provider composite health mode");
+    assert.ok(fixture.includes('provider: "multi-provider-council"'), "fixture should report the single JARVIS-X composite identity");
+    assert.ok(!fixture.includes("single-engine-composite-prompt"), "fixture must not advertise the obsolete one-model composite route");
   }
+  assert.ok(hqE2E.includes("provider_calls: 5"), "successful HQ fixture must record five provider calls");
+  assert.ok(hqE2E.includes('stage:"synthesis"'), "successful HQ fixture must include the Gemini synthesis stage");
 });
 test("roster uses the intended exact model IDs", () => {
   assert.ok(gateway.includes('openai: { model: "gpt-6.1-sol"'));
