@@ -10,7 +10,7 @@ const TEXT_SCHEMA = Object.freeze({
 });
 
 /** One deterministic, read-only local capability; no network or persistent state. */
-export function createDefaultCapabilityRegistry() {
+export function createDefaultCapabilityRegistry(options = {}) {
   const registry = createCapabilityRegistry({
     permissionCheck: async ({ userId, permission, consequence }) =>
       typeof userId === "string" && userId.trim().length > 0 &&
@@ -18,6 +18,10 @@ export function createDefaultCapabilityRegistry() {
     approvalCheck: async () => false,
     maxConcurrent: 2
   });
+  if (options.enabled !== true) {
+    registry.seal();
+    return registry;
+  }
   registry.register({
     name: "text.analyze",
     description: "Count characters, words, sentences, and paragraphs in supplied text. Use only when these measurements help answer the user's request.",
