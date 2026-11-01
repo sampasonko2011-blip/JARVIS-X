@@ -44,6 +44,14 @@ test("v12 supports explicit orchestration modes and stateless Gemini synthesis",
   assert.match(gateway, /provider_empty_output/);
 });
 
+test("provider adapters reject incomplete or truncated responses before counting a stage as executed", () => {
+  assert.match(gateway, /data\\?\\.status !== "completed"/);
+  assert.match(gateway, /data\\?\\.choices\\?\\.\\[0\\]\\?\\.finish_reason !== "stop"/);
+  assert.match(gateway, /!\\["end_turn", "stop_sequence"\\]\\.includes\\(data\\?\\.stop_reason\\)/);
+  assert.match(gateway, /provider_incomplete_response_/);
+  assert.match(gateway, /provider_nonterminal_finish_/);
+});
+
 test("v12 composite route uses five distinct providers with parallel reviews and Gemini synthesis", () => {
   assert.match(gateway, /executeFiveProviderCouncil/);
   assert.match(gateway, /five-provider-council/);
