@@ -5,10 +5,10 @@
  */
 const checks = [
   { provider: "OpenAI", envKey: "OPENAI_API_KEY", model: "gpt-6.1-sol", kind: "responses", url: "https://api.openai.com/v1/responses" },
-  { provider: "DeepSeek", envKey: "DEEPSEEK_API_KEY", model: "deepseek-flash", kind: "chat", url: "https://api.deepseek.com/chat/completions" },
-  { provider: "Anthropic", envKey: "ANTHROPIC_API_KEY", model: "claude-opus-5-5", kind: "anthropic", url: "https://api.anthropic.com/v1/messages" },
+  { provider: "DeepSeek", envKey: "DEEPSEEK_API_KEY", model: "deepseek-v4-flash", kind: "chat", url: "https://api.deepseek.com/chat/completions" },
+  { provider: "Anthropic", envKey: "ANTHROPIC_API_KEY", model: "claude-opus-5", kind: "anthropic", url: "https://api.anthropic.com/v1/messages" },
   { provider: "xAI", envKey: "XAI_API_KEY", model: "grok-4.7", kind: "responses", url: "https://api.x.ai/v1/responses" },
-  { provider: "Google", envKey: "GOOGLE_API_KEY", model: "gemini-4-argon", kind: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-4-argon:generateContent" }
+  { provider: "Google", envKey: "GOOGLE_API_KEY", model: "gemini-3.8-flash", kind: "gemini", url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent" }
 ];
 const timeoutFor = (config) => config.kind === "gemini" ? 45_000 : 20_000;
 
@@ -31,10 +31,10 @@ function identityMatches(config, observed) {
   if (typeof observed !== "string" || !observed.trim()) return false;
   const id = observed.toLowerCase();
   if (config.provider === "OpenAI") return id.startsWith("gpt-6.1-sol");
-  if (config.provider === "DeepSeek") return id === "deepseek-flash" || id.startsWith("deepseek-v4.1-flash");
+  if (config.provider === "DeepSeek") return id === "deepseek-v4-flash" || id.startsWith("deepseek-v4.1-flash");
   if (config.provider === "Anthropic") return id === "claude-opus-5" || id.startsWith("claude-opus-5-");
   if (config.provider === "xAI") return id.startsWith("grok-4.7");
-  return id.startsWith("gemini-4-argon");
+  return id.startsWith("gemini-3.8-flash");
 }
 
 async function smokeTest(config) {
