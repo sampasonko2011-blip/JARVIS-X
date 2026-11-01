@@ -6,7 +6,7 @@
 
 | Provider | Required environment variable | API style |
 |---|---|---|
-| Google Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Gemini `:generateContent` |
+| Google Gemini | `GOOGLE_API_KEY` or `JARVIS_X_GEMINI_API_KEY` | Gemini Interactions API `/v1beta/interactions` |
 | Anthropic Claude | `ANTHROPIC_API_KEY` | Messages API |
 | DeepSeek | `DEEPSEEK_API_KEY` | OpenAI-compatible chat completions |
 | OpenAI | `OPENAI_API_KEY` | OpenAI-compatible chat completions |
