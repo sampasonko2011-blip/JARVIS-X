@@ -55,9 +55,9 @@ LangGraph's official documentation distinguishes thread-scoped checkpoints from 
 
 ## Validation gates
 
-- Unit tests for one-core invocation, invalid inputs, provider/model identity, bounded outputs, memory trust boundary and tool-availability truthfulness.
+- Unit tests for one executive-core identity, bounded optional tool follow-up, invalid inputs, provider/model identity, bounded outputs, memory trust boundary and tool-availability truthfulness.
 - Gateway contract tests for authentication, allowlisting, rate limits, budget reservation, audit writes and no silent fallback.
-- Browser E2E tests for the single-core health contract and one-call execution receipt.
+- Browser E2E tests for the single-core health contract and execution receipt; separate mocked tests cover the optional local capability loop.
 - Holdout task set measuring factuality, task success, calibration, safety, latency and cost against the baseline.
 - Live provider smoke tests only after separate explicit authorization and a verified spend cap. Under the current €0 boundary, do not run them.
 - Production deployment and merge require separate owner authorization and a coordinated gateway/frontend cutover.
