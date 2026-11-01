@@ -388,7 +388,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
     headers = { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" };
     body = { model: config.model, system, messages: [{ role: "user", content: task }], max_tokens: MAX_OUTPUT_TOKENS };
   } else {
-    // Gemini 4 Argon is routed through the current Interactions API; its model ID is operator-configured.
+    // Gemini is routed through the Interactions API; its model ID is operator-configured.
     // store:false avoids retaining these HQ prompts in provider-side interaction history.
     endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions";
     headers = { "x-goog-api-key": apiKey, "Content-Type": "application/json" };
