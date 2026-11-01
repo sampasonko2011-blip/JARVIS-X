@@ -139,3 +139,40 @@ test("timed-out handlers retain their concurrency slot until they actually settl
   assert.equal(afterSettle.status, "succeeded");
   assert.equal(secondCalls, 1);
 });
+
+test("registry exports only strict, closed Responses function schemas", () => {
+  const registry = createCapabilityRegistry();
+  registry.register(baseDefinition());
+  const tools = registry.toOpenAITools();
+  assert.equal(tools.length, 1);
+  assert.deepEqual(tools[0], {
+    type: "function",
+    name: "notes_search",
+    description: "Search approved notes",
+    parameters: {
+      type: "object",
+      properties: { query: { type: "string", maxLength: 100 } },
+      required: ["query"],
+      additionalProperties: false
+    },
+    strict: true
+  });
+  assert.equal(registry.resolveToolName("notes_search"), "notes.search");
+  assert.equal(registry.resolveToolName("unknown_tool"), null);
+});
+
+test("strict Responses schemas reject optional fields and ambiguous tool names", () => {
+  const optional = createCapabilityRegistry();
+  assert.throws(() => optional.register(baseDefinition({
+    inputSchema: {
+      type: "object",
+      properties: { query: { type: "string" }, limit: { type: "integer" } },
+      required: ["query"],
+      additionalProperties: false
+    }
+  })), /capability_schema_all_properties_must_be_required/);
+  const collision = createCapabilityRegistry();
+  collision.register(baseDefinition({ name: "notes.search" }));
+  collision.register(baseDefinition({ name: "notes_search" }));
+  assert.throws(() => collision.toOpenAITools(), /capability_tool_name_collision/);
+});
