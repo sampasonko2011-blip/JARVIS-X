@@ -1,4 +1,8 @@
-import { identityMatches, hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
+import { identityMatches as importedIdentityMatches, hasExpectedArithmeticResult } from "./provider-smoke-utils.mjs";
+
+function identityMatches(observed, requested) {
+  return importedIdentityMatches(observed, requested);
+}
 
 /**
  * Bounded, manually dispatched smoke test. All five API keys and exact model IDs
