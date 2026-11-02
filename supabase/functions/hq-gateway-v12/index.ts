@@ -19,6 +19,9 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel";
 const PRIMARY_MODEL = "single-executive-core";
+// Release lock: this production candidate must not make live model calls.
+// Re-enable only through a separately reviewed, explicitly authorized code change.
+const LIVE_INFERENCE_ENABLED = false;
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 // Bound the single executive-core input and output.
@@ -384,7 +387,8 @@ Deno.serve(async (req: Request) => {
       executiveModel: EXECUTIVE_CONFIG.model,
       executiveRuntimeConfigured,
       budgetGuard,
-      chatEnabled: executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
+      liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
+      chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
@@ -542,6 +546,11 @@ Deno.serve(async (req: Request) => {
   }
   if (body.mode !== undefined && (typeof body.mode !== "string" || !["live", "mock", "support", "master_control", "epaulement", "domination"].includes(body.mode))) {
     return jsonResponse({ error: "invalid_execution_mode" }, 400, origin);
+  }
+
+  // Hard fail-closed release gate: credentials and budget configuration cannot override this lock.
+  if (!LIVE_INFERENCE_ENABLED) {
+    return jsonResponse({ error: "live_inference_disabled", executive_identity: "JARVIS-X", model_calls: 0 }, 403, origin);
   }
 
   const missingProviderConfig: string[] = [];
