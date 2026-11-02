@@ -1,4 +1,4 @@
-const CACHE = 'jarvis-x-hq-shell-v10';
+const CACHE = 'jarvis-x-hq-shell-v11';
 const SHELL = ['./', './index.html', './hq.css', './hq.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg'];
 
 self.addEventListener('install', (event) => {
