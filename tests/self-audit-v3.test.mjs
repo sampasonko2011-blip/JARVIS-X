@@ -45,7 +45,8 @@ const base = {
     leakageCheck: "pass",
     independentGrader: "blind-independent",
     primaryMetric: "accuracy",
-    primaryImprovementLowerBound: 0.03
+    primaryImprovementLowerBound: 0.03,
+    confidenceLevel: 0.95
   },
   cost: { known: true, currency: "USD", actual: 0, ceiling: 0 },
   liveProviderCalls: 0
