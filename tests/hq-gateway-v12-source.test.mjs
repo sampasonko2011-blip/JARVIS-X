@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
 const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cognitive-kernel.mjs", import.meta.url), "utf8");
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
-const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-execution.mjs", import.meta.url), "utf8");
 const xmemo = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-memory.mjs", import.meta.url), "utf8");
 const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 const hqClient = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
@@ -13,7 +13,7 @@ const serviceWorker = await readFile(new URL("../hq/sw.js", import.meta.url), "u
 
 test("v12 imports the cognitive kernel and deterministic mock dependency", () => {
   assert.match(gateway, /executeCognitiveKernel/);
-  assert.match(gateway, /createMockCouncilResult/);
+  assert.match(gateway, /createMockExecutionResult/);
   assert.match(mock, /Deterministic mock only/);
 });
 
@@ -114,7 +114,30 @@ test("HQ separates zero-provider integration fixtures from budget-gated live inf
 });
 
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
-  assert.match(serviceWorker, /jarvis-x-hq-shell-v8/);
+  assert.match(serviceWorker, /jarvis-x-hq-shell-v9/);
   assert.match(serviceWorker, /'\.\/mission-control\.js'/);
   assert.match(serviceWorker, /'\.\/hq\.js'/);
+});
+
+
+test("Nano Banana image route is separate, authenticated, confirmed, and zero-budget by default", async () => {
+  const imageAdapter = await readFile(new URL("../supabase/functions/hq-gateway-v12/nano-banana-image.mjs", import.meta.url), "utf8");
+  const imageMigration = await readFile(new URL("../supabase/migrations/20261102120000_hq_image_budget_guard.sql", import.meta.url), "utf8");
+  assert.match(gateway, /createNanoBananaImageGenerator/);
+  assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
+  assert.match(gateway, /body\.user_confirmed !== true/);
+  assert.match(gateway, /reserve_hq_image_budget/);
+  assert.match(gateway, /image_budget_guard_unavailable/);
+  assert.match(imageAdapter, /gemini-nano-banana-2\.1/);
+  assert.match(imageAdapter, /v1beta\/interactions/);
+  assert.match(imageAdapter, /AbortSignal\.timeout\(60_000\)/);
+  assert.match(imageMigration, /enabled boolean NOT NULL DEFAULT false/);
+  assert.match(imageMigration, /daily_limit_usd numeric\(12,6\) NOT NULL DEFAULT 0/);
+  assert.match(imageMigration, /GRANT EXECUTE ON FUNCTION public\.reserve_hq_image_budget\(uuid, uuid\) TO service_role/);
+  assert.match(hqHtml, /id="image-cost-confirm"/);
+  assert.match(hqHtml, /id="image-generate" disabled/);
+  assert.match(hqClient, /JX_GATEWAY\+'\/image'/);
+  assert.match(hqClient, /user_confirmed:true/);
+  assert.match(hqClient, /No automatic retry was made/);
+  assert.doesNotMatch(hqClient, /GOOGLE_API_KEY|JARVIS_X_GEMINI_API_KEY/);
 });
