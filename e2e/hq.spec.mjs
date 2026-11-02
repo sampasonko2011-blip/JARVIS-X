@@ -361,6 +361,29 @@ test("direct chat sends a message and displays a reply only after a verified gat
   expect(request.memory_consent).toBe(false);
 });
 
+test("zero-provider mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", selectedProvider: "composite", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { ok: true, mock: true, provider: "mock", model: "mock-v1", execution_mode: "mock-composite-prompt-placeholder", provider_calls: 0, providers_used: [{ stage: "mock-placeholder", provider: "mock", model: "mock-v1" }], output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-execution-mode").selectOption("mock");
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await expect(page.locator("#chat-gateway-status")).toContainText("not AI");
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("Check the local integration path");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("MOCK FIXTURE — NOT AI");
+  await expect(page.locator("#chat-thread")).toContainText("no real AI inference was performed");
+  await expect(page.locator("#chat-gateway-status")).toContainText("Provider calls: 0");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.mode).toBe("mock");
+  expect(request.memory_consent).toBe(false);
+  expect(request.ia_selectionnee).toBe("composite");
+});
+
 test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
   await installGatewayFetchMock(page, {
     health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", selectedProvider: "composite", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
