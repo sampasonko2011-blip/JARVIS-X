@@ -25,7 +25,7 @@ const MAX_TASK_CHARS = 12_000;
 const MAX_STAGE_INPUT_CHARS = 64_000;
 const MAX_PROVIDER_OUTPUT_CHARS = 12_000;
 const MAX_OUTPUT_TOKENS = 1024;
-// Retained only for explicitly selected Gemini diagnostics, not the default composite route.
+// Gemini credentials are used only by the separate image-generation capability, never by reasoning.
 const GEMINI_MAX_OUTPUT_TOKENS = 1_024;
 
 
@@ -371,7 +371,7 @@ Deno.serve(async (req: Request) => {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("identity"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
     const healthRoute = healthRouteResult.route;
-    const providersConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
+    const executiveRuntimeConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -386,7 +386,7 @@ Deno.serve(async (req: Request) => {
       model: PRIMARY_MODEL,
       providersConfigured,
                   budgetGuard,
-      chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
+      chatEnabled: executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
@@ -520,7 +520,7 @@ Deno.serve(async (req: Request) => {
         metadata: {
           execution_mode: "mock-executive-placeholder",
           mock: true,
-          provider_calls: 0,
+          model_calls: 0,
           mock_execution_receipt: mockResult.executionReceipt,
           latency_ms: Date.now() - started,
         },
@@ -531,8 +531,8 @@ Deno.serve(async (req: Request) => {
     }
     return jsonResponse({
       ok: true,
-      provider: "mock",
-      model: "mock-v1",
+      executive_identity: "JARVIS-X",
+      executive_runtime: { model: "mock-fixture" },
       execution_mode: "mock-executive-placeholder",
       mock: true,
       provider_calls: 0,
@@ -550,8 +550,8 @@ Deno.serve(async (req: Request) => {
   if (!Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
   if (!EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
   if (missingProviderConfig.length > 0) {
-    const requestedProvider = PRIMARY_PROVIDER;
-    const requestedModel = PRIMARY_MODEL;
+    const requestedIdentity = "JARVIS-X";
+    const requestedModel = EXECUTIVE_CONFIG.model;
     const requestedMode = "single-core-cognitive-kernel";
     try {
       await writeRun(user.id, {
@@ -559,11 +559,11 @@ Deno.serve(async (req: Request) => {
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "The configured JARVIS-X executive model is not configured; no inference executed",
         error_code: "provider_configuration_missing",
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, execution_mode: requestedMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, model_calls: 0, execution_mode: requestedMode, executive_identity: requestedIdentity, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
-    return jsonResponse({ error: "providers_not_configured", provider: requestedProvider, selected_provider: rucheRoute.selection, execution_mode: requestedMode, missing_provider_count: missingProviderConfig.length }, 503, origin);
+    return jsonResponse({ error: "executive_runtime_not_configured", executive_identity: requestedIdentity, execution_mode: requestedMode, missing_runtime_config_count: missingProviderConfig.length }, 503, origin);
   }
 
   let budgetReservation;
@@ -647,7 +647,7 @@ Deno.serve(async (req: Request) => {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
