@@ -6,6 +6,7 @@ const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/ind
 const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cognitive-kernel.mjs", import.meta.url), "utf8");
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+const xmemo = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-memory.mjs", import.meta.url), "utf8");
 
 test("v12 imports the cognitive kernel and deterministic mock dependency", () => {
   assert.match(gateway, /executeCognitiveKernel/);
@@ -47,6 +48,21 @@ test("v12 preserves authentication, allowlisting, rate limits, and fail-closed b
   assert.match(gateway, /reserve_hq_global_budget/);
   assert.match(gateway, /global_budget_guard_unavailable/);
   assert.match(gateway, /global_kill_switch_enabled/);
+});
+
+
+test("XMemo transport is isolated, account-scoped, bounded, and separately consent-gated", () => {
+  assert.match(gateway, /createXMemoMemoryClient/);
+  assert.match(gateway, /body\.memory_consent === true/);
+  assert.match(gateway, /memoryConsent \? await recallMemory/);
+  assert.match(gateway, /memoryConsent\s*\?\s*await storeConversationMemory/);
+  assert.match(xmemo, /memoryPathForUser/);
+  assert.match(xmemo, /UUID_PATTERN/);
+  assert.match(xmemo, /AbortSignal\.timeout/);
+  assert.match(xmemo, /Cache-Control": "no-store"/);
+  assert.match(xmemo, /REDACTED_SECRET/);
+  assert.match(xmemo, /MAX_CONTEXT_CHARS/);
+  assert.doesNotMatch(gateway, /const XMEMO_BASE_URL/);
 });
 
 test("provider IDs remain operator-configured and are not hard-coded", () => {
