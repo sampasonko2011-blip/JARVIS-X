@@ -19,7 +19,7 @@ test("v12 imports the cognitive kernel and deterministic mock dependency", () =>
 
 test("default composite is one executive core, not a five-model council", () => {
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
-  assert.match(router, /type RucheSelection = "composite"/);
+  assert.match(router, /type RucheSelection = "jarvis-x"/);
   assert.match(router, /alternate_reasoning_routes_disabled/);
   assert.match(gateway, /return executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
