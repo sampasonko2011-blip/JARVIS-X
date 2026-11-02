@@ -25,16 +25,19 @@ test("local passphrase gate locks and unlocks the workspace", async ({ page }) =
   await expect(page.locator("#gate")).toHaveClass(/hidden/);
 });
 
-test("AI council builds a provider-neutral packet without claiming live model calls", async ({ page }) => {
-  await page.locator('[data-section="council"]').click();
+test("cognitive workflow builds one-identity task packet without claiming live model calls", async ({ page }) => {
+  await page.locator('[data-section="cognitive"]').click();
   await page.locator("#task").fill("Audit the release for regressions");
   await page.locator("#constraints").fill("Read-only first; no merge");
-  await page.locator("#build-council").click();
-  await expect(page.locator("#council-output")).toContainText("jarvis-x-task-packet");
-  await expect(page.locator("#council-status")).toContainText("No model was called");
+  await page.locator("#build-task-packet").click();
+  await expect(page.locator("#cognitive-output")).toContainText("jarvis-x-task-packet");
+  await expect(page.locator("#cognitive-status")).toContainText("No model was called");
+  await expect(page.locator("#cognitive-output")).toContainText("internal_passes");
+  await expect(page.locator("#cognitive-output")).toContainText("JARVIS-X");
+  await expect(page.locator("#cognitive-output")).toContainText("not an independent model");
   await page.locator("#data-class").selectOption("sensitive");
-  await page.locator("#build-council").click();
-  await expect(page.locator("#council-status")).toContainText("handoff is blocked");
+  await page.locator("#build-task-packet").click();
+  await expect(page.locator("#cognitive-status")).toContainText("handoff is blocked");
 });
 
 test("portable handoff exports and rejects malformed imports", async ({ page }) => {

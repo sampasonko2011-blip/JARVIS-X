@@ -286,7 +286,7 @@ test("prompt console saves format-aware drafts and keeps handoff manual", async 
   await page.locator("#prompt-context").fill("Project context, intentionally selected");
   await page.locator("#prompt-input").fill("Compare two approaches and cite sources");
   await page.locator("#save-chat-draft").click();
-  await expect(page.locator("#chat-history")).toContainText("PROMPT DRAFT");
+  await expect(page.locator("#chat-history")).toContainText("TASK BRIEF");
   await expect(page.locator("#chat-history")).toContainText("research");
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0")));
   expect(saved.chats).toHaveLength(1);
@@ -345,7 +345,7 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-engine-composite-prompt", selectedProvider: "composite", provider: "openai", model: "gpt-6.1-sol", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", provider: "openai", model: "gpt-6.1-sol", providers_used: [{provider:"openai",model:"gpt-6.1-sol",stage:"single-model-multi-perspective"}], provider_calls: 1 } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executive_identity: "JARVIS-X", executive_runtime: {model:"openai-model"}, model_calls: 1 } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
@@ -361,10 +361,33 @@ test("direct chat sends a message and displays a reply only after a verified gat
   expect(request.memory_consent).toBe(false);
 });
 
+test("zero-model mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { ok: true, mock: true, executive_identity: "JARVIS-X", executive_runtime: {model:"mock-fixture"}, execution_mode: "mock-executive-placeholder", mock: true, model_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('[data-view="chat"]').click();
+  await page.locator("#chat-execution-mode").selectOption("mock");
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await expect(page.locator("#chat-gateway-status")).toContainText("not AI");
+  await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-compose").fill("Check the local integration path");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("MOCK FIXTURE — NOT AI");
+  await expect(page.locator("#chat-thread")).toContainText("no real AI inference was performed");
+  await expect(page.locator("#chat-gateway-status")).toContainText("Model calls: 0");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.mode).toBe("mock");
+  expect(request.memory_consent).toBe(false);
+  expect(request.executive_identity).toBe("jarvis-x");
+});
+
 test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-engine-composite-prompt", selectedProvider: "composite", provider: "openai", model: "gpt-6.1-sol", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "openai", providers_used: [{provider:"openai",model:"gpt-6.1-sol",stage:"single-model-multi-perspective"}], provider_calls: 1 } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1 } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
@@ -381,13 +404,15 @@ test("cross-platform memory is sent only when explicitly enabled for the message
 
 test("cross-platform memory preference persists across messages and can be disabled", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-engine-composite-prompt", selectedProvider: "composite", provider: "openai", model: "gpt-6.1-sol", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { ok: true, output: "Reply", provider: "openai", providers_used: [{provider:"openai",model:"gpt-6.1-sol",stage:"single-model-multi-perspective"}], provider_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { ok: true, output: "Reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  // Memory is now opt-in: explicitly enable it for this persistence scenario.
+  await page.locator("#chat-memory-consent").check();
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
 
   await page.locator("#chat-compose").fill("First message with memory enabled");
@@ -413,8 +438,8 @@ test("cross-platform memory preference persists across messages and can be disab
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
   await page.locator('[data-view="upgrades"]').click();
   await expect(page.locator("#upgrade-proposals")).toContainText("Secure live AI chat gateway");
-  await expect(page.locator("#upgrade-proposals")).toContainText("Encrypted cross-device Memory OS");
-  await expect(page.locator("#upgrade-proposals")).toContainText("Version-pinned multi-model router");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Cross-platform portable export and import");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Least-privilege plugin broker");
   await page.locator('[data-proposal-approve="secure-chat-gateway"]').click();
   await expect(page.locator('[data-proposal="secure-chat-gateway"]')).toContainText("APPROVED FOR PLANNING");
   await expect(page.locator('[data-proposal-approve="secure-chat-gateway"]')).toBeDisabled();
@@ -437,14 +462,14 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#image-final-prompt")).toHaveValue(/Premium 3D render/);
   await expect(page.locator("#image-final-prompt")).toHaveValue(/16:9 landscape/);
   await expect(page.locator("#image-status")).toContainText("No image was generated");
-  await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
+  await expect(page.locator("#view-images")).toContainText("BUDGET DISABLED BY DEFAULT");
 });
 
-test("HQ presents JARVIS-X as one composite assistant, not separate model roles", async ({ page }) => {
+test("HQ presents JARVIS-X as one executive identity, not separate model roles", async ({ page }) => {
   await page.locator('[data-view="console"]').click();
   await expect(page.locator("#view-console")).toContainText("One assistant identity");
-  await expect(page.locator("#view-console")).toContainText("JARVIS-X is the single assistant you interact with");
-  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one composite provider");
+  await expect(page.locator("#view-console")).toContainText("JARVIS-X is one coherent executive identity");
+  await expect(page.locator("#view-console")).toContainText("Planning, challenge, and synthesis are internal passes of that same identity");
   await expect(page.locator("#council-build")).toHaveCount(0);
   await expect(page.locator("#council-lead")).toHaveCount(0);
   await expect(page.locator("#council-challenge")).toHaveCount(0);
@@ -482,69 +507,13 @@ test("strict CSP blocks injected inline scripts and style blocks", async ({ page
 });
 
 
-test("Model Forge registers a pinned candidate and keeps manual benchmark claims unproven", async ({ page }) => {
+test("Capability Forge exposes Nano Banana, XMemo, and portable export under one executive identity", async ({ page }) => {
   await page.locator('[data-view="forge"]').click();
   await expect(page.locator("#view-forge")).toBeVisible();
-  await page.locator("#forge-id").fill("e2e-open-model-candidate");
-  await page.locator("#forge-name").fill("E2E open-weight candidate");
-  await page.locator("#forge-source").fill("https://huggingface.co/example/model");
-  await page.locator("#forge-revision").fill("0123456789abcdef");
-  await page.locator("#forge-license").fill("Apache-2.0-reviewed");
-  await page.locator("#forge-digest").fill("a".repeat(64));
-  await page.locator("#forge-capabilities").fill("reasoning, summarization");
-  await page.locator("#forge-baseline-id").fill("baseline-e2e-001");
-  await page.locator("#forge-candidate-id").fill("candidate-e2e-001");
-  await page.locator("#forge-security-id").fill("security-review-e2e-001");
-  await page.locator("#forge-register").click();
-  await expect(page.locator("#forge-intake-status")).toContainText("registered locally");
-  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
-
-  await page.locator("#forge-benchmark-candidate").selectOption("e2e-open-model-candidate");
-  await page.locator("#forge-base-quality").fill("0.70");
-  await page.locator("#forge-new-quality").fill("0.74");
-  await page.locator("#forge-base-safety").fill("0.98");
-  await page.locator("#forge-new-safety").fill("0.98");
-  await page.locator("#forge-base-latency").fill("900");
-  await page.locator("#forge-new-latency").fill("850");
-  await page.locator("#forge-base-memory").fill("4000");
-  await page.locator("#forge-new-memory").fill("3800");
-  await page.locator("#forge-evaluate").click();
-  await expect(page.locator("#forge-benchmark-status")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-  await expect(page.locator("#forge-run-list")).toContainText("manually entered measurements");
-
-  await page.reload();
-  await page.locator('[data-view="forge"]').click();
-  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
-  await expect(page.locator("#forge-run-list")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-});
-
-
-test("Model Forge validates candidates and marks manually entered benchmarks unproven", async ({ page }) => {
-  await page.locator('[data-view="forge"]').click();
-  await expect(page.locator("#view-forge")).toBeVisible();
-  await page.locator("#forge-id").fill("test-model-candidate");
-  await page.locator("#forge-name").fill("Test open-weight candidate");
-  await page.locator("#forge-source").fill("https://huggingface.co/example/test-model");
-  await page.locator("#forge-revision").fill("0123456789abcdef0123456789abcdef01234567");
-  await page.locator("#forge-license").fill("Apache-2.0-reviewed");
-  await page.locator("#forge-digest").fill("a".repeat(64));
-  await page.locator("#forge-capabilities").fill("reasoning, summarization");
-  await page.locator("#forge-baseline-id").fill("baseline-fixture-001");
-  await page.locator("#forge-candidate-id").fill("candidate-fixture-001");
-  await page.locator("#forge-security-id").fill("security-fixture-001");
-  await page.locator("#forge-register").click();
-  await expect(page.locator("#forge-candidate-list")).toContainText("Test open-weight candidate");
-  await page.locator("#forge-benchmark-candidate").selectOption("test-model-candidate");
-  await page.locator("#forge-base-quality").fill("0.70");
-  await page.locator("#forge-new-quality").fill("0.74");
-  await page.locator("#forge-base-safety").fill("0.98");
-  await page.locator("#forge-new-safety").fill("0.98");
-  await page.locator("#forge-base-latency").fill("900");
-  await page.locator("#forge-new-latency").fill("850");
-  await page.locator("#forge-base-memory").fill("4000");
-  await page.locator("#forge-new-memory").fill("3800");
-  await page.locator("#forge-evaluate").click();
-  await expect(page.locator("#forge-run-list")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-  await expect(page.locator("#forge-benchmark-status")).toContainText("unverified manual claims");
-  await expect(page.locator("#forge-benchmark-status")).toContainText("not proof of model improvement");
+  await expect(page.locator("#capability-registry")).toContainText("Nano Banana image generation");
+  await expect(page.locator("#capability-registry")).toContainText("XMemo memory");
+  await expect(page.locator("#capability-registry")).toContainText("Encrypted portable export/import");
+  await expect(page.locator("#capability-registry")).toContainText("DISABLED BY DEFAULT");
+  await expect(page.locator("#view-forge")).not.toContainText("open-weight model candidates");
+  await expect(page.locator("#view-forge")).not.toContainText("provider picker");
 });

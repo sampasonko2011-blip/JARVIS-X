@@ -4,21 +4,19 @@ import {
   CAPABILITIES,
   EVIDENCE_STATES,
   transitionEvidence,
-  buildCouncilPlan,
   assessToolRequest,
   validateExecutionReceipt,
   assessSyncEnvelope,
-  rankProvidersForTask,
   reconcileSyncEnvelopes,
 } from "../hq/capability-core.mjs";
 
 test("capability register preserves current live-state boundaries", () => {
   const byId = Object.fromEntries(CAPABILITIES.map((item) => [item.id, item.status]));
   assert.equal(byId["static-hq"], "IMPLEMENTED_LOCAL");
-  assert.equal(byId["multi-ai"], "IMPLEMENTED_IN_PR_48_NOT_LIVE");
-  assert.equal(byId["image-generation"], "NOT_CONNECTED");
+  assert.equal(byId["single-executive-core"], "SOURCE_VALIDATED_NOT_DEPLOYED");
+  assert.equal(byId["image-generation"], "ADAPTER_AND_BUDGET_GATE_IMPLEMENTED_DISABLED");
   assert.equal(byId["tool-broker"], "GENERIC_BOUNDARY_ONLY");
-  assert.equal(byId["cross-device-sync"], "NOT_CONNECTED");
+  assert.equal(byId["cross-platform-portability"], "LOCAL_EXPORT_IMPORT_AVAILABLE");
   assert.equal(byId["security-gateway-ui"], "IN_PR_48");
   assert.equal(byId["gateway-backend"], "NOT_DEPLOYED");
 });
@@ -30,36 +28,6 @@ test("evidence lifecycle rejects skipping directly from proposal to world-state 
   });
   assert.equal(transitionEvidence("PROPOSED", "WORLD_STATE_VERIFIED").reason, "INVALID_TRANSITION");
   assert.equal(transitionEvidence("UNKNOWN", "EXECUTED").reason, "UNKNOWN_STATE");
-});
-
-test("council planner falls back to manual handoff when no providers have live evidence", () => {
-  const plan = buildCouncilPlan({ objective: "Compare two strategies", providers: [
-    { id: "provider-a", modelId: "model-a", status: "CONNECTED", authorized: true, liveTestPassed: false },
-  ] });
-  assert.equal(plan.mode, "MANUAL_HANDOFF");
-  assert.deepEqual(plan.providerIds, []);
-  assert.match(plan.limitation, /No provider was called/);
-  assert.throws(() => buildCouncilPlan({ objective: "  " }), /non-empty/);
-});
-
-test("council planner requires independent verified providers for a live council", () => {
-  const providers = [
-    { id: "a", modelId: "model-a", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
-    { id: "b", modelId: "model-b", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
-  ];
-  const plan = buildCouncilPlan({ objective: "Challenge the first solution", providers });
-  assert.equal(plan.mode, "LIVE_ELIGIBLE");
-  assert.deepEqual(plan.providerIds, ["a", "b"]);
-  assert.equal(plan.stages.length, 3);
-  assert.match(plan.limitation, /does not itself invoke/);
-  const sameModel = buildCouncilPlan({
-    objective: "Independent review",
-    providers: [
-      { id: "alias-a", modelId: "same-model", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
-      { id: "alias-b", modelId: "same-model", status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true },
-    ],
-  });
-  assert.equal(sameModel.mode, "MANUAL_HANDOFF");
 });
 
 test("tool broker policy is fail-closed for missing scope, disabled tools, and writes without approval", () => {
@@ -152,62 +120,6 @@ test("sync envelope schema checks do not claim authentication or persistence", (
   assert.equal(assessSyncEnvelope({
     schemaVersion: 1, accountId: "a", revision: -1, updatedAt: "2026-10-23T12:00:00Z", records: [],
   }).reason, "INVALID_REVISION");
-});
-
-
-test("provider router ranks only complete, authorized, benchmarked candidates", () => {
-  const providers = [
-    {
-      providerId: "provider-a", modelId: "model-a",
-      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
-      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.92 },
-      reliability: 0.96, latencyMs: 3000, costMicros: 250, benchmarkEvidenceId: "bench-a", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
-    },
-    {
-      providerId: "provider-b", modelId: "model-b",
-      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
-      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.84 },
-      reliability: 0.98, latencyMs: 1800, costMicros: 100, benchmarkEvidenceId: "bench-b", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
-    },
-    {
-      providerId: "provider-c", modelId: "model-c",
-      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
-      capabilities: ["reasoning"], qualityByTask: { research: 0.99 },
-      reliability: 0.99, latencyMs: 1000, costMicros: 0, benchmarkEvidenceId: "bench-c",
-    },
-    {
-      providerId: "provider-unknown", modelId: "model-unknown",
-      status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
-      capabilities: ["reasoning", "web-research"], qualityByTask: { research: 0.99 },
-      reliability: 0.99, latencyMs: 100, costMicros: 0,
-    },
-  ];
-  const result = rankProvidersForTask({
-    taskType: "research",
-    requiredCapabilities: ["reasoning", "web-research"],
-    providers,
-    maxLatencyMs: 10000,
-    maxCostMicros: 1000,
-    minimumQuality: 0.8,
-  });
-  assert.equal(result.status, "RANKED");
-  assert.equal(result.candidates.length, 2);
-  assert.equal(result.candidates[0].providerId, "provider-a");
-  assert.equal(result.candidates.some((p) => p.providerId === "provider-c"), false);
-  assert.equal(result.candidates.some((p) => p.providerId === "provider-unknown"), false);
-  assert.equal(result.weights.quality + result.weights.reliability + result.weights.latency + result.weights.cost, 1);
-});
-
-test("provider router keeps unknown metrics distinct from zero and fails closed", () => {
-  const missingLatency = {
-    providerId: "provider-a", modelId: "model-a",
-    status: "WORLD_STATE_VERIFIED", authorized: true, liveTestPassed: true, safetyPassed: true,
-    capabilities: ["reasoning"], qualityByTask: { math: 0.9 },
-    reliability: 0.9, costMicros: 0, benchmarkEvidenceId: "bench-a", benchmarkSource: "controlled-suite", benchmarkVersion: "1.0", benchmarkDate: "2026-10-20T00:00:00Z",
-  };
-  assert.equal(rankProvidersForTask({ taskType: "math", providers: [missingLatency] }).status, "NO_EVIDENCE_QUALIFIED_CANDIDATE");
-  assert.equal(rankProvidersForTask({ taskType: "", providers: [] }).reason, "TASK_TYPE_REQUIRED");
-  assert.equal(rankProvidersForTask({ taskType: "math", maxLatencyMs: 0, providers: [] }).reason, "INVALID_ROUTING_CONSTRAINTS");
 });
 
 

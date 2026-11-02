@@ -40,7 +40,7 @@
  <div class="brand"><div class="logo">JX</div><div><strong>JARVIS-X</strong><small>MISSION CONTROL / LOCAL</small></div></div>
  <nav class="nav" aria-label="Mission control navigation">
   <button class="active" data-section="home"><span>⌂</span>Overview</button>
-  <button data-section="council"><span>◉</span>AI Council</button>
+  <button data-section="cognitive"><span>◉</span>Cognitive Workflow</button>
   <button data-section="bridge"><span>⇄</span>Cross-platform</button>
   <button data-section="workflows"><span>⌘</span>Workflows</button>
   <button data-section="security"><span>⛨</span>Security</button>
@@ -53,7 +53,7 @@
 
 <section class="section active" id="section-home">
  <div class="grid">
-  <article class="card hero s8"><div class="eyebrow">SYSTEM ONLINE / LOCAL SHELL</div><h2>Think wider. Verify harder. Act only within scope.</h2><p>JARVIS-X coordinates task briefs, reasoning stages, workflow plans and defensive checks under one identity. It does not pretend to have live execution or remote memory when those routes are not configured.</p><div class="actions"><button class="btn primary" data-jump="council">Start AI council</button><button class="btn" data-jump="bridge">Open cross-platform bridge</button><button class="btn ghost" data-jump="security">Run local security checks</button></div></article>
+  <article class="card hero s8"><div class="eyebrow">SYSTEM ONLINE / LOCAL SHELL</div><h2>Think wider. Verify harder. Act only within scope.</h2><p>JARVIS-X coordinates task briefs, reasoning stages, workflow plans and defensive checks under one identity. It does not pretend to have live execution or remote memory when those routes are not configured.</p><div class="actions"><button class="btn primary" data-jump="cognitive">Start cognitive workflow</button><button class="btn" data-jump="bridge">Open cross-platform bridge</button><button class="btn ghost" data-jump="security">Run local security checks</button></div></article>
   <article class="card s4"><div class="ringwrap"><div class="ring"><b>JX / 09<small>MISSION CONTROL</small></b></div><div><div class="eyebrow">EVIDENCE STATUS</div><h2 style="margin:8px 0">No fake green.</h2><div class="muted small">Configured ≠ connected. Connected ≠ tested. Tested ≠ world-state verified.</div></div></div></article>
   <div class="metrics s12">
    <div class="metric"><span class="tag green">LOCAL</span><strong>Ready</strong><small>Planner, handoff packet and local workflow queue</small></div>
@@ -67,7 +67,7 @@
    <div class="item"><strong>Least privilege</strong>Read-only by default. External writes require a real authorized connector and explicit approval.</div>
   </div></article>
   <article class="card s6"><div class="cardhead"><h2>Fast launch</h2><span class="tag">INTERACTIVE</span></div><div class="list">
-   <button class="btn ghost" data-jump="council">01 · Build a multi-model task packet</button>
+   <button class="btn ghost" data-jump="cognitive">01 · Build a JARVIS-X task packet</button>
    <button class="btn ghost" data-jump="bridge">02 · Export a portable handoff</button>
    <button class="btn ghost" data-jump="workflows">03 · Plan a workflow</button>
    <button class="btn ghost" data-jump="security">04 · Check browser security posture</button>
@@ -75,20 +75,20 @@
  </div>
 </section>
 
-<section class="section" id="section-council">
- <h2 class="section-title">AI Council / Task Orchestrator</h2><p class="intro">One identity, one operating doctrine: JARVIS-X. Build an evidence-led task packet with lead, independent challenge and synthesis stages. This local workspace prepares work; it does not itself execute a model request.</p>
+<section class="section" id="section-cognitive">
+ <h2 class="section-title">Cognitive Workflow / Task Orchestrator</h2><p class="intro">One identity, one operating doctrine: JARVIS-X. Build an evidence-led task packet with lead, challenge and synthesis passes inside one JARVIS-X identity. This local workspace prepares work; it does not itself execute a model request.</p>
  <div class="grid">
   <article class="card s7"><div class="field"><label for="task">Objective</label><textarea id="task" placeholder="Describe the outcome, constraints, and how success will be verified."></textarea></div>
    <div class="split"><div class="field"><label for="task-mode">Workflow type</label><select id="task-mode"><option value="research">Research + evidence</option><option value="build">Build + test</option><option value="audit">Adversarial audit</option><option value="creative">Creative / image brief</option><option value="operations">Operational workflow</option></select></div><div class="field"><label for="data-class">Data class</label><select id="data-class"><option value="public">Public / non-sensitive</option><option value="private">Private — minimize before handoff</option><option value="sensitive">Sensitive — do not export to external models</option></select></div></div>
    <div class="field"><label for="constraints">Constraints and acceptance tests</label><textarea id="constraints" placeholder="Approval boundaries, budget, no-go actions, exact tests."></textarea></div>
    <div class="field"><div class="muted small">Execution route: JARVIS-X gateway when authenticated and verified. Internal model routing is not a user-facing identity selector.</div></div>
-   <div class="actions"><button class="btn primary" id="build-council">Build council packet</button><button class="btn" id="copy-council">Copy packet</button><button class="btn ghost" id="save-council">Save local task</button></div><div id="council-status" class="statusline" role="status"></div>
+   <div class="actions"><button class="btn primary" id="build-task-packet">Build task packet</button><button class="btn" id="copy-task-packet">Copy packet</button><button class="btn ghost" id="save-task-packet">Save local task</button></div><div id="cognitive-status" class="statusline" role="status"></div>
   </article>
   <article class="card s5"><div class="cardhead"><h2>JARVIS-X reasoning pipeline</h2><span class="tag amber">ROUTE-DEPENDENT</span></div><div class="list">
    <div class="item"><strong>Lead model</strong>Build the strongest first answer and cite sources, assumptions, and unknowns.</div>
    <div class="item"><strong>Independent critic</strong>Try to falsify the lead answer; identify omissions, counterexamples and risks.</div>
    <div class="item"><strong>Synthesizer</strong>Resolve disagreements using evidence, not majority vote or model prestige.</div>
-  </div><div class="field"><label>Packet preview</label><div id="council-output" class="output">Your generated task packet will appear here.</div></div><div class="muted small">All roles belong to the JARVIS-X workflow. The number of stages is not proof that separate models were invoked.</div></article>
+  </div><div class="field"><label>Packet preview</label><div id="cognitive-output" class="output">Your generated task packet will appear here.</div></div><div class="muted small">All roles belong to the JARVIS-X workflow. The number of stages is not proof that separate models were invoked.</div></article>
   <article class="card s12"><div class="cardhead"><h2>Single-identity contract</h2><span class="tag">JARVIS-X</span></div><p>Model adapters, when enabled, are internal implementation details. The interface presents one JARVIS-X identity; actual execution, permissions, and evidence remain subject to gateway checks.</p><p class="muted small">OpenRouter remains excluded by project policy. Never put credentials in browser storage or exported task packets.</p></article>
  </div>
 </section>
@@ -101,7 +101,7 @@
    <div class="field"><label for="bridge-checkpoint">Last known-good checkpoint (commit, URL or milestone)</label><input class="input" id="bridge-checkpoint" value="main @ 28eb90e28929fd46c97dea77b5366574c89bad8b"></div>
    <div class="field"><label for="bridge-evidence">Evidence, errors, completed work and unknowns</label><textarea id="bridge-evidence" placeholder="What was observed? What remains unproven? Include links, not secrets."></textarea></div>
    <div class="field"><label for="bridge-next">Next tests / constraints</label><textarea id="bridge-next" placeholder="Acceptance criteria, no-go actions, approval boundaries."></textarea></div>
-   <div class="warn">Sensitive data selection is intentionally blocked from the AI council export. Never include passwords, API keys, session cookies, private health data or credentials in a portable packet.</div>
+   <div class="warn">Sensitive data selection is intentionally blocked from the task-packet export. Never include passwords, API keys, session cookies, private health data or credentials in a portable packet.</div>
    <div class="actions"><button class="btn primary" id="build-bridge">Build handoff packet</button><button class="btn" id="copy-bridge">Copy packet</button><button class="btn" id="download-bridge">Download JSON</button></div><div class="field"><label for="bridge-import">Import a packet from another platform</label><input class="input" id="bridge-import" type="file" accept="application/json,.json"></div><div id="bridge-status" class="statusline" role="status"></div>
   </article>
   <article class="card s6"><div class="cardhead"><h2>Portable packet</h2><span class="tag">SCHEMA v1</span></div><div id="bridge-output" class="output">Build a packet to see the handoff payload.</div><div class="muted small">Export and review the packet within your authorized JARVIS-X workflow. No external session is opened automatically.</div><div class="footer">No shared memory is assumed. The receiving platform must treat imported content as untrusted, validate facts and permissions, and request fresh approval for consequential actions.</div></article>

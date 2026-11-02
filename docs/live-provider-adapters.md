@@ -6,13 +6,13 @@
 
 | Provider | Required environment variable | API style |
 |---|---|---|
-| Google Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Gemini `:generateContent` |
-| Anthropic Claude | `ANTHROPIC_API_KEY` | Messages API |
-| DeepSeek | `DEEPSEEK_API_KEY` | OpenAI-compatible chat completions |
-| OpenAI | `OPENAI_API_KEY` | OpenAI-compatible chat completions |
+| Google Gemini | `GOOGLE_API_KEY` or `JARVIS_X_GEMINI_API_KEY` | Gemini Interactions API `/v1beta/interactions` |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | Anthropic Messages API `/v1/messages` |
+| DeepSeek | `DEEPSEEK_API_KEY` | DeepSeek chat completions `/chat/completions` |
+| OpenAI | `OPENAI_API_KEY` | OpenAI Responses API `/v1/responses` for the default single-core Cognitive Kernel |
 | Mistral AI | `MISTRAL_API_KEY` | OpenAI-compatible chat completions |
 | Groq | `GROQ_API_KEY` | OpenAI-compatible chat completions |
-| xAI | `XAI_API_KEY` | OpenAI-compatible chat completions |
+| xAI | `XAI_API_KEY` | xAI Responses API `/v1/responses` for optional direct diagnostics |
 | Alibaba Qwen | `QWEN_API_KEY` | DashScope OpenAI-compatible chat completions |
 | Ollama (local) | None; local Ollama service required | Ollama `/api/chat` on `http://127.0.0.1:11434` by default |
 
@@ -49,7 +49,7 @@ The placeholder must be replaced by the exact installed model tag before use. Th
 
 If Ollama is not running, the route fails as unavailable; JARVIS-X should report the failure honestly rather than silently switching to a paid cloud provider. Never expose the local Ollama port to an untrusted network without appropriate controls.
 
-Use `adapters[candidate.id]({ task, role })` with the existing composite engine. The engine still requires a validated scorecard and sufficient holdout evidence before routing a candidate. Do not mark a candidate `VALIDATED` just because an API call succeeds.
+Use `adapters[candidate.id]({ task, role })` with the evaluation/runtime tooling. The HQ default `composite` route is the single-core Cognitive Kernel and does not fan out to these optional provider adapters. The engine still requires a validated scorecard and sufficient holdout evidence before routing a candidate. Do not mark a candidate `VALIDATED` just because an API call succeeds.
 
 ## Verification
 
@@ -64,3 +64,15 @@ For a real smoke test, configure a secret in the trusted runtime, use a currentl
 - The current provider adapters return response text and basic usage metadata; provider-specific structured output, tool calls, image inputs, embeddings, reranking, audio, and video need their own typed adapters.
 - Anthropic API failures must be distinguished from failures in the connected integration layer. A Composio encoding failure does not establish that the direct Messages API is broken.
 - OpenRouter is intentionally unsupported by the active adapter layer due to the explicit provider exclusion policy.
+
+## Versioned HQ gateway model configuration
+
+The single-core HQ gateway does not guess the executive model ID. Optional diagnostic adapters also require explicit provider model IDs. Set these exact, account-enabled model IDs as server-side Edge Function environment variables:
+
+- `OPENAI_MODEL`
+- `DEEPSEEK_MODEL`
+- `ANTHROPIC_MODEL`
+- `XAI_MODEL`
+- `GEMINI_MODEL`
+
+Only `OPENAI_MODEL` is required for the default composite route. The other model IDs are needed only if their optional direct diagnostic routes are deliberately configured. Health reports the route unavailable if any secret or model ID is missing. The candidate source intentionally has no fallback model IDs; verify each ID against the provider account's live model catalogue before configuring it. The manual provider smoke workflow remains a separate, manually confirmed, potentially billable diagnostic for five provider APIs. It is not used by the default Cognitive Kernel and is never run by CI.

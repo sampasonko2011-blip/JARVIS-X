@@ -108,14 +108,14 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 });
 
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-engine-composite-prompt", selectedProvider: "composite", provider: "openai", model: "gpt-6.1-sol", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "provider_not_configured" } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "executive_runtime_not_configured" } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-compose").fill("timeout regression");
   await page.locator("#chat-send").click();
-  await expect(page.locator("#chat-gateway-status")).toContainText("provider_not_configured");
+  await expect(page.locator("#chat-gateway-status")).toContainText("executive_runtime_not_configured");
   await expect(page.locator("#chat-thread")).toContainText("DELIVERY UNKNOWN");
   await expect(page.locator("#chat-send")).toBeEnabled();
 });
