@@ -386,7 +386,7 @@ test("zero-provider mock chat works with the live budget disabled and is labelle
 
 test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
     chat: { status: 200, body: { output: "Consent-enabled reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1 } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
@@ -404,7 +404,7 @@ test("cross-platform memory is sent only when explicitly enabled for the message
 
 test("cross-platform memory preference persists across messages and can be disabled", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
     chat: { status: 200, body: { ok: true, output: "Reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
