@@ -16,6 +16,11 @@ test("Mission Control presents one JARVIS-X identity and never exposes API key i
   assert.match(html, /Remote sync: not connected/);
   assert.match(html, /Defence API/);
   assert.match(html, /Single-identity contract/);
+  assert.match(html, /Cognitive Workflow \/ Task Orchestrator/);
+  assert.doesNotMatch(html, /AI Council|multi-model task packet/i);
+  assert.match(js, /internal_passes/);
+  assert.match(js, /identity:"JARVIS-X"/);
+  assert.match(js, /not an independent model/);
   assert.doesNotMatch(html, /providers-select|Provider roster|href="https:\/\/(?:chatgpt\.com|claude\.ai|gemini\.google\.com)\//i);
   assert.doesNotMatch(html, /type=["']password["'][^>]*(?:api|secret)|(?:api|secret)[^>]*type=["']password["']/i);
   assert.match(js, /No model was called/);
@@ -32,7 +37,7 @@ test("cross-platform import requires the explicit packet schema and rejects secr
   assert.match(js, /Do not assume shared memory, sessions, credentials or provider access/);
 });
 
-test("sensitive council tasks are blocked from external handoff and workflow queue is explicitly local", async () => {
+test("sensitive task packets are blocked from external handoff and workflow queue is explicitly local", async () => {
   const js = await readFile(new URL("../hq/mission-control.js", import.meta.url), "utf8");
   assert.match(js, /dataClass==="sensitive"/);
   assert.match(js, /Sensitive data selected: export\/handoff is blocked/);
