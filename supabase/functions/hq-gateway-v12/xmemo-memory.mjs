@@ -49,7 +49,8 @@ export function createXMemoMemoryClient({
     });
   }
 
-  async function recall(task, userId) {
+  async function recall(task, userId, { consent = false } = {}) {
+    if (consent !== true) return { status: "not_consented", context: "" };
     if (!apiKey) return { status: "not_configured", context: "" };
     let path;
     try { path = memoryPathForUser(userId); } catch {
@@ -78,7 +79,8 @@ export function createXMemoMemoryClient({
     }
   }
 
-  async function store(task, answer, userId, taskType) {
+  async function store(task, answer, userId, taskType, { consent = false } = {}) {
+    if (consent !== true) return "not_consented";
     if (!apiKey) return "not_configured";
     let path;
     try { path = memoryPathForUser(userId); } catch {
