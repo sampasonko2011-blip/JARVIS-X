@@ -286,7 +286,7 @@ test("prompt console saves format-aware drafts and keeps handoff manual", async 
   await page.locator("#prompt-context").fill("Project context, intentionally selected");
   await page.locator("#prompt-input").fill("Compare two approaches and cite sources");
   await page.locator("#save-chat-draft").click();
-  await expect(page.locator("#chat-history")).toContainText("PROMPT DRAFT");
+  await expect(page.locator("#chat-history")).toContainText("TASK BRIEF");
   await expect(page.locator("#chat-history")).toContainText("research");
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0")));
   expect(saved.chats).toHaveLength(1);
@@ -469,7 +469,7 @@ test("HQ presents JARVIS-X as one executive identity, not separate model roles",
   await page.locator('[data-view="console"]').click();
   await expect(page.locator("#view-console")).toContainText("One assistant identity");
   await expect(page.locator("#view-console")).toContainText("JARVIS-X is one coherent executive identity");
-  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one coherent executive identity");
+  await expect(page.locator("#view-console")).toContainText("Planning, challenge, and synthesis are internal passes of that same identity");
   await expect(page.locator("#council-build")).toHaveCount(0);
   await expect(page.locator("#council-lead")).toHaveCount(0);
   await expect(page.locator("#council-challenge")).toHaveCount(0);
