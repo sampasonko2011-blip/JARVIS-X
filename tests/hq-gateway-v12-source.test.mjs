@@ -7,6 +7,9 @@ const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cogn
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
 const xmemo = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-memory.mjs", import.meta.url), "utf8");
+const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+const hqClient = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+const serviceWorker = await readFile(new URL("../hq/sw.js", import.meta.url), "utf8");
 
 test("v12 imports the cognitive kernel and deterministic mock dependency", () => {
   assert.match(gateway, /executeCognitiveKernel/);
@@ -92,4 +95,25 @@ test("cross-platform memory is explicit opt-in and consent is sent per request",
   assert.match(gateway, /await storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
   assert.match(html, /Off by default/);
   assert.match(html, /other devices have their own consent setting/);
+});
+
+
+test("HQ separates zero-provider integration fixtures from budget-gated live inference", () => {
+  assert.match(hqHtml, /id="chat-execution-mode"/);
+  assert.match(hqHtml, /value="live"/);
+  assert.match(hqHtml, /value="mock"/);
+  assert.match(hqClient, /executionMode==='mock'/);
+  assert.match(hqClient, /health\.mockModeEnabled!==true/);
+  assert.match(hqClient, /health\.chatEnabled!==true/);
+  assert.match(hqClient, /executionMode==='live'&&document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqClient, /mode:executionMode/);
+  assert.match(hqClient, /result\.mock!==true\|\|result\.provider_calls!==0\|\|result\.provider!=='mock'/);
+  assert.match(hqClient, /MOCK FIXTURE — NOT AI/);
+  assert.match(hqClient, /Provider calls: 0\. No model or memory was used/);
+});
+
+test("updated HQ client assets are included in a versioned offline shell cache", () => {
+  assert.match(serviceWorker, /jarvis-x-hq-shell-v8/);
+  assert.match(serviceWorker, /'\.\/mission-control\.js'/);
+  assert.match(serviceWorker, /'\.\/hq\.js'/);
 });
