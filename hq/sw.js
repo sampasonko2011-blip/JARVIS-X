@@ -1,5 +1,5 @@
 const CACHE = 'jarvis-x-hq-shell-v8';
-const SHELL = ['./', './index.html', './hq.css', './hq.js', './forge.js', './model-registry.mjs', './mission-control.html', './mission-control.js', './manifest.webmanifest', './icon.svg', './mission-control.js'];
+const SHELL = ['./', './index.html', './hq.css', './hq.js', './forge.js', './model-registry.mjs', './mission-control.html', './mission-control.js', './manifest.webmanifest' , './icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
