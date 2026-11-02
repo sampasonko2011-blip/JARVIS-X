@@ -37,6 +37,6 @@ test("image generation is a separate capability and never a reasoning route", ()
 
 test("mock mode clearly states that no inference occurred", () => {
   assert.match(mock, /no real AI inference was performed/);
-  assert.match(mock, /does not demonstrate model capability/);
+  assert.match(mock, /does not demonstrate reasoning quality/);
   assert.match(mock, /providerCalls: 0/);
 });
