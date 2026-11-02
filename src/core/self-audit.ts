@@ -186,7 +186,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
     }
   }
 
-  if (Array.isArray(failures) && failures.some(item => !isRecord(item) || !nonEmpty(item.signature) || !nonEmpty(item.interventionId))) {
+  if (failures !== undefined && (!Array.isArray(failures) || failures.some(item => !isRecord(item) || !nonEmpty(item.signature) || !nonEmpty(item.interventionId)))) {
     malformed.push("recentFailures must contain signature and interventionId strings");
   }
   if (legacySignatures !== undefined && (!Array.isArray(legacySignatures) || legacySignatures.some(s => !nonEmpty(s)))) {
@@ -231,7 +231,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   if (missingMetrics.length) reasons.push("Missing required metrics: " + missingMetrics.join(", ") + ".");
   if (missingChecks.length) reasons.push("Missing required checks: " + missingChecks.join(", ") + ".");
   if (evalData.primaryMetric !== PRIMARY_METRIC[typedScope]) reasons.push("Primary metric does not match the declared evaluation scope.");
-  if (evalData.taskSetHash !== evalData.taskSetHash || evalData.holdoutSetHash === evalData.taskSetHash) reasons.push("Task-set and holdout-set hashes must be distinct.");
+  if (evalData.holdoutSetHash === evalData.taskSetHash) reasons.push("Task-set and holdout-set hashes must be distinct.");
   if (evalData.paired !== true) reasons.push("Baseline and candidate task pairing is not verified.");
   if (typedScope === "reasoning-quality" || typedScope === "fusion-quality") {
     if (typedMode !== "local-model" && typedMode !== "live-provider") reasons.push("Mock/deterministic execution cannot establish reasoning-quality or fusion-quality gains.");
@@ -239,6 +239,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   }
   if (typedScope === "memory-quality" && typedMode !== "authenticated-e2e") reasons.push("Memory-quality claims require authenticated end-to-end execution.");
   if (typedMode === "live-provider" && !(typeof value.liveProviderCalls === "number" && value.liveProviderCalls > 0)) reasons.push("Live-provider mode requires an observed provider-call receipt.");
+  if (typedMode === "live-provider" && (!APPROVAL_REQUIRED.has(changeClass as ChangeClass) || value.explicitApproval !== true)) reasons.push("Live-provider evaluation requires explicit external-integration or paid-inference approval.");
   if (typedMode !== "live-provider" && (value.liveProviderCalls ?? 0) !== 0) reasons.push("Non-live execution mode cannot report live provider calls.");
 
   const cost = value.cost as Record<string, unknown>;
@@ -302,9 +303,8 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
     value.independentChallenge === "fail" || value.regressionTests === "fail" || value.restartPersistence === "fail";
   if (hardReject) return result("REJECT", circuitBreaker, improvementPercent, metricDeltas, reasons, "Do not promote. Preserve last known-good version; isolate the failure and require a changed intervention plus independent retest.");
   if (circuitBreaker || reasons.length) {
-    const decision: AuditDecision = !circuitBreaker && missingMetrics.length === 0 && missingChecks.length === 0 &&
-      currentEvidence.length > 0 && !hasRegression && failed.length === 0 && unknown.length === 0 &&
-      value.independentChallenge === "pass" && value.regressionTests === "pass" && costKnown
+    const decision: AuditDecision = !circuitBreaker &&
+      reasons.every(reason => reason.startsWith("Primary metric did not demonstrate"))
       ? "MODIFY" : "UNPROVEN";
     return result(decision, circuitBreaker, improvementPercent, metricDeltas, reasons,
       circuitBreaker ? "STOP retries. Preserve checkpoint and test a materially changed intervention." :
