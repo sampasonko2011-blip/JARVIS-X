@@ -640,7 +640,7 @@ Deno.serve(async (req: Request) => {
     const executionMode = result.executionMode ?? "single-core-cognitive-kernel";
     const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
     const reportedProvider = PRIMARY_PROVIDER;
-    const reportedModel = result.providersUsed[0]?.model ?? requestedModel;
+    const reportedModel = result.providersUsed[0]?.model ?? EXECUTIVE_CONFIG.model;
     const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
     try {
       await writeRun(user.id, {
