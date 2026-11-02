@@ -105,7 +105,7 @@ test("HQ separates zero-provider integration fixtures from budget-gated live inf
   assert.match(hqClient, /executionMode==='mock'/);
   assert.match(hqClient, /health\.mockModeEnabled!==true/);
   assert.match(hqClient, /health\.chatEnabled!==true/);
-  assert.match(hqClient, /executionMode==='live'&&document\.querySelector\('#chat-memory-consent'\)\.checked/);
+  assert.match(hqClient, /effectiveMemoryConsent=executionMode==='live'&&memoryConsent/);
   assert.match(hqClient, /mode:executionMode/);
   assert.match(hqClient, /result\.mock!==true\|\|result\.provider_calls!==0\|\|result\.provider!=='mock'/);
   assert.match(hqClient, /MOCK FIXTURE — NOT AI/);
