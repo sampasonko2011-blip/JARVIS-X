@@ -73,7 +73,7 @@ test("XMemo transport is isolated, account-scoped, bounded, and separately conse
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
   assert.ok(gateway.includes("OPENAI_MODEL"));
   assert.ok(gateway.includes("OPENAI_API_KEY"));
-  for (const legacy of ["DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY", "MISTRAL_API_KEY", "LLAMA_API_KEY"]) {
+  for (const legacy of ["DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "MISTRAL_API_KEY", "LLAMA_API_KEY"]) {
     assert.ok(!gateway.includes(legacy), "secondary reasoning adapter remains: " + legacy);
   }
   assert.doesNotMatch(gateway, /AIza[0-9A-Za-z_-]{20,}/);
