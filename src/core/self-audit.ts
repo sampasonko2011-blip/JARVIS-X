@@ -38,6 +38,8 @@ export interface EvaluationProvenance {
   primaryMetric: string;
   primaryImprovementLowerBound: number;
   confidenceLevel: number;
+  confidenceIntervalMethod?: "paired-bootstrap" | "not-required";
+  confidenceIntervalSourceHash?: string;
 }
 export interface CostEvidence {
   known: boolean;
@@ -239,8 +241,11 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
     if (typedMode !== "local-model" && typedMode !== "live-provider") reasons.push("Mock/deterministic execution cannot establish reasoning-quality or fusion-quality gains.");
     if (evalData.independentGrader !== "blind-independent") reasons.push("Quality claims require a blind independent grader.");
     if (evalData.confidenceLevel !== 0.95) reasons.push("Reasoning/fusion quality claims require a 95% paired improvement interval.");
+    if (evalData.confidenceIntervalMethod !== "paired-bootstrap" || !nonEmpty(evalData.confidenceIntervalSourceHash)) reasons.push("The paired confidence interval requires a bootstrap method and source hash.");
+
   }
   if (typedScope === "memory-quality" && typedMode !== "authenticated-e2e") reasons.push("Memory-quality claims require authenticated end-to-end execution.");
+  if (typedScope === "memory-quality" && value.restartPersistence !== "pass") reasons.push("Memory-quality claims require verified persistence after restart.");
   if (typedMode === "live-provider" && !(typeof value.liveProviderCalls === "number" && value.liveProviderCalls > 0)) reasons.push("Live-provider mode requires an observed provider-call receipt.");
   if (typedMode === "live-provider" && (!APPROVAL_REQUIRED.has(changeClass as ChangeClass) || value.explicitApproval !== true)) reasons.push("Live-provider evaluation requires explicit external-integration or paid-inference approval.");
   if (typedMode !== "live-provider" && (value.liveProviderCalls ?? 0) !== 0) reasons.push("Non-live execution mode cannot report live provider calls.");
@@ -250,6 +255,10 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   const actual = cost.actual;
   const ceiling = cost.ceiling;
   if (cost.currency !== "USD") reasons.push("Cost currency must be explicitly USD for the configured budget policy.");
+  const costMetric = (metrics as Record<string, unknown>[]).find(metric => metric.name === "cost");
+  if (costMetric && typeof costMetric.candidate === "number" && typeof actual === "number" && costMetric.candidate !== actual) {
+    reasons.push("Cost metric does not match the observed cost evidence.");
+  }
   if (!costKnown || typeof actual !== "number" || !Number.isFinite(actual) || actual < 0 ||
       typeof ceiling !== "number" || !Number.isFinite(ceiling) || ceiling < 0) {
     reasons.push("Cost is unknown or malformed; cost evidence is required.");
