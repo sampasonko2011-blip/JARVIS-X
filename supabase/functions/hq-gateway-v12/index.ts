@@ -5,7 +5,7 @@
 // access allowlist, budget guard state, and authenticated live inference.
 // Keep fail-closed behavior; never bypass auth, allowlisting, rate limits, or budget checks.
 
-import { createMockCouncilResult } from "./mock-council.mjs";
+import { createMockExecutionResult } from "./mock-execution.mjs";
 import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
@@ -641,7 +641,7 @@ Deno.serve(async (req: Request) => {
     if (Deno.env.get("JX_ENABLE_MOCK_MODE") !== "true") {
       return jsonResponse({ error: "mock_mode_disabled", provider_calls: 0 }, 403, origin);
     }
-    const mockResult = createMockCouncilResult();
+    const mockResult = createMockExecutionResult();
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: "mock", model: "mock-v1",
@@ -652,7 +652,7 @@ Deno.serve(async (req: Request) => {
           execution_mode: "mock-composite-prompt-placeholder",
           mock: true,
           provider_calls: 0,
-          simulated_stages: mockResult.providersUsed.map((stage) => stage.stage),
+          mock_execution_receipt: mockResult.executionReceipt,
           latency_ms: Date.now() - started,
         },
         completed_at: new Date().toISOString(),
@@ -667,7 +667,7 @@ Deno.serve(async (req: Request) => {
       execution_mode: "mock-composite-prompt-placeholder",
       mock: true,
       provider_calls: 0,
-      providers_used: mockResult.providersUsed,
+      execution_receipt: mockResult.executionReceipt,
       output: mockResult.answer,
       latency_ms: Date.now() - started,
       memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" },
