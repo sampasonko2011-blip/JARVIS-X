@@ -137,6 +137,9 @@ test("Nano Banana image route is separate, authenticated, confirmed, and zero-bu
   assert.match(imageAdapter, /AbortSignal\.timeout\(60_000\)/);
   assert.match(imageMigration, /enabled boolean NOT NULL DEFAULT false/);
   assert.match(imageMigration, /daily_limit_usd numeric\(12,6\) NOT NULL DEFAULT 0/);
+  assert.match(imageMigration, /account_owner_approved boolean NOT NULL DEFAULT false/);
+  assert.match(imageMigration, /account_owner_approval_required/);
+  assert.match(imageMigration, /image_pricing_review_required/);
   assert.match(imageMigration, /GRANT EXECUTE ON FUNCTION public\.reserve_hq_image_budget\(uuid, uuid\) TO service_role/);
   assert.match(hqHtml, /id="image-cost-confirm"/);
   assert.match(hqHtml, /id="image-generate" disabled/);
