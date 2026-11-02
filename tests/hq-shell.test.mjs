@@ -267,7 +267,8 @@ test("cross-platform memory is opt-in at both the HQ control and gateway boundar
   assert.ok(html.includes('id="chat-memory-consent"'));
   assert.ok(html.includes("const memoryConsent=document.querySelector('#chat-memory-consent').checked"));
   assert.ok(html.includes("MEMORY_PREFERENCE_KEY"));
-  assert.ok(html.includes("memory_consent:memoryConsent"));
+  assert.ok(html.includes("effectiveMemoryConsent=executionMode==='live'&&memoryConsent"));
+  assert.ok(html.includes("memory_consent:effectiveMemoryConsent"));
   assert.ok(gateway.includes("const memoryConsent = body.memory_consent === true;"));
   assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
   assert.ok(gateway.includes(': "not_consented";'));
