@@ -141,7 +141,7 @@ test("quality claims cannot self-declare a confidence level without interval pro
 });
 
 test("cost metric must reconcile with observed cost evidence", () => {
-  const result = runSelfAudit({ ...base, metrics: base.metrics.map(metric => metric.name === "cost" ? { ...metric, candidate: 0.01 } : metric) });
+  const result = runSelfAudit({ ...base, metrics: base.metrics.map(metric => metric.name === "cost" ? { ...metric, baseline: 0.02, candidate: 0.01 } : metric) });
   assert.equal(result.decision, "UNPROVEN");
   assert.match(result.reasons.join(" "), /Cost metric does not match/i);
 });
