@@ -230,7 +230,7 @@ test("HQ direct chat is a real gateway client but fails closed without authentic
 test("HQ upgrade proposals expose individual approve and dismiss controls and hard failure gates", async () => {
   const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["upgrade-proposals", "proposal-status"]) assert.ok(html.includes('id="' + id + '"'));
-  for (const id of ["secure-chat-gateway", "closed-loop-self-audit", "plugin-broker", "cross-platform-pwa"]) assert.ok(html.includes("id:'" + id + "'"));
+  for (const id of ["secure-chat-gateway", "closed-loop-self-audit", "plugin-broker", "cross-platform-portability"]) assert.ok(html.includes("id:'" + id + "'"));
   assert.ok(html.includes("APPROVED FOR PLANNING"));
   assert.ok(html.includes("DISMISSED"));
   assert.ok(html.includes("Repeated failure is REJECTED or SUPERSEDED"));
@@ -282,23 +282,22 @@ test("HQ image prompt builder uses real line breaks, not visible backslash-n tex
 });
 
 
-test("HQ Model Forge is reachable, offline-shell aware, and exposes evidence-gated local evaluation", async () => {
+test("HQ Capability Forge is reachable and exposes honest single-identity capability evidence", async () => {
   const html = await read("hq/index.html");
   const sw = await read("hq/sw.js");
   const forge = await read("hq/forge.js");
-  const registry = await read("hq/model-registry.mjs");
   assert.ok(html.includes('data-view="forge"'));
   assert.ok(html.includes('id="view-forge"'));
-  assert.ok(html.includes('id="forge-register"'));
-  assert.ok(html.includes('id="forge-evaluate"'));
+  assert.ok(html.includes('id="capability-registry"'));
+  assert.ok(html.includes("JARVIS-X Capability Forge"));
   assert.ok(html.includes('type="module" src="./forge.js"'));
   assert.ok(sw.includes("'./forge.js'"));
-  assert.ok(sw.includes("'./model-registry.mjs'"));
-  assert.ok(forge.includes("validateModelCandidate"));
-  assert.ok(forge.includes("assessPromotion"));
-  assert.ok(forge.includes("localStorage"));
-  assert.ok(registry.includes("networkAccess must be false"));
-  assert.ok(registry.includes("AWAITING_HUMAN_APPROVAL"));
+  assert.ok(!html.includes("open-weight model candidates"));
+  assert.ok(forge.includes("Nano Banana image generation"));
+  assert.ok(forge.includes("XMemo memory"));
+  assert.ok(forge.includes("Encrypted portable export/import"));
+  assert.ok(forge.includes("DISABLED BY DEFAULT"));
+  assert.ok(!forge.includes("validateModelCandidate"));
 });
 
 
