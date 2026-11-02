@@ -361,7 +361,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
   expect(request.memory_consent).toBe(false);
 });
 
-test("zero-provider mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
+test("zero-model mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
   await installGatewayFetchMock(page, {
     health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
     chat: { status: 200, body: { ok: true, mock: true, executive_identity: "JARVIS-X", executive_runtime: {model:"mock-fixture"}, execution_mode: "mock-executive-placeholder", mock: true, model_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
