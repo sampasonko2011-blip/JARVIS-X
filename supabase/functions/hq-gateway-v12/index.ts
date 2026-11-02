@@ -9,6 +9,7 @@ import { createMockCouncilResult } from "./mock-council.mjs";
 import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
+import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
@@ -249,85 +250,14 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
   return row as { allowed: boolean; limit_key: string; request_limit: number; remaining: number; reset_at: string };
 }
 
-const XMEMO_BASE_URL = "https://xmemo.dev";
-const MEMORY_CONTEXT_MAX_CHARS = 8_000;
-
-function memoryPathForUser(userId: string) {
-  return "projects/jarvis-x-hq/users/" + userId + "/conversations";
-}
-
-async function xmemoRequest(path: string, apiKey: string, init: RequestInit) {
-  return await fetch(XMEMO_BASE_URL + path, {
-    ...init,
-    signal: AbortSignal.timeout(6_000),
-    headers: {
-      "X-API-Key": apiKey,
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-      ...(init.headers ?? {}),
-    },
-  });
-}
+const xmemoMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
 
 async function recallMemory(task: string, userId: string) {
-  const apiKey = Deno.env.get("XMEMO_API_KEY");
-  if (!apiKey) return { status: "not_configured", context: "" };
-  try {
-    const response = await xmemoRequest("/v1/recall/context", apiKey, {
-      method: "POST",
-      body: JSON.stringify({
-        // The recall service needs a relevance query, not raw credentials or contact details.
-        query: redactForMemory(task).slice(0, MAX_TASK_CHARS),
-        path: memoryPathForUser(userId),
-        max_items: 6,
-        max_tokens: 1200,
-        prefer_working: true,
-      }),
-    });
-    if (!response.ok) {
-      await response.text();
-      return { status: "unavailable", context: "" };
-    }
-    const data = await response.json().catch(() => ({}));
-    const context = typeof data?.context_text === "string"
-      ? data.context_text.slice(0, MEMORY_CONTEXT_MAX_CHARS)
-      : "";
-    return { status: context.trim() ? "recalled" : "empty", context };
-  } catch {
-    return { status: "unavailable", context: "" };
-  }
-}
-
-function redactForMemory(text: string) {
-  return text
-    .replace(/\b(?:sk-[A-Za-z0-9_-]{16,}|sb_secret_[A-Za-z0-9_-]+|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})\b/g, "[REDACTED_SECRET]")
-    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[REDACTED_EMAIL]")
-    .replace(/\b(?:password|passwd|api[_ -]?key|access[_ -]?token|refresh[_ -]?token)\s*[:=]\s*\S+/gi, "[REDACTED_CREDENTIAL]");
+  return await xmemoMemory.recall(task, userId);
 }
 
 async function storeConversationMemory(task: string, answer: string, userId: string, taskType: string) {
-  const apiKey = Deno.env.get("XMEMO_API_KEY");
-  if (!apiKey) return "not_configured";
-  try {
-    const content = ("User request:\n" + redactForMemory(task) + "\n\nJARVIS-X response:\n" + redactForMemory(answer)).slice(0, 18_000);
-    const response = await xmemoRequest("/v1/remember", apiKey, {
-      method: "POST",
-      body: JSON.stringify({
-        content,
-        path: memoryPathForUser(userId),
-        source: "jarvis-x-hq",
-        dedupe: true,
-        metadata: { kind: "conversation_turn", task_type: taskType, source: "jarvis-x-hq" },
-      }),
-    });
-    if (!response.ok) {
-      await response.text();
-      return "failed";
-    }
-    return "stored";
-  } catch {
-    return "failed";
-  }
+  return await xmemoMemory.store(task, answer, userId, taskType);
 }
 
 const PROVIDER_CONFIG = Object.freeze({
