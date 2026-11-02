@@ -50,6 +50,8 @@ test("Nano Banana adapter fails closed on provider errors, missing output, MIME 
   const request = { prompt: "test", aspectRatio: "1:1", outputFormat: "png", count: 1, userConfirmed: true };
   await assert.rejects(make(new Response("{}", { status: 429 })).generate(request), /image_provider_http_429/);
   await assert.rejects(make(new Response(JSON.stringify({ id: "x" }), { status: 200 })).generate(request), /output_missing/);
+  const noMime = await make(new Response(JSON.stringify({ id: "x", output_image: { data: png } }), { status: 200 })).generate(request);
+  assert.equal(noMime.mimeType, "image/png");
   await assert.rejects(make(new Response(JSON.stringify({ id: "x", output_image: { mime_type: "image/jpeg", data: png } }), { status: 200 })).generate(request), /mime_mismatch/);
   await assert.rejects(make(new Response(JSON.stringify({ id: "x", output_image: { mime_type: "image/png", data: "aGVsbG8=" } }), { status: 200 })).generate(request), /signature_invalid/);
 });
