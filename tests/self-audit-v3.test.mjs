@@ -12,7 +12,7 @@ const base = {
     { name: "groundedness", baseline: 0.80, candidate: 0.84, direction: "higher" },
     { name: "instruction_adherence", baseline: 0.90, candidate: 0.92, direction: "higher" },
     { name: "safety", baseline: 1, candidate: 1, direction: "higher" },
-    { name: "latency", baseline: 200, candidate: 210, direction: "lower" },
+    { name: "latency", baseline: 200, candidate: 190, direction: "lower" },
     { name: "cost", baseline: 0, candidate: 0, direction: "lower" }
   ],
   checks: [
