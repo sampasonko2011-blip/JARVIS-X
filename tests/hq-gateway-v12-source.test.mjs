@@ -14,7 +14,7 @@ const serviceWorker = await readFile(new URL("../hq/sw.js", import.meta.url), "u
 test("v12 imports the cognitive kernel and deterministic mock dependency", () => {
   assert.match(gateway, /executeCognitiveKernel/);
   assert.match(gateway, /createMockExecutionResult/);
-  assert.match(mock, /Deterministic mock only/);
+  assert.match(mock, /Deterministic integration fixture only/);
 });
 
 test("default composite is one executive core, not a five-model council", () => {
