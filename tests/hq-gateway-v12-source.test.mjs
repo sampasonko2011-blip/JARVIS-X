@@ -118,7 +118,7 @@ test("HQ separates zero-model integration fixtures from budget-gated live infere
   assert.match(hqClient, /Model calls: 0/);
 });
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
-  assert.match(serviceWorker, /jarvis-x-hq-shell-v9/);
+  assert.match(serviceWorker, /jarvis-x-hq-shell-v10/);
   assert.match(serviceWorker, /'\.\/mission-control\.js'/);
   assert.match(serviceWorker, /'\.\/hq\.js'/);
 });
