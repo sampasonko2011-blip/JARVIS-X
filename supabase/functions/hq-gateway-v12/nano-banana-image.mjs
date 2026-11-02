@@ -47,6 +47,7 @@ export function validateNanoBananaRequest(request = {}) {
   return { valid: true, request: { prompt: request.prompt.trim(), aspectRatio: request.aspectRatio, outputFormat: request.outputFormat } };
 }
 
+/** @param {{ apiKey: string, fetchImpl?: typeof fetch, model?: string }} options */
 export function createNanoBananaImageGenerator({ apiKey, fetchImpl = fetch, model = NANO_BANANA_MODEL } = {}) {
   if (typeof apiKey !== "string" || !apiKey.trim()) throw new Error("image_provider_credential_missing");
   if (model !== NANO_BANANA_MODEL) throw new Error("image_model_not_allowlisted");
