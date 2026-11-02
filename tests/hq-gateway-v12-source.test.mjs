@@ -54,10 +54,11 @@ test("v12 preserves authentication, allowlisting, rate limits, and fail-closed b
 test("XMemo transport is isolated, account-scoped, bounded, and separately consent-gated", () => {
   assert.match(gateway, /createXMemoMemoryClient/);
   assert.match(gateway, /body\.memory_consent === true/);
-  assert.match(gateway, /memoryConsent \? await recallMemory/);
-  assert.match(gateway, /memoryConsent\s*\?\s*await storeConversationMemory/);
+  assert.match(gateway, /await recallMemory\(task, user\.id, memoryConsent\)/);
+  assert.match(gateway, /await storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
   assert.match(xmemo, /memoryPathForUser/);
   assert.match(xmemo, /UUID_PATTERN/);
+  assert.match(xmemo, /consent !== true/);
   assert.match(xmemo, /AbortSignal\.timeout/);
   assert.match(xmemo, /Cache-Control": "no-store"/);
   assert.match(xmemo, /REDACTED_SECRET/);
