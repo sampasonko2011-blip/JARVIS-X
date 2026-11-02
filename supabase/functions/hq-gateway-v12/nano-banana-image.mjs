@@ -74,7 +74,8 @@ export function createNanoBananaImageGenerator({ apiKey, fetchImpl = fetch, mode
       const output = interaction?.output_image;
       if (typeof interaction?.id !== "string" || !interaction.id.trim()) throw new Error("image_provider_receipt_missing");
       if (!output || typeof output.data !== "string") throw new Error("image_provider_output_missing");
-      if (output.mime_type !== mimeType) throw new Error("image_provider_mime_mismatch");
+      const actualMimeType = typeof output.mime_type === "string" ? output.mime_type : mimeType;
+      if (actualMimeType !== mimeType) throw new Error("image_provider_mime_mismatch");
       const bytes = decodeBase64(output.data);
       verifyImageSignature(bytes, mimeType);
       const contentHash = await sha256(bytes);
