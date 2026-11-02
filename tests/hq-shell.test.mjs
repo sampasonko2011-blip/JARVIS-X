@@ -52,7 +52,7 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
 test("HQ documentation distinguishes implemented frontend from unverified remote services", async () => {
   const docs = await read("hq/README.md");
   assert.ok(docs.includes("Live executive inference"));
-  assert.ok(docs.includes("not independently verified"));
+  assert.ok(docs.includes("Not independently verified"));
   assert.ok(docs.includes("cross-platform retrieval"));
   assert.ok(docs.includes("not automatic cross-device synchronization"));
   assert.ok(docs.includes("Provider/service-role credentials never belong in browser code"));
