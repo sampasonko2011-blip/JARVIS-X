@@ -643,14 +643,14 @@ Deno.serve(async (req: Request) => {
     const executionMode = result.executionMode ?? "single-core-cognitive-kernel";
     const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
     const reportedProvider = PRIMARY_PROVIDER;
-    const reportedModel = result.providersUsed.map(item => item.provider + ":" + item.model).join(" + ");
+    const reportedModel = result.providersUsed[0]?.model ?? requestedModel;
     const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -658,14 +658,12 @@ Deno.serve(async (req: Request) => {
     }
     return jsonResponse({
       ok: true,
-      provider: reportedProvider,
-      model: reportedModel,
+      executive_identity: "JARVIS-X",
+      executive_runtime: { model: reportedModel },
       execution_mode: executionMode,
-      selected_provider: rucheRoute.selection,
       orchestration_mode: orchestrationMode,
       independence,
-      providers_used: result.providersUsed,
-      provider_calls: result.providerCalls,
+      model_calls: result.providerCalls,
       tool_calls: result.toolCalls ?? 0,
       capabilities_used: result.capabilitiesUsed ?? [],
       output: result.answer,
