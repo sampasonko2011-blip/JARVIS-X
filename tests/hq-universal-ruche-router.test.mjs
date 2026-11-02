@@ -7,56 +7,32 @@ const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/ind
 const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cognitive-kernel.mjs", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
 
-test("default composite route requires only the executive core credential", () => {
-  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY"\]/);
+test("Vegeto route exposes exactly one executive identity and rejects alternate reasoning routes", () => {
+  assert.match(router, /type RucheSelection = "composite"/);
+  assert.match(router, /alternate_reasoning_routes_disabled/);
+  assert.match(router, /provider: null/);
+  assert.doesNotMatch(router, /deepseek|anthropic|claude|grok|gemini|mistral|llama/);
+  assert.match(gateway, /PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel"/);
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
-  assert.match(gateway, /COMPOSITE_PROVIDERS\.every\(providerIsConfigured\)/);
 });
 
-test("default composite gateway uses one executive model with bounded local tool calling", () => {
+test("one executive cognitive kernel owns reasoning, challenge, and synthesis passes", () => {
   assert.match(gateway, /import \{ executeCognitiveKernel \} from "\.\/cognitive-kernel\.mjs"/);
   assert.match(gateway, /return executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
   assert.match(gateway, /executeResponsesToolLoop\(/);
-  assert.match(gateway, /invokeOpenAIResponses\(request\.input, request\.instructions, request\.tools\)/);
   assert.match(gateway, /single-core-cognitive-kernel/);
-  assert.match(kernel, /providerCalls: Number\.isInteger\(raw\.providerCalls\)/);
+  assert.match(kernel, /one-executive-core-with-deterministic-governance/);
   assert.doesNotMatch(gateway, /executeFiveProviderCouncil/);
 });
 
-test("provider-specific adapters remain separate optional diagnostic routes", () => {
-  for (const provider of ["openai", "deepseek", "anthropic", "xai", "google", "mistral", "llama"]) {
-    assert.ok(gateway.includes(provider + ": { model:"), "missing provider adapter config " + provider);
-  }
-  for (const endpoint of [
-    "https://api.openai.com/v1",
-    "https://api.deepseek.com/chat/completions",
-    "https://api.anthropic.com/v1/messages",
-    "https://api.x.ai/v1",
-    "https://generativelanguage.googleapis.com/v1beta/interactions"
-  ]) assert.ok(gateway.includes(endpoint), "missing adapter endpoint " + endpoint);
-});
-
-test("health reports one executive core and the same single assistant identity", () => {
-  assert.match(gateway, /mode: healthRoute\.provider \? "single-provider" : "single-core-cognitive-kernel"/);
-  assert.match(gateway, /providers: healthRoute\.provider \? \[healthRoute\.provider\] : \[\.\.\.COMPOSITE_PROVIDERS\]/);
-  assert.match(gateway, /provider: healthRoute\.provider \?\? PRIMARY_PROVIDER/);
-  assert.match(gateway, /PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel"/);
-});
-
-test("optional direct provider routes remain available for controlled diagnostics", () => {
-  for (const provider of ["openai", "deepseek", "claude", "grok", "gemini", "mistral", "llama"]) {
-    assert.ok(router.includes('"' + provider + '"'));
-  }
-  assert.match(router, /invalid_orchestration_mode/);
-});
-
-test("success receipts report actual executive-model and local tool-call counts", () => {
-  assert.match(gateway, /provider_calls: result\.providerCalls/);
-  assert.match(gateway, /tool_calls: result\.toolCalls \?\? 0/);
-  assert.match(gateway, /capabilities_used: result\.capabilitiesUsed \?\? \[\]/);
-  assert.match(gateway, /providers_used: result\.providersUsed/);
-  assert.match(gateway, /one-executive-core-with-deterministic-governance/);
+test("image generation is a separate capability and never a reasoning route", () => {
+  assert.match(gateway, /createNanoBananaImageGenerator/);
+  assert.match(gateway, /if \(isImageRoute\)/);
+  assert.match(gateway, /reserveImageBudget\(user\.id\)/);
+  assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
+  assert.match(gateway, /user_confirmed !== true/);
+  assert.match(router, /type RucheSelection = "composite"/);
 });
 
 test("mock mode clearly states that no inference occurred", () => {
