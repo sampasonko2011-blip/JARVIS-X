@@ -56,7 +56,7 @@ test("HQ documentation distinguishes implemented frontend from unverified remote
   assert.ok(docs.includes("cross-platform retrieval"));
   assert.ok(docs.includes("not automatic cross-device synchronization"));
   assert.ok(docs.includes("Provider/service-role credentials never belong in browser code"));
-  assert.ok(docs.includes("deterministic fixtures/mocks"));
+  assert.ok(docs.includes("Mock fixtures make zero model calls"));
 });
 
 
