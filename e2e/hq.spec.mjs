@@ -468,7 +468,7 @@ test("image studio builds a local prompt and never claims an image was generated
 test("HQ presents JARVIS-X as one executive identity, not separate model roles", async ({ page }) => {
   await page.locator('[data-view="console"]').click();
   await expect(page.locator("#view-console")).toContainText("One assistant identity");
-  await expect(page.locator("#view-console")).toContainText("JARVIS-X is the single assistant you interact with");
+  await expect(page.locator("#view-console")).toContainText("JARVIS-X is one coherent executive identity");
   await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one coherent executive identity");
   await expect(page.locator("#council-build")).toHaveCount(0);
   await expect(page.locator("#council-lead")).toHaveCount(0);
