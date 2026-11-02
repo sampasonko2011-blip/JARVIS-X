@@ -27,8 +27,8 @@ test("adapter independently enforces per-call consent with zero transport calls"
     apiKey: "test-key",
     fetchImpl: async () => { calls++; throw new Error("consent gate failed"); },
   });
-  assert.deepEqual(await client.recall("query", userA), { status: "not_consented", context: "" });
-  assert.equal(await client.store("task", "answer", userA, "research"), "not_consented");
+  assert.deepEqual(await client.recall("query", userA, { consent: true }), { status: "not_consented", context: "" });
+  assert.equal(await client.store("task", "answer", userA, "research", { consent: true }), "not_consented");
   assert.equal(calls, 0);
   assert.deepEqual(await client.recall("query", userA, { consent: false }), { status: "not_consented", context: "" });
   assert.equal(await client.store("task", "answer", userA, "research", { consent: false }), "not_consented");
@@ -38,11 +38,11 @@ test("adapter independently enforces per-call consent with zero transport calls"
 test("missing key and invalid account context fail closed without network calls", async () => {
   let calls = 0;
   const client = createXMemoMemoryClient({ fetchImpl: async () => { calls++; throw new Error("unexpected"); } });
-  assert.deepEqual(await client.recall("query", userA), { status: "not_configured", context: "" });
-  assert.equal(await client.store("task", "answer", userA, "research"), "not_configured");
+  assert.deepEqual(await client.recall("query", userA, { consent: true }), { status: "not_configured", context: "" });
+  assert.equal(await client.store("task", "answer", userA, "research", { consent: true }), "not_configured");
   const configured = createXMemoMemoryClient({ apiKey: "test-only", fetchImpl: async () => { calls++; throw new Error("unexpected"); } });
-  assert.deepEqual(await configured.recall("query", "../other-user"), { status: "invalid_user", context: "" });
-  assert.equal(await configured.store("task", "answer", "../other-user", "research"), "invalid_user");
+  assert.deepEqual(await configured.recall("query", "../other-user", { consent: true }), { status: "invalid_user", context: "" });
+  assert.equal(await configured.store("task", "answer", "../other-user", "research", { consent: true }), "invalid_user");
   assert.equal(calls, 0);
 });
 
@@ -55,7 +55,7 @@ test("recall sends bounded redacted query and user-scoped path with no-store hea
       return new Response(JSON.stringify({ context_text: "Relevant prior decision" }), { status: 200 });
     },
   });
-  const result = await client.recall("Find note for person@example.com with key sk-abcdefghijklmnopqrstuvwxyz", userA);
+  const result = await client.recall("Find note for person@example.com with key sk-abcdefghijklmnopqrstuvwxyz", userA, { consent: true });
   assert.deepEqual(result, { status: "recalled", context: "Relevant prior decision" });
   assert.equal(captured.url, "https://xmemo.dev/v1/recall/context");
   assert.equal(captured.body.path, memoryPathForUser(userA));
@@ -72,10 +72,10 @@ test("recall bounds returned context and distinguishes empty, unavailable, and m
   const empty = createXMemoMemoryClient({ apiKey: "test", fetchImpl: async () => new Response("{}", { status: 200 }) });
   const bad = createXMemoMemoryClient({ apiKey: "test", fetchImpl: async () => new Response("no", { status: 503 }) });
   const malformed = createXMemoMemoryClient({ apiKey: "test", fetchImpl: async () => new Response("not-json", { status: 200 }) });
-  assert.equal((await ok.recall("query", userA)).context.length, 8000);
-  assert.deepEqual(await empty.recall("query", userA), { status: "empty", context: "" });
-  assert.deepEqual(await bad.recall("query", userA), { status: "unavailable", context: "" });
-  assert.deepEqual(await malformed.recall("query", userA), { status: "empty", context: "" });
+  assert.equal((await ok.recall("query", userA, { consent: true })).context.length, 8000);
+  assert.deepEqual(await empty.recall("query", userA, { consent: true }), { status: "empty", context: "" });
+  assert.deepEqual(await bad.recall("query", userA, { consent: true }), { status: "unavailable", context: "" });
+  assert.deepEqual(await malformed.recall("query", userA, { consent: true }), { status: "empty", context: "" });
 });
 
 test("store sends redacted, bounded content to the authenticated user's path", async () => {
@@ -87,7 +87,7 @@ test("store sends redacted, bounded content to the authenticated user's path", a
       return new Response("{}", { status: 200 });
     },
   });
-  const status = await client.store("Contact person@example.com", "Use key sk-abcdefghijklmnopqrstuvwxyz password=supersecret", userB, "research");
+  const status = await client.store("Contact person@example.com", "Use key sk-abcdefghijklmnopqrstuvwxyz password=supersecret", userB, "research", { consent: true });
   assert.equal(status, "stored");
   assert.equal(captured.url, "https://xmemo.dev/v1/remember");
   assert.equal(captured.body.path, memoryPathForUser(userB));
@@ -99,8 +99,8 @@ test("store sends redacted, bounded content to the authenticated user's path", a
 test("store fails closed on HTTP and transport errors", async () => {
   const bad = createXMemoMemoryClient({ apiKey: "test", fetchImpl: async () => new Response("no", { status: 500 }) });
   const network = createXMemoMemoryClient({ apiKey: "test", fetchImpl: async () => { throw new Error("private transport detail"); } });
-  assert.equal(await bad.store("task", "answer", userA, "research"), "failed");
-  assert.equal(await network.store("task", "answer", userA, "research"), "failed");
+  assert.equal(await bad.store("task", "answer", userA, "research", { consent: true }), "failed");
+  assert.equal(await network.store("task", "answer", userA, "research", { consent: true }), "failed");
 });
 
 test("adapter requires a bounded timeout", () => {
