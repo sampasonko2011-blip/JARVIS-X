@@ -25,6 +25,13 @@ function decodeBase64(value) {
   return bytes;
 }
 
+function verifyImageSignature(bytes, mimeType) {
+  const starts = (...values) => values.every((value, index) => bytes[index] === value);
+  if (mimeType === "image/png" && !starts(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) throw new Error("image_output_signature_invalid");
+  if (mimeType === "image/jpeg" && !starts(0xff, 0xd8, 0xff)) throw new Error("image_output_signature_invalid");
+  if (mimeType === "image/webp" && !(String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP")) throw new Error("image_output_signature_invalid");
+}
+
 async function sha256(bytes) {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
@@ -68,6 +75,7 @@ export function createNanoBananaImageGenerator({ apiKey, fetchImpl = fetch, mode
       if (!output || typeof output.data !== "string") throw new Error("image_provider_output_missing");
       if (output.mime_type !== mimeType) throw new Error("image_provider_mime_mismatch");
       const bytes = decodeBase64(output.data);
+      verifyImageSignature(bytes, mimeType);
       const contentHash = await sha256(bytes);
       return Object.freeze({
         providerId: "google-gemini",
