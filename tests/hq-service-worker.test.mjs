@@ -84,6 +84,8 @@ test("service worker precaches the app shell and activates without deleting unre
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./mission-control.html")), "Mission Control must be precached");
+  const precache = lifecycleCalls.find((call) => call[0] === "addAll")?.[1] ?? [];
+  assert.equal(new Set(precache).size, precache.length, "precache asset URLs must be unique or Cache.addAll can reject installation");
   assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
 
   let activatePromise;
