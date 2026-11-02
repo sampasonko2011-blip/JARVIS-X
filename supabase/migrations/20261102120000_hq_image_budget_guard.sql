@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS public.hq_image_budget_config (
   singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
   enabled boolean NOT NULL DEFAULT false,
   kill_switch_enabled boolean NOT NULL DEFAULT false,
+  account_owner_approved boolean NOT NULL DEFAULT false,
+  account_owner_approved_at timestamptz,
+  pricing_reviewed_at timestamptz,
+  pricing_reference text,
   daily_limit_usd numeric(12,6) NOT NULL DEFAULT 0 CHECK (daily_limit_usd >= 0),
   per_image_reservation_usd numeric(12,6) NOT NULL DEFAULT 0.033600 CHECK (per_image_reservation_usd > 0),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -59,6 +63,14 @@ BEGIN
   SELECT * INTO cfg FROM public.hq_image_budget_config WHERE singleton = true FOR UPDATE;
   IF NOT FOUND OR NOT cfg.enabled THEN
     RETURN QUERY SELECT false, 'image_budget_disabled', NULL::numeric, NULL::numeric, COALESCE(cfg.daily_limit_usd, 0);
+    RETURN;
+  END IF;
+  IF NOT cfg.account_owner_approved OR cfg.account_owner_approved_at IS NULL THEN
+    RETURN QUERY SELECT false, 'account_owner_approval_required', cfg.per_image_reservation_usd, NULL::numeric, cfg.daily_limit_usd;
+    RETURN;
+  END IF;
+  IF cfg.pricing_reviewed_at IS NULL OR cfg.pricing_reviewed_at < now() - interval '30 days' OR cfg.pricing_reference IS NULL OR length(trim(cfg.pricing_reference)) = 0 THEN
+    RETURN QUERY SELECT false, 'image_pricing_review_required', cfg.per_image_reservation_usd, NULL::numeric, cfg.daily_limit_usd;
     RETURN;
   END IF;
   IF cfg.kill_switch_enabled THEN
