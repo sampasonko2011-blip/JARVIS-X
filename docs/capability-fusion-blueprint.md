@@ -64,7 +64,7 @@ The registry remains sealed after construction. The model may select only regist
 - **OBSERVED:** PR #73 is open, draft, unmerged, and based on the single-core Cognitive Kernel branch.
 - **OBSERVED:** gateway source contains a sealed schema-validated capability registry and bounded Responses function-call loop.
 - **OBSERVED:** the only default gateway capability is deterministic read-only `text.analyze`; it is disabled unless the server-side feature flag is explicitly enabled.
-- **OBSERVED:** gateway source contains an XMemo consent gate, but live persistence, account isolation, and deletion/retention semantics are unverified.
+- **OBSERVED:** gateway uses a testable XMemo transport adapter. Request consent is checked in the gateway and independently enforced inside the adapter; adapter tests cover zero calls when consent is off, UUID-scoped paths, common-pattern redaction, bounds, and failure handling. These are mocked contract tests, not proof of live persistence, account isolation, or deletion/retention semantics.
 - **OBSERVED:** generic HQ tool broker requires injected executors, exact scopes, trusted approval verification, audit callbacks, and world-state verification; no connector executor is registered.
 - **OBSERVED:** PR #73 is not deployed. Production cutover runbook says prepared, not executed.
 - **BLOCKED:** paid inference remains blocked under the €0 requirement. No live provider, search, or connector smoke test is authorized here.
