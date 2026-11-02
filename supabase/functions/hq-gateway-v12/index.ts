@@ -252,12 +252,12 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
 
 const xmemoMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
 
-async function recallMemory(task: string, userId: string) {
-  return await xmemoMemory.recall(task, userId);
+async function recallMemory(task: string, userId: string, consent: boolean) {
+  return await xmemoMemory.recall(task, userId, { consent });
 }
 
-async function storeConversationMemory(task: string, answer: string, userId: string, taskType: string) {
-  return await xmemoMemory.store(task, answer, userId, taskType);
+async function storeConversationMemory(task: string, answer: string, userId: string, taskType: string, consent: boolean) {
+  return await xmemoMemory.store(task, answer, userId, taskType, { consent });
 }
 
 const PROVIDER_CONFIG = Object.freeze({
@@ -643,7 +643,7 @@ Deno.serve(async (req: Request) => {
 
   // Cross-platform memory is opt-in per request. No recall or write unless the user explicitly consents.
   const memoryConsent = body.memory_consent === true;
-  const memory = memoryConsent ? await recallMemory(task, user.id) : { status: "not_consented", context: "" };
+  const memory = await recallMemory(task, user.id, memoryConsent);
   type CognitiveExecutionResult = {
     answer: string;
     providerCalls: number;
@@ -689,9 +689,7 @@ Deno.serve(async (req: Request) => {
     const independence = result.independence ?? (rucheRoute.provider ? "single-provider-no-cross-review" : "one-executive-core-with-deterministic-governance");
     const reportedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
     const reportedModel = result.providersUsed.map(item => item.provider + ":" + item.model).join(" + ");
-    const memoryWriteStatus = memoryConsent
-      ? await storeConversationMemory(task, result.answer, user.id, taskType)
-      : "not_consented";
+    const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
