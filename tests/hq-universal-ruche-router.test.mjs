@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
 const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cognitive-kernel.mjs", import.meta.url), "utf8");
-const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-council.mjs", import.meta.url), "utf8");
+const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-execution.mjs", import.meta.url), "utf8");
 
 test("Vegeto route exposes exactly one executive identity and rejects alternate reasoning routes", () => {
   assert.match(router, /type RucheSelection = "composite"/);
