@@ -143,10 +143,11 @@ test("HQ security and multi-AI deployment claims stay explicit and gated", async
   assert.ok(html.includes('<meta name="referrer" content="no-referrer">'));
 
   const architecture = await read("docs/hq-multi-ai-architecture.md");
-  assert.ok(architecture.includes("**Status: PROPOSED.**"));
+  assert.ok(architecture.includes("**Status: SOURCE IMPLEMENTATION IN PROGRESS; NOT DEPLOYED.**"));
   assert.ok(architecture.includes("server-side secrets only"));
   assert.ok(architecture.includes("user A cannot read/write user B"));
-  assert.ok(architecture.includes("Gate E — multi-provider orchestration"));
+  assert.ok(architecture.includes("one coherent executive identity"));
+  assert.ok(architecture.includes("adult account-owner approval"));
 
   const workflow = await read(".github/workflows/deploy-hq-pages.yml");
   assert.ok(workflow.includes("branches: [main]"));
