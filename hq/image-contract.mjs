@@ -3,7 +3,7 @@
  * Validation only: no provider calls, network access, or image generation.
  */
 
-const ALLOWED_ASPECT_RATIOS = new Set(["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"]);
+const ALLOWED_ASPECT_RATIOS = new Set(["1:1", "3:2", "2:3", "4:3", "3:4", "4:5", "5:4", "16:9", "9:16", "21:9"]);
 const ALLOWED_OUTPUT_FORMATS = new Set(["png", "jpeg", "webp"]);
 const MAX_PROMPT_LENGTH = 8000;
 const MAX_OUTPUTS = 4;
