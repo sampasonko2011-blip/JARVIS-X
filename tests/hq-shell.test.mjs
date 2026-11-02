@@ -51,11 +51,11 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
 
 test("HQ documentation distinguishes implemented frontend from unverified remote services", async () => {
   const docs = await read("hq/README.md");
-  assert.ok(docs.includes("Live model inference"));
-  assert.ok(docs.includes("not yet independently verified"));
-  assert.ok(docs.includes("cross-platform memory"));
-  assert.ok(docs.includes("not automatically synchronized"));
-  assert.ok(docs.includes("Provider credentials must remain in Supabase Edge Function secrets"));
+  assert.ok(docs.includes("Live executive inference"));
+  assert.ok(docs.includes("not independently verified"));
+  assert.ok(docs.includes("cross-platform retrieval"));
+  assert.ok(docs.includes("not automatic cross-device synchronization"));
+  assert.ok(docs.includes("Provider/service-role credentials never belong in browser code"));
   assert.ok(docs.includes("deterministic fixtures/mocks"));
 });
 
@@ -247,7 +247,7 @@ test("HQ capability control plane has honest single-identity and encrypted vault
     'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
     'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
     'One assistant identity', 'JARVIS-X is one coherent executive identity',
-    'not separate assistants or model votes', 'not live synchronization',
+    'not separate assistants or competing reasoning models', 'not live synchronization',
     'never leaves this page'
   ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
 });
