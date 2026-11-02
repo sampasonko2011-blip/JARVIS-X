@@ -370,8 +370,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("identity"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
-    const healthRoute = healthRouteResult.route;
-    const executiveRuntimeConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
+        const executiveRuntimeConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -507,7 +506,7 @@ Deno.serve(async (req: Request) => {
   // A mock request is rejected (never downgraded to live inference) unless the server flag is enabled.
   if (body.mode === "mock") {
     if (Deno.env.get("JX_ENABLE_MOCK_MODE") !== "true") {
-      return jsonResponse({ error: "mock_mode_disabled", provider_calls: 0 }, 403, origin);
+      return jsonResponse({ error: "mock_mode_disabled", model_calls: 0 }, 403, origin);
     }
     const mockResult = createMockExecutionResult();
     try {
@@ -534,7 +533,7 @@ Deno.serve(async (req: Request) => {
       executive_runtime: { model: "mock-fixture" },
       execution_mode: "mock-executive-placeholder",
       mock: true,
-      provider_calls: 0,
+      model_calls: 0,
       execution_receipt: mockResult.executionReceipt,
       output: mockResult.answer,
       latency_ms: Date.now() - started,
@@ -578,7 +577,7 @@ Deno.serve(async (req: Request) => {
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Global inference budget guard denied the request",
         error_code: budgetReservation.reason.slice(0, 100),
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, budget_reservation_usd: budgetReservation.reservedUsd, budget_reserved_today_usd: budgetReservation.reservedTodayUsd, budget_daily_limit_usd: budgetReservation.dailyLimitUsd },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, model_calls: 0, budget_reservation_usd: budgetReservation.reservedUsd, budget_reserved_today_usd: budgetReservation.reservedTodayUsd, budget_daily_limit_usd: budgetReservation.dailyLimitUsd },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -646,7 +645,7 @@ Deno.serve(async (req: Request) => {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence, executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -678,10 +677,10 @@ Deno.serve(async (req: Request) => {
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel execution failed; response content not persisted",
         error_code: code,
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "single-core-cognitive-kernel", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: "one-executive-core-with-deterministic-governance" },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "single-core-cognitive-kernel", executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence: "one-executive-core-with-deterministic-governance" },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
-    return jsonResponse({ error: "provider_request_failed", code }, 502, origin);
+    return jsonResponse({ error: "executive_runtime_failed", code }, 502, origin);
   }
 });
