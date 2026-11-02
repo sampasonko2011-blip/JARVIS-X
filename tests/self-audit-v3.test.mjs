@@ -46,7 +46,9 @@ const base = {
     independentGrader: "blind-independent",
     primaryMetric: "accuracy",
     primaryImprovementLowerBound: 0.03,
-    confidenceLevel: 0.95
+    confidenceLevel: 0.95,
+    confidenceIntervalMethod: "paired-bootstrap",
+    confidenceIntervalSourceHash: "sha256:paired-ci"
   },
   cost: { known: true, currency: "USD", actual: 0, ceiling: 0 },
   liveProviderCalls: 0
@@ -130,4 +132,16 @@ test("stale evidence from another revision cannot substantiate candidate", () =>
   const result = runSelfAudit({ ...base, evidence: [{ ...base.evidence[0], revision: "old-revision" }] });
   assert.equal(result.decision, "UNPROVEN");
   assert.match(result.reasons.join(" "), /evidence.*revision|revision.*evidence/i);
+});
+
+test("quality claims cannot self-declare a confidence level without interval provenance", () => {
+  const result = runSelfAudit({ ...base, evaluation: { ...base.evaluation, confidenceIntervalMethod: "not-required", confidenceIntervalSourceHash: "" } });
+  assert.equal(result.decision, "UNPROVEN");
+  assert.match(result.reasons.join(" "), /confidence interval requires/i);
+});
+
+test("cost metric must reconcile with observed cost evidence", () => {
+  const result = runSelfAudit({ ...base, metrics: base.metrics.map(metric => metric.name === "cost" ? { ...metric, candidate: 0.01 } : metric) });
+  assert.equal(result.decision, "UNPROVEN");
+  assert.match(result.reasons.join(" "), /Cost metric does not match/i);
 });
