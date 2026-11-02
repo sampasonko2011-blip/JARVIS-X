@@ -487,7 +487,7 @@ Deno.serve(async (req: Request) => {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("provider"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
     const healthRoute = healthRouteResult.route;
-    const healthProvider = healthRoute.provider ?? "openai";
+    const healthProvider: ProviderName = "openai";
     const providerIsConfigured = (provider: ProviderName) => {
       const config = PROVIDER_CONFIG[provider];
       const secretConfigured = provider === "google"
@@ -496,9 +496,7 @@ Deno.serve(async (req: Request) => {
       return secretConfigured && Boolean(config.model) &&
         (provider !== "llama" || Boolean(Deno.env.get("LLAMA_BASE_URL")));
     };
-    const providersConfigured = healthRoute.provider
-      ? providerIsConfigured(healthProvider)
-      : COMPOSITE_PROVIDERS.every(providerIsConfigured);
+    const providersConfigured = providerIsConfigured(healthProvider);
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -507,15 +505,13 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       ok: true,
       service: "jarvis-x-gateway",
-      mode: healthRoute.provider ? "single-provider" : "single-core-cognitive-kernel",
-      selectedProvider: healthRoute.selection,
-      provider: healthRoute.provider ?? PRIMARY_PROVIDER,
-      model: healthRoute.provider
-        ? PROVIDER_CONFIG[healthRoute.provider].model
-        : PRIMARY_MODEL,
+      mode: "single-core-cognitive-kernel",
+      selectedProvider: "composite",
+      provider: PRIMARY_PROVIDER,
+      model: PRIMARY_MODEL,
       providersConfigured,
       providerConfigured: providersConfigured,
-      providers: healthRoute.provider ? [healthRoute.provider] : [...COMPOSITE_PROVIDERS],
+      providers: [...COMPOSITE_PROVIDERS],
       budgetGuard,
       chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
@@ -538,7 +534,7 @@ Deno.serve(async (req: Request) => {
   if (!isImageRoute && (typeof body.task !== "string" || !body.task.trim() || body.task.length > MAX_TASK_CHARS)) {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
   }
-  const task = isImageRoute ? "Image generation request" : body.task.trim();
+  const task = isImageRoute ? "Image generation request" : (body.task as string).trim();
   const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
   const routeResult = resolveRucheRoute(body.ia_selectionnee ?? body.selected_provider, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);
@@ -690,9 +686,9 @@ Deno.serve(async (req: Request) => {
     return missing;
   });
   if (missingProviderConfig.length > 0) {
-    const requestedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
-    const requestedModel = rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL;
-    const requestedMode = rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel";
+    const requestedProvider = PRIMARY_PROVIDER;
+    const requestedModel = PRIMARY_MODEL;
+    const requestedMode = "single-core-cognitive-kernel";
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
@@ -748,9 +744,7 @@ Deno.serve(async (req: Request) => {
     capabilitiesUsed?: string[];
   };
   try {
-    const result: CognitiveExecutionResult = rucheRoute.provider
-      ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
-      : await (() => {
+    const result: CognitiveExecutionResult = await (() => {
           const registry = createDefaultCapabilityRegistry({
             enabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
           });
@@ -779,16 +773,16 @@ Deno.serve(async (req: Request) => {
             },
           });
         })();
-    const executionMode = result.executionMode ?? (rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel");
-    const independence = result.independence ?? (rucheRoute.provider ? "single-provider-no-cross-review" : "one-executive-core-with-deterministic-governance");
-    const reportedProvider = rucheRoute.provider ?? PRIMARY_PROVIDER;
+    const executionMode = result.executionMode ?? "single-core-cognitive-kernel";
+    const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
+    const reportedProvider = PRIMARY_PROVIDER;
     const reportedModel = result.providersUsed.map(item => item.provider + ":" + item.model).join(" + ");
     const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Single-provider answer returned; response content not persisted" : "Single-core cognitive kernel answer returned; response content not persisted",
+        output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
         metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, provider_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, providers_used: result.providersUsed, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
@@ -818,12 +812,12 @@ Deno.serve(async (req: Request) => {
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "failed",
-        provider: rucheRoute.provider ? rucheRoute.provider : PRIMARY_PROVIDER,
-        model: rucheRoute.provider ? PROVIDER_CONFIG[rucheRoute.provider].model : PRIMARY_MODEL,
+        provider: PRIMARY_PROVIDER,
+        model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Single-core cognitive kernel execution failed; response content not persisted",
         error_code: code,
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: rucheRoute.provider ? "single-provider" : "single-core-cognitive-kernel", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: rucheRoute.provider ? "single-provider-no-cross-review" : "one-executive-core-with-deterministic-governance" },
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "single-core-cognitive-kernel", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: "one-executive-core-with-deterministic-governance" },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
