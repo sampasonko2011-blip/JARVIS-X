@@ -11,6 +11,7 @@ import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
 import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
+import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
   "http://localhost:3000",
@@ -209,6 +210,32 @@ async function reserveGlobalBudget(userId: string) {
     reservedTodayUsd,
     dailyLimitUsd,
   };
+}
+
+async function reserveImageBudget(userId: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) throw new Error("image_budget_service_credentials_missing");
+  const reservationId = crypto.randomUUID();
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_hq_image_budget`, {
+    method: "POST",
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_reservation_id: reservationId, p_user_id: userId }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error("image_budget_reservation_unavailable");
+  const data = await response.json().catch(() => null);
+  const row = Array.isArray(data) ? data[0] : null;
+  if (!row || typeof row.allowed !== "boolean" || typeof row.reason !== "string") throw new Error("image_budget_reservation_invalid");
+  const reservedUsd = Number(row.reserved_usd);
+  const reservedTodayUsd = Number(row.reserved_today_usd);
+  const dailyLimitUsd = Number(row.daily_limit_usd);
+  if (row.allowed && (row.reason !== "reserved" || !Number.isFinite(reservedUsd) || reservedUsd <= 0 ||
+      !Number.isFinite(reservedTodayUsd) || reservedTodayUsd < reservedUsd ||
+      !Number.isFinite(dailyLimitUsd) || dailyLimitUsd <= 0 || reservedTodayUsd > dailyLimitUsd)) {
+    throw new Error("image_budget_reservation_invalid");
+  }
+  return { ...row, reservationId, reservedUsd, reservedTodayUsd, dailyLimitUsd };
 }
 
 async function consumeRateLimit(userId: string, key: "minute" | "day") {
@@ -507,10 +534,11 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: error instanceof Error && error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json" },
       error instanceof Error && error.message === "request_body_too_large" ? 413 : 400, origin);
   }
-  if (typeof body.task !== "string" || !body.task.trim() || body.task.length > MAX_TASK_CHARS) {
+  const isImageRoute = url.pathname.endsWith("/image");
+  if (!isImageRoute && (typeof body.task !== "string" || !body.task.trim() || body.task.length > MAX_TASK_CHARS)) {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
   }
-  const task = body.task.trim();
+  const task = isImageRoute ? "Image generation request" : body.task.trim();
   const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
   const routeResult = resolveRucheRoute(body.ia_selectionnee ?? body.selected_provider, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);
@@ -538,6 +566,72 @@ Deno.serve(async (req: Request) => {
       reset_at: denied.reset_at,
       retry_after_seconds: retryAfter,
     }, 429, origin);
+  }
+
+  // Image generation is a separately budgeted capability, never a reasoning route.
+  // The feature flag, server-side credential, per-request confirmation, and atomic
+  // daily image budget must all pass before a paid image API request can occur.
+  if (isImageRoute) {
+    if (Deno.env.get("JX_ENABLE_IMAGE_GENERATION") !== "true") {
+      return jsonResponse({ error: "image_generation_disabled", provider_calls: 0 }, 403, origin);
+    }
+    if (body.user_confirmed !== true) return jsonResponse({ error: "explicit_image_cost_confirmation_required" }, 400, origin);
+    const imageApiKey = Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
+    if (!imageApiKey) return jsonResponse({ error: "image_provider_credential_missing" }, 503, origin);
+    let imageBudget;
+    try { imageBudget = await reserveImageBudget(user.id); }
+    catch { return jsonResponse({ error: "image_budget_guard_unavailable", message: "Image generation is blocked because its separate budget guard could not be verified." }, 503, origin); }
+    if (!imageBudget.allowed) {
+      return jsonResponse({ error: "image_budget_blocked", reason: imageBudget.reason, reserved_today_usd: imageBudget.reservedTodayUsd, daily_limit_usd: imageBudget.dailyLimitUsd }, 429, origin);
+    }
+    const imageStarted = Date.now();
+    try {
+      const generator = createNanoBananaImageGenerator({ apiKey: imageApiKey });
+      const asset = await generator.generate({
+        prompt: body.prompt,
+        aspectRatio: body.aspect_ratio,
+        outputFormat: body.output_format,
+        count: 1,
+        userConfirmed: body.user_confirmed,
+      });
+      await writeRun(user.id, {
+        task_type: "hq_image_generation", status: "succeeded",
+        provider: "google-gemini", model: NANO_BANANA_MODEL,
+        input_summary: "Image prompt omitted from audit record",
+        output_summary: "One generated image returned; bytes not persisted by gateway",
+        error_code: null,
+        metadata: {
+          image_asset_id: asset.assetId, image_mime_type: asset.mimeType,
+          image_byte_length: asset.byteLength, image_sha256: asset.contentHash,
+          image_aspect_ratio: body.aspect_ratio, image_output_format: body.output_format,
+          budget_reservation_id: imageBudget.reservationId,
+          budget_reserved_usd: imageBudget.reservedUsd,
+          latency_ms: Date.now() - imageStarted,
+        },
+        completed_at: new Date().toISOString(),
+      });
+      return jsonResponse({
+        ok: true,
+        capability: "image.generate",
+        provider: asset.providerId,
+        model: asset.modelId,
+        image: { asset_id: asset.assetId, mime_type: asset.mimeType, byte_length: asset.byteLength, sha256: asset.contentHash, data_url: asset.dataUrl },
+        budget: { reserved_usd: imageBudget.reservedUsd, reserved_today_usd: imageBudget.reservedTodayUsd, daily_limit_usd: imageBudget.dailyLimitUsd },
+      }, 200, origin);
+    } catch (error) {
+      try {
+        await writeRun(user.id, {
+          task_type: "hq_image_generation", status: "failed",
+          provider: "google-gemini", model: NANO_BANANA_MODEL,
+          input_summary: "Image prompt omitted from audit record",
+          output_summary: "Image generation failed; reservation retained conservatively",
+          error_code: error instanceof Error && /^image_[a-z0-9_]+$/.test(error.message) ? error.message.slice(0, 100) : "image_generation_failed",
+          metadata: { budget_reservation_id: imageBudget.reservationId, budget_reserved_usd: imageBudget.reservedUsd, latency_ms: Date.now() - imageStarted },
+          completed_at: new Date().toISOString(),
+        });
+      } catch { return jsonResponse({ error: "image_audit_logging_failed", reservation_retained: true }, 503, origin); }
+      return jsonResponse({ error: "image_generation_failed", reservation_retained: true }, 502, origin);
+    }
   }
 
   // Explicit mock mode is opt-in, authenticated, allowlisted, and rate-limited.
