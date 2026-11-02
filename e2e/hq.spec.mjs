@@ -345,7 +345,7 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 });
 
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
-  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", executive_identity: "JARVIS-X", executive_runtime: {model:"openai-model"}, model_calls: 1, provider_calls: 1 } } });
+  await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executive_identity: "JARVIS-X", executive_runtime: {model:"openai-model"}, model_calls: 1, model_calls: 1 } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
@@ -363,8 +363,8 @@ test("direct chat sends a message and displays a reply only after a verified gat
 
 test("zero-provider mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { ok: true, mock: true, provider: "mock", model: "mock-v1", execution_mode: "mock-executive-placeholder", provider_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { ok: true, mock: true, executive_identity: "JARVIS-X", executive_runtime: {model:"mock-fixture"}, execution_mode: "mock-executive-placeholder", model_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
@@ -386,8 +386,8 @@ test("zero-provider mock chat works with the live budget disabled and is labelle
 
 test("cross-platform memory is sent only when explicitly enabled for the message", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "jarvis-x-cognitive-kernel", providers_used: [{provider:"openai",model:"openai-model",stage:"executive_core"}], provider_calls: 1 } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Consent-enabled reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1 } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
@@ -404,8 +404,8 @@ test("cross-platform memory is sent only when explicitly enabled for the message
 
 test("cross-platform memory preference persists across messages and can be disabled", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", provider: "jarvis-x-cognitive-kernel", model: "single-executive-core", providersConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
-    chat: { status: 200, body: { ok: true, output: "Reply", provider: "jarvis-x-cognitive-kernel", providers_used: [{provider:"openai",model:"openai-model",stage:"executive_core"}], provider_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { ok: true, output: "Reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
@@ -465,11 +465,11 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
 });
 
-test("HQ presents JARVIS-X as one composite assistant, not separate model roles", async ({ page }) => {
+test("HQ presents JARVIS-X as one executive identity, not separate model roles", async ({ page }) => {
   await page.locator('[data-view="console"]').click();
   await expect(page.locator("#view-console")).toContainText("One assistant identity");
   await expect(page.locator("#view-console")).toContainText("JARVIS-X is the single assistant you interact with");
-  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one composite provider");
+  await expect(page.locator("#view-console")).toContainText("operate behind the scenes as one coherent executive identity");
   await expect(page.locator("#council-build")).toHaveCount(0);
   await expect(page.locator("#council-lead")).toHaveCount(0);
   await expect(page.locator("#council-challenge")).toHaveCount(0);
