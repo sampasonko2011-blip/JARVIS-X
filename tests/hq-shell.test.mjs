@@ -145,7 +145,7 @@ test("HQ security and multi-AI deployment claims stay explicit and gated", async
   const architecture = await read("docs/hq-multi-ai-architecture.md");
   assert.ok(architecture.includes("**Status: SOURCE IMPLEMENTATION IN PROGRESS; NOT DEPLOYED.**"));
   assert.ok(architecture.includes("server-side credential only"));
-  assert.ok(architecture.includes("user A cannot read/write user B"));
+  assert.ok(architecture.includes("account allowlist"));
   assert.ok(architecture.includes("one coherent executive identity"));
   assert.ok(architecture.includes("adult account-owner approval"));
 
