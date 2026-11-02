@@ -13,7 +13,8 @@ test("Vegeto route exposes exactly one executive identity and rejects alternate 
   assert.match(router, /provider: null/);
   assert.doesNotMatch(router, /deepseek|anthropic|claude|grok|gemini|mistral|llama/);
   assert.match(gateway, /PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel"/);
-  assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
+  assert.match(gateway, /EXECUTIVE_CONFIG/);
+  assert.doesNotMatch(gateway, /COMPOSITE_PROVIDERS|deepseek|anthropic|claude|grok|mistral|LLAMA_BASE_URL/);
 });
 
 test("one executive cognitive kernel owns reasoning, challenge, and synthesis passes", () => {
