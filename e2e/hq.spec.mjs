@@ -438,8 +438,8 @@ test("cross-platform memory preference persists across messages and can be disab
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
   await page.locator('[data-view="upgrades"]').click();
   await expect(page.locator("#upgrade-proposals")).toContainText("Secure live AI chat gateway");
-  await expect(page.locator("#upgrade-proposals")).toContainText("Encrypted cross-device Memory OS");
-  await expect(page.locator("#upgrade-proposals")).toContainText("Version-pinned multi-model router");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Cross-platform portable export and import");
+  await expect(page.locator("#upgrade-proposals")).toContainText("Least-privilege plugin broker");
   await page.locator('[data-proposal-approve="secure-chat-gateway"]').click();
   await expect(page.locator('[data-proposal="secure-chat-gateway"]')).toContainText("APPROVED FOR PLANNING");
   await expect(page.locator('[data-proposal-approve="secure-chat-gateway"]')).toBeDisabled();
@@ -507,69 +507,13 @@ test("strict CSP blocks injected inline scripts and style blocks", async ({ page
 });
 
 
-test("Model Forge registers a pinned candidate and keeps manual benchmark claims unproven", async ({ page }) => {
+test("Capability Forge exposes Nano Banana, XMemo, and portable export under one executive identity", async ({ page }) => {
   await page.locator('[data-view="forge"]').click();
   await expect(page.locator("#view-forge")).toBeVisible();
-  await page.locator("#forge-id").fill("e2e-open-model-candidate");
-  await page.locator("#forge-name").fill("E2E open-weight candidate");
-  await page.locator("#forge-source").fill("https://huggingface.co/example/model");
-  await page.locator("#forge-revision").fill("0123456789abcdef");
-  await page.locator("#forge-license").fill("Apache-2.0-reviewed");
-  await page.locator("#forge-digest").fill("a".repeat(64));
-  await page.locator("#forge-capabilities").fill("reasoning, summarization");
-  await page.locator("#forge-baseline-id").fill("baseline-e2e-001");
-  await page.locator("#forge-candidate-id").fill("candidate-e2e-001");
-  await page.locator("#forge-security-id").fill("security-review-e2e-001");
-  await page.locator("#forge-register").click();
-  await expect(page.locator("#forge-intake-status")).toContainText("registered locally");
-  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
-
-  await page.locator("#forge-benchmark-candidate").selectOption("e2e-open-model-candidate");
-  await page.locator("#forge-base-quality").fill("0.70");
-  await page.locator("#forge-new-quality").fill("0.74");
-  await page.locator("#forge-base-safety").fill("0.98");
-  await page.locator("#forge-new-safety").fill("0.98");
-  await page.locator("#forge-base-latency").fill("900");
-  await page.locator("#forge-new-latency").fill("850");
-  await page.locator("#forge-base-memory").fill("4000");
-  await page.locator("#forge-new-memory").fill("3800");
-  await page.locator("#forge-evaluate").click();
-  await expect(page.locator("#forge-benchmark-status")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-  await expect(page.locator("#forge-run-list")).toContainText("manually entered measurements");
-
-  await page.reload();
-  await page.locator('[data-view="forge"]').click();
-  await expect(page.locator("#forge-candidate-list")).toContainText("E2E open-weight candidate");
-  await expect(page.locator("#forge-run-list")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-});
-
-
-test("Model Forge validates candidates and marks manually entered benchmarks unproven", async ({ page }) => {
-  await page.locator('[data-view="forge"]').click();
-  await expect(page.locator("#view-forge")).toBeVisible();
-  await page.locator("#forge-id").fill("test-model-candidate");
-  await page.locator("#forge-name").fill("Test open-weight candidate");
-  await page.locator("#forge-source").fill("https://huggingface.co/example/test-model");
-  await page.locator("#forge-revision").fill("0123456789abcdef0123456789abcdef01234567");
-  await page.locator("#forge-license").fill("Apache-2.0-reviewed");
-  await page.locator("#forge-digest").fill("a".repeat(64));
-  await page.locator("#forge-capabilities").fill("reasoning, summarization");
-  await page.locator("#forge-baseline-id").fill("baseline-fixture-001");
-  await page.locator("#forge-candidate-id").fill("candidate-fixture-001");
-  await page.locator("#forge-security-id").fill("security-fixture-001");
-  await page.locator("#forge-register").click();
-  await expect(page.locator("#forge-candidate-list")).toContainText("Test open-weight candidate");
-  await page.locator("#forge-benchmark-candidate").selectOption("test-model-candidate");
-  await page.locator("#forge-base-quality").fill("0.70");
-  await page.locator("#forge-new-quality").fill("0.74");
-  await page.locator("#forge-base-safety").fill("0.98");
-  await page.locator("#forge-new-safety").fill("0.98");
-  await page.locator("#forge-base-latency").fill("900");
-  await page.locator("#forge-new-latency").fill("850");
-  await page.locator("#forge-base-memory").fill("4000");
-  await page.locator("#forge-new-memory").fill("3800");
-  await page.locator("#forge-evaluate").click();
-  await expect(page.locator("#forge-run-list")).toContainText("UNPROVEN_MANUAL_BENCHMARKS");
-  await expect(page.locator("#forge-benchmark-status")).toContainText("unverified manual claims");
-  await expect(page.locator("#forge-benchmark-status")).toContainText("not proof of model improvement");
+  await expect(page.locator("#capability-registry")).toContainText("Nano Banana image generation");
+  await expect(page.locator("#capability-registry")).toContainText("XMemo memory");
+  await expect(page.locator("#capability-registry")).toContainText("Encrypted portable export/import");
+  await expect(page.locator("#capability-registry")).toContainText("DISABLED BY DEFAULT");
+  await expect(page.locator("#view-forge")).not.toContainText("open-weight model candidates");
+  await expect(page.locator("#view-forge")).not.toContainText("provider picker");
 });
