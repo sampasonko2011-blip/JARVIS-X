@@ -115,7 +115,7 @@ test("direct chat send fails safely when provider is unavailable", async ({ page
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-compose").fill("timeout regression");
   await page.locator("#chat-send").click();
-  await expect(page.locator("#chat-gateway-status")).toContainText("provider_not_configured");
+  await expect(page.locator("#chat-gateway-status")).toContainText("executive_runtime_not_configured");
   await expect(page.locator("#chat-thread")).toContainText("DELIVERY UNKNOWN");
   await expect(page.locator("#chat-send")).toBeEnabled();
 });
