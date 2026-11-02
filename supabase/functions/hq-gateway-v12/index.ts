@@ -382,10 +382,9 @@ Deno.serve(async (req: Request) => {
       service: "jarvis-x-gateway",
       mode: "single-core-cognitive-kernel",
       executiveIdentity: "JARVIS-X",
-      provider: PRIMARY_PROVIDER,
-      model: PRIMARY_MODEL,
-      providersConfigured,
-                  budgetGuard,
+      executiveModel: EXECUTIVE_CONFIG.model,
+      executiveRuntimeConfigured,
+      budgetGuard,
       chatEnabled: executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
@@ -442,7 +441,7 @@ Deno.serve(async (req: Request) => {
   // daily image budget must all pass before a paid image API request can occur.
   if (isImageRoute) {
     if (Deno.env.get("JX_ENABLE_IMAGE_GENERATION") !== "true") {
-      return jsonResponse({ error: "image_generation_disabled", provider_calls: 0 }, 403, origin);
+      return jsonResponse({ error: "image_generation_disabled", model_calls: 0 }, 403, origin);
     }
     if (body.user_confirmed !== true) return jsonResponse({ error: "explicit_image_cost_confirmation_required" }, 400, origin);
     const imageApiKey = Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
@@ -513,9 +512,9 @@ Deno.serve(async (req: Request) => {
     const mockResult = createMockExecutionResult();
     try {
       await writeRun(user.id, {
-        task_type: taskType, status: "succeeded", provider: "mock", model: "mock-v1",
+        task_type: taskType, status: "succeeded", provider: "mock", model: "mock-fixture",
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: "Deterministic mock result; no provider inference executed",
+        output_summary: "Deterministic mock result; no model inference executed",
         error_code: null,
         metadata: {
           execution_mode: "mock-executive-placeholder",
@@ -555,11 +554,11 @@ Deno.serve(async (req: Request) => {
     const requestedMode = "single-core-cognitive-kernel";
     try {
       await writeRun(user.id, {
-        task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
+        task_type: taskType, status: "blocked", provider: PRIMARY_PROVIDER, model: requestedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: "The configured JARVIS-X executive model is not configured; no inference executed",
-        error_code: "provider_configuration_missing",
-        metadata: { input_chars: task.length, latency_ms: Date.now() - started, model_calls: 0, execution_mode: requestedMode, executive_identity: requestedIdentity, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
+        output_summary: "The JARVIS-X executive runtime is not configured; no inference executed",
+        error_code: "executive_runtime_configuration_missing",
+        metadata: { input_chars: task.length, latency_ms: Date.now() - started, model_calls: 0, execution_mode: requestedMode, executive_identity: requestedIdentity, orchestration_mode: orchestrationMode, missing_runtime_config_count: missingProviderConfig.length },
         completed_at: new Date().toISOString(),
       });
     } catch { return jsonResponse({ error: "audit_logging_failed" }, 503, origin); }
@@ -647,7 +646,7 @@ Deno.serve(async (req: Request) => {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence, executive_identity: "JARVIS-X", executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
