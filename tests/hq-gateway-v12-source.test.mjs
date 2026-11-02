@@ -89,7 +89,8 @@ test("cross-platform memory is explicit opt-in and consent is sent per request",
   const html = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
   assert.match(client, /let enabled=false/);
   assert.match(client, /enabled=saved==='true'/);
-  assert.match(client, /memory_consent:memoryConsent/);
+  assert.match(client, /effectiveMemoryConsent=executionMode==='live'&&memoryConsent/);
+  assert.match(client, /memory_consent:effectiveMemoryConsent/);
   assert.match(gateway, /body\.memory_consent === true/);
   assert.match(gateway, /await recallMemory\(task, user\.id, memoryConsent\)/);
   assert.match(gateway, /await storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
