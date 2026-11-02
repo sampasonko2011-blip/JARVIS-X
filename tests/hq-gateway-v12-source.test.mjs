@@ -19,7 +19,8 @@ test("v12 imports the cognitive kernel and deterministic mock dependency", () =>
 
 test("default composite is one executive core, not a five-model council", () => {
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
-  assert.match(router, /composite: \{ provider: null, requiredSecrets: \["OPENAI_API_KEY"\]/);
+  assert.match(router, /type RucheSelection = "composite"/);
+  assert.match(router, /alternate_reasoning_routes_disabled/);
   assert.match(gateway, /return executeCognitiveKernel\(/);
   assert.match(gateway, /invokeCore: async/);
   assert.match(gateway, /invokeOpenAIResponses\(request\.input, request\.instructions, request\.tools\)/);
@@ -69,19 +70,21 @@ test("XMemo transport is isolated, account-scoped, bounded, and separately conse
   assert.doesNotMatch(gateway, /const XMEMO_BASE_URL/);
 });
 
-test("provider IDs remain operator-configured and are not hard-coded", () => {
-  for (const env of ["OPENAI_MODEL", "DEEPSEEK_MODEL", "ANTHROPIC_MODEL", "XAI_MODEL", "GEMINI_MODEL"]) {
-    assert.ok(gateway.includes(env), "missing configuration reference " + env);
+test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
+  assert.ok(gateway.includes("OPENAI_MODEL"));
+  assert.ok(gateway.includes("OPENAI_API_KEY"));
+  for (const legacy of ["DEEPSEEK_API_KEY", "ANTHROPIC_API_KEY", "XAI_API_KEY", "GOOGLE_API_KEY", "MISTRAL_API_KEY", "LLAMA_API_KEY"]) {
+    assert.ok(!gateway.includes(legacy), "secondary reasoning adapter remains: " + legacy);
   }
   assert.doesNotMatch(gateway, /AIza[0-9A-Za-z_-]{20,}/);
 });
 
-test("provider adapters reject incomplete responses before treating them as completed", () => {
+test("the single executive Responses adapter validates completed response and model identity", () => {
   assert.ok(gateway.includes('data?.status !== "completed"'));
-  assert.ok(gateway.includes('data?.choices?.[0]?.finish_reason !== "stop"'));
-  assert.ok(gateway.includes('!["end_turn", "stop_sequence"].includes(data?.stop_reason)'));
-  assert.ok(gateway.includes("provider_incomplete_response_"));
-  assert.ok(gateway.includes("provider_nonterminal_finish_"));
+  assert.ok(gateway.includes('data?.model !== "string"'));
+  assert.ok(gateway.includes("provider_model_identity_missing_openai"));
+  assert.ok(gateway.includes("provider_model_identity_mismatch_openai"));
+  assert.ok(!gateway.includes("callProvider("));
 });
 
 test("cross-platform memory is explicit opt-in and consent is sent per request", async () => {
