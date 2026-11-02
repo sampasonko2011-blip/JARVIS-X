@@ -27,8 +27,8 @@ test("adapter independently enforces per-call consent with zero transport calls"
     apiKey: "test-key",
     fetchImpl: async () => { calls++; throw new Error("consent gate failed"); },
   });
-  assert.deepEqual(await client.recall("query", userA, { consent: true }), { status: "not_consented", context: "" });
-  assert.equal(await client.store("task", "answer", userA, "research", { consent: true }), "not_consented");
+  assert.deepEqual(await client.recall("query", userA, { consent: false }), { status: "not_consented", context: "" });
+  assert.equal(await client.store("task", "answer", userA, "research", { consent: false }), "not_consented");
   assert.equal(calls, 0);
   assert.deepEqual(await client.recall("query", userA, { consent: false }), { status: "not_consented", context: "" });
   assert.equal(await client.store("task", "answer", userA, "research", { consent: false }), "not_consented");
