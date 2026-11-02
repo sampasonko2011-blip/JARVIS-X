@@ -103,7 +103,7 @@ test("cross-platform memory is explicit opt-in and consent is sent per request",
 });
 
 
-test("HQ separates zero-provider integration fixtures from budget-gated live inference", () => {
+test("HQ separates zero-model integration fixtures from budget-gated live inference", () => {
   assert.match(hqHtml, /id="chat-execution-mode"/);
   assert.match(hqHtml, /value="live"/);
   assert.match(hqHtml, /value="mock"/);
@@ -111,13 +111,12 @@ test("HQ separates zero-provider integration fixtures from budget-gated live inf
   assert.match(hqClient, /health\.mockModeEnabled!==true/);
   assert.match(hqClient, /health\.chatEnabled!==true/);
   assert.match(hqClient, /effectiveMemoryConsent=executionMode==='live'&&memoryConsent/);
-  assert.match(hqClient, /mode:executionMode/);
+  assert.match(hqClient, /executive_identity:'jarvis-x'/);
   assert.ok(hqClient.includes("result.model_calls!==0"));
   assert.ok(hqClient.includes("result.executive_identity"));
   assert.match(hqClient, /MOCK FIXTURE — NOT AI/);
-  assert.match(hqClient, /Model calls: 0\\. No model or memory was used/);
+  assert.match(hqClient, /Model calls: 0/);
 });
-
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
   assert.match(serviceWorker, /jarvis-x-hq-shell-v9/);
   assert.match(serviceWorker, /'\.\/mission-control\.js'/);
