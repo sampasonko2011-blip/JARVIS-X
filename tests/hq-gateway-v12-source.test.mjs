@@ -116,6 +116,9 @@ test("HQ separates zero-model integration fixtures from budget-gated live infere
   assert.ok(hqClient.includes("result.executive_identity"));
   assert.match(hqClient, /MOCK FIXTURE — NOT AI/);
   assert.match(hqClient, /Model calls: 0/);
+  assert.match(gateway, /const LIVE_INFERENCE_ENABLED = false/);
+  assert.match(gateway, /error: "live_inference_disabled".*model_calls: 0/);
+  assert.match(gateway, /chatEnabled: LIVE_INFERENCE_ENABLED &&/);
 });
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
   assert.match(serviceWorker, /jarvis-x-hq-shell-v11/);
