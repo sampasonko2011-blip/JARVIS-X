@@ -406,7 +406,7 @@ async function callProvider(provider: ProviderName, task: string, stage: Council
   const response = await fetch(endpoint, { method: "POST", headers, signal: AbortSignal.timeout(provider === "google" ? 45_000 : 25_000), body: JSON.stringify(body) });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error("provider_http_" + response.status + "_" + provider);
-  // Never treat a non-terminal or truncated provider response as a completed council stage.
+  // Never treat a non-terminal or truncated provider response as a completed diagnostic stage.
   if ((provider === "openai" || provider === "xai") && data?.status !== "completed") {
     throw new Error("provider_incomplete_response_" + provider);
   }
@@ -673,7 +673,7 @@ Deno.serve(async (req: Request) => {
       await writeRun(user.id, {
         task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Selected provider is not configured; no inference executed" : "One or more of the five required specialist providers is not configured; no inference executed",
+        output_summary: rucheRoute.provider ? "Selected provider is not configured; no inference executed" : "The configured JARVIS-X executive model is not configured; no inference executed",
         error_code: "provider_configuration_missing",
         metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, execution_mode: requestedMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
         completed_at: new Date().toISOString(),
@@ -714,7 +714,7 @@ Deno.serve(async (req: Request) => {
   // Cross-platform memory is opt-in per request. No recall or write unless the user explicitly consents.
   const memoryConsent = body.memory_consent === true;
   const memory = memoryConsent ? await recallMemory(task, user.id) : { status: "not_consented", context: "" };
-  type CouncilExecutionResult = {
+  type CognitiveExecutionResult = {
     answer: string;
     providerCalls: number;
     providersUsed: Array<{ provider: string; model: string; stage: string }>;
@@ -724,7 +724,7 @@ Deno.serve(async (req: Request) => {
     capabilitiesUsed?: string[];
   };
   try {
-    const result: CouncilExecutionResult = rucheRoute.provider
+    const result: CognitiveExecutionResult = rucheRoute.provider
       ? await executeSingleProvider(rucheRoute.provider, task, memory.context, orchestrationMode)
       : await (() => {
           const registry = createDefaultCapabilityRegistry({
