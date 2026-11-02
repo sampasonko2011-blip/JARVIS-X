@@ -214,13 +214,15 @@ test("chat sends explicit memory consent and never reports a failed delivery as 
   assert.match(hqRuntime, /MEMORY_PREFERENCE_KEY/);
   assert.match(hqRuntime, /initializeCrossPlatformMemoryPreference/);
   assert.doesNotMatch(hqRuntime, /checked=false/);
-  assert.match(hqRuntime, /memory_consent:memoryConsent/);
+  assert.match(hqRuntime, /effectiveMemoryConsent=executionMode==='live'&&memoryConsent/);
+  assert.match(hqRuntime, /memory_consent:effectiveMemoryConsent/);
   assert.match(hq, /userMessage\.delivery='DELIVERY UNKNOWN — CHECK GATEWAY BEFORE RETRYING'/);
   assert.match(hq, /Chat failed:[\s\S]*?Do not retry until delivery is checked/);
   assert.match(hq, /result\.ok!==true|health\.ok!==true/);
   assert.match(hq, /health\.mode!==expectedMode/);
   assert.match(hq, /health\.selectedProvider!==selectedProvider/);
   assert.match(hq, /health\.budgetGuard\.enabled!==true/);
+  assert.match(hq, /executionMode==='mock'[\s\S]*?health\.mockModeEnabled!==true/);
   assert.match(hq, /health\.budgetGuard\.killSwitchEnabled===true/);
 });
 
@@ -248,7 +250,7 @@ test("cross-platform memory preference persists in this browser and is user-disa
   assert.match(hqRuntime, /if\(saved!=='true'&&saved!=='false'\)localStorage\.setItem\(MEMORY_PREFERENCE_KEY,'false'\)/);
   assert.match(hqRuntime, /const memoryConsent=document\.querySelector\('#chat-memory-consent'\)\.checked/);
   assert.match(hqRuntime, /MEMORY_PREFERENCE_KEY/);
-  assert.match(hqRuntime, /memory_consent:memoryConsent/);
+  assert.match(hqRuntime, /memory_consent:effectiveMemoryConsent/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /const memory = memoryConsent \? await recallMemory\(task, user\.id\) : \{ status: "not_consented", context: "" \}/);
   assert.match(gateway, /const memoryWriteStatus = memoryConsent[\s\S]*?await storeConversationMemory\(task, result\.answer, user\.id, taskType\)[\s\S]*?: "not_consented"/);
@@ -339,6 +341,7 @@ test("HQ health check and chat UI require the selected Ruche route contract", ()
   assert.match(hq, /health\.providersConfigured/);
   assert.match(hq, /result\.providers_used/);
   assert.match(hq, /Configured Ruche route/);
+  assert.match(hq, /health\.mockModeEnabled!==true/);
 });
 
 test("paid inference cannot start before the global budget reservation succeeds", () => {
