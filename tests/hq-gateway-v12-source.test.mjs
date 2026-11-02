@@ -18,7 +18,8 @@ test("v12 imports the cognitive kernel and deterministic mock dependency", () =>
 });
 
 test("JARVIS-X is the only executive identity and uses one configured runtime", () => {
-  assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
+  assert.match(gateway, /EXECUTIVE_CONFIG/);
+  assert.doesNotMatch(gateway, /COMPOSITE_PROVIDERS|deepseek|anthropic|claude|grok|mistral|LLAMA_BASE_URL/);
   assert.match(router, /type RucheSelection = "jarvis-x"/);
   assert.match(router, /alternate_reasoning_routes_disabled/);
   assert.match(gateway, /return executeCognitiveKernel\(/);
