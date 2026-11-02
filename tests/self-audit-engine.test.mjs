@@ -26,7 +26,7 @@ const good={
   environmentHash:"sha256:env",protocolHash:"sha256:protocol",
   rubricVersion:"runtime-v1",paired:true,holdoutSampleCount:12,
   leakageCheck:"pass",independentGrader:"not-required",
-  primaryMetric:"correctness",primaryImprovementLowerBound:0.05
+  primaryMetric:"correctness",primaryImprovementLowerBound:0.05,confidenceLevel:0.95
  },
  cost:{known:true,currency:"USD",actual:0,ceiling:0},
  liveProviderCalls:0
