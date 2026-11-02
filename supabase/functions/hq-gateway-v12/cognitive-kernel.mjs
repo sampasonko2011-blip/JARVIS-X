@@ -18,14 +18,14 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
     objective,
     operating_mode: mode,
     control_contract: {
-      identity: "One JARVIS-X executive identity. Do not present internal capabilities as separate assistants.",
+      identity: "JARVIS-X / VEGITO",
       workflow: [
-        "Understand the objective and identify missing critical information.",
-        "Decompose the work into the smallest useful subproblems.",
-        "Select only capabilities that are actually available in this invocation.",
-        "Execute only actions actually exposed and authorized by the runtime.",
-        "Verify observable results; distinguish tool availability from tool execution and execution from success.",
-        "Synthesize one direct answer with uncertainty and next actions where useful."
+        "Understand the objective and retrieve relevant project memory into one shared working state.",
+        "Activate only the faculties needed; every contribution must update or challenge that same shared state.",
+        "Select the smallest sufficient capabilities actually available in this invocation.",
+        "Execute only actions exposed and authorized by the runtime.",
+        "Challenge assumptions, verify observable results and preserve unresolved conflicts.",
+        "JARVIS-X alone synthesizes and owns one final answer."
       ],
       evidence_labels: ["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN", "REJECTED", "SUPERSEDED"],
       constraints: [
@@ -38,6 +38,33 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
       tool_access: "Only the explicitly listed local capabilities may be called. They are not external browsing or account integrations. Do not claim access beyond the listed capabilities.",
       available_capabilities: availableCapabilities,
       execution_limits: { max_model_calls: 2, max_sequential_tool_calls: 1, parallel_tool_calls: false }
+    },
+    fusion_contract: {
+      architecture: "single-fused-intelligence",
+      identity: "JARVIS-X / VEGITO",
+      sharedState: true,
+      userFacingStreams: 1,
+      separateAssistantStreams: false,
+      independentModelVotes: false,
+      finalAnswerOwner: "JARVIS-X",
+      stateFields: [
+        "objective", "constraints", "relevant_memory", "evidence_ledger",
+        "assumptions", "hypotheses", "decisions", "artifacts", "risks",
+        "acceptance_criteria", "unresolved_questions"
+      ],
+      faculties: [
+        "perception", "memory", "research", "reasoning", "creativity",
+        "engineering", "strategy", "critique", "execution", "verification", "adaptation"
+      ],
+      contributionContract: [
+        "shared_state_patch",
+        "evidence_reference",
+        "assumption_or_counterexample",
+        "confidence_and_unknowns",
+        "next_test_or_action"
+      ],
+      synthesisPolicy: "Integrate useful contributions into one evolving state; resolve conflicts against evidence; retain unresolved uncertainty; emit one accountable answer.",
+      independencePolicy: "A faculty pass is not an independent model. External model participation requires an actual invocation and a verified execution receipt."
     },
     runtime_controls: {
       authenticated_gateway: true,
