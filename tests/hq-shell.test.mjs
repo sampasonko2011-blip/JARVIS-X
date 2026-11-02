@@ -247,7 +247,7 @@ test("HQ capability control plane has honest single-identity and encrypted vault
     'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
     'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
     'One assistant identity', 'JARVIS-X is one coherent executive identity',
-    'not exposed as separate assistants', 'not live synchronization',
+    'not separate assistants or model votes', 'not live synchronization',
     'never leaves this page'
   ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
 });
