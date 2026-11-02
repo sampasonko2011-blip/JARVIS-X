@@ -19,7 +19,6 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel";
 const PRIMARY_MODEL = "single-executive-core";
-const COMPOSITE_PROVIDERS = ["openai"] as const;
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 // Bound the single executive-core input and output.
@@ -369,7 +368,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
-    const healthRouteResult = resolveRucheRoute(url.searchParams.get("provider"), url.searchParams.get("orchestration_mode"));
+    const healthRouteResult = resolveRucheRoute(url.searchParams.get("identity"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
     const healthRoute = healthRouteResult.route;
     const providersConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
@@ -382,13 +381,11 @@ Deno.serve(async (req: Request) => {
       ok: true,
       service: "jarvis-x-gateway",
       mode: "single-core-cognitive-kernel",
-      selectedProvider: "composite",
+      executiveIdentity: "JARVIS-X",
       provider: PRIMARY_PROVIDER,
       model: PRIMARY_MODEL,
       providersConfigured,
-      providerConfigured: providersConfigured,
-      providers: [...COMPOSITE_PROVIDERS],
-      budgetGuard,
+                  budgetGuard,
       chatEnabled: providersConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
       memoryProvider: "xmemo",
       memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
@@ -412,7 +409,7 @@ Deno.serve(async (req: Request) => {
   }
   const task = isImageRoute ? "Image generation request" : (body.task as string).trim();
   const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
-  const routeResult = resolveRucheRoute(body.ia_selectionnee ?? body.selected_provider, body.orchestration_mode ?? modeAlias ?? body.mode);
+  const routeResult = resolveRucheRoute(body.executive_identity, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);
   const rucheRoute: RucheRoute = routeResult.route;
   const orchestrationMode = rucheRoute.mode;
@@ -521,7 +518,7 @@ Deno.serve(async (req: Request) => {
         output_summary: "Deterministic mock result; no provider inference executed",
         error_code: null,
         metadata: {
-          execution_mode: "mock-composite-prompt-placeholder",
+          execution_mode: "mock-executive-placeholder",
           mock: true,
           provider_calls: 0,
           mock_execution_receipt: mockResult.executionReceipt,
@@ -530,13 +527,13 @@ Deno.serve(async (req: Request) => {
         completed_at: new Date().toISOString(),
       });
     } catch {
-      return jsonResponse({ error: "audit_logging_failed", execution_mode: "mock-composite-prompt-placeholder" }, 503, origin);
+      return jsonResponse({ error: "audit_logging_failed", execution_mode: "mock-executive-placeholder" }, 503, origin);
     }
     return jsonResponse({
       ok: true,
       provider: "mock",
       model: "mock-v1",
-      execution_mode: "mock-composite-prompt-placeholder",
+      execution_mode: "mock-executive-placeholder",
       mock: true,
       provider_calls: 0,
       execution_receipt: mockResult.executionReceipt,
