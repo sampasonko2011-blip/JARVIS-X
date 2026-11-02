@@ -1,7 +1,7 @@
 # JARVIS-X Composite Architecture v2
 
 ## Design decision
-One executive identity; multiple bounded capabilities; independent verification; one accountable output. This is a staged target, not a claim that every component is wired into active HQ runtime.
+One executive identity; multiple bounded capabilities; independent verification; one accountable output. Vegito is the governing analogy: capabilities are fused into one shared intelligence, not arranged as Goku and Vegeta producing separate streams. Every specialist contribution updates the same working state; JARVIS-X owns one plan, one synthesis and one answer. This is a staged target, not a claim that every component is wired into active HQ runtime.
 
 ## Layers
 - Executive control plane: objective, task graph, permissions, budgets, stop conditions, final synthesis. Model output cannot change permissions.
