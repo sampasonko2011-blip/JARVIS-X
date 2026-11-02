@@ -1,4 +1,4 @@
-# JARVIS-X HQ — single-identity architecture and release gates
+# JARVIS-X HQ — Vegeto single-identity architecture and release gates
 
 **Status: SOURCE IMPLEMENTATION IN PROGRESS; NOT DEPLOYED.** This document records the Vegeto architecture and its actual release boundaries.
 
@@ -62,7 +62,7 @@ Use the exact evidence sequence:
 
 `PROPOSED -> AVAILABLE -> AUTHORIZED -> INVOKED -> EXECUTED -> OUTPUT_VALIDATED -> WORLD_STATE_VERIFIED`
 
-A source adapter is not a live integration. A mock test is not a provider call. CI success is not deployment. A generated response is not proof that a saved file or external state exists.
+A source adapter is not a live integration. A mock test is not a real capability invocation. CI success is not deployment. A generated response is not proof that a saved file or external state exists.
 
 ### Gate A — static HQ
 - CI green on the exact latest revision.
@@ -78,7 +78,7 @@ A source adapter is not a live integration. A mock test is not a provider call. 
 - Server-side executive credential/model configured.
 - Budget guard configured from current pricing and bounded usage, separately approved.
 - Authenticated smoke test verifies actual model identity, response, audit receipt, timeout, and secret redaction.
-- No live model calls under the current zero-budget configuration.
+- No live executive inference calls under the current zero-budget configuration.
 
 ### Gate D — image capability
 - Image budget migration applied only to an authorized environment.
@@ -88,7 +88,7 @@ A source adapter is not a live integration. A mock test is not a provider call. 
 
 ## Current status
 
-- The v12 source router now accepts only the single composite executive route.
+- The v12 source router now accepts only the JARVIS-X executive identity.
 - Nano Banana adapter, authenticated image route, UI controls, and separate atomic budget migration are source-integrated.
 - Image generation remains disabled by default; the migration has not been applied to production.
 - Live model inference, live XMemo persistence/account isolation, live image generation, and production deployment remain unverified.
