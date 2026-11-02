@@ -8,7 +8,7 @@ const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cogn
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-execution.mjs", import.meta.url), "utf8");
 
 test("Vegeto route exposes exactly one executive identity and rejects alternate reasoning routes", () => {
-  assert.match(router, /type RucheSelection = "composite"/);
+  assert.match(router, /type RucheSelection = "jarvis-x"/);
   assert.match(router, /alternate_reasoning_routes_disabled/);
   assert.match(router, /provider: null/);
   assert.doesNotMatch(router, /deepseek|anthropic|claude|grok|gemini|mistral|llama/);
@@ -32,7 +32,7 @@ test("image generation is a separate capability and never a reasoning route", ()
   assert.match(gateway, /reserveImageBudget\(user\.id\)/);
   assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
   assert.match(gateway, /user_confirmed !== true/);
-  assert.match(router, /type RucheSelection = "composite"/);
+  assert.match(router, /type RucheSelection = "jarvis-x"/);
 });
 
 test("mock mode clearly states that no inference occurred", () => {
