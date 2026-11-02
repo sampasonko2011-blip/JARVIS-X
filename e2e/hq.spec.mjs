@@ -363,7 +363,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
 
 test("zero-provider mock chat works with the live budget disabled and is labelled as non-AI", async ({ page }) => {
   await installGatewayFetchMock(page, {
-    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: false, budgetGuard: { enabled: false, killSwitchEnabled: false, requestReservationConfigured: false, dailyLimitUsd: 10 }, chatEnabled: false, mockModeEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
     chat: { status: 200, body: { ok: true, mock: true, executive_identity: "JARVIS-X", executive_runtime: {model:"mock-fixture"}, execution_mode: "mock-executive-placeholder", mock: true, model_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
@@ -377,7 +377,7 @@ test("zero-provider mock chat works with the live budget disabled and is labelle
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("MOCK FIXTURE — NOT AI");
   await expect(page.locator("#chat-thread")).toContainText("no real AI inference was performed");
-  await expect(page.locator("#chat-gateway-status")).toContainText("Provider calls: 0");
+  await expect(page.locator("#chat-gateway-status")).toContainText("Model calls: 0");
   const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
   expect(request.mode).toBe("mock");
   expect(request.memory_consent).toBe(false);
