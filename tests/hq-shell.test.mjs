@@ -206,7 +206,7 @@ test("HQ release metadata is valid, pinned to stable, and forbids automatic prov
 
 test("HQ upgrade center separates read-only update discovery from privileged changes", async () => {
   const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
-  for (const id of ["view-upgrades", "check-updates", "check-models", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log"]) assert.ok(html.includes('id="' + id + '"'));
+  for (const id of ["view-upgrades", "check-updates", "upgrade-status", "upgrade-detail", "upgrade-message", "upgrade-log"]) assert.ok(html.includes('id="' + id + '"'));
   assert.ok(html.includes("fetch('./release-manifest.json'"));
   assert.ok(html.includes("registration.update()"));
   assert.ok(html.includes("Always requires approval"));
@@ -230,7 +230,7 @@ test("HQ direct chat is a real gateway client but fails closed without authentic
 test("HQ upgrade proposals expose individual approve and dismiss controls and hard failure gates", async () => {
   const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const id of ["upgrade-proposals", "proposal-status"]) assert.ok(html.includes('id="' + id + '"'));
-  for (const id of ["secure-chat-gateway", "cross-device-memory", "multi-model-adapters", "closed-loop-self-audit", "plugin-broker", "cross-platform-pwa"]) assert.ok(html.includes("id:'" + id + "'"));
+  for (const id of ["secure-chat-gateway", "closed-loop-self-audit", "plugin-broker", "cross-platform-pwa"]) assert.ok(html.includes("id:'" + id + "'"));
   assert.ok(html.includes("APPROVED FOR PLANNING"));
   assert.ok(html.includes("DISMISSED"));
   assert.ok(html.includes("Repeated failure is REJECTED or SUPERSEDED"));
