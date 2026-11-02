@@ -9,7 +9,7 @@ JARVIS-X HQ is a progressive web app (PWA) served from `hq/`. Its target archite
 - **CI:** Treat only the latest completed Actions run on the exact PR head SHA as evidence. Earlier runs on older commits are superseded.
 - **Live executive inference:** Not independently verified. The gateway requires a configured server-side runtime and a separately enabled global budget guard.
 - **XMemo memory:** Per-request consent, bounded payloads, account-scoped paths, and fail-closed behavior have mock/contract tests. Live persistence, account isolation, deletion, and cross-platform retrieval remain unverified.
-- **Image generation:** Nano Banana 2.1 adapter, authenticated route, UI, and a separate atomic budget migration are source-integrated. The feature flag is off by default, the budget migration is not applied to production, and no live image call has been made.
+- **Image generation:** Nano Banana 2.1 adapter, authenticated `/image` route, Image Studio UI, and a separate atomic budget migration are source-integrated. `JX_ENABLE_IMAGE_GENERATION` is off by default; the migration is not applied to production; the image budget defaults to disabled/zero; account-owner approval and a price review within 30 days are mandatory. The API key is server-only. No live image call has been made. The published standard 1K price is approximately USD 0.0336 per image; there is no free API tier for this model.
 - **Budget:** The live paid-inference budget guard remains disabled by default. Do not enable paid inference or image generation without separately reviewed limits, account-owner approval, and verified server-side spend controls.
 
 ## Install and portable continuity
