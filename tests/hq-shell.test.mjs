@@ -51,7 +51,7 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
 
 test("HQ documentation distinguishes implemented frontend from unverified remote services", async () => {
   const docs = await read("hq/README.md");
-  assert.ok(docs.includes("Live provider inference"));
+  assert.ok(docs.includes("Live model inference"));
   assert.ok(docs.includes("not yet independently verified"));
   assert.ok(docs.includes("cross-platform memory"));
   assert.ok(docs.includes("not automatically synchronized"));
