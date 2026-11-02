@@ -20,6 +20,21 @@ test("redaction removes common credential and email patterns before transport", 
   assert.match(redacted, /REDACTED_CREDENTIAL/);
 });
 
+
+test("adapter independently enforces per-call consent with zero transport calls", async () => {
+  let calls = 0;
+  const client = createXMemoMemoryClient({
+    apiKey: "test-key",
+    fetchImpl: async () => { calls++; throw new Error("consent gate failed"); },
+  });
+  assert.deepEqual(await client.recall("query", userA), { status: "not_consented", context: "" });
+  assert.equal(await client.store("task", "answer", userA, "research"), "not_consented");
+  assert.equal(calls, 0);
+  assert.deepEqual(await client.recall("query", userA, { consent: false }), { status: "not_consented", context: "" });
+  assert.equal(await client.store("task", "answer", userA, "research", { consent: false }), "not_consented");
+  assert.equal(calls, 0);
+});
+
 test("missing key and invalid account context fail closed without network calls", async () => {
   let calls = 0;
   const client = createXMemoMemoryClient({ fetchImpl: async () => { calls++; throw new Error("unexpected"); } });
