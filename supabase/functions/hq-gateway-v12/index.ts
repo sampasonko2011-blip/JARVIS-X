@@ -557,7 +557,7 @@ Deno.serve(async (req: Request) => {
       await writeRun(user.id, {
         task_type: taskType, status: "blocked", provider: requestedProvider, model: requestedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Selected provider is not configured; no inference executed" : "The configured JARVIS-X executive model is not configured; no inference executed",
+        output_summary: "The configured JARVIS-X executive model is not configured; no inference executed",
         error_code: "provider_configuration_missing",
         metadata: { input_chars: task.length, latency_ms: Date.now() - started, provider_calls: 0, execution_mode: requestedMode, selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, missing_provider_count: missingProviderConfig.length },
         completed_at: new Date().toISOString(),
@@ -677,7 +677,7 @@ Deno.serve(async (req: Request) => {
         provider: PRIMARY_PROVIDER,
         model: PRIMARY_MODEL,
         input_summary: "Prompt omitted; sensitive content not persisted",
-        output_summary: rucheRoute.provider ? "Single-provider request failed; response content not persisted" : "Single-core cognitive kernel execution failed; response content not persisted",
+        output_summary: "Single-core cognitive kernel execution failed; response content not persisted",
         error_code: code,
         metadata: { input_chars: task.length, latency_ms: Date.now() - started, execution_mode: "single-core-cognitive-kernel", selected_provider: rucheRoute.selection, orchestration_mode: orchestrationMode, independence: "one-executive-core-with-deterministic-governance" },
         completed_at: new Date().toISOString(),
