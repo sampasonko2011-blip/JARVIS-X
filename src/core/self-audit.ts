@@ -37,6 +37,7 @@ export interface EvaluationProvenance {
   independentGrader: string;
   primaryMetric: string;
   primaryImprovementLowerBound: number;
+  confidenceLevel: number;
 }
 export interface CostEvidence {
   known: boolean;
@@ -220,6 +221,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   if (!nonEmpty(evalData.independentGrader)) malformed.push("independentGrader description is required");
   if (!nonEmpty(evalData.primaryMetric)) malformed.push("primaryMetric is required");
   if (typeof evalData.primaryImprovementLowerBound !== "number" || !Number.isFinite(evalData.primaryImprovementLowerBound)) malformed.push("primaryImprovementLowerBound must be finite");
+  if (typeof evalData.confidenceLevel !== "number" || !Number.isFinite(evalData.confidenceLevel) || evalData.confidenceLevel <= 0 || evalData.confidenceLevel >= 1) malformed.push("confidenceLevel must be a finite probability between 0 and 1");
   if (malformed.length) return result("UNPROVEN", circuitBreaker, improvementPercent, metricDeltas, [...new Set(malformed)], "Keep candidate inactive; correct evaluation provenance and rerun.");
 
   const typedScope = scope as EvaluationScope;
@@ -236,6 +238,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   if (typedScope === "reasoning-quality" || typedScope === "fusion-quality") {
     if (typedMode !== "local-model" && typedMode !== "live-provider") reasons.push("Mock/deterministic execution cannot establish reasoning-quality or fusion-quality gains.");
     if (evalData.independentGrader !== "blind-independent") reasons.push("Quality claims require a blind independent grader.");
+    if (evalData.confidenceLevel !== 0.95) reasons.push("Reasoning/fusion quality claims require a 95% paired improvement interval.");
   }
   if (typedScope === "memory-quality" && typedMode !== "authenticated-e2e") reasons.push("Memory-quality claims require authenticated end-to-end execution.");
   if (typedMode === "live-provider" && !(typeof value.liveProviderCalls === "number" && value.liveProviderCalls > 0)) reasons.push("Live-provider mode requires an observed provider-call receipt.");
@@ -275,7 +278,7 @@ export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
   const primary = (metrics as Record<string, unknown>[]).find(metric => metric.name === evalData.primaryMetric);
   const primaryDelta = primary ? metricDeltas[String(primary.name)] : Number.NaN;
   const primaryBaseline = primary?.baseline as number | undefined;
-  const primaryPct = primary && primaryBaseline !== 0 ? primaryDelta / Math.abs(primaryBaseline) : primaryDelta;
+  const primaryPct = primaryBaseline === undefined || primaryBaseline === 0 ? primaryDelta : primaryDelta / Math.abs(primaryBaseline);
   if (!primary || !Number.isFinite(primaryPct) || primaryPct <= 0 || primaryPct < (evalData.primaryImprovementLowerBound as number)) {
     reasons.push("Primary metric did not demonstrate the declared minimum improvement lower bound.");
   }
