@@ -462,7 +462,7 @@ test("image studio builds a local prompt and never claims an image was generated
   await expect(page.locator("#image-final-prompt")).toHaveValue(/Premium 3D render/);
   await expect(page.locator("#image-final-prompt")).toHaveValue(/16:9 landscape/);
   await expect(page.locator("#image-status")).toContainText("No image was generated");
-  await expect(page.locator("#view-images")).toContainText("NOT CONNECTED");
+  await expect(page.locator("#view-images")).toContainText("BUDGET DISABLED BY DEFAULT");
 });
 
 test("HQ presents JARVIS-X as one executive identity, not separate model roles", async ({ page }) => {
