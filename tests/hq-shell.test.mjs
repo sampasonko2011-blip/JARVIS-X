@@ -23,7 +23,7 @@ test("HQ shell includes the core command surfaces and transparent capability bou
     "data-delete-record",
     "Backup imported into this browser",
     "2 MB safety limit",
-    "cross-device sync",
+    "automatic sync is not",
   ]) {
     assert.ok(html.includes(marker), `HQ shell should include ${marker}`);
   }
@@ -241,12 +241,12 @@ test("HQ upgrade proposals expose individual approve and dismiss controls and ha
   assert.ok(html.includes("upgradeProposals"));
 });
 
-test("HQ capability control plane has honest multi-AI and encrypted vault boundaries", async () => {
+test("HQ capability control plane has honest single-identity and encrypted vault boundaries", async () => {
   const html = (await read("hq/index.html")) + "\n" + await read("hq/hq.js") + "\n" + await read("hq/hq.css");
   for (const marker of [
     'id="view-sync"', 'id="vault-export"', 'id="vault-import-file"',
     'PBKDF2-SHA-256', 'AES-256-GCM', '310000',
-    'One assistant identity', 'JARVIS-X is the single assistant you interact with',
+    'One assistant identity', 'JARVIS-X is one coherent executive identity',
     'not exposed as separate assistants', 'not live synchronization',
     'never leaves this page'
   ]) assert.ok(html.includes(marker), `HQ capability control plane should include ${marker}`);
