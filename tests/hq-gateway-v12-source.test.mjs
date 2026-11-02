@@ -17,7 +17,7 @@ test("v12 imports the cognitive kernel and deterministic mock dependency", () =>
   assert.match(mock, /Deterministic integration fixture only/);
 });
 
-test("default composite is one executive core, not a five-model council", () => {
+test("JARVIS-X is the only executive identity and uses one configured runtime", () => {
   assert.match(gateway, /COMPOSITE_PROVIDERS = \["openai"\]/);
   assert.match(router, /type RucheSelection = "jarvis-x"/);
   assert.match(router, /alternate_reasoning_routes_disabled/);
