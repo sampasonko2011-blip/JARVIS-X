@@ -92,3 +92,11 @@ Acceptance: UI tests cover each evidence state, each execution state, blocked/un
 BASELINE → IMPLEMENT → TEST → INDEPENDENT CHALLENGE → COMPARABLE/HOLDOUT RETEST → REGRESSION CHECK → KEEP / MODIFY / REJECT / UNPROVEN.
 
 Do not merge or deploy this execution branch without a separate explicit approval.
+
+## PRONOTE portal update — 2026-11-03
+
+- User supplied: `https://e221000e.index-education.net/pronote/eleve.html`.
+- OBSERVED public page metadata: title `PRONOTE - Le Collège Bilingue`; description identifies `PRONOTE Espace Élèves - Le Collège Bilingue - Dakar (DK)`; version shown: `PRONOTE 2026.2.8`.
+- A manual setup handoff was started for existing profile `prof_94e89a9aa6d14585` (PRONOTE Fresh Login). The user must open the setup link provided in chat, sign in directly there, and select **Save profile**. Credentials must not be sent in chat.
+- Profile setup is not yet complete. Do not mark the profile authenticated until the user completes the setup flow and the profile reports the site as signed in.
+- TinyFish wallet remains observed at -$0.792. No metered automation, top-up, or paid access was initiated.
