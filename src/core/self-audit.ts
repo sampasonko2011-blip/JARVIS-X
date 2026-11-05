@@ -12,7 +12,9 @@ export interface SelfAuditInput {
  recentFailureSignatures?: string[]; consecutiveComparableRetestFailures?: number;
 }
 export interface SelfAuditResult { decision: AuditDecision; status: AuditStatus; circuitBreaker: boolean; improvementPercent: Record<string, number>; reasons: string[]; nextAction: string; }
-const APPROVAL_REQUIRED = new Set<ChangeClass>(["external-integration","deployment","paid-inference","destructive"]);
+// All consequential repository changes require exact-scope explicit approval.
+// The evaluator must not infer approval from change class, PR existence, or prior unrelated approval.
+const APPROVAL_REQUIRED = new Set<ChangeClass>(["internal-code","external-integration","deployment","paid-inference","destructive"]);
 export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
  const reasons: string[] = [], improvementPercent: Record<string,number> = {};
  const signatures=input.recentFailureSignatures??[];
