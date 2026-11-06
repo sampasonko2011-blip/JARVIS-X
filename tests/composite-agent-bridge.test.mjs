@@ -153,3 +153,23 @@ test("governed bridge refuses missing tool selection before invoking runtime", a
   }), /explicit allowlisted task.tool/);
   assert.equal(runtimeCalls, 0);
 });
+
+
+test("governed bridge supports omitted adapter registry and still executes through shared runtime", async () => {
+  const registryAgent = agent("runtime-only-agent", "runtime-operator", {
+    roles: ["research"], allowedTools: ["read_public_web"]
+  });
+  const runtime = createAgentRuntime({
+    registry: { agents: [registryAgent] },
+    authorize: async () => true,
+    handlers: { read_public_web: async () => ({ output: "runtime-only" }) },
+    verify: async result => result.output === "runtime-only"
+  });
+  const bindings = createCompositeAgentBindings({ agents: [registryAgent] }, undefined, { runtime });
+  const result = await bindings.providers[0].execute({
+    task: { objective: "test omitted adapters", tool: "read_public_web" },
+    role: "research"
+  });
+  assert.equal(result.output, "runtime-only");
+  assert.equal(result.evidence.some(item => item.source === "agent-runtime" && item.status === "VALIDATED"), true);
+});
