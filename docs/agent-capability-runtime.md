@@ -45,3 +45,23 @@ Bind authenticated identity, approval receipts, replay protection, durable audit
 - This establishes a tested host composition boundary. It does not by itself prove that a deployed HQ application entrypoint imports and instantiates the factory, nor that production authorization, handlers or audit are connected.
 - Memory continuity is based on explicit portable export/import, not mandatory cross-device synchronization. `MemoryOS.exportBundle()` creates a versioned, SHA-256-checksummed bundle of memory records and resumable project checkpoints; it rejects secret-like content. `importBundle()` validates the checksum and record/checkpoint schema before one atomic backing-store update. Unsupported stores fail closed rather than partially restoring.
 - Portable export is a user-controlled transfer artifact. It is not automatic synchronization, a cloud backup, or proof that a separate device has imported it. Validate the actual exported file and protect it as private project data; never include credentials or secrets.
+
+
+## Existing gateway integration boundary (verified 2026-11-06)
+
+The deployed gateway composition entrypoint in `server/index.mjs` currently:
+1. Loads the private model registry from `JX_MODEL_REGISTRY_PATH`.
+2. Loads provider attestations and creates `createSinglePrimaryRuntime()`.
+3. Passes that runtime to `createGatewayHandler()` with Supabase request authentication, origin allowlisting and request limits.
+
+This is a model/provider-selection runtime, not the specialist-agent registry/runtime. The new `createGovernedAgentHost()` factory is intentionally not wired into `server/index.mjs` yet: the gateway has no configured specialist-agent registry, narrow host handler map, authenticated task-authorization callback or independent agent-output verifier. Creating an empty or permissive adapter here would produce misleading readiness or unsafe execution.
+
+Integration gate before enabling specialist execution:
+- Define a separate private agent registry and explicit enablement policy; all proposed profiles remain disabled by default.
+- Implement only narrowly scoped gateway-owned handlers, each with explicit input/output schemas and data-access scope.
+- Bind task authorization to the authenticated Supabase principal and an explicit per-task approval grant; never trust client-supplied agent IDs, scopes or approval flags.
+- Persist append-only audit/replay state in an approved durable store and independently verify outputs before returning them.
+- Add gateway-level tests for unauthorized requests, tenant isolation, replay, timeouts, provider/handler failure, output verification and audit-store outage.
+- Keep the existing single-primary chat path unchanged until this separate agent path passes isolated tests and is explicitly approved for deployment.
+
+Status: architecture boundary OBSERVED from `server/index.mjs`; production specialist-agent execution remains DISABLED / UNPROVEN. The host composition factory and its unit tests do not imply a live agent integration.
