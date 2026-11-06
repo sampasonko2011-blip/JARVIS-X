@@ -184,3 +184,30 @@ test("timed-out non-cooperative authorization retains concurrency lease and neve
  const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"authorization settled",tool:"inspect_diff"}});
  assert.equal(result.evidence.executed,true);
 });
+
+
+test("task snapshot prevents mutation between authorization, execution and verification",async()=>{
+ let authorizeObjective,handlerObjective,verifiedObjective;
+ const task={objective:"approved objective",tool:"inspect_diff",input:{scope:"original"}};
+ const runtime=createAgentRuntime({registry:registry(agent()),authorize:async({task:authorized})=>{authorizeObjective=authorized.objective;await new Promise(resolve=>setImmediate(resolve));return true;},
+ handlers:{inspect_diff:async({objective,input})=>{handlerObjective=objective;return {objective,input};}},
+ verify:async(result,{task:verified})=>{verifiedObjective=verified.objective;return result.objective===verified.objective&&result.input.scope==="original";}});
+ const pending=runtime.run({agentId:"repo-verifier",role:"critique",task});
+ task.objective="mutated objective";task.input.scope="mutated";
+ const result=await pending;
+ assert.equal(authorizeObjective,"approved objective");
+ assert.equal(handlerObjective,"approved objective");
+ assert.equal(verifiedObjective,"approved objective");
+ assert.equal(result.evidence.status,"VALIDATED");
+});
+
+test("mutating caller handler map after runtime creation cannot swap trusted executor",async()=>{
+ let originalCalls=0,replacementCalls=0;
+ const handlers={inspect_diff:async()=>{originalCalls++;return {source:"original"};}};
+ const runtime=createAgentRuntime({registry:registry(agent()),handlers,authorize:async()=>true,verify:async result=>result.source==="original"});
+ handlers.inspect_diff=async()=>{replacementCalls++;return {source:"replacement"};};
+ const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"fixed executor",tool:"inspect_diff"}});
+ assert.equal(originalCalls,1);
+ assert.equal(replacementCalls,0);
+ assert.equal(result.evidence.status,"VALIDATED");
+});
