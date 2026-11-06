@@ -52,7 +52,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     assert(typeof handlers[tool] === "function", "No trusted host handler is configured for tool");
     const evidence = { agentId, role, tool, status: "UNPROVEN", authorized: false, executed: false, verified: false, failure: null };
     audit.push(evidence);
-    let timer;
+    let timer, slotOwned = false;
     const controller = new AbortController();
     const abortFromCaller = () => controller.abort(callerSignal?.reason);
     if (callerSignal?.aborted) controller.abort(callerSignal.reason);
@@ -64,6 +64,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       evidence.authorized = true;
       assert(active < maxConcurrent, "AGENT_CONCURRENCY_LIMIT");
       active++;
+      slotOwned = true;
       const timeout = new Promise((_, reject) => {
         timer = setTimeout(() => {
           controller.abort(new Error("AGENT_TIMEOUT"));
@@ -74,6 +75,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       const operation = Promise.resolve().then(() => handlers[tool]({
         objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
       }));
+      operation.then(() => { if (slotOwned) { active--; slotOwned = false; } }, () => { if (slotOwned) { active--; slotOwned = false; } });
       const result = await Promise.race([operation, timeout]);
       const verified = await verify(result, { agentId, role, task, agent, tool });
       evidence.verified = verified === true;
@@ -85,7 +87,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       throw error;
     } finally {
       if (timer) clearTimeout(timer);
-      if (evidence.authorized && evidence.executed) active--;
+      if (slotOwned) { active--; slotOwned = false; }
       callerSignal?.removeEventListener("abort", abortFromCaller);
     }
   }
