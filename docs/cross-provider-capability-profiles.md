@@ -61,3 +61,9 @@ A user-facing request such as `/agent claude review this diff` can select the Cl
 ## Portability boundary
 
 The registry, aliases, role vocabulary, task envelope and evidence format are designed to be portable across JARVIS-X clients. An assistant interface does not automatically inherit another interface's private conversation history, connector credentials, plugins, tools, or runtime. A Claude client and ChatGPT client can each host JARVIS-X-compatible adapters, but each host must separately configure its own authenticated connections and import the portable memory bundle when desired.
+
+## Model improvement, replacement and composition governance
+
+JARVIS-X may continuously identify candidate models and adapters for a capability, but discovery is not activation. A candidate must have an explicit provider/model identity, verified adapter and authentication state, declared permissions, cost/latency envelope, and task-relevant evaluation evidence. Compare it against the current baseline on representative tasks, then run held-out retests, independent verification and security/privacy/cost regression checks.
+
+The system may recommend **KEEP**, **MODIFY**, **REPLACE** or **COMPOSE**. Replacement and provider activation remain proposals until the user approves the consequential change. Composition is appropriate when specialists provide complementary, non-duplicative capabilities through interoperable scoped task contracts; outputs enter one shared evidence ledger and one JARVIS-X synthesis. A second model from the same operator is not automatically an independent verifier. No brand, marketing benchmark or untested claim is sufficient to promote a candidate.
