@@ -14,7 +14,8 @@ const ELIGIBLE = new Set(["OBSERVED", "VALIDATED"]);
  * name: independenceGroup must identify its actual operator/vendor/security domain.
  * This function constructs bindings only; it never invokes agents.
  */
-export function createCompositeAgentBindings(registry, adapters) {
+export function createCompositeAgentBindings(registry, adapters, { authorize = async () => false } = {}) {
+  if (typeof authorize !== "function") throw new TypeError("A trusted task authorization verifier is required");
   const unavailable = [];
   const selected = new Map();
   for (const agent of registry?.agents ?? []) {
@@ -67,10 +68,23 @@ export function createCompositeAgentBindings(registry, adapters) {
         if (!request?.task || typeof request.task.objective !== "string" || !request.task.objective.trim()) {
           throw new TypeError("Agent requires a non-empty task objective.");
         }
+        if (!capabilities.some(capability => capability.kind === request.role)) {
+          throw new Error("Requested role is outside the agent capability mapping.");
+        }
+        if (request.task.objective.length > 8000) throw new Error("Agent task objective exceeds the 8000-character limit.");
+        if (request.signal?.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
+        const allowed = await authorize({
+          agentId: agent.id, independenceGroup: agent.independenceGroup,
+          role: request.role, task: request.task, allowedTools: [...new Set(agent.allowedTools ?? [])],
+          dataAccessScope: agent.dataAccessScope ?? "none"
+        });
+        if (allowed !== true) throw new Error("Agent task authorization denied.");
+        if (request.signal?.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
         const result = await adapter({
           task: request.task,
           role: request.role,
           context: request.context ?? {},
+          signal: request.signal,
           allowedTools: [...new Set(agent.allowedTools ?? [])],
           dataAccessScope: agent.dataAccessScope ?? "none"
         });
