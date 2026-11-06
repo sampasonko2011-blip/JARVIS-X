@@ -35,3 +35,29 @@ It returns `PROFILE_ONLY` unless the matching agent is explicitly enabled, has e
 A provider-backed profile must not become executable until its adapter is separately connected and authenticated, its allowed tools/data scope are least-privilege, each task has principal-bound approval, and the governed host enforces independent output verification plus durable audit/replay controls. Missing dependencies must fail closed. External-provider usage may incur cost and requires explicit user authorization.
 
 The host application can use the same portable profile registry and resolver regardless of whether its interface is ChatGPT, Claude, another assistant, or a standalone JARVIS-X client. This is a portability contract for the profile metadata and command vocabulary—not automatic memory migration, universal runtime compatibility, or access to another host's private tools.
+
+## Custom agent roster and provider adapters
+
+The built-in six agent records are architectural candidates and are currently `DISABLED` / `PROPOSED`. They are not the user's actively connected provider roster. The ten named AI aliases above are profile metadata only.
+
+The composite bridge is provider-neutral: an authorized host may inject an executor under any registered agent ID. This allows an operator to add a Claude API adapter, Gemini adapter, a self-hosted model endpoint, a company agent, or a future provider without changing the shared capability contract. The adapter must be implemented and authenticated by the deployment owner; registration does not create an account, API key, vendor access, or permission.
+
+Minimal executor contract:
+
+```js
+const adapters = {
+  "my-claude-agent": async ({ task, role, context, signal, allowedTools, dataAccessScope }) => {
+    // Call only the provider endpoint configured by the deployment owner.
+    // Return structured output; never expose credentials to the caller.
+    return { output: { summary: "..." }, evidence: [] };
+  }
+};
+```
+
+Register the corresponding agent with a unique real `independenceGroup`, explicit `owner`, eligible evidence, declared roles, least-privilege tools and data scope. Inject the adapter into `createCompositeAgentBindings`; require trusted task authorization for every invocation. Prefer the shared governed runtime, with allowlisted handlers, task-bound approval, independent verification and durable audit/replay. Never mark a provider connected merely because its alias or adapter slot exists.
+
+A user-facing request such as `/agent claude review this diff` can select the Claude-style profile in the JARVIS-X host. It invokes an actual Claude-backed agent only if that host has a separately configured, authenticated, enabled adapter and the exact task is approved. Otherwise it must report `PROFILE_ONLY` / unavailable and continue only with capabilities actually available in the current host.
+
+## Portability boundary
+
+The registry, aliases, role vocabulary, task envelope and evidence format are designed to be portable across JARVIS-X clients. An assistant interface does not automatically inherit another interface's private conversation history, connector credentials, plugins, tools, or runtime. A Claude client and ChatGPT client can each host JARVIS-X-compatible adapters, but each host must separately configure its own authenticated connections and import the portable memory bundle when desired.
