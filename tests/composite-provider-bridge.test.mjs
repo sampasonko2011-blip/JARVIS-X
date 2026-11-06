@@ -81,3 +81,19 @@ test("provider bridge rejects empty task and empty provider output", async () =>
   await assert.rejects(bindings.providers[0].execute({ task: { id: "x", objective: " " }, role: "reasoning", context: {} }), /non-empty task/);
   await assert.rejects(bindings.providers[0].execute({ task: { id: "x", objective: "do work" }, role: "reasoning", context: {} }), /no usable text/);
 });
+
+test("provider bridge assigns exactly one deterministic critic role for CompositeEngine", () => {
+  const registry = { candidates: [
+    candidate("openai", "OpenAI", "OBSERVED", ["reasoning", "critique"]),
+    candidate("anthropic", "Anthropic", "OBSERVED", ["reasoning", "critique"]),
+    candidate("google", "Google", "OBSERVED", ["reasoning"]),
+    candidate("deepseek", "DeepSeek", "OBSERVED", ["coding"]),
+    candidate("mistral", "Mistral AI", "OBSERVED", ["research"])
+  ] };
+  const adapters = Object.fromEntries(registry.candidates.map(item => [item.id, async () => ({ text: "ok" })]));
+  const bindings = createCompositeProviderBindings(registry, adapters);
+  const critics = bindings.roster.filter(member => member.capabilities[0] === "critique");
+  assert.equal(critics.length, 1);
+  assert.equal(critics[0].providerId, "anthropic");
+  assert.equal(bindings.roster.find(member => member.providerId === "openai").capabilities[0], "reasoning");
+});
