@@ -59,3 +59,17 @@ test("handler receives abort signal and timeout is audited",async()=>{
  assert.equal(runtime.audit()[0].status,"REJECTED");
  assert.equal(runtime.audit()[0].failure,"AGENT_TIMEOUT");
 });
+
+
+test("late handler completion after caller cancellation cannot be verified as success",async()=>{
+ let finish;
+ const controller=new AbortController();
+ const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>new Promise(resolve=>{finish=()=>resolve({verified:true});})},authorize:async()=>true,verify:async()=>true});
+ const pending=runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"cancel",tool:"inspect_diff"},signal:controller.signal});
+ await new Promise(resolve=>setImmediate(resolve));
+ controller.abort(new Error("caller cancelled"));
+ finish();
+ await assert.rejects(pending,/AGENT_INVOCATION_ABORTED/);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ assert.equal(runtime.audit()[0].verified,false);
+});
