@@ -61,10 +61,9 @@ export class MemoryOS {
     const current = this.get(id);
     if (!current) throw new Error("Memory record does not exist: " + id);
     if (current.updatedAt !== expectedUpdatedAt) throw new Error("Memory revision conflict; reload before deleting.");
-    if (!this.store.delete || !this.store.setMany) throw new Error("Backing store does not support atomic deletion; refusing partial delete.");
+    if (!this.store.deleteMany) throw new Error("Backing store does not support atomic deletion; refusing partial delete.");
     const ids = this.store.get<string[]>(this.indexKey()) ?? [];
-    this.store.setMany([{ key: this.indexKey(), value: ids.filter(value => value !== id) }]);
-    this.store.delete(this.key(id));
+    this.store.deleteMany([this.key(id)], [{ key: this.indexKey(), value: ids.filter(value => value !== id) }]);
   }
 
   saveCheckpoint(input: Omit<WorkingCheckpoint, "updatedAt"> & Partial<Pick<WorkingCheckpoint, "updatedAt">>, now = new Date()): WorkingCheckpoint {
