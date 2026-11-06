@@ -37,3 +37,11 @@ Bind authenticated identity, approval receipts, replay protection, durable audit
 - Host handler mappings are captured at runtime construction so later caller mutation cannot replace an approved executor.
 - Regression tests cover a non-cooperative handler timeout, non-cooperative authorization timeout, task mutation during authorization and handler-map mutation.
 - These are source-level controls. They do not make a malicious host adapter safe, terminate non-cooperative work, or provide durable audit. A hung host promise intentionally retains its slot indefinitely; operational recovery requires host-level process isolation/restart and monitoring.
+
+
+## HQ host composition and portable memory
+
+- `hq/governed-agent-host.mjs` is the single composition factory for the declared specialist registry, shared governed runtime and composite provider bindings. The host supplies its own narrow handlers, authenticated authorization callback and independent verifier; defaults deny execution. The factory is covered by `tests/governed-agent-host.test.mjs`.
+- This establishes a tested host composition boundary. It does not by itself prove that a deployed HQ application entrypoint imports and instantiates the factory, nor that production authorization, handlers or audit are connected.
+- Memory continuity is based on explicit portable export/import, not mandatory cross-device synchronization. `MemoryOS.exportBundle()` creates a versioned, SHA-256-checksummed bundle of memory records and resumable project checkpoints; it rejects secret-like content. `importBundle()` validates the checksum and record/checkpoint schema before one atomic backing-store update. Unsupported stores fail closed rather than partially restoring.
+- Portable export is a user-controlled transfer artifact. It is not automatic synchronization, a cloud backup, or proof that a separate device has imported it. Validate the actual exported file and protect it as private project data; never include credentials or secrets.
