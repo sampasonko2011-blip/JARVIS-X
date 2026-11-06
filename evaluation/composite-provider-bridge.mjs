@@ -1,27 +1,4 @@
-import type { AgentResponse, Capability, ClaimStatus, Provider, Task } from "../src/core/types.js";
-
-export interface ModelCandidate {
-  id: string;
-  provider: string;
-  model_id: string;
-  roles?: string[];
-  status: ClaimStatus;
-}
-export interface AdapterResult {
-  text: string;
-  provider?: string;
-  requested_model_id?: string;
-  observed_model_id?: string | null;
-  latency_ms?: number;
-  raw_usage?: unknown;
-}
-export type ProviderAdapter = (input: { task: string; role: string; signal?: AbortSignal }) => Promise<AdapterResult>;
-export interface CompositeProviderBindings {
-  providers: Provider[];
-  roster: Array<{ providerId: string; capabilities: string[]; utilityScore: number; status: "VALIDATED" | "OBSERVED" }>;
-  unavailable: Array<{ candidateId: string; reason: string }>;
-}
-const ROLE_KIND: Record<string, Capability["kind"]> = {
+const ROLE_KIND = {
   reasoning: "reasoning", "general-reasoning": "reasoning", orchestration: "reasoning",
   coding: "coding", "code-generation": "coding", "code-review": "coding",
   "software-engineering": "coding", "repository-maintenance": "coding", "agentic-coding": "coding",
@@ -31,13 +8,13 @@ const ROLE_KIND: Record<string, Capability["kind"]> = {
   execution: "execution", "tool-use": "execution", "agentic-workflows": "execution",
   memory: "memory", "long-context-synthesis": "memory"
 };
-const STATUS_RANK: Record<string, number> = { VALIDATED: 2, OBSERVED: 1 };
+const STATUS_RANK = { VALIDATED: 2, OBSERVED: 1 };
 function providerKey(value: string): string {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
-function capabilityList(candidate: ModelCandidate): Capability[] {
+function capabilityList(candidate) {
   const roles = [...new Set((candidate.roles ?? []).map(role => role.trim().toLocaleLowerCase("en-US")))];
-  const mapped = roles.map(role => ({ role, kind: ROLE_KIND[role] })).filter((item): item is { role: string; kind: Capability["kind"] } => Boolean(item.kind));
+  const mapped = roles.map(role => ({ role, kind: ROLE_KIND[role] })).filter(item => Boolean(item.kind));
   return mapped.map(({ role, kind }) => ({
     id: candidate.id + ":" + role,
     kind,
@@ -52,11 +29,8 @@ function capabilityList(candidate: ModelCandidate): Capability[] {
  * Only candidates with OBSERVED/VALIDATED evidence are eligible; adapters alone never
  * promote candidates. Candidates sharing one vendor collapse to one provider identity.
  */
-export function createCompositeProviderBindings(
-  registry: { candidates?: ModelCandidate[] },
-  adapters: Record<string, ProviderAdapter>
-): CompositeProviderBindings {
-  const unavailable: CompositeProviderBindings["unavailable"] = [];
+export function createCompositeProviderBindings(registry, adapters) {
+  const unavailable = [];
   const byVendor = new Map<string, { candidate: ModelCandidate; capabilities: Capability[] }>();
   for (const candidate of registry.candidates ?? []) {
     if (!candidate?.id || !candidate.provider || !candidate.model_id) continue;
@@ -89,15 +63,15 @@ export function createCompositeProviderBindings(
     }
   }
 
-  const providers: Provider[] = [];
-  const roster: CompositeProviderBindings["roster"] = [];
+  const providers = [];
+  const roster = [];
   for (const [id, binding] of [...byVendor.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     const { candidate, capabilities } = binding;
     const adapter = adapters[candidate.id];
     providers.push({
       id,
       capabilities,
-      async execute(request: { task: Task; role: string; context: Record<string, unknown> }): Promise<AgentResponse> {
+      async execute(request) {
         if (!request?.task || typeof request.task.objective !== "string" || !request.task.objective.trim()) {
           throw new TypeError("Composite provider requires a non-empty task objective.");
         }
