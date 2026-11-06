@@ -50,7 +50,7 @@ export function createCompositeAgentBindings(registry, adapters) {
     const group = String(agent.independenceGroup).trim().toLowerCase();
     const current = selected.get(group);
     if (current) {
-      unavailable.push({ agentId: agent.id, reason: "DUPLICATE_INDEPENDENCE_GROUP:" + current.id });
+      unavailable.push({ agentId: agent.id, reason: "DUPLICATE_INDEPENDENCE_GROUP:" + current.agent.id });
       continue;
     }
     selected.set(group, { agent, capabilities });
