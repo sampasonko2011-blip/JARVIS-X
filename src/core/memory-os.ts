@@ -97,9 +97,16 @@ export class MemoryOS {
     const checkpointProjects = new Set<string>();
     for (const checkpoint of bundle.checkpoints) {
       if (!checkpoint || typeof checkpoint.project !== "string" || !checkpoint.project.trim() ||
-          typeof checkpoint.task !== "string" || !checkpoint.task.trim() ||
-          typeof checkpoint.nextAction !== "string" || !checkpoint.nextAction.trim() ||
-          typeof checkpoint.updatedAt !== "string") throw new Error("Memory export contains an invalid checkpoint.");
+          checkpoint.project.length > 200 ||
+          typeof checkpoint.task !== "string" || !checkpoint.task.trim() || checkpoint.task.length > 4000 ||
+          typeof checkpoint.nextAction !== "string" || !checkpoint.nextAction.trim() || checkpoint.nextAction.length > 4000 ||
+          typeof checkpoint.updatedAt !== "string" ||
+          (checkpoint.blockers !== undefined && (!Array.isArray(checkpoint.blockers) || checkpoint.blockers.length > 100 ||
+            checkpoint.blockers.some(value => typeof value !== "string" || value.length > 1000))) ||
+          (checkpoint.contextRefs !== undefined && (!Array.isArray(checkpoint.contextRefs) || checkpoint.contextRefs.length > 100 ||
+            checkpoint.contextRefs.some(value => typeof value !== "string" || value.length > 500)))) {
+        throw new Error("Memory export contains an invalid checkpoint.");
+      }
       if (checkpointProjects.has(checkpoint.project)) throw new Error("Memory export contains duplicate checkpoint projects.");
       checkpointProjects.add(checkpoint.project);
       validDate(checkpoint.updatedAt, "checkpoint.updatedAt");
