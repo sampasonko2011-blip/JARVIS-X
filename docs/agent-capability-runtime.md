@@ -3,7 +3,9 @@
 ## Added
 - Declarative agent registry: role, evidence status, activation, independence group, tool allowlist and data scope.
 - Runtime validates the registry and dispatches only to host-injected handlers after explicit authorization.
-- In-memory execution audit and tests for duplicate identities, unknown tools, unassigned independence, disabled agents, authorization denial, successful dispatch and failed verification.
+- In-memory execution audit records authorization denials, execution outcomes and verifier failures. Tests cover duplicate identities, unknown tools, unassigned independence, disabled agents, authorization denial, successful dispatch and failed verification.
+- Runtime has bounded concurrency (1–8), bounded timeouts (100–120000 ms), caller cancellation propagation and cooperative handler abort signals. A timed-out handler retains its concurrency lease until it actually settles; a handler that ignores cancellation can therefore hold a slot, which is fail-closed rather than silently allowing concurrency overcommit.
+- The default verifier denies validation. Only an independently injected verifier returning literal `true` can produce VALIDATED; a handler's own `{ verified: true }` claim is ignored.
 
 ## Truth and safety boundaries
 - Registry entries begin DISABLED and PROPOSED. They are candidates, not discovered connected agents.
