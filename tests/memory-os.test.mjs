@@ -69,3 +69,17 @@ test("JsonFileMemoryStore commits multi-key updates in one restart-safe snapshot
     assert.deepEqual(afterDelete.get("index"), []);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+test("MemoryOS fails closed when backing store cannot atomically update record and index", () => {
+  const values = new Map();
+  const store = {
+    get(key) { return values.get(key); },
+    set(key, value) { values.set(key, value); },
+  };
+  const memory = new MemoryOS(store);
+  assert.throws(() => memory.save({
+    id: "unsafe", title: "Unsafe fallback", content: "must not split",
+    kind: "semantic", status: "OBSERVED",
+  }), /does not support atomic record\/index updates/);
+  assert.equal(values.size, 0);
+});
