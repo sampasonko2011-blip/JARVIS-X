@@ -40,7 +40,8 @@ test("invocation requires exact-scope authorization and an authorized role", asy
   registry.register(validAgent());
   const task = {objective:"review",digest:"task-digest",authenticatedSubject:"test-user"};
   const approval = {action:"agent.invoke",resource:"research-1",scope:"research-1:research",taskDigest:"task-digest",subject:"test-user"};
-  await assert.rejects(registry.invoke("research-1",{task,role:"research",approvedScope:approval}),/Exact-scope approval/);
+  const wrongScope = {...approval, scope:"research-1:memory-analysis"};
+  await assert.rejects(registry.invoke("research-1",{task,role:"research",approvedScope:wrongScope}),/Exact-scope approval/);
   const result = await registry.invoke("research-1",{task,role:"research",approvedScope:approval});
   assert.equal(result.evidence.status,"OBSERVED");
   assert.equal(result.output,"evidence");
