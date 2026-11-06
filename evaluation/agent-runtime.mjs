@@ -38,6 +38,9 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
   assert(Number.isSafeInteger(maxAuditEntries) && maxAuditEntries >= 10 && maxAuditEntries <= 10000, "maxAuditEntries must be 10..10000");
   // Snapshot untrusted declarative input once; later caller mutation cannot grant tools or enable agents.
   const trustedRegistry = deepFreeze(structuredClone(registry));
+  // Capture host handlers once so later mutation of the caller's map cannot swap
+  // executable capabilities after policy validation.
+  const trustedHandlers = Object.freeze({ ...handlers });
   const checked = validateAgentRegistry(trustedRegistry);
   const validation = Object.freeze({ ...checked, errors: Object.freeze([...checked.errors]) });
   const audit = [];
@@ -54,10 +57,14 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     assert(agent.status === "OBSERVED" || agent.status === "VALIDATED", "Agent evidence is not eligible");
     assert(agent.roles.includes(role), "Role is outside agent capability declaration");
     assert(task && typeof task.objective === "string" && task.objective.trim(), "Task objective is required");
-    const tool = task.tool;
+    // Authorization, execution and verification must observe one immutable task
+    // snapshot; otherwise a caller could mutate the task while authorization awaits.
+    const trustedTask = deepFreeze(structuredClone(task));
+    const trustedApproval = approval === undefined ? undefined : deepFreeze(structuredClone(approval));
+    const tool = trustedTask.tool;
     assert(typeof tool === "string" && agent.allowedTools.includes(tool) && SAFE_TOOLS.has(tool), "Tool is outside agent allowlist");
-    assert(typeof handlers[tool] === "function", "No trusted host handler is configured for tool");
-    assert(task.objective.length <= 8000, "Task objective exceeds the 8000-character limit");
+    assert(typeof trustedHandlers[tool] === "function", "No trusted host handler is configured for tool");
+    assert(trustedTask.objective.length <= 8000, "Task objective exceeds the 8000-character limit");
     const evidence = { agentId, role, tool, status: "UNPROVEN", authorized: false, executed: false, verified: false, failure: null };
     record(evidence);
     let timer, slotOwned = false;
@@ -99,18 +106,18 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
           reject(new Error("AGENT_TIMEOUT"));
         }, timeoutMs);
       });
-      const authorization = trackWork(Promise.resolve().then(() => authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope })));
+      const authorization = trackWork(Promise.resolve().then(() => authorize({ agentId, role, tool, task: trustedTask, approval: trustedApproval, dataAccessScope: agent.dataAccessScope })));
       const allowed = await Promise.race([authorization, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       assert(allowed === true, "Authorization denied");
       evidence.authorized = true;
       evidence.executed = true;
-      const operation = trackWork(Promise.resolve().then(() => handlers[tool]({
-        objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
+      const operation = trackWork(Promise.resolve().then(() => trustedHandlers[tool]({
+        objective: trustedTask.objective, input: trustedTask.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
       })));
       const result = await Promise.race([operation, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
-      const verification = trackWork(Promise.resolve().then(() => verify(result, { agentId, role, task, agent, tool })));
+      const verification = trackWork(Promise.resolve().then(() => verify(result, { agentId, role, task: trustedTask, agent, tool })));
       const verified = await Promise.race([verification, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       evidence.verified = verified === true;
