@@ -11,3 +11,22 @@ test("disabled agents cannot execute",async()=>{const runtime=createAgentRuntime
 test("execution requires allowlisted tool, trusted handler and explicit authorization",async()=>{let calls=0;const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>{calls++;return {verified:true};}},authorize:async()=>false});await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}}),/Authorization denied/);await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"shell_exec"}}),/outside agent allowlist/);assert.equal(calls,0);});
 test("trusted host handler runs only after authorization and records verification status",async()=>{let calls=0;const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async({objective,dataAccessScope})=>{calls++;return {objective,dataAccessScope,verified:true};}},authorize:async({agentId,tool,dataAccessScope})=>agentId==="repo-verifier"&&tool==="inspect_diff"&&dataAccessScope==="selected-diff-only"});const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review patch",tool:"inspect_diff"}});assert.equal(calls,1);assert.equal(result.evidence.verified,true);assert.equal(runtime.audit().length,1);});
 test("failed verification remains UNPROVEN",async()=>{const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>({findings:["maybe"]})},authorize:async()=>true,verify:async()=>false});const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}});assert.equal(result.evidence.status,"UNPROVEN");assert.equal(result.evidence.verified,false);});
+
+
+test("handler self-asserted verified flag is not trusted by the default verifier",async()=>{
+ const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>({verified:true,claim:"self-attested"})},authorize:async()=>true});
+ const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}});
+ assert.equal(result.evidence.status,"UNPROVEN");
+ assert.equal(result.evidence.verified,false);
+ assert.equal(runtime.audit()[0].status,"UNPROVEN");
+});
+
+test("independent verifier can validate output; handler failures remain in the audit ledger",async()=>{
+ const passing=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>({finding:"supported"})},authorize:async()=>true,verify:async(result)=>result.finding==="supported"});
+ const accepted=await passing.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}});
+ assert.equal(accepted.evidence.status,"VALIDATED");
+ const failing=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>{throw new Error("sandbox unavailable");}},authorize:async()=>true});
+ await assert.rejects(failing.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}}),/sandbox unavailable/);
+ assert.equal(failing.audit()[0].status,"REJECTED");
+ assert.equal(failing.audit()[0].failure,"sandbox unavailable");
+});
