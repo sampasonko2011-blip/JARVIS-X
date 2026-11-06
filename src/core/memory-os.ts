@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { MemoryStore } from "./memory.js";
 import type { ClaimStatus } from "./types.js";
 
@@ -10,6 +11,12 @@ export interface MemoryRecord {
 }
 export interface MemorySearchOptions { limit?: number; project?: string; kinds?: MemoryKind[]; includeSuperseded?: boolean; now?: Date; }
 export interface ScoredMemory { record: MemoryRecord; score: number; freshness: "fresh" | "stale" | "unknown"; }
+export interface MemoryExportBundle {
+  schemaVersion: 1;
+  exportedAt: string;
+  records: MemoryRecord[];
+  checksum: string;
+}
 export interface WorkingCheckpoint {
   project: string;
   task: string;
@@ -22,6 +29,9 @@ export interface WorkingCheckpoint {
 const VALID_STATUSES = new Set<MemoryStatus>(["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN", "REJECTED", "SUPERSEDED"]);
 const VALID_KINDS = new Set<MemoryKind>(["working", "episodic", "semantic", "procedural", "evidence"]);
 const TOKEN = /[\p{L}\p{N}_-]{2,}/gu;
+const SECRET_LIKE = /(-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:ghp_|github_pat_|sk-[A-Za-z0-9_-]{16,}|xox[baprs]-)[A-Za-z0-9_-]{12,}|\bBearer\s+[A-Za-z0-9._~-]{16,})/i;
+function exportPayload(exportedAt: string, records: MemoryRecord[]) { return { schemaVersion: 1 as const, exportedAt, records }; }
+function checksum(payload: ReturnType<typeof exportPayload>): string { return createHash("sha256").update(JSON.stringify(payload)).digest("hex"); }
 function tokens(value: string): string[] { return [...new Set(value.toLocaleLowerCase().match(TOKEN) ?? [])]; }
 function validDate(value: string, field: string): number {
   const parsed = Date.parse(value);
@@ -53,6 +63,32 @@ export class MemoryOS {
     return record;
   }
 
+  /** Create a portable integrity-checked snapshot. Secret-like content is rejected, never silently exported. */
+  exportBundle(now = new Date()): MemoryExportBundle {
+    const ids = this.store.get<string[]>(this.indexKey()) ?? [];
+    const records = ids.map(id => this.get(id)).filter((record): record is MemoryRecord => Boolean(record)).sort((a, b) => a.id.localeCompare(b.id));
+    for (const record of records) if (SECRET_LIKE.test(record.content) || SECRET_LIKE.test(record.title)) throw new Error("Memory export blocked: secret-like material detected in record " + record.id);
+    const exportedAt = now.toISOString(); const payload = exportPayload(exportedAt, records);
+    return { ...payload, checksum: checksum(payload) };
+  }
+
+  /** Verify the entire bundle before atomically importing; existing IDs are replaced. */
+  importBundle(bundle: MemoryExportBundle): { imported: number; checksum: string } {
+    if (!bundle || bundle.schemaVersion !== 1 || !Array.isArray(bundle.records) || typeof bundle.exportedAt !== "string" || !Number.isFinite(Date.parse(bundle.exportedAt)) || typeof bundle.checksum !== "string") throw new Error("Invalid memory export bundle.");
+    const payload = exportPayload(bundle.exportedAt, bundle.records);
+    if (checksum(payload) !== bundle.checksum) throw new Error("Memory export checksum mismatch.");
+    const seen = new Set<string>();
+    for (const record of bundle.records) {
+      if (!record || typeof record.id !== "string" || !record.id.trim() || typeof record.title !== "string" || !record.title.trim() || typeof record.content !== "string" || !record.content.trim() || !VALID_KINDS.has(record.kind) || !VALID_STATUSES.has(record.status) || typeof record.createdAt !== "string" || typeof record.updatedAt !== "string") throw new Error("Memory export contains an invalid record.");
+      if (seen.has(record.id)) throw new Error("Memory export contains duplicate record IDs."); seen.add(record.id);
+      validDate(record.createdAt, "createdAt"); validDate(record.updatedAt, "updatedAt"); if (record.expiresAt) validDate(record.expiresAt, "expiresAt");
+      if (SECRET_LIKE.test(record.content) || SECRET_LIKE.test(record.title)) throw new Error("Memory import blocked: secret-like material detected in record " + record.id);
+    }
+    const existing = this.store.get<string[]>(this.indexKey()) ?? []; const nextIds = [...new Set([...existing, ...bundle.records.map(record => record.id)])];
+    if (!this.store.setMany) throw new Error("Backing store does not support atomic import; refusing a partial memory restore.");
+    this.store.setMany([...bundle.records.map(record => ({ key: this.key(record.id), value: record })), { key: this.indexKey(), value: nextIds }]);
+    return { imported: bundle.records.length, checksum: bundle.checksum };
+  }
   get(id: string): MemoryRecord | undefined { return this.store.get<MemoryRecord>(this.key(id)); }
 
   /** Delete a record with an optimistic timestamp check; unsupported stores fail closed. */
