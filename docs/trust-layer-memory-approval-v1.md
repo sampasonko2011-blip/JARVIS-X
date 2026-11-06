@@ -48,4 +48,4 @@ MemoryOS.exportBundle() creates deterministic record ordering and a SHA-256 inte
 
 The export covers indexed MemoryRecord entries only. Working checkpoints are not silently included, and this API is not a remote XMemo sync protocol. The checksum detects accidental or tampered content but is not a digital signature or proof of exporter identity. Secret detection is a narrow heuristic, not complete DLP. Treat exports as sensitive, user-controlled files; review/redact before sharing. Cross-device synchronization, encryption at rest, multi-process locking, authenticated account isolation and automated GitHub↔XMemo webhooks remain unimplemented until separately integrated and tested.
 
-Tests cover successful round-trip, checksum tampering, secret-like content rejection and atomic-store fail-closed behavior.
+Tests cover successful record and checkpoint round-trip, checksum tampering, secret-like content rejection and atomic-store fail-closed behavior.
