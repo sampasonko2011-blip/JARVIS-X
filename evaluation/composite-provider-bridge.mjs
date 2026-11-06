@@ -105,5 +105,18 @@ export function createCompositeProviderBindings(registry, adapters) {
       status: candidate.status
     });
   }
+  // CompositeEngine identifies the independent critic from the first roster capability.
+  // Assign that role to exactly one deterministic vendor; retain critique as a callable
+  // capability on the other providers without misclassifying every organ as the critic.
+  const criticIndex = roster.findIndex(member => member.capabilities.includes("critique"));
+  if (criticIndex >= 0) {
+    for (let index = 0; index < roster.length; index++) {
+      const member = roster[index];
+      const withoutCritique = member.capabilities.filter(kind => kind !== "critique");
+      member.capabilities = index === criticIndex
+        ? ["critique", ...withoutCritique]
+        : withoutCritique.length ? withoutCritique : member.capabilities;
+    }
+  }
   return { providers, roster, unavailable };
 }
