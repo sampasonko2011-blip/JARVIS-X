@@ -30,3 +30,13 @@ test("independent verifier can validate output; handler failures remain in the a
  assert.equal(failing.audit()[0].status,"REJECTED");
  assert.equal(failing.audit()[0].failure,"sandbox unavailable");
 });
+
+
+test("runtime snapshots and freezes registry so post-construction mutation cannot grant execution",async()=>{
+ const source=registry(agent({activation:"DISABLED"}));
+ const runtime=createAgentRuntime({registry:source,handlers:{inspect_diff:async()=>({ok:true})},authorize:async()=>true});
+ source.agents[0].activation="ENABLED";
+ source.agents[0].allowedTools.push("read_public_web");
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"try escalation",tool:"inspect_diff"}}),/disabled/);
+ assert.equal(runtime.list()[0].activation,"DISABLED");
+});
