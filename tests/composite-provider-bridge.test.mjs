@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createCompositeProviderBindings } from "../evaluation/composite-provider-bridge.mjs";
+import { createCompositeProviderBindings, evaluateCompositeReadiness } from "../evaluation/composite-provider-bridge.mjs";
 
 const candidate = (id, provider, status = "OBSERVED", roles = ["reasoning", "critique"]) => ({
   id, provider, model_id: id + "-model", status, roles
@@ -96,4 +96,33 @@ test("provider bridge assigns exactly one deterministic critic role for Composit
   assert.equal(critics.length, 1);
   assert.equal(critics[0].providerId, "anthropic");
   assert.equal(bindings.roster.find(member => member.providerId === "openai").capabilities[0], "reasoning");
+});
+
+test("provider bridge maps documented specialist roles and excludes image-only model kinds", () => {
+  const registry = { candidates: [
+    { ...candidate("claude", "Anthropic", "OBSERVED", ["deep-reasoning", "synthesis"]), kind: "hosted-model" },
+    { ...candidate("image", "Google", "OBSERVED", ["multimodal"]), kind: "image-generation-model" }
+  ] };
+  const bindings = createCompositeProviderBindings(registry, {
+    claude: async () => ({ text: "ok" }),
+    image: async () => ({ text: "not a text model" })
+  });
+  assert.deepEqual(bindings.roster[0].capabilities, ["reasoning", "reasoning"]);
+  assert.equal(bindings.unavailable[0].reason, "NON_TEXT_MODEL_KIND");
+});
+
+test("readiness gate refuses to pretend three vendors meet the five-organ composite policy", () => {
+  const registry = { candidates: [
+    candidate("google-a", "Google", "OBSERVED", ["reasoning"]),
+    candidate("google-b", "Google", "OBSERVED", ["coding"]),
+    candidate("anthropic", "Anthropic", "OBSERVED", ["critique"]),
+    candidate("deepseek", "DeepSeek", "OBSERVED", ["reasoning"])
+  ] };
+  const adapters = Object.fromEntries(registry.candidates.map(item => [item.id, async () => ({ text: "ok" })]));
+  const bindings = createCompositeProviderBindings(registry, adapters);
+  const readiness = evaluateCompositeReadiness(bindings);
+  assert.equal(bindings.providers.length, 3, "two Google models are one provider, not two independent organs");
+  assert.equal(readiness.canInvoke, false);
+  assert.equal(readiness.status, "BLOCKED_INSUFFICIENT_INDEPENDENT_PROVIDERS");
+  assert.equal(readiness.minimumProviders, 5);
 });
