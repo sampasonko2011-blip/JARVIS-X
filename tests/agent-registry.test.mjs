@@ -36,7 +36,7 @@ test("eligible filters by role and explicitly allowed independence group", () =>
 });
 
 test("invocation requires exact-scope authorization and an authorized role", async () => {
-  const registry = new AgentRegistry();
+  const registry = new AgentRegistry({authorize: async () => true});
   registry.register(validAgent());
   const task = {objective:"review",digest:"task-digest",authenticatedSubject:"test-user"};
   const approval = {action:"agent.invoke",resource:"research-1",scope:"research-1:research",taskDigest:"task-digest",subject:"test-user"};
@@ -44,7 +44,8 @@ test("invocation requires exact-scope authorization and an authorized role", asy
   const result = await registry.invoke("research-1",{task,role:"research",approvedScope:approval});
   assert.equal(result.evidence.status,"OBSERVED");
   assert.equal(result.output,"evidence");
-  await assert.rejects(registry.invoke("research-1",{task,role:"coding",approvedScope:approval}),/not registered/);
+  const wrongRoleApproval = {...approval, scope:"research-1:coding"};
+  await assert.rejects(registry.invoke("research-1",{task,role:"coding",approvedScope:wrongRoleApproval}),/not registered/);
 });
 
 test("missing objective and unknown agent fail closed", async () => {
@@ -52,4 +53,12 @@ test("missing objective and unknown agent fail closed", async () => {
   registry.register(validAgent());
   await assert.rejects(registry.invoke("missing",{task:{objective:"x"},role:"research"}),/Unknown agent/);
   assert.throws(()=>registry.eligible({role:"research",task:{}}),/objective/);
+});
+
+test("approval-shaped data is not authorization without a trusted verifier", async () => {
+  const registry = new AgentRegistry();
+  registry.register(validAgent());
+  const task = {objective:"review",digest:"digest",authenticatedSubject:"subject"};
+  const approvedScope = {action:"agent.invoke",resource:"research-1",scope:"research-1:research",taskDigest:"digest",subject:"subject"};
+  await assert.rejects(registry.invoke("research-1",{task,role:"research",approvedScope}),/Trusted authorization verifier denied/);
 });
