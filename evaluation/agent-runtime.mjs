@@ -67,6 +67,9 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
     let rejectAbort;
     const aborted = new Promise((_, reject) => { rejectAbort = reject; });
+    // The caller may already have aborted before the first Promise.race is attached.
+    // Mark the rejection as handled immediately; Promise.race still observes it normally.
+    aborted.catch(() => {});
     const abortFromController = () => {
       const reason = controller.signal.reason;
       rejectAbort(reason instanceof Error && reason.message === "AGENT_TIMEOUT"
