@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "default_activation": "DISABLED",
+    "eligible_evidence": ["OBSERVED", "VALIDATED"],
+    "independence_rule": "One agent per actual operator/vendor/security domain; names and wrappers do not establish independence.",
+    "least_privilege": "Every enabled agent must declare allowedTools and dataAccessScope.",
+    "discovery_is_not_access": true,
+    "no_implicit_credentials": true
+  },
+  "agents": [
+    {
+      "id": "public-web-research-agent",
+      "kind": "research-agent",
+      "roles": ["research", "critique"],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": ["read_public_web"],
+      "dataAccessScope": "public-only",
+      "note": "Candidate architecture entry only. No connected/authenticated agent or executable adapter is asserted."
+    },
+    {
+      "id": "repository-engineering-agent",
+      "kind": "coding-agent",
+      "roles": ["coding", "code-review"],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": ["read_repository", "propose_patch", "run_sandbox_tests"],
+      "dataAccessScope": "explicitly-selected-repository-branch-only",
+      "note": "Candidate architecture entry only. Must not write to protected branches, merge, deploy, or read secrets."
+    },
+    {
+      "id": "verification-agent",
+      "kind": "verification-agent",
+      "roles": ["critique", "research"],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": ["read_test_results", "inspect_diff", "run_sandbox_tests"],
+      "dataAccessScope": "test-artifacts-and-selected-diff-only",
+      "note": "Candidate architecture entry only. Independent verification requires a genuinely separate execution path, not a second prompt to the same model."
+    }
+  ]
+}
