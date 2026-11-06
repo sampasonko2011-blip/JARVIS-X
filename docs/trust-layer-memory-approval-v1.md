@@ -40,3 +40,12 @@ CI fixture follow-up: the opaque-token broker tests assert verifier rejection fo
 - Added a deny-by-default runtime with host-injected handlers, explicit authorization, per-agent tool allowlists and data-access scope.
 - Added tests for duplicate IDs, unsafe tool names, unassigned independence, disabled agents, authorization denial, positive authorized dispatch and failed verification.
 - No agents are activated and no external agent/model is claimed to have participated. The in-memory audit is not durable.
+
+
+## Portable memory export/import v1 (source-level)
+
+MemoryOS.exportBundle() creates deterministic record ordering and a SHA-256 integrity checksum over schema version, export timestamp and records. MemoryOS.importBundle() verifies schema, checksum, record fields, dates, duplicate IDs and secret-like material before performing one atomic store update. Existing IDs are replaced; unrelated local records remain. A store without setMany fails closed.
+
+The export covers indexed MemoryRecord entries only. Working checkpoints are not silently included, and this API is not a remote XMemo sync protocol. The checksum detects accidental or tampered content but is not a digital signature or proof of exporter identity. Secret detection is a narrow heuristic, not complete DLP. Treat exports as sensitive, user-controlled files; review/redact before sharing. Cross-device synchronization, encryption at rest, multi-process locking, authenticated account isolation and automated GitHub↔XMemo webhooks remain unimplemented until separately integrated and tested.
+
+Tests cover successful round-trip, checksum tampering, secret-like content rejection and atomic-store fail-closed behavior.
