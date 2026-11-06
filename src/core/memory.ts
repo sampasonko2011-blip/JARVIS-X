@@ -7,7 +7,7 @@ export interface MemoryStore {
   set<T>(key: string, value: T): void;
   delete?(key: string): void;
   deleteMany?(keys: string[], updates?: Array<{ key: string; value: unknown }>): void;
-  setMany?<T>(entries: Array<{ key: string; value: T }>): void;
+  setMany?(entries: Array<{ key: string; value: unknown }>): void;
 }
 
 /** Process-local store. Use for tests and explicitly ephemeral runs only. */
@@ -23,7 +23,7 @@ export class InMemoryStore implements MemoryStore {
     this.values.clear();
     for (const [key, value] of next) this.values.set(key, value);
   }
-  setMany<T>(entries: Array<{ key: string; value: T }>): void {
+  setMany(entries: Array<{ key: string; value: unknown }>): void {
     const next = new Map(this.values);
     for (const entry of entries) {
       if (!entry.key.trim()) throw new Error("Memory key must be non-empty.");
@@ -106,7 +106,7 @@ export class JsonFileMemoryStore implements MemoryStore {
   }
 
   /** Persist a group of values in one snapshot so record + index cannot split across writes. */
-  setMany<T>(entries: Array<{ key: string; value: T }>): void {
+  setMany(entries: Array<{ key: string; value: unknown }>): void {
     const next = new Map(this.values);
     for (const entry of entries) {
       if (!entry.key.trim()) throw new Error("Memory key must be non-empty.");
