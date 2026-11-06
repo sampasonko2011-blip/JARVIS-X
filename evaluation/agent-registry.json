@@ -2,7 +2,10 @@
   "schema_version": 1,
   "policy": {
     "default_activation": "DISABLED",
-    "eligible_evidence": ["OBSERVED", "VALIDATED"],
+    "eligible_evidence": [
+      "OBSERVED",
+      "VALIDATED"
+    ],
     "independence_rule": "One agent per actual operator/vendor/security domain; names and wrappers do not establish independence.",
     "least_privilege": "Every enabled agent must declare allowedTools and dataAccessScope.",
     "discovery_is_not_access": true,
@@ -12,35 +15,107 @@
     {
       "id": "public-web-research-agent",
       "kind": "research-agent",
-      "roles": ["research", "critique"],
+      "roles": [
+        "research",
+        "critique"
+      ],
       "activation": "DISABLED",
       "status": "PROPOSED",
       "independenceGroup": "unassigned-operator",
-      "allowedTools": ["read_public_web"],
+      "allowedTools": [
+        "read_public_web"
+      ],
       "dataAccessScope": "public-only",
-      "note": "Candidate architecture entry only. No connected/authenticated agent or executable adapter is asserted."
+      "note": "Architecture candidate only; no connected/authenticated agent or executable adapter is asserted."
     },
     {
       "id": "repository-engineering-agent",
       "kind": "coding-agent",
-      "roles": ["coding", "code-review"],
+      "roles": [
+        "coding",
+        "code-review"
+      ],
       "activation": "DISABLED",
       "status": "PROPOSED",
       "independenceGroup": "unassigned-operator",
-      "allowedTools": ["read_repository", "propose_patch", "run_sandbox_tests"],
+      "allowedTools": [
+        "read_repository",
+        "propose_patch",
+        "run_sandbox_tests"
+      ],
       "dataAccessScope": "explicitly-selected-repository-branch-only",
-      "note": "Candidate architecture entry only. Must not write to protected branches, merge, deploy, or read secrets."
+      "note": "Must not write protected branches, merge, deploy or read secrets."
     },
     {
-      "id": "verification-agent",
-      "kind": "verification-agent",
-      "roles": ["critique", "research"],
+      "id": "security-review-agent",
+      "kind": "security-agent",
+      "roles": [
+        "security-review",
+        "critique"
+      ],
       "activation": "DISABLED",
       "status": "PROPOSED",
       "independenceGroup": "unassigned-operator",
-      "allowedTools": ["read_test_results", "inspect_diff", "run_sandbox_tests"],
-      "dataAccessScope": "test-artifacts-and-selected-diff-only",
-      "note": "Candidate architecture entry only. Independent verification requires a genuinely separate execution path, not a second prompt to the same model."
+      "allowedTools": [
+        "read_repository",
+        "inspect_diff",
+        "read_test_results"
+      ],
+      "dataAccessScope": "selected-diff-and-test-artifacts-only",
+      "note": "Static review candidate; no independent operator or security service has been connected."
+    },
+    {
+      "id": "evaluation-agent",
+      "kind": "evaluation-agent",
+      "roles": [
+        "benchmarking",
+        "verification",
+        "critique"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "run_sandbox_tests",
+        "read_test_results",
+        "inspect_diff"
+      ],
+      "dataAccessScope": "sandbox-test-artifacts-and-selected-diff-only",
+      "note": "Must use held-out tests and independent evidence; a second prompt to the same model is not independence."
+    },
+    {
+      "id": "memory-steward-agent",
+      "kind": "memory-agent",
+      "roles": [
+        "memory-analysis",
+        "research"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "read_test_results"
+      ],
+      "dataAccessScope": "explicitly-authorized-memory-contract-and-test-artifacts-only",
+      "note": "No personal memory source, secrets, or persistent store is connected by this registry entry."
+    },
+    {
+      "id": "operations-coordinator-agent",
+      "kind": "operations-agent",
+      "roles": [
+        "planning",
+        "tool-orchestration"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "read_test_results"
+      ],
+      "dataAccessScope": "selected-project-metadata-and-test-artifacts-only",
+      "note": "Planning-only candidate; no background scheduling, production mutation, paid action or deployment."
     }
   ]
 }
