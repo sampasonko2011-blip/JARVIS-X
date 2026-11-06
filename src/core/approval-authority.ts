@@ -81,16 +81,24 @@ export class ApprovalAuthority {
   }
 
   async verifyAndConsume(token: SignedApproval, context: ApprovalVerifyContext): Promise<boolean> {
-    if (!token || !token.payload || typeof token.signature !== "string") return false;
+    if (!token || !token.payload || typeof token.payload !== "object" || Array.isArray(token.payload) ||
+        typeof token.signature !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token.signature) ||
+        !context || typeof context !== "object") return false;
     const p = token.payload;
     const expected = {
       subject: context.authenticatedSubject, action: context.action, resource: context.resource,
       scope: context.scope, candidateRevision: context.candidateRevision,
       audience: context.audience, policyVersion: context.policyVersion
     };
-    for (const [field, value] of Object.entries(expected)) if (!value.trim() || p[field as keyof ApprovalPayload] !== value) return false;
-    if (p.version !== 1 || !p.jti || !p.keyId || !Number.isFinite(p.issuedAt) || !Number.isFinite(p.expiresAt)) return false;
+    for (const [field, value] of Object.entries(expected)) {
+      if (typeof value !== "string" || !value.trim() || typeof p[field as keyof ApprovalPayload] !== "string" ||
+          p[field as keyof ApprovalPayload] !== value) return false;
+    }
+    if (p.version !== 1 || typeof p.jti !== "string" || !p.jti.trim() ||
+        typeof p.keyId !== "string" || !p.keyId.trim() ||
+        !Number.isSafeInteger(p.issuedAt) || !Number.isSafeInteger(p.expiresAt)) return false;
     const now = context.now ?? Date.now();
+    if (!Number.isSafeInteger(now)) return false;
     if (p.issuedAt > now || p.expiresAt <= now || p.expiresAt - p.issuedAt > 900_000) return false;
     const secret = await this.keys.getSigningKey(p.keyId);
     if (!secret || secret.byteLength < 32) return false;
