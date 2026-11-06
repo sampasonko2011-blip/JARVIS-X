@@ -32,11 +32,14 @@ export function validateAgentRegistry(registry) {
   return { valid: errors.length === 0, errors, agentCount: ids.size, independentGroups: groups.size };
 }
 /** Host-injected, deny-by-default dispatcher. Discovery never implies execution. */
-export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false } = {}) {
+export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false, maxConcurrent = 3, timeoutMs = 30000 } = {}) {
+  assert(Number.isSafeInteger(maxConcurrent) && maxConcurrent >= 1 && maxConcurrent <= 8, "maxConcurrent must be 1..8");
+  assert(Number.isSafeInteger(timeoutMs) && timeoutMs >= 100 && timeoutMs <= 120000, "timeoutMs must be 100..120000");
   // Snapshot untrusted declarative input once; later caller mutation cannot grant tools or enable agents.
   const trustedRegistry = deepFreeze(structuredClone(registry));
   const audit = [], validation = validateAgentRegistry(trustedRegistry);
-  async function run({ agentId, role, task, approval }) {
+  let active = 0;
+  async function run({ agentId, role, task, approval, signal: callerSignal }) {
     assert(validation.valid, "Agent registry invalid: " + validation.errors.join(","));
     const agent = trustedRegistry.agents.find(item => item.id === agentId);
     assert(agent, "Unknown agent: " + agentId);
@@ -47,12 +50,31 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     const tool = task.tool;
     assert(typeof tool === "string" && agent.allowedTools.includes(tool) && SAFE_TOOLS.has(tool), "Tool is outside agent allowlist");
     assert(typeof handlers[tool] === "function", "No trusted host handler is configured for tool");
-    assert(await authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope }) === true, "Authorization denied");
-    const evidence = { agentId, role, tool, status: "UNPROVEN", executed: false, verified: false, failure: null };
+    const evidence = { agentId, role, tool, status: "UNPROVEN", authorized: false, executed: false, verified: false, failure: null };
     audit.push(evidence);
+    let timer;
+    const controller = new AbortController();
+    const abortFromCaller = () => controller.abort(callerSignal?.reason);
+    if (callerSignal?.aborted) controller.abort(callerSignal.reason);
+    else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
     try {
+      assert(!controller.signal.aborted, "AGENT_INVOCATION_ABORTED");
+      const allowed = await authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope });
+      assert(allowed === true, "Authorization denied");
+      evidence.authorized = true;
+      assert(active < maxConcurrent, "AGENT_CONCURRENCY_LIMIT");
+      active++;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          controller.abort(new Error("AGENT_TIMEOUT"));
+          reject(new Error("AGENT_TIMEOUT"));
+        }, timeoutMs);
+      });
       evidence.executed = true;
-      const result = await handlers[tool]({ objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope });
+      const operation = Promise.resolve().then(() => handlers[tool]({
+        objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
+      }));
+      const result = await Promise.race([operation, timeout]);
       const verified = await verify(result, { agentId, role, task, agent, tool });
       evidence.verified = verified === true;
       evidence.status = verified === true ? "VALIDATED" : "UNPROVEN";
@@ -61,6 +83,10 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       evidence.status = "REJECTED";
       evidence.failure = error instanceof Error ? error.message : String(error);
       throw error;
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (evidence.authorized && evidence.executed) active--;
+      callerSignal?.removeEventListener("abort", abortFromCaller);
     }
   }
   return {
