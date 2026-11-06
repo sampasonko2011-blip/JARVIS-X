@@ -108,7 +108,8 @@ test("provider bridge maps documented specialist roles and excludes image-only m
     claude: async () => ({ text: "ok" }),
     image: async () => ({ text: "not a text model" })
   });
-  assert.deepEqual(bindings.roster[0].capabilities, ["reasoning", "reasoning"]);
+  assert.deepEqual(bindings.roster[0].capabilities, ["reasoning"]);
+  assert.deepEqual(bindings.providers[0].capabilities.map(item => item.strengths), [["deep-reasoning", "synthesis"]]);
   assert.equal(bindings.unavailable[0].reason, "NON_TEXT_MODEL_KIND");
 });
 
@@ -156,4 +157,15 @@ test("provider bridge runs through the real CompositeEngine with five independen
   assert.equal(result.selected.length, 5);
   assert.ok(result.membersInvoked.includes("anthropic"));
   assert.ok(result.rationale.some(item => item.includes("independent critic output passed")));
+});
+
+
+test("capability aliases collapse to one stable core capability without losing provenance", () => {
+  const bindings = createCompositeProviderBindings(
+    { candidates: [candidate("alias-model", "Anthropic", "VALIDATED", ["synthesis", "deep-reasoning", "reasoning"])] },
+    { "alias-model": async () => ({ text: "ok" }) }
+  );
+  assert.equal(bindings.providers[0].capabilities.length, 1);
+  assert.equal(bindings.providers[0].capabilities[0].id, "alias-model:reasoning");
+  assert.deepEqual(bindings.providers[0].capabilities[0].strengths, ["deep-reasoning", "reasoning", "synthesis"]);
 });
