@@ -14,9 +14,13 @@ export function validateAgentRegistry(registry) {
     if (!Array.isArray(agent.roles) || !agent.roles.length || agent.roles.some(role => typeof role !== "string")) errors.push("INVALID_ROLES:" + agent.id);
     if (!Array.isArray(agent.allowedTools) || agent.allowedTools.some(tool => !SAFE_TOOLS.has(tool))) errors.push("INVALID_TOOL_ALLOWLIST:" + agent.id);
     if (typeof agent.dataAccessScope !== "string" || !agent.dataAccessScope.trim()) errors.push("MISSING_DATA_SCOPE:" + agent.id);
-    if (typeof agent.independenceGroup !== "string" || !agent.independenceGroup.trim() || agent.independenceGroup === "unassigned-operator") errors.push("INDEPENDENCE_UNVERIFIED:" + agent.id);
+    if (typeof agent.independenceGroup !== "string" || !agent.independenceGroup.trim() ||
+        (agent.activation === "ENABLED" && agent.independenceGroup === "unassigned-operator")) {
+      errors.push("INDEPENDENCE_UNVERIFIED:" + agent.id);
+    }
     if (agent.activation === "ENABLED" && agent.status !== "OBSERVED" && agent.status !== "VALIDATED") errors.push("UNPROVEN_AGENT_ENABLED:" + agent.id);
-    if (agent.independenceGroup && agent.independenceGroup !== "unassigned-operator") groups.add(agent.independenceGroup);
+    // Proposed/disabled entries do not claim independent execution domains.
+    if (agent.activation === "ENABLED" && agent.independenceGroup !== "unassigned-operator") groups.add(agent.independenceGroup);
   }
   return { valid: errors.length === 0, errors, agentCount: ids.size, independentGroups: groups.size };
 }
