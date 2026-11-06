@@ -83,3 +83,42 @@ test("MemoryOS fails closed when backing store cannot atomically update record a
   }), /does not support atomic record\/index updates/);
   assert.equal(values.size, 0);
 });
+
+
+test("MemoryOS exports an integrity-checked bundle and atomically restores it", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.save({ id: "portable-1", title: "JARVIS-X continuity", content: "Project checkpoint with provenance.", kind: "episodic", status: "OBSERVED", source: "GitHub PR #79", project: "jarvis-x" }, new Date("2026-11-06T04:00:00.000Z"));
+  const bundle = source.exportBundle(new Date("2026-11-06T05:00:00.000Z"));
+  const target = new MemoryOS(new InMemoryStore());
+  const result = target.importBundle(bundle);
+  assert.equal(result.imported, 1);
+  assert.equal(target.get("portable-1").content, "Project checkpoint with provenance.");
+  assert.equal(target.search("JARVIS-X continuity", { project: "jarvis-x" })[0].record.id, "portable-1");
+});
+
+test("MemoryOS rejects tampered export bundles without importing partial records", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.save({ id: "tamper-1", title: "Integrity", content: "Original content", kind: "semantic", status: "VALIDATED" });
+  const bundle = source.exportBundle();
+  bundle.records[0].content = "Tampered content";
+  const target = new MemoryOS(new InMemoryStore());
+  assert.throws(() => target.importBundle(bundle), /checksum mismatch/);
+  assert.equal(target.get("tamper-1"), undefined);
+  assert.deepEqual(target.search("Tampered content"), []);
+});
+
+test("MemoryOS blocks secret-like content from portable export", () => {
+  const memory = new MemoryOS(new InMemoryStore());
+  memory.save({ id: "secret-1", title: "Unsafe note", content: "ghp_abcdefghijklmnopqrstuvwxyz123456", kind: "semantic", status: "OBSERVED" });
+  assert.throws(() => memory.exportBundle(), /secret-like material detected/);
+});
+
+test("MemoryOS import fails closed when the backing store cannot atomically update", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.save({ id: "atomic-1", title: "Atomic restore", content: "Must be all or nothing.", kind: "semantic", status: "OBSERVED" });
+  const bundle = source.exportBundle();
+  const values = new Map();
+  const target = new MemoryOS({ get: key => values.get(key), set: (key, value) => values.set(key, value) });
+  assert.throws(() => target.importBundle(bundle), /does not support atomic import/);
+  assert.equal(values.size, 0);
+});
