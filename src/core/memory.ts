@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 export interface MemoryStore {
   get<T>(key: string): T | undefined;
   set<T>(key: string, value: T): void;
+  delete?(key: string): void;
   setMany?<T>(entries: Array<{ key: string; value: T }>): void;
 }
 
@@ -13,6 +14,7 @@ export class InMemoryStore implements MemoryStore {
   private readonly values = new Map<string, unknown>();
   get<T>(key: string): T | undefined { return this.values.get(key) as T | undefined; }
   set<T>(key: string, value: T): void { this.values.set(key, value); }
+  delete(key: string): void { this.values.delete(key); }
   setMany<T>(entries: Array<{ key: string; value: T }>): void {
     const next = new Map(this.values);
     for (const entry of entries) {
@@ -64,6 +66,15 @@ export class JsonFileMemoryStore implements MemoryStore {
       else this.values.delete(key);
       throw error;
     }
+  }
+
+  delete(key: string): void {
+    if (!key.trim()) throw new Error("Memory key must be non-empty.");
+    if (!this.values.has(key)) return;
+    const previous = this.values.get(key);
+    this.values.delete(key);
+    try { this.persist(); }
+    catch (error) { this.values.set(key, previous); throw error; }
   }
 
   /** Persist a group of values in one snapshot so record + index cannot split across writes. */
