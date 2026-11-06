@@ -48,8 +48,8 @@ export class MemoryOS {
     const record: MemoryRecord = { ...input, createdAt, updatedAt };
     const ids = this.store.get<string[]>(this.indexKey()) ?? [];
     const nextIds = ids.includes(input.id) ? ids : [...ids, input.id];
-    if (this.store.setMany) this.store.setMany([{ key: this.key(input.id), value: record }, { key: this.indexKey(), value: nextIds }]);
-    else { this.store.set(this.key(input.id), record); this.store.set(this.indexKey(), nextIds); }
+    if (!this.store.setMany) throw new Error("Backing store does not support atomic record/index updates; refusing a partial memory write.");
+    this.store.setMany([{ key: this.key(input.id), value: record }, { key: this.indexKey(), value: nextIds }]);
     return record;
   }
 
