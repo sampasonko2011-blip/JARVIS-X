@@ -8,7 +8,7 @@ test("registry rejects duplicate IDs, unassigned independence and unknown tools"
  assert.equal(result.valid,false); assert.ok(result.errors.some(x=>x.startsWith("DUPLICATE_AGENT_ID"))); assert.ok(result.errors.some(x=>x.startsWith("INVALID_TOOL_ALLOWLIST"))); assert.ok(result.errors.some(x=>x.startsWith("INDEPENDENCE_UNVERIFIED")));
 });
 test("disabled agents cannot execute",async()=>{const runtime=createAgentRuntime({registry:registry(agent({activation:"DISABLED"}))});await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}}),/disabled/);});
-test("execution requires allowlisted tool, trusted handler and explicit authorization",async()=>{let calls=0;const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>{calls++;return {verified:true};}},authorize:async()=>false});await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}}),/Authorization denied/);await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"shell_exec"}}),/outside agent allowlist/);assert.equal(calls,0);});
+test("execution requires allowlisted tool, trusted handler and explicit authorization",async()=>{let calls=0;const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>{calls++;return {verified:true};}},authorize:async()=>false});await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}}),/Authorization denied/);await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"shell_exec"}}),/outside agent allowlist/);assert.equal(calls,0);assert.equal(runtime.audit()[0].authorized,false);assert.equal(runtime.audit()[0].executed,false);});
 test("trusted host handler runs only after authorization and records verification status",async()=>{let calls=0;const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async({objective,dataAccessScope})=>{calls++;return {objective,dataAccessScope,verified:true};}},authorize:async({agentId,tool,dataAccessScope})=>agentId==="repo-verifier"&&tool==="inspect_diff"&&dataAccessScope==="selected-diff-only",verify:async(result)=>result.verified===true});const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review patch",tool:"inspect_diff"}});assert.equal(calls,1);assert.equal(result.evidence.verified,true);assert.equal(runtime.audit().length,1);});
 test("failed verification remains UNPROVEN",async()=>{const runtime=createAgentRuntime({registry:registry(agent()),handlers:{inspect_diff:async()=>({findings:["maybe"]})},authorize:async()=>true,verify:async()=>false});const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"review",tool:"inspect_diff"}});assert.equal(result.evidence.status,"UNPROVEN");assert.equal(result.evidence.verified,false);});
 
@@ -39,4 +39,23 @@ test("runtime snapshots and freezes registry so post-construction mutation canno
  source.agents[0].allowedTools.push("read_public_web");
  await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"try escalation",tool:"inspect_diff"}}),/disabled/);
  assert.equal(runtime.list()[0].activation,"DISABLED");
+});
+
+
+test("concurrency limit rejects excess work and audit records denied attempts",async()=>{
+ let release;
+ const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,handlers:{inspect_diff:async()=>new Promise(resolve=>{release=()=>resolve({ok:true});})},authorize:async()=>true});
+ const first=runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"first",tool:"inspect_diff"}});
+ await new Promise(resolve=>setImmediate(resolve));
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"second",tool:"inspect_diff"}}),/CONCURRENCY_LIMIT/);
+ release(); await first;
+ assert.equal(runtime.audit().length,2);
+ assert.equal(runtime.audit()[1].status,"REJECTED");
+});
+
+test("handler receives abort signal and timeout is audited",async()=>{
+ const runtime=createAgentRuntime({registry:registry(agent()),timeoutMs:100,handlers:{inspect_diff:async({signal})=>new Promise((resolve,reject)=>signal.addEventListener("abort",()=>reject(new Error("cooperative abort")),{once:true}))},authorize:async()=>true});
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"bounded",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ assert.equal(runtime.audit()[0].failure,"AGENT_TIMEOUT");
 });
