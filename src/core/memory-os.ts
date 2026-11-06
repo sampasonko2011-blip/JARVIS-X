@@ -74,7 +74,7 @@ export class MemoryOS {
       .filter((checkpoint): checkpoint is WorkingCheckpoint => Boolean(checkpoint))
       .sort((a, b) => a.project.localeCompare(b.project));
     for (const checkpoint of checkpoints) {
-      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? [])].some(value => SECRET_LIKE.test(value))) {
+      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? []), ...(checkpoint.contextRefs ?? [])].some(value => SECRET_LIKE.test(value))) {
         throw new Error("Memory export blocked: secret-like material detected in checkpoint " + checkpoint.project);
       }
     }
@@ -111,7 +111,7 @@ export class MemoryOS {
       checkpointProjects.add(checkpoint.project);
       validDate(checkpoint.updatedAt, "checkpoint.updatedAt");
       if (checkpoint.expiresAt) validDate(checkpoint.expiresAt, "checkpoint.expiresAt");
-      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? [])].some(value => SECRET_LIKE.test(value))) {
+      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? []), ...(checkpoint.contextRefs ?? [])].some(value => SECRET_LIKE.test(value))) {
         throw new Error("Memory import blocked: secret-like material detected in checkpoint " + checkpoint.project);
       }
     }
