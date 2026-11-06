@@ -9,6 +9,10 @@
 - Audit retention is bounded (default 500, configurable 10–10000); task objectives are capped at 8000 characters. The public validation snapshot cannot mutate the runtime's internal policy.
 - The default verifier denies validation. Only an independently injected verifier returning literal `true` can produce VALIDATED; a handler's own `{ verified: true }` claim is ignored.
 
+
+- Composite-agent bridge supports an explicit governed mode: pass the shared `createAgentRuntime(...)` instance as `{ runtime }`. In this mode each invocation requires `task.tool` and delegates to `runtime.run`; the compatibility adapter is not called. The runtime owns its configured handler, authorization, immutable task snapshot, timeout, cancellation, concurrency lease and independent verifier. Runtime evidence is propagated to the Provider response. The legacy bridge-only authorization path remains for compatibility and is not equivalent to governed execution.
+- Regression tests exercise the governed bridge path, assert the compatibility adapter is never invoked, require independent verifier evidence, and reject missing tool selection before runtime invocation.
+
 ## Truth and safety boundaries
 - Registry entries begin DISABLED and PROPOSED. They are candidates, not discovered connected agents.
 - A second prompt or wrapper around the same model is not independent. Independence requires separate, evidenced operators/providers/execution paths.
