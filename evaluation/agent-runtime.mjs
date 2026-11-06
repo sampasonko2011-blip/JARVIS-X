@@ -134,8 +134,9 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       // lease until it settles; this is fail-closed rather than overcommitting.
       if (slotOwned && pendingWork.some(item => !item.settled)) {
         const outstanding = pendingWork.map(item => item.promise);
+        // Keep slotOwned true until releaseSlot actually decrements active.
+        // The closure may run after this invocation has already returned.
         Promise.allSettled(outstanding).then(releaseSlot);
-        slotOwned = false;
       } else {
         releaseSlot();
       }
