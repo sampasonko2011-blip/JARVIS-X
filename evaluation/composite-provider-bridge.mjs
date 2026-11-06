@@ -1,14 +1,15 @@
 const ROLE_KIND = {
-  reasoning: "reasoning", "general-reasoning": "reasoning", orchestration: "reasoning",
+  reasoning: "reasoning", "general-reasoning": "reasoning", "deep-reasoning": "reasoning", orchestration: "reasoning", synthesis: "reasoning", "multi-step-analysis": "reasoning", "fast-general": "reasoning",
   coding: "coding", "code-generation": "coding", "code-review": "coding",
   "software-engineering": "coding", "repository-maintenance": "coding", "agentic-coding": "coding",
   critique: "critique", review: "critique", "independent-review": "critique",
   research: "research", "web-research": "research",
   vision: "vision", multimodal: "vision",
-  execution: "execution", "tool-use": "execution", "agentic-workflows": "execution",
+  execution: "execution", "tool-use": "execution", "agentic-workflows": "execution", "agentic-tool-use": "execution", "fast-routing": "execution",
   memory: "memory", "long-context-synthesis": "memory"
 };
 const STATUS_RANK = { VALIDATED: 2, OBSERVED: 1 };
+const TEXT_MODEL_KINDS = new Set(["hosted-model", "hosted-model-candidate", "open-weight-model-candidate", "open-weight-coding-candidate", "model-family-candidate", "open-weight-model-family", "local-runtime"]);
 function providerKey(value) {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -34,6 +35,10 @@ export function createCompositeProviderBindings(registry, adapters) {
   const byVendor = new Map();
   for (const candidate of registry.candidates ?? []) {
     if (!candidate?.id || !candidate.provider || !candidate.model_id) continue;
+    if (candidate.kind && !TEXT_MODEL_KINDS.has(candidate.kind)) {
+      unavailable.push({ candidateId: candidate.id, reason: "NON_TEXT_MODEL_KIND" });
+      continue;
+    }
     if (candidate.provider.toLowerCase().includes("openrouter")) {
       unavailable.push({ candidateId: candidate.id, reason: "PROVIDER_EXCLUDED_BY_POLICY" });
       continue;
@@ -119,4 +124,25 @@ export function createCompositeProviderBindings(registry, adapters) {
     }
   }
   return { providers, roster, unavailable };
+}
+
+/**
+ * A readiness check only; it never invokes a provider. The current CompositeEngine
+ * requires five distinct vendors, so aliases/models from one vendor cannot inflate
+ * independence. Readiness is based on constructed adapters and evidence status.
+ */
+export function evaluateCompositeReadiness(bindings, minimumProviders = 5) {
+  if (!Number.isInteger(minimumProviders) || minimumProviders < 2) {
+    throw new TypeError("minimumProviders must be an integer >= 2");
+  }
+  const count = bindings?.providers?.length ?? 0;
+  const ready = count >= minimumProviders;
+  return {
+    status: ready ? "READY_FOR_EXPLICIT_INVOCATION" : "BLOCKED_INSUFFICIENT_INDEPENDENT_PROVIDERS",
+    independentProviderCount: count,
+    minimumProviders,
+    canInvoke: ready,
+    reason: ready ? "Distinct vendor threshold satisfied; explicit task authorization and verification are still required."
+      : "Only " + count + " distinct eligible provider(s) are bound; " + minimumProviders + " are required. Do not duplicate vendor aliases or promote unproven candidates to fill the gap."
+  };
 }
