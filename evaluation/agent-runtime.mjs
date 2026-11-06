@@ -88,7 +88,6 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       const operation = Promise.resolve().then(() => handlers[tool]({
         objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
       }));
-      operation.then(() => { if (slotOwned) { active--; slotOwned = false; } }, () => { if (slotOwned) { active--; slotOwned = false; } });
       const result = await Promise.race([operation, timeout]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       const verified = await Promise.race([
