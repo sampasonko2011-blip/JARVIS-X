@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCompositeAgentBindings, evaluateAgentReadiness } from "../evaluation/composite-agent-bridge.mjs";
+import { createAgentRuntime } from "../evaluation/agent-runtime.mjs";
 
 const agent = (id, group, extra = {}) => ({
   id, independenceGroup: group, activation: "ENABLED",
@@ -109,4 +110,46 @@ test("composite agent bridge rejects oversized task before authorization", async
  const bindings=createCompositeAgentBindings({agents:[agent("agent","operator")]},{agent:async()=>({output:"ok"})},{authorize:async()=>{authorizationCalls++;return true;}});
  await assert.rejects(bindings.providers[0].execute({task:{objective:"x".repeat(8001)},role:"research"}),/8000-character/);
  assert.equal(authorizationCalls,0);
+});
+
+
+test("governed bridge delegates authorization, execution and verification to the shared agent runtime", async () => {
+  let adapterCalls = 0;
+  const registryAgent = agent("governed-agent", "operator-governed", {
+    activation: "ENABLED", status: "OBSERVED", roles: ["research"],
+    allowedTools: ["read_public_web"], dataAccessScope: "public-only"
+  });
+  const runtime = createAgentRuntime({
+    registry: { agents: [registryAgent] },
+    authorize: async ({ task }) => task.objective === "governed task",
+    handlers: { read_public_web: async ({ objective }) => ({ output: "result for " + objective }) },
+    verify: async result => result.output === "result for governed task"
+  });
+  const bindings = createCompositeAgentBindings(
+    { agents: [registryAgent] },
+    { "governed-agent": async () => { adapterCalls++; return { output: "bypass" }; } },
+    { runtime }
+  );
+  const result = await bindings.providers[0].execute({
+    task: { objective: "governed task", tool: "read_public_web" },
+    role: "research"
+  });
+  assert.equal(result.output, "result for governed task");
+  assert.equal(adapterCalls, 0, "governed runtime, not compatibility adapter, owns execution");
+  assert.ok(result.evidence.some(item => item.source === "agent-runtime" && item.status === "VALIDATED"));
+  assert.equal(runtime.audit()[0].verified, true);
+});
+
+test("governed bridge refuses missing tool selection before invoking runtime", async () => {
+  let runtimeCalls = 0;
+  const runtime = { run: async () => { runtimeCalls++; return { result: { output: "no" } }; } };
+  const bindings = createCompositeAgentBindings(
+    { agents: [agent("agent", "operator")] },
+    { agent: async () => ({ output: "fallback" }) },
+    { runtime }
+  );
+  await assert.rejects(bindings.providers[0].execute({
+    task: { objective: "must select a tool" }, role: "research"
+  }), /explicit allowlisted task.tool/);
+  assert.equal(runtimeCalls, 0);
 });
