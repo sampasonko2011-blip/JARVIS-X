@@ -111,10 +111,13 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       assert(allowed === true, "Authorization denied");
       evidence.authorized = true;
-      evidence.executed = true;
-      const operation = trackWork(Promise.resolve().then(() => trustedHandlers[tool]({
-        objective: trustedTask.objective, input: trustedTask.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
-      })));
+      const operation = trackWork(Promise.resolve().then(() => {
+        // Mark execution only at the actual host-handler dispatch boundary.
+        evidence.executed = true;
+        return trustedHandlers[tool]({
+          objective: trustedTask.objective, input: trustedTask.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
+        });
+      }));
       const result = await Promise.race([operation, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       const verification = trackWork(Promise.resolve().then(() => verify(result, { agentId, role, task: trustedTask, agent, tool })));
