@@ -9,7 +9,7 @@ const ROLE_KIND = {
   memory: "memory", "long-context-synthesis": "memory"
 };
 const STATUS_RANK = { VALIDATED: 2, OBSERVED: 1 };
-function providerKey(value: string): string {
+function providerKey(value) {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 function capabilityList(candidate) {
@@ -31,7 +31,7 @@ function capabilityList(candidate) {
  */
 export function createCompositeProviderBindings(registry, adapters) {
   const unavailable = [];
-  const byVendor = new Map<string, { candidate: ModelCandidate; capabilities: Capability[] }>();
+  const byVendor = new Map();
   for (const candidate of registry.candidates ?? []) {
     if (!candidate?.id || !candidate.provider || !candidate.model_id) continue;
     if (candidate.provider.toLowerCase().includes("openrouter")) {
