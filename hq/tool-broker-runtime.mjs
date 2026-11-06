@@ -79,7 +79,7 @@ export async function executeAuthorizedTool({
       toolId: tool.id,
       action,
       resource: text(request.resource, 500),
-      scope: requestedScopes,
+      scope: [...requestedScopes].sort().join(","),
       candidateRevision: text(request.candidateRevision, 200),
       authenticatedSubject: text(request.authenticatedSubject, 200),
       audience: text(request.audience, 120),
