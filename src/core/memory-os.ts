@@ -69,12 +69,21 @@ export class MemoryOS {
     const ids = this.store.get<string[]>(this.indexKey()) ?? [];
     const records = ids.map(id => this.get(id)).filter((record): record is MemoryRecord => Boolean(record)).sort((a, b) => a.id.localeCompare(b.id));
     for (const record of records) if (SECRET_LIKE.test(record.content) || SECRET_LIKE.test(record.title)) throw new Error("Memory export blocked: secret-like material detected in record " + record.id);
-    const exportedAt = now.toISOString(); const payload = exportPayload(exportedAt, records);
+    const checkpointIds = this.store.get<string[]>(this.checkpointIndexKey()) ?? [];
+    const checkpoints = checkpointIds.map(project => this.store.get<WorkingCheckpoint>(this.checkpointKey(project)))
+      .filter((checkpoint): checkpoint is WorkingCheckpoint => Boolean(checkpoint))
+      .sort((a, b) => a.project.localeCompare(b.project));
+    for (const checkpoint of checkpoints) {
+      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? [])].some(value => SECRET_LIKE.test(value))) {
+        throw new Error("Memory export blocked: secret-like material detected in checkpoint " + checkpoint.project);
+      }
+    }
+    const exportedAt = now.toISOString(); const payload = exportPayload(exportedAt, records, checkpoints);
     return { ...payload, checksum: checksum(payload) };
   }
 
   /** Verify the entire bundle before atomically importing; existing IDs are replaced. */
-  importBundle(bundle: MemoryExportBundle): { imported: number; checksum: string } {
+  importBundle(bundle: MemoryExportBundle): { imported: number; checkpointsImported: number; checksum: string } {
     if (!bundle || bundle.schemaVersion !== 1 || !Array.isArray(bundle.records) || !Array.isArray(bundle.checkpoints) || typeof bundle.exportedAt !== "string" || !Number.isFinite(Date.parse(bundle.exportedAt)) || typeof bundle.checksum !== "string") throw new Error("Invalid memory export bundle.");
     const payload = exportPayload(bundle.exportedAt, bundle.records, bundle.checkpoints);
     if (checksum(payload) !== bundle.checksum) throw new Error("Memory export checksum mismatch.");
