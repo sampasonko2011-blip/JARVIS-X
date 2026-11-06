@@ -149,3 +149,38 @@ test("already-aborted caller signal is rejected cleanly before authorization or 
  assert.equal(runtime.audit()[0].status,"REJECTED");
  assert.equal(runtime.audit()[0].executed,false);
 });
+
+
+test("timed-out non-cooperative handler retains concurrency lease until it settles",async()=>{
+ let finish,handlerStarted;
+ const started=new Promise(resolve=>{handlerStarted=resolve;});
+ const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:100,
+   authorize:async()=>true,
+   handlers:{inspect_diff:async()=>{handlerStarted();return new Promise(resolve=>{finish=()=>resolve({late:true});});}}
+ });
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"hang past deadline",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ await started;
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"must not overcommit",tool:"inspect_diff"}}),/CONCURRENCY_LIMIT/);
+ finish();
+ await new Promise(resolve=>setImmediate(resolve));
+ const accepted=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"slot released after settle",tool:"inspect_diff"}});
+ assert.equal(accepted.evidence.executed,true);
+});
+
+test("timed-out non-cooperative authorization retains concurrency lease and never starts handler",async()=>{
+ let finish,authorizationStarted,handlerCalls=0;
+ const started=new Promise(resolve=>{authorizationStarted=resolve;});
+ const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:100,
+   authorize:async()=>{authorizationStarted();return new Promise(resolve=>{finish=()=>resolve(true);});},
+   handlers:{inspect_diff:async()=>{handlerCalls++;return {ok:true};}}
+ });
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"authorization hangs",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
+ await started;
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"must remain blocked",tool:"inspect_diff"}}),/CONCURRENCY_LIMIT/);
+ assert.equal(handlerCalls,0);
+ finish();
+ await new Promise(resolve=>setImmediate(resolve));
+ const result=await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"authorization settled",tool:"inspect_diff"}});
+ assert.equal(result.evidence.executed,true);
+});
