@@ -46,13 +46,26 @@ export class MemoryOS {
     validDate(createdAt, "createdAt"); validDate(updatedAt, "updatedAt");
     if (input.expiresAt) validDate(input.expiresAt, "expiresAt");
     const record: MemoryRecord = { ...input, createdAt, updatedAt };
-    this.store.set(this.key(input.id), record);
     const ids = this.store.get<string[]>(this.indexKey()) ?? [];
-    if (!ids.includes(input.id)) this.store.set(this.indexKey(), [...ids, input.id]);
+    const nextIds = ids.includes(input.id) ? ids : [...ids, input.id];
+    if (this.store.setMany) this.store.setMany([{ key: this.key(input.id), value: record }, { key: this.indexKey(), value: nextIds }]);
+    else { this.store.set(this.key(input.id), record); this.store.set(this.indexKey(), nextIds); }
     return record;
   }
 
   get(id: string): MemoryRecord | undefined { return this.store.get<MemoryRecord>(this.key(id)); }
+
+  /** Delete a record with an optimistic timestamp check; unsupported stores fail closed. */
+  delete(id: string, expectedUpdatedAt: string): void {
+    if (!id.trim() || !expectedUpdatedAt.trim()) throw new Error("Memory id and expectedUpdatedAt are required.");
+    const current = this.get(id);
+    if (!current) throw new Error("Memory record does not exist: " + id);
+    if (current.updatedAt !== expectedUpdatedAt) throw new Error("Memory revision conflict; reload before deleting.");
+    if (!this.store.delete || !this.store.setMany) throw new Error("Backing store does not support atomic deletion; refusing partial delete.");
+    const ids = this.store.get<string[]>(this.indexKey()) ?? [];
+    this.store.setMany([{ key: this.indexKey(), value: ids.filter(value => value !== id) }]);
+    this.store.delete(this.key(id));
+  }
 
   saveCheckpoint(input: Omit<WorkingCheckpoint, "updatedAt"> & Partial<Pick<WorkingCheckpoint, "updatedAt">>, now = new Date()): WorkingCheckpoint {
     if (!input.project.trim() || !input.task.trim() || !input.nextAction.trim()) {
