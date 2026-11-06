@@ -22,3 +22,9 @@ All six profiles are DISABLED/PROPOSED and use the unassigned independence group
 
 ## Limitations
 The current registry is declarative. It does not create six external models, establish independent operators, provide durable audit, or prove a shared-state multi-agent runtime. Exact approval authentication and durable replay protection remain host integration requirements.
+
+## Verification ledger — 2026-11-06
+- CI run #1802 initially failed: 333/335 tests passed. The two failures were the exact-scope test's stale expected rejection and a duplicate independence-group diagnostic referencing the wrong object.
+- Both root causes have been patched on this branch. A later exact-head CI run is still required to validate the fixes.
+- The six candidate profiles remain disabled/proposed. Disabled proposals do not count as independent execution groups; an enabled agent must have a verified group.
+- The registry helper now requires a host-injected trusted authorization verifier; an approval-shaped object alone cannot authorize execution.
