@@ -90,17 +90,17 @@ test("tool broker rejects approvals bound to a different action or request", asy
     ...base,
     request: request({ approval: { ...approval, payload: { ...approval.payload, requestId: "another-request" } } }),
   });
-  assert.equal(wrongRequest.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongRequest.reason, "APPROVAL_VERIFICATION_FAILED");
   const wrongAction = await executeAuthorizedTool({
     ...base,
     request: request({ approval: { ...approval, payload: { ...approval.payload, action: "delete" } } }),
   });
-  assert.equal(wrongAction.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongAction.reason, "APPROVAL_VERIFICATION_FAILED");
   const wrongScope = await executeAuthorizedTool({
     ...base,
     request: request({ approval: { ...approval, payload: { ...approval.payload, scope: "record:999:update" } } }),
   });
-  assert.equal(wrongScope.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongScope.reason, "APPROVAL_VERIFICATION_FAILED");
   assert.equal(calls, 0);
 });
 
@@ -212,7 +212,7 @@ test("tool broker accepts opaque signed-token shape only after trusted verifier 
 test("tool broker blocks incomplete signed approval context before executor", async () => {
   let calls = 0;
   const result = await executeAuthorizedTool({
-    request: request({ approval: { payload: {}, signature: "opaque" } }),
+    request: request({ approval: { payload: {}, signature: "opaque" }, authenticatedSubject: "" }),
     tool,
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
