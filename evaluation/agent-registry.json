@@ -117,5 +117,37 @@
       "dataAccessScope": "selected-project-metadata-and-test-artifacts-only",
       "note": "Planning-only candidate; no background scheduling, production mutation, paid action or deployment."
     }
+  ],
+  "profiles": [
+    {
+      "id": "claude-style-engineering",
+      "label": "Claude-style engineering capability profile",
+      "aliases": [
+        "claude",
+        "claude-style",
+        "claude-coding"
+      ],
+      "agentId": "repository-engineering-agent",
+      "capabilities": [
+        "coding",
+        "code-review",
+        "architecture",
+        "debugging",
+        "test-design",
+        "technical-explanation"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_AGENT_AND_ADAPTER_ARE_EXPLICITLY_ENABLED"
+      },
+      "note": "Capability mapping only. This alias does not invoke Anthropic Claude, claim model access, or copy proprietary model weights."
+    }
   ]
 }
