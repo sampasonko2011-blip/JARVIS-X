@@ -203,7 +203,7 @@ test("tool broker accepts opaque signed-token shape only after trusted verifier 
   assert.equal(calls, 1);
   assert.equal(seen.requestId, "request-123");
   assert.equal(seen.action, "update");
-  assert.deepEqual(seen.scope, ["record:123:update"]);
+  assert.equal(seen.scope, "record:123:update");
 });
 
 test("tool broker blocks incomplete signed approval context before executor", async () => {
