@@ -33,3 +33,23 @@ export function resolveAgentProfile(registry, input) {
     reason: executionReady ? null : "A real enabled agent, validated evidence, adapter and governed host are still required."
   });
 }
+
+
+/**
+ * Resolve a profile alias and invoke only its explicitly enabled, authorized bridge.
+ * This does not create adapters or bypass the composite bridge's authorization.
+ */
+export async function invokeAgentProfile({
+  registry, bindings, command, task, role, context = {}, approval, signal
+}) {
+  const profile = resolveAgentProfile(registry, command);
+  if (!profile.matched) return { status: "UNKNOWN_PROFILE", invoked: false };
+  if (!profile.executionReady) return { status: "PROFILE_ONLY", invoked: false, profile };
+  const providerId = "agent:" + registry.profiles.find(item => item.id === profile.profileId).agentId;
+  const provider = bindings?.providers?.find(item => item.id === providerId);
+  if (!provider || typeof provider.execute !== "function") {
+    return { status: "ADAPTER_UNAVAILABLE", invoked: false, profile };
+  }
+  const result = await provider.execute({ task, role, context, approval, signal });
+  return { status: "INVOKED", invoked: true, profile, providerId, result };
+}
