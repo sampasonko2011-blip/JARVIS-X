@@ -65,6 +65,15 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     const abortFromCaller = () => controller.abort(callerSignal?.reason);
     if (callerSignal?.aborted) controller.abort(callerSignal.reason);
     else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
+    let rejectAbort;
+    const aborted = new Promise((_, reject) => { rejectAbort = reject; });
+    const abortFromController = () => {
+      const reason = controller.signal.reason;
+      rejectAbort(reason instanceof Error && reason.message === "AGENT_TIMEOUT"
+        ? reason : new Error("AGENT_INVOCATION_ABORTED"));
+    };
+    if (controller.signal.aborted) abortFromController();
+    else controller.signal.addEventListener("abort", abortFromController, { once: true });
     try {
       assert(!controller.signal.aborted, "AGENT_INVOCATION_ABORTED");
       assert(active < maxConcurrent, "AGENT_CONCURRENCY_LIMIT");
@@ -79,7 +88,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       });
       const allowed = await Promise.race([
         Promise.resolve().then(() => authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope })),
-        timeout
+        timeout, aborted
       ]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       assert(allowed === true, "Authorization denied");
@@ -88,11 +97,11 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       const operation = Promise.resolve().then(() => handlers[tool]({
         objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
       }));
-      const result = await Promise.race([operation, timeout]);
+      const result = await Promise.race([operation, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       const verified = await Promise.race([
         Promise.resolve().then(() => verify(result, { agentId, role, task, agent, tool })),
-        timeout
+        timeout, aborted
       ]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       evidence.verified = verified === true;
@@ -106,6 +115,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       if (timer) clearTimeout(timer);
       if (slotOwned) { active--; slotOwned = false; }
       callerSignal?.removeEventListener("abort", abortFromCaller);
+      controller.signal.removeEventListener("abort", abortFromController);
     }
   }
   return {
