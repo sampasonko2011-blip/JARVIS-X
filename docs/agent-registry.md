@@ -32,3 +32,11 @@ The current registry is declarative. It does not create six external models, est
 
 ## Refinement — verifier trust boundary
 The runtime's default verifier now returns false. A handler cannot validate its own output merely by returning `{ verified: true }`. The host must inject an independent verifier; only an explicit verifier success produces VALIDATED. Unverified outputs remain UNPROVEN. Handler exceptions are retained in the in-memory audit ledger as REJECTED before being re-thrown. This ledger remains volatile and is not a tamper-resistant audit trail.
+
+## Runtime hardening — 2026-11-06
+
+- Concurrency leases remain held after timeout/cancellation until every in-flight authorization, handler and verifier promise settles. Non-cooperative host work therefore blocks new work instead of silently exceeding the configured concurrency cap.
+- The runtime snapshots and freezes the task before authorization, execution and verification. The same immutable task view is used throughout to prevent time-of-check/time-of-use mutation.
+- Host handler mappings are captured at runtime construction so later caller mutation cannot replace an approved executor.
+- Regression tests cover a non-cooperative handler timeout, non-cooperative authorization timeout, task mutation during authorization and handler-map mutation.
+- These are source-level controls. They do not make a malicious host adapter safe, terminate non-cooperative work, or provide durable audit. A hung host promise intentionally retains its slot indefinitely; operational recovery requires host-level process isolation/restart and monitoring.
