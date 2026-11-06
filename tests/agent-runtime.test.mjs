@@ -73,3 +73,22 @@ test("late handler completion after caller cancellation cannot be verified as su
  assert.equal(runtime.audit()[0].status,"REJECTED");
  assert.equal(runtime.audit()[0].verified,false);
 });
+
+
+test("public validation snapshot cannot mutate the runtime policy",async()=>{
+ const runtime=createAgentRuntime({registry:registry(agent({activation:"DISABLED"}))});
+ const exposed=runtime.validation;
+ exposed.valid=true;
+ exposed.errors.push("caller mutation");
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"must stay disabled",tool:"inspect_diff"}}),/disabled/);
+ assert.equal(runtime.validation.valid,true);
+ assert.deepEqual(runtime.validation.errors,[]);
+});
+
+test("audit retention is bounded and task objective size is capped",async()=>{
+ const runtime=createAgentRuntime({registry:registry(agent()),maxAuditEntries:10,handlers:{inspect_diff:async()=>({ok:true})},authorize:async()=>true});
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"x".repeat(8001),tool:"inspect_diff"}}),/8000-character/);
+ for(let i=0;i<12;i++) await runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"audit "+i,tool:"inspect_diff"}});
+ assert.equal(runtime.audit().length,10);
+ assert.equal(runtime.audit()[0].executed,true);
+});
