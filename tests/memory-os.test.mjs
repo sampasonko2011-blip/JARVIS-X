@@ -43,3 +43,29 @@ test("MemoryOS rejects invalid confidence and empty queries safely", () => {
   assert.throws(() => memory.save({ id: "bad", title: "Bad", content: "Bad confidence", kind: "semantic", status: "OBSERVED", confidence: 1.5 }), /between 0 and 1/);
   assert.deepEqual(memory.search("!!!"), []);
 });
+
+test("MemoryOS deletes a record and index entry together with optimistic revision guard", () => {
+  const memory = new MemoryOS(new InMemoryStore());
+  const record = memory.save({ id: "remove-me", title: "Temporary note", content: "delete transaction", kind: "semantic", status: "OBSERVED" });
+  assert.throws(() => memory.delete("remove-me", "stale-revision"), /revision conflict/);
+  assert.equal(memory.get("remove-me").id, "remove-me");
+  memory.delete("remove-me", record.updatedAt);
+  assert.equal(memory.get("remove-me"), undefined);
+  assert.deepEqual(memory.search("Temporary note"), []);
+});
+
+test("JsonFileMemoryStore commits multi-key updates in one restart-safe snapshot", () => {
+  const directory = mkdtempSync(join(tmpdir(), "jarvis-x-atomic-"));
+  try {
+    const path = join(directory, "memory.json");
+    const store = new JsonFileMemoryStore(path);
+    store.setMany([{ key: "record:a", value: { id: "a" } }, { key: "index", value: ["a"] }]);
+    const restarted = new JsonFileMemoryStore(path);
+    assert.deepEqual(restarted.get("record:a"), { id: "a" });
+    assert.deepEqual(restarted.get("index"), ["a"]);
+    restarted.deleteMany(["record:a"], [{ key: "index", value: [] }]);
+    const afterDelete = new JsonFileMemoryStore(path);
+    assert.equal(afterDelete.get("record:a"), undefined);
+    assert.deepEqual(afterDelete.get("index"), []);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
