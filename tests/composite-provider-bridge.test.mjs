@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCompositeProviderBindings, evaluateCompositeReadiness } from "../evaluation/composite-provider-bridge.mjs";
+import { CompositeEngine } from "../dist/core/composite.js";
 
 const candidate = (id, provider, status = "OBSERVED", roles = ["reasoning", "critique"]) => ({
   id, provider, model_id: id + "-model", status, roles
@@ -125,4 +126,34 @@ test("readiness gate refuses to pretend three vendors meet the five-organ compos
   assert.equal(readiness.canInvoke, false);
   assert.equal(readiness.status, "BLOCKED_INSUFFICIENT_INDEPENDENT_PROVIDERS");
   assert.equal(readiness.minimumProviders, 5);
+});
+
+test("provider bridge runs through the real CompositeEngine with five independent mock vendors", async () => {
+  const registry = { candidates: [
+    candidate("openai", "OpenAI", "VALIDATED", ["reasoning"]),
+    candidate("anthropic", "Anthropic", "VALIDATED", ["critique"]),
+    candidate("deepseek", "DeepSeek", "OBSERVED", ["coding"]),
+    candidate("google", "Google", "OBSERVED", ["research"]),
+    candidate("mistral", "Mistral AI", "OBSERVED", ["execution"])
+  ] };
+  const adapters = Object.fromEntries(registry.candidates.map(item => [item.id, async ({ task, role }) => ({
+    text: item.id === "anthropic" ? "independent critique: " + task : "proposal from " + item.id + " for " + role,
+    requested_model_id: item.model_id,
+    observed_model_id: item.model_id,
+    latency_ms: 3
+  })]));
+  const bindings = createCompositeProviderBindings(registry, adapters);
+  const readiness = evaluateCompositeReadiness(bindings);
+  assert.equal(readiness.canInvoke, true);
+  const engine = new CompositeEngine(bindings.providers);
+  const result = await engine.run(
+    { id: "bridge-integration", objective: "produce a test proposal" },
+    bindings.roster,
+    response => typeof response.output?.text === "string" && response.output.text.length > 0
+  );
+  assert.equal(result.verification, "VALIDATED");
+  assert.equal(result.membersInvoked.length, 5);
+  assert.equal(result.selected.length, 5);
+  assert.ok(result.membersInvoked.includes("anthropic"));
+  assert.ok(result.rationale.some(item => item.includes("independent critic output passed")));
 });
