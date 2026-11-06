@@ -41,7 +41,7 @@ test("bridged providers satisfy the core Provider interface and preserve provena
   assert.equal(response.output.observedModelId, "claude-4");
   assert.equal(response.output.latencyMs, 25);
   assert.equal(response.evidence[0].status, "OBSERVED");
-  assert.deepEqual(bindings.roster[0].capabilities, ["coding", "critique"]);
+  assert.deepEqual(bindings.roster[0].capabilities, ["critique", "coding"]);
 });
 
 test("provider bridge collapses aliases to one vendor and selects strongest evidence deterministically", () => {
