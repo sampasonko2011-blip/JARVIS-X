@@ -29,7 +29,7 @@ export function createCompositeAgentBindings(registry, adapters, { authorize = a
       unavailable.push({ agentId: agent.id, reason: "EVIDENCE_NOT_ELIGIBLE" });
       continue;
     }
-    if (typeof adapters?.[agent.id] !== "function") {
+    if (!runtime && typeof adapters?.[agent.id] !== "function") {
       unavailable.push({ agentId: agent.id, reason: "ADAPTER_NOT_CONFIGURED" });
       continue;
     }
