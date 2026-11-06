@@ -6,6 +6,7 @@ export interface MemoryStore {
   get<T>(key: string): T | undefined;
   set<T>(key: string, value: T): void;
   delete?(key: string): void;
+  deleteMany?(keys: string[], updates?: Array<{ key: string; value: unknown }>): void;
   setMany?<T>(entries: Array<{ key: string; value: T }>): void;
 }
 
@@ -15,6 +16,13 @@ export class InMemoryStore implements MemoryStore {
   get<T>(key: string): T | undefined { return this.values.get(key) as T | undefined; }
   set<T>(key: string, value: T): void { this.values.set(key, value); }
   delete(key: string): void { this.values.delete(key); }
+  deleteMany(keys: string[], updates: Array<{ key: string; value: unknown }> = []): void {
+    const next = new Map(this.values);
+    for (const key of keys) next.delete(key);
+    for (const entry of updates) next.set(entry.key, JSON.parse(JSON.stringify(entry.value)) as unknown);
+    this.values.clear();
+    for (const [key, value] of next) this.values.set(key, value);
+  }
   setMany<T>(entries: Array<{ key: string; value: T }>): void {
     const next = new Map(this.values);
     for (const entry of entries) {
@@ -75,6 +83,26 @@ export class JsonFileMemoryStore implements MemoryStore {
     this.values.delete(key);
     try { this.persist(); }
     catch (error) { this.values.set(key, previous); throw error; }
+  }
+  deleteMany(keys: string[], updates: Array<{ key: string; value: unknown }> = []): void {
+    const next = new Map(this.values);
+    for (const key of keys) next.delete(key);
+    for (const entry of updates) {
+      if (!entry.key.trim()) throw new Error("Memory key must be non-empty.");
+      let encoded: string | undefined;
+      try { encoded = JSON.stringify(entry.value); } catch { throw new Error("Memory values must be JSON-serializable."); }
+      if (encoded === undefined) throw new Error("Memory values must be JSON-serializable.");
+      next.set(entry.key, JSON.parse(encoded) as unknown);
+    }
+    const previous = new Map(this.values);
+    this.values.clear();
+    for (const [key, value] of next) this.values.set(key, value);
+    try { this.persist(); }
+    catch (error) {
+      this.values.clear();
+      for (const [key, value] of previous) this.values.set(key, value);
+      throw error;
+    }
   }
 
   /** Persist a group of values in one snapshot so record + index cannot split across writes. */
