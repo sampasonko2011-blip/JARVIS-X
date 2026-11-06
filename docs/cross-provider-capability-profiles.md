@@ -67,3 +67,15 @@ The registry, aliases, role vocabulary, task envelope and evidence format are de
 JARVIS-X may continuously identify candidate models and adapters for a capability, but discovery is not activation. A candidate must have an explicit provider/model identity, verified adapter and authentication state, declared permissions, cost/latency envelope, and task-relevant evaluation evidence. Compare it against the current baseline on representative tasks, then run held-out retests, independent verification and security/privacy/cost regression checks.
 
 The system may recommend **KEEP**, **MODIFY**, **REPLACE** or **COMPOSE**. Replacement and provider activation remain proposals until the user approves the consequential change. Composition is appropriate when specialists provide complementary, non-duplicative capabilities through interoperable scoped task contracts; outputs enter one shared evidence ledger and one JARVIS-X synthesis. A second model from the same operator is not automatically an independent verifier. No brand, marketing benchmark or untested claim is sufficient to promote a candidate.
+
+## Runtime command routing contract
+
+The command parser may call `invokeAgentProfile({ registry, bindings, command, task, role, context, approval, signal })`. It resolves an alias, checks profile and agent enablement/evidence, finds the matching composite bridge provider, then delegates to that provider. The composite bridge remains responsible for authorization, least-privilege tool scope, structured output and governed runtime behavior. The router cannot activate an agent or manufacture a provider connection.
+
+Possible outcomes:
+- `UNKNOWN_PROFILE`: alias not registered.
+- `PROFILE_ONLY`: profile/agent is not explicitly enabled with eligible evidence.
+- `ADAPTER_UNAVAILABLE`: enabled profile has no injected adapter binding.
+- `INVOKED`: the bridge was called; this does not alone mean output correctness is validated.
+
+A production chat host must explicitly load the approved registry and adapters and pass the user's actual task approval to the governed bridge. Do not expose raw vendor credentials to the profile parser or client.
