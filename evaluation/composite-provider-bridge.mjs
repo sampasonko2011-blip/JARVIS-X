@@ -102,7 +102,7 @@ export function createCompositeProviderBindings(registry, adapters) {
       providerId: id,
       capabilities: capabilities.map(capability => capability.kind),
       utilityScore: 0,
-      status: candidate.status as "OBSERVED" | "VALIDATED"
+      status: candidate.status
     });
   }
   return { providers, roster, unavailable };
