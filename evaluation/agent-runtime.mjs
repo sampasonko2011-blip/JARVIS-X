@@ -61,6 +61,16 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     const evidence = { agentId, role, tool, status: "UNPROVEN", authorized: false, executed: false, verified: false, failure: null };
     record(evidence);
     let timer, slotOwned = false;
+    const pendingWork = [];
+    const trackWork = promise => {
+      const item = { promise: Promise.resolve(promise), settled: false };
+      item.promise.then(() => { item.settled = true; }, () => { item.settled = true; });
+      pendingWork.push(item);
+      return item.promise;
+    };
+    const releaseSlot = () => {
+      if (slotOwned) { active--; slotOwned = false; }
+    };
     const controller = new AbortController();
     const abortFromCaller = () => controller.abort(callerSignal?.reason);
     if (callerSignal?.aborted) controller.abort(callerSignal.reason);
@@ -89,23 +99,19 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
           reject(new Error("AGENT_TIMEOUT"));
         }, timeoutMs);
       });
-      const allowed = await Promise.race([
-        Promise.resolve().then(() => authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope })),
-        timeout, aborted
-      ]);
+      const authorization = trackWork(Promise.resolve().then(() => authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope })));
+      const allowed = await Promise.race([authorization, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       assert(allowed === true, "Authorization denied");
       evidence.authorized = true;
       evidence.executed = true;
-      const operation = Promise.resolve().then(() => handlers[tool]({
+      const operation = trackWork(Promise.resolve().then(() => handlers[tool]({
         objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
-      }));
+      })));
       const result = await Promise.race([operation, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
-      const verified = await Promise.race([
-        Promise.resolve().then(() => verify(result, { agentId, role, task, agent, tool })),
-        timeout, aborted
-      ]);
+      const verification = trackWork(Promise.resolve().then(() => verify(result, { agentId, role, task, agent, tool })));
+      const verified = await Promise.race([verification, timeout, aborted]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       evidence.verified = verified === true;
       evidence.status = verified === true ? "VALIDATED" : "UNPROVEN";
@@ -116,7 +122,16 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       throw error;
     } finally {
       if (timer) clearTimeout(timer);
-      if (slotOwned) { active--; slotOwned = false; }
+      // A timeout/cancellation must not free capacity while injected host work is
+      // still running. A non-cooperative handler/authorizer/verifier holds the
+      // lease until it settles; this is fail-closed rather than overcommitting.
+      if (slotOwned && pendingWork.some(item => !item.settled)) {
+        const outstanding = pendingWork.map(item => item.promise);
+        Promise.allSettled(outstanding).then(releaseSlot);
+        slotOwned = false;
+      } else {
+        releaseSlot();
+      }
       callerSignal?.removeEventListener("abort", abortFromCaller);
       controller.signal.removeEventListener("abort", abortFromController);
     }
