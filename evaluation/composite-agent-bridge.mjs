@@ -19,7 +19,7 @@ export function createCompositeAgentBindings(registry, adapters) {
   const selected = new Map();
   for (const agent of registry?.agents ?? []) {
     if (!agent?.id || !agent.independenceGroup) continue;
-    if (agent.activation !== "EXPLICITLY_ENABLED") {
+    if (agent.activation !== "ENABLED") {
       unavailable.push({ agentId: agent.id, reason: "NOT_EXPLICITLY_ENABLED" });
       continue;
     }
