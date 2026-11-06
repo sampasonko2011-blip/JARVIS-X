@@ -77,7 +77,10 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
       }));
       operation.then(() => { if (slotOwned) { active--; slotOwned = false; } }, () => { if (slotOwned) { active--; slotOwned = false; } });
       const result = await Promise.race([operation, timeout]);
+      // A timeout/caller abort must not be converted into success by a late handler result.
+      if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       const verified = await verify(result, { agentId, role, task, agent, tool });
+      if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       evidence.verified = verified === true;
       evidence.status = verified === true ? "VALIDATED" : "UNPROVEN";
       return { result, evidence };
