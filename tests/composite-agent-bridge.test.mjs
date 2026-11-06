@@ -127,7 +127,7 @@ test("governed bridge delegates authorization, execution and verification to the
   });
   const bindings = createCompositeAgentBindings(
     { agents: [registryAgent] },
-    { "governed-agent": async () => { adapterCalls++; return { output: "bypass" }; } },
+    {},
     { runtime }
   );
   const result = await bindings.providers[0].execute({
@@ -145,7 +145,7 @@ test("governed bridge refuses missing tool selection before invoking runtime", a
   const runtime = { run: async () => { runtimeCalls++; return { result: { output: "no" } }; } };
   const bindings = createCompositeAgentBindings(
     { agents: [agent("agent", "operator")] },
-    { agent: async () => ({ output: "fallback" }) },
+    {},
     { runtime }
   );
   await assert.rejects(bindings.providers[0].execute({
