@@ -7,6 +7,7 @@ Bridge the existing vendor-specific adapters in `evaluation/provider-adapters.mj
 - Maps supported candidate roles to the core capability taxonomy.
 - Requires an existing adapter and OBSERVED or VALIDATED candidate evidence.
 - Collapses model aliases from the same vendor to one provider identity so one vendor cannot occupy multiple independent composite slots.
+- Assigns exactly one deterministic critic role in the CompositeEngine roster; other vendors retain their non-critic role as the primary slot so the composite does not misclassify every provider as the critic.
 - Chooses the strongest evidence status deterministically; ties use candidate ID ordering.
 - Preserves requested/observed model ID, latency and usage metadata in the returned response.
 - Constructs bindings without invoking a model. Invocation occurs only when the caller explicitly runs the CompositeEngine.
