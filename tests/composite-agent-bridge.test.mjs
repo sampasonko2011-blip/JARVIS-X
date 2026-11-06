@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createCompositeAgentBindings, evaluateAgentReadiness } from "../evaluation/composite-agent-bridge.mjs";
 
 const agent = (id, group, extra = {}) => ({
-  id, independenceGroup: group, activation: "EXPLICITLY_ENABLED",
+  id, independenceGroup: group, activation: "ENABLED",
   status: "OBSERVED", roles: ["research", "critique"],
   allowedTools: ["read_public_web"], dataAccessScope: "public-only", ...extra
 });
