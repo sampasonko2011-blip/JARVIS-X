@@ -11,7 +11,7 @@
 
 
 - Composite-agent bridge supports an explicit governed mode: pass the shared `createAgentRuntime(...)` instance as `{ runtime }`. In this mode each invocation requires `task.tool` and delegates to `runtime.run`; the compatibility adapter is not called. The runtime owns its configured handler, authorization, immutable task snapshot, timeout, cancellation, concurrency lease and independent verifier. Runtime evidence is propagated to the Provider response. The legacy bridge-only authorization path remains for compatibility and is not equivalent to governed execution.
-- Regression tests exercise the governed bridge path, assert the compatibility adapter is never invoked, require independent verifier evidence, and reject missing tool selection before runtime invocation.
+- Regression tests exercise the governed bridge path without any legacy adapter configured, require independent verifier evidence, and reject missing tool selection before runtime invocation.
 
 ## Truth and safety boundaries
 - Registry entries begin DISABLED and PROPOSED. They are candidates, not discovered connected agents.
