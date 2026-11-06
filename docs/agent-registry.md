@@ -28,3 +28,7 @@ The current registry is declarative. It does not create six external models, est
 - Both root causes have been patched on this branch. A later exact-head CI run is still required to validate the fixes.
 - The six candidate profiles remain disabled/proposed. Disabled proposals do not count as independent execution groups; an enabled agent must have a verified group.
 - The registry helper now requires a host-injected trusted authorization verifier; an approval-shaped object alone cannot authorize execution.
+
+
+## Refinement — verifier trust boundary
+The runtime's default verifier now returns false. A handler cannot validate its own output merely by returning `{ verified: true }`. The host must inject an independent verifier; only an explicit verifier success produces VALIDATED. Unverified outputs remain UNPROVEN. Handler exceptions are retained in the in-memory audit ledger as REJECTED before being re-thrown. This ledger remains volatile and is not a tamper-resistant audit trail.
