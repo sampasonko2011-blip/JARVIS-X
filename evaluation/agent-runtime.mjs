@@ -2,6 +2,13 @@ const ALLOWED_STATUSES = new Set(["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN
 const ALLOWED_ACTIVATION = new Set(["DISABLED", "ENABLED"]);
 const SAFE_TOOLS = new Set(["read_public_web", "read_repository", "propose_patch", "run_sandbox_tests", "read_test_results", "inspect_diff"]);
 function assert(condition, message) { if (!condition) throw new TypeError(message); }
+function deepFreeze(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
 export function validateAgentRegistry(registry) {
   assert(registry && typeof registry === "object" && Array.isArray(registry.agents), "registry.agents must be an array");
   const ids = new Set(), groups = new Set(), errors = [];
@@ -26,10 +33,12 @@ export function validateAgentRegistry(registry) {
 }
 /** Host-injected, deny-by-default dispatcher. Discovery never implies execution. */
 export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false } = {}) {
-  const audit = [], validation = validateAgentRegistry(registry);
+  // Snapshot untrusted declarative input once; later caller mutation cannot grant tools or enable agents.
+  const trustedRegistry = deepFreeze(structuredClone(registry));
+  const audit = [], validation = validateAgentRegistry(trustedRegistry);
   async function run({ agentId, role, task, approval }) {
     assert(validation.valid, "Agent registry invalid: " + validation.errors.join(","));
-    const agent = registry.agents.find(item => item.id === agentId);
+    const agent = trustedRegistry.agents.find(item => item.id === agentId);
     assert(agent, "Unknown agent: " + agentId);
     assert(agent.activation === "ENABLED", "Agent is disabled");
     assert(agent.status === "OBSERVED" || agent.status === "VALIDATED", "Agent evidence is not eligible");
@@ -56,7 +65,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
   }
   return {
     validation,
-    list() { return registry.agents.map(({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope }) => ({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope })); },
+    list() { return trustedRegistry.agents.map(({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope }) => ({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope })); },
     run,
     audit() { return audit.map(item => ({ ...item })); }
   };
