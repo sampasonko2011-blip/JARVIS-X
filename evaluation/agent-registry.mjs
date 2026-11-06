@@ -10,6 +10,11 @@ const norm = value => String(value ?? "").trim().toLowerCase();
 
 export class AgentRegistry {
   #agents = new Map();
+  #authorize;
+  constructor({ authorize = async () => false } = {}) {
+    if (typeof authorize !== "function") throw new TypeError("A trusted authorization verifier is required");
+    this.#authorize = authorize;
+  }
   register(agent) {
     if (!agent || typeof agent.id !== "string" || !/^[a-z0-9][a-z0-9._-]{1,63}$/i.test(agent.id)) throw new TypeError("Invalid agent id");
     if (this.#agents.has(agent.id)) throw new Error("Duplicate agent id");
@@ -36,9 +41,15 @@ export class AgentRegistry {
     if(!a) throw new Error("Unknown agent");
     if(!task || typeof task.objective!=="string" || !task.objective.trim()) throw new TypeError("A non-empty task objective is required");
     if(!approvedScope || approvedScope.action!=="agent.invoke" || approvedScope.resource!==id ||
-       approvedScope.scope!==id+":"+norm(role) || approvedScope.taskDigest!==task.digest ||
-       approvedScope.subject!==task.authenticatedSubject) throw new Error("Exact-scope approval required");
+       approvedScope.scope!==id+":"+norm(role) || typeof task.digest!=="string" || !task.digest ||
+       typeof task.authenticatedSubject!=="string" || !task.authenticatedSubject ||
+       approvedScope.taskDigest!==task.digest || approvedScope.subject!==task.authenticatedSubject) {
+      throw new Error("Exact-scope approval required");
+    }
     if(!a.roles.includes(norm(role))) throw new Error("Agent is not registered for requested role");
+    if(await this.#authorize({agentId:id,role:norm(role),task,approvedScope}) !== true) {
+      throw new Error("Trusted authorization verifier denied invocation");
+    }
     const result=await a.execute({task,role:norm(role),signal});
     if(!result || typeof result.output!=="string" || !result.output.trim()) throw new Error("Agent returned no usable output");
     return {agentId:id,independenceGroup:a.independenceGroup,output:result.output,
