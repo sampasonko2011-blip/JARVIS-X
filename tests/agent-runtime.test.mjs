@@ -92,3 +92,20 @@ test("audit retention is bounded and task objective size is capped",async()=>{
  assert.equal(runtime.audit().length,10);
  assert.equal(runtime.audit()[0].executed,true);
 });
+
+
+test("authorization is deadline-bounded and a timed-out authorizer cannot start a handler",async()=>{
+ let calls=0;
+ const runtime=createAgentRuntime({registry:registry(agent()),timeoutMs:100,authorize:async()=>new Promise(()=>{}),handlers:{inspect_diff:async()=>{calls++;return {ok:true};}}});
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"auth timeout",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
+ assert.equal(calls,0);
+ assert.equal(runtime.audit()[0].authorized,false);
+ assert.equal(runtime.audit()[0].executed,false);
+});
+
+test("independent verification is deadline-bounded and remains unvalidated on timeout",async()=>{
+ const runtime=createAgentRuntime({registry:registry(agent()),timeoutMs:100,handlers:{inspect_diff:async()=>({finding:"done"})},authorize:async()=>true,verify:async()=>new Promise(()=>{})});
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"verify timeout",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ assert.equal(runtime.audit()[0].verified,false);
+});
