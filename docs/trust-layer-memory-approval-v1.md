@@ -10,13 +10,13 @@
 
 ## Explicit non-claims
 
-This is a library boundary, not a complete production trust boundary. No production key provider, authenticated identity adapter, durable atomic replay store, or live gateway/tool-broker integration is included. The token issuer must receive an identity already authenticated by a trusted host. A caller-supplied subject is not authentication. An in-memory replay store is not replay protection across restarts or instances.
+This is a library boundary, not a complete production trust boundary. No production key provider, authenticated identity adapter, durable atomic replay store, or production gateway identity/key/replay integration is included. The HQ tool-broker source now accepts opaque approval-token data and delegates to an injected verifier; this is source-level wiring only, not a production identity or key service. The token issuer must receive an identity already authenticated by a trusted host. A caller-supplied subject is not authentication. An in-memory replay store is not replay protection across restarts or instances.
 
 `JsonFileMemoryStore` remains single-process local storage. Atomic rename protects a snapshot from partial replacement, but does not establish multi-process locking, distributed consistency, encryption at rest, account isolation, or cross-device synchronization.
 
 ## Required integration sequence
 
-1. Wire one `ApprovalAuthority` verifier into both the self-audit write gate and the tool broker. Remove trust in caller-supplied `approvedBy` or boolean approval flags.
+1. Complete the remaining self-audit write-gate integration with the same `ApprovalAuthority` verifier; retain the HQ broker's injected-verifier boundary. Remove trust in caller-supplied `approvedBy` or boolean approval flags.
 2. Bind issuer identity to the existing authenticated session/account provider. If no trusted identity adapter is present, fail closed.
 3. Inject signing keys from an authorized secret manager. Never commit or print key material; define rotation and revocation behavior before production use.
 4. Implement durable, atomic, cross-instance `consumeOnce(jti, expiresAt)` with a uniqueness constraint / compare-and-set. If unavailable or unhealthy, deny the write.
@@ -33,3 +33,10 @@ The module can be considered source-level implemented only after CI passes. Prod
 The HQ broker now treats caller-supplied approvals as opaque signed-token data and delegates trust to an injected verifier before policy evaluation. The verifier context binds authenticated subject, action, resource, canonical sorted scope, candidate revision, audience, policy version, request ID and idempotency key. The test fixtures use opaque-token shapes; this still does not install a production identity adapter, key manager, durable replay store or connector.
 
 CI fixture follow-up: the opaque-token broker tests assert verifier rejection for mismatched action/request/scope and explicitly remove the authenticated subject in the incomplete-context case. Latest CI exposed two assertion/fixture mismatches; these have been corrected and require a fresh exact-head run.
+
+
+## Agent capability runtime checkpoint (2026-11-06)
+- Added a declarative specialist-agent registry. All entries are DISABLED and PROPOSED; independence groups remain unassigned until actual separate providers/operators/execution paths are evidenced.
+- Added a deny-by-default runtime with host-injected handlers, explicit authorization, per-agent tool allowlists and data-access scope.
+- Added tests for duplicate IDs, unsafe tool names, unassigned independence, disabled agents, authorization denial, positive authorized dispatch and failed verification.
+- No agents are activated and no external agent/model is claimed to have participated. The in-memory audit is not durable.
