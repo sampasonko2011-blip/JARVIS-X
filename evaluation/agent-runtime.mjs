@@ -32,12 +32,19 @@ export function validateAgentRegistry(registry) {
   return { valid: errors.length === 0, errors, agentCount: ids.size, independentGroups: groups.size };
 }
 /** Host-injected, deny-by-default dispatcher. Discovery never implies execution. */
-export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false, maxConcurrent = 3, timeoutMs = 30000 } = {}) {
+export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false, maxConcurrent = 3, timeoutMs = 30000, maxAuditEntries = 500 } = {}) {
   assert(Number.isSafeInteger(maxConcurrent) && maxConcurrent >= 1 && maxConcurrent <= 8, "maxConcurrent must be 1..8");
   assert(Number.isSafeInteger(timeoutMs) && timeoutMs >= 100 && timeoutMs <= 120000, "timeoutMs must be 100..120000");
+  assert(Number.isSafeInteger(maxAuditEntries) && maxAuditEntries >= 10 && maxAuditEntries <= 10000, "maxAuditEntries must be 10..10000");
   // Snapshot untrusted declarative input once; later caller mutation cannot grant tools or enable agents.
   const trustedRegistry = deepFreeze(structuredClone(registry));
-  const audit = [], validation = validateAgentRegistry(trustedRegistry);
+  const checked = validateAgentRegistry(trustedRegistry);
+  const validation = Object.freeze({ ...checked, errors: Object.freeze([...checked.errors]) });
+  const audit = [];
+  const record = entry => {
+    audit.push(entry);
+    if (audit.length > maxAuditEntries) audit.splice(0, audit.length - maxAuditEntries);
+  };
   let active = 0;
   async function run({ agentId, role, task, approval, signal: callerSignal }) {
     assert(validation.valid, "Agent registry invalid: " + validation.errors.join(","));
@@ -50,8 +57,9 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     const tool = task.tool;
     assert(typeof tool === "string" && agent.allowedTools.includes(tool) && SAFE_TOOLS.has(tool), "Tool is outside agent allowlist");
     assert(typeof handlers[tool] === "function", "No trusted host handler is configured for tool");
+    assert(task.objective.length <= 8000, "Task objective exceeds the 8000-character limit");
     const evidence = { agentId, role, tool, status: "UNPROVEN", authorized: false, executed: false, verified: false, failure: null };
-    audit.push(evidence);
+    record(evidence);
     let timer, slotOwned = false;
     const controller = new AbortController();
     const abortFromCaller = () => controller.abort(callerSignal?.reason);
@@ -95,7 +103,7 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     }
   }
   return {
-    validation,
+    get validation() { return { valid: validation.valid, errors: [...validation.errors], agentCount: validation.agentCount, independentGroups: validation.independentGroups }; },
     list() { return trustedRegistry.agents.map(({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope }) => ({ id, kind, roles, activation, status, independenceGroup, allowedTools, dataAccessScope })); },
     run,
     audit() { return audit.map(item => ({ ...item })); }
