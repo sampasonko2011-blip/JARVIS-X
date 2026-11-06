@@ -20,3 +20,11 @@
 
 ## Production integration gate
 Bind authenticated identity, approval receipts, replay protection, durable audit, timeout/cancellation, per-tool policy, tenant isolation and rate/cost controls before enabling agents. This PR does not change production configuration or activate agents.
+
+## Runtime hardening — 2026-11-06
+
+- Concurrency leases remain held after timeout/cancellation until every in-flight authorization, handler and verifier promise settles. Non-cooperative host work therefore blocks new work instead of silently exceeding the configured concurrency cap.
+- The runtime snapshots and freezes the task before authorization, execution and verification. The same immutable task view is used throughout to prevent time-of-check/time-of-use mutation.
+- Host handler mappings are captured at runtime construction so later caller mutation cannot replace an approved executor.
+- Regression tests cover a non-cooperative handler timeout, non-cooperative authorization timeout, task mutation during authorization and handler-map mutation.
+- These are source-level controls. They do not make a malicious host adapter safe, terminate non-cooperative work, or provide durable audit. A hung host promise intentionally retains its slot indefinitely; operational recovery requires host-level process isolation/restart and monitoring.
