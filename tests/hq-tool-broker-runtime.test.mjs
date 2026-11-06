@@ -169,3 +169,55 @@ test("tool broker blocks before execution if the pre-execution audit fails", asy
   assert.equal(result.reason, "PRE_EXECUTION_AUDIT_FAILED");
   assert.equal(calls, 0);
 });
+
+
+test("tool broker accepts opaque signed-token shape only after trusted verifier and binds complete approval context", async () => {
+  let calls = 0;
+  let seen;
+  const token = { payload: { jti: "jti-1" }, signature: "opaque-signature" };
+  const result = await executeAuthorizedTool({
+    request: request({
+      approval: token,
+      resource: "record:123",
+      candidateRevision: "rev-7",
+      authenticatedSubject: "owner-1",
+      audience: "jarvis-x-tool-broker",
+      policyVersion: "v1",
+    }),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    async verifyApproval(candidate, context) {
+      seen = context;
+      return candidate === token &&
+        context.authenticatedSubject === "owner-1" &&
+        context.resource === "record:123" &&
+        context.candidateRevision === "rev-7" &&
+        context.audience === "jarvis-x-tool-broker" &&
+        context.policyVersion === "v1";
+    },
+    audit: auditOk,
+  });
+  assert.equal(result.status, "EXECUTED");
+  assert.equal(calls, 1);
+  assert.equal(seen.requestId, "request-123");
+  assert.equal(seen.action, "update");
+  assert.deepEqual(seen.scope, ["record:123:update"]);
+});
+
+test("tool broker blocks incomplete signed approval context before executor", async () => {
+  let calls = 0;
+  const result = await executeAuthorizedTool({
+    request: request({ approval: { payload: {}, signature: "opaque" } }),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
+    audit: auditOk,
+  });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.reason, "APPROVAL_CONTEXT_INCOMPLETE");
+  assert.equal(calls, 0);
+});
