@@ -137,3 +137,15 @@ test("caller cancellation interrupts pending authorization before handler execut
  assert.equal(runtime.audit()[0].authorized,false);
  assert.equal(runtime.audit()[0].executed,false);
 });
+
+
+test("already-aborted caller signal is rejected cleanly before authorization or handler execution",async()=>{
+ const controller=new AbortController(); controller.abort();
+ let authorizationCalls=0,handlerCalls=0;
+ const runtime=createAgentRuntime({registry:registry(agent()),authorize:async()=>{authorizationCalls++;return true;},handlers:{inspect_diff:async()=>{handlerCalls++;return {ok:true};}}});
+ await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"pre-aborted",tool:"inspect_diff"},signal:controller.signal}),/AGENT_INVOCATION_ABORTED/);
+ assert.equal(authorizationCalls,0);
+ assert.equal(handlerCalls,0);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ assert.equal(runtime.audit()[0].executed,false);
+});
