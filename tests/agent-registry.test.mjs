@@ -62,3 +62,14 @@ test("approval-shaped data is not authorization without a trusted verifier", asy
   const approvedScope = {action:"agent.invoke",resource:"research-1",scope:"research-1:research",taskDigest:"digest",subject:"subject"};
   await assert.rejects(registry.invoke("research-1",{task,role:"research",approvedScope}),/Trusted authorization verifier denied/);
 });
+
+test("six proposed specialists remain disabled and registry-valid", async () => {
+  const { validateAgentRegistry, createAgentRuntime } = await import("../evaluation/agent-runtime.mjs");
+  const { default: manifest } = await import("../evaluation/agent-registry.json", { with: { type: "json" } });
+  const result = validateAgentRegistry(manifest);
+  assert.equal(result.valid, true, JSON.stringify(result.errors));
+  assert.equal(result.agentCount, 6);
+  assert.equal(manifest.agents.every(agent => agent.activation === "DISABLED" && agent.status === "PROPOSED"), true);
+  const runtime = createAgentRuntime({registry:manifest});
+  assert.equal(runtime.list().length, 6);
+});
