@@ -28,6 +28,21 @@ test("slash agent command resolves case-insensitively and keeps proposed agent d
   assert.equal(result.activation, "DISABLED");
   assert.equal(result.executionReady, false);
 });
+test("provider aliases resolve as capability profiles without asserting vendor connections", () => {
+  for (const alias of ["claude", "gpt", "gemini", "perplexity", "deepseek", "qwen", "llama", "mistral", "grok", "copilot"]) {
+    const result = resolveAgentProfile({
+      profiles: [
+        { id: "claude-style-engineering", label: "Claude-style engineering", aliases: ["claude"], agentId: "repository-engineering-agent", capabilities: ["coding"], provider: { kind: "capability-profile", vendor: null, model: null, connected: false }, execution: { enabled: false } },
+        { id: "gpt-general-reasoning", label: "GPT-style general reasoning", aliases: ["gpt"], agentId: "evaluation-agent", capabilities: ["reasoning"], provider: { kind: "capability-profile", vendor: null, model: null, connected: false }, execution: { enabled: false } },
+        ...["gemini","perplexity","deepseek","qwen","llama","mistral","grok","copilot"].map(name => ({ id: name, label: name, aliases: [name], agentId: "repository-engineering-agent", capabilities: ["profiled-capability"], provider: { kind: "capability-profile", vendor: null, model: null, connected: false }, execution: { enabled: false } }))
+      ],
+      agents: registry.agents
+    }, alias);
+    assert.equal(result.matched, true, alias);
+    assert.equal(result.executionReady, false, alias);
+    assert.equal(result.provider.connected, false, alias);
+  }
+});
 test("unknown aliases fail closed and malformed requests are rejected", () => {
   assert.equal(resolveAgentProfile(registry, "unknown").status, "UNKNOWN_PROFILE");
   assert.throws(() => resolveAgentProfile(registry, " "), /required/);
