@@ -25,7 +25,7 @@ export function validateAgentRegistry(registry) {
   return { valid: errors.length === 0, errors, agentCount: ids.size, independentGroups: groups.size };
 }
 /** Host-injected, deny-by-default dispatcher. Discovery never implies execution. */
-export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async result => Boolean(result?.verified) } = {}) {
+export function createAgentRuntime({ registry, handlers = {}, authorize = async () => false, verify = async () => false } = {}) {
   const audit = [], validation = validateAgentRegistry(registry);
   async function run({ agentId, role, task, approval }) {
     assert(validation.valid, "Agent registry invalid: " + validation.errors.join(","));
@@ -39,11 +39,20 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     assert(typeof tool === "string" && agent.allowedTools.includes(tool) && SAFE_TOOLS.has(tool), "Tool is outside agent allowlist");
     assert(typeof handlers[tool] === "function", "No trusted host handler is configured for tool");
     assert(await authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope }) === true, "Authorization denied");
-    const result = await handlers[tool]({ objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope });
-    const verified = await verify(result, { agentId, role, task });
-    const evidence = { agentId, role, tool, status: verified ? "OBSERVED" : "UNPROVEN", executed: true, verified: verified === true };
+    const evidence = { agentId, role, tool, status: "UNPROVEN", executed: false, verified: false, failure: null };
     audit.push(evidence);
-    return { result, evidence };
+    try {
+      evidence.executed = true;
+      const result = await handlers[tool]({ objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope });
+      const verified = await verify(result, { agentId, role, task, agent, tool });
+      evidence.verified = verified === true;
+      evidence.status = verified === true ? "VALIDATED" : "UNPROVEN";
+      return { result, evidence };
+    } catch (error) {
+      evidence.status = "REJECTED";
+      evidence.failure = error instanceof Error ? error.message : String(error);
+      throw error;
+    }
   }
   return {
     validation,
