@@ -397,5 +397,39 @@
       },
       "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
     }
-  ]
+  ],
+  "selectionPolicy": {
+    "mode": "evidence-gated",
+    "objective": "Select the best available capability for the task while preserving one JARVIS-X objective and evidence ledger.",
+    "candidateRequirements": [
+      "explicit-provider-and-model-identity",
+      "verified-adapter-and-authentication-state",
+      "declared-tool-and-data-scope",
+      "cost-and-latency-envelope",
+      "task-relevant-evaluation-suite"
+    ],
+    "evaluation": [
+      "baseline-comparison",
+      "held-out-task-retest",
+      "independent-output-verification",
+      "security-and-privacy-regression",
+      "cost-and-latency-measurement"
+    ],
+    "replacement": "PROPOSE_ONLY_UNTIL_USER_APPROVAL",
+    "fusion": "PROPOSE_ONLY_WHEN_COMPLEMENTARY_CAPABILITIES_AND_INTEROPERABLE_TASK_CONTRACTS_ARE_VALIDATED",
+    "fallback": "FAIL_CLOSED_OR_USE_CURRENTLY_AVAILABLE_CAPABILITY_WITH_TRANSPARENT_DISCLOSURE",
+    "prohibit": [
+      "select_by_brand_or_claimed_benchmark_alone",
+      "auto_enable_provider",
+      "auto_spend",
+      "auto_replace_active_provider",
+      "claim_uninvoked_model_participation"
+    ]
+  },
+  "compositionPolicy": {
+    "architecture": "one-shared-objective-one-task-plan-one-evidence-ledger-one-final-response",
+    "specialists": "parallel_or_sequential_specialist_work_may_be_composed_only_through_scoped_task_contracts",
+    "independence": "shared vendor or operator does not count as independent verification",
+    "synthesis": "JARVIS-X owns final synthesis; specialist outputs are evidence inputs, not competing final answers"
+  }
 }
