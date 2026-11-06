@@ -14,8 +14,9 @@ const ELIGIBLE = new Set(["OBSERVED", "VALIDATED"]);
  * name: independenceGroup must identify its actual operator/vendor/security domain.
  * This function constructs bindings only; it never invokes agents.
  */
-export function createCompositeAgentBindings(registry, adapters, { authorize = async () => false } = {}) {
+export function createCompositeAgentBindings(registry, adapters, { authorize = async () => false, runtime = null } = {}) {
   if (typeof authorize !== "function") throw new TypeError("A trusted task authorization verifier is required");
+  if (runtime !== null && typeof runtime.run !== "function") throw new TypeError("Governed runtime must expose run().");
   const unavailable = [];
   const selected = new Map();
   for (const agent of registry?.agents ?? []) {
@@ -73,33 +74,24 @@ export function createCompositeAgentBindings(registry, adapters, { authorize = a
         }
         if (request.task.objective.length > 8000) throw new Error("Agent task objective exceeds the 8000-character limit.");
         if (request.signal?.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
-        const allowed = await authorize({
-          agentId: agent.id, independenceGroup: agent.independenceGroup,
-          role: request.role, task: request.task, allowedTools: [...new Set(agent.allowedTools ?? [])],
-          dataAccessScope: agent.dataAccessScope ?? "none"
-        });
-        if (allowed !== true) throw new Error("Agent task authorization denied.");
-        if (request.signal?.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
-        const result = await adapter({
-          task: request.task,
-          role: request.role,
-          context: request.context ?? {},
-          signal: request.signal,
-          allowedTools: [...new Set(agent.allowedTools ?? [])],
-          dataAccessScope: agent.dataAccessScope ?? "none"
-        });
-        if (!result || typeof result !== "object" || !("output" in result)) {
-          throw new Error("Agent adapter returned no structured output.");
+        let result;
+        let runtimeEvidence = null;
+        if (runtime) {
+          if (typeof request.task.tool !== "string" || !request.task.tool.trim()) throw new Error("Governed agent invocation requires an explicit allowlisted task.tool.");
+          const governed = await runtime.run({ agentId: agent.id, role: request.role, task: request.task, approval: request.approval, signal: request.signal });
+          result = governed?.result;
+          runtimeEvidence = governed?.evidence ?? null;
+        } else {
+          const allowed = await authorize({ agentId: agent.id, independenceGroup: agent.independenceGroup, role: request.role, task: request.task, allowedTools: [...new Set(agent.allowedTools ?? [])], dataAccessScope: agent.dataAccessScope ?? "none" });
+          if (allowed !== true) throw new Error("Agent task authorization denied.");
+          if (request.signal?.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
+          result = await adapter({ task: request.task, role: request.role, context: request.context ?? {}, signal: request.signal, allowedTools: [...new Set(agent.allowedTools ?? [])], dataAccessScope: agent.dataAccessScope ?? "none" });
         }
-        return {
-          capabilityId: "agent:" + agent.id,
-          output: result.output,
-          evidence: [{
-            source: "agent-registry/" + agent.id,
-            claim: "Configured agent adapter returned output; correctness and tool-side effects require independent verification.",
-            status: "OBSERVED"
-          }, ...(Array.isArray(result.evidence) ? result.evidence : [])]
-        };
+        if (!result || typeof result !== "object" || !("output" in result)) throw new Error("Agent adapter returned no structured output.");
+        const evidence = [{ source: "agent-registry/" + agent.id, claim: runtime ? "Output passed through governed runtime; verifier evidence is recorded separately." : "Compatibility adapter returned output; correctness requires independent verification.", status: runtimeEvidence?.status === "VALIDATED" ? "VALIDATED" : "OBSERVED" }];
+        if (runtimeEvidence) evidence.push({ source: "agent-runtime", claim: "Governed runtime authorization/execution/verification evidence.", status: runtimeEvidence.status });
+        if (Array.isArray(result.evidence)) evidence.push(...result.evidence);
+        return { capabilityId: "agent:" + agent.id, output: result.output, evidence };
       }
     });
     roster.push({
