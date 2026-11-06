@@ -152,11 +152,11 @@ test("already-aborted caller signal is rejected cleanly before authorization or 
 
 
 test("timed-out non-cooperative handler retains concurrency lease until it settles",async()=>{
- let finish,handlerStarted;
+ let finish,handlerStarted,calls=0;
  const started=new Promise(resolve=>{handlerStarted=resolve;});
- const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:100,
+ const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:1000,
    authorize:async()=>true,
-   handlers:{inspect_diff:async()=>{handlerStarted();return new Promise(resolve=>{finish=()=>resolve({late:true});});}}
+   handlers:{inspect_diff:async()=>{calls++;if(calls>1)return {ok:true};handlerStarted();return new Promise(resolve=>{finish=()=>resolve({late:true});});}}
  });
  await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"hang past deadline",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
  assert.equal(runtime.audit()[0].status,"REJECTED");
@@ -169,10 +169,10 @@ test("timed-out non-cooperative handler retains concurrency lease until it settl
 });
 
 test("timed-out non-cooperative authorization retains concurrency lease and never starts handler",async()=>{
- let finish,authorizationStarted,handlerCalls=0;
+ let finish,authorizationStarted,handlerCalls=0,authorizationCalls=0;
  const started=new Promise(resolve=>{authorizationStarted=resolve;});
- const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:100,
-   authorize:async()=>{authorizationStarted();return new Promise(resolve=>{finish=()=>resolve(true);});},
+ const runtime=createAgentRuntime({registry:registry(agent()),maxConcurrent:1,timeoutMs:1000,
+   authorize:async()=>{authorizationCalls++;if(authorizationCalls>1)return true;authorizationStarted();return new Promise(resolve=>{finish=()=>resolve(true);});},
    handlers:{inspect_diff:async()=>{handlerCalls++;return {ok:true};}}
  });
  await assert.rejects(runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"authorization hangs",tool:"inspect_diff"}}),/AGENT_TIMEOUT/);
