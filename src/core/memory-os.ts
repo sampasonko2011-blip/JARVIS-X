@@ -15,6 +15,7 @@ export interface MemoryExportBundle {
   schemaVersion: 1;
   exportedAt: string;
   records: MemoryRecord[];
+  checkpoints: WorkingCheckpoint[];
   checksum: string;
 }
 export interface WorkingCheckpoint {
@@ -30,7 +31,7 @@ const VALID_STATUSES = new Set<MemoryStatus>(["OBSERVED", "VALIDATED", "PROPOSED
 const VALID_KINDS = new Set<MemoryKind>(["working", "episodic", "semantic", "procedural", "evidence"]);
 const TOKEN = /[\p{L}\p{N}_-]{2,}/gu;
 const SECRET_LIKE = /(-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:ghp_|github_pat_|sk-[A-Za-z0-9_-]{16,}|xox[baprs]-)[A-Za-z0-9_-]{12,}|\bBearer\s+[A-Za-z0-9._~-]{16,})/i;
-function exportPayload(exportedAt: string, records: MemoryRecord[]) { return { schemaVersion: 1 as const, exportedAt, records }; }
+function exportPayload(exportedAt: string, records: MemoryRecord[], checkpoints: WorkingCheckpoint[]) { return { schemaVersion: 1 as const, exportedAt, records, checkpoints }; }
 function checksum(payload: ReturnType<typeof exportPayload>): string { return createHash("sha256").update(JSON.stringify(payload)).digest("hex"); }
 function tokens(value: string): string[] { return [...new Set(value.toLocaleLowerCase().match(TOKEN) ?? [])]; }
 function validDate(value: string, field: string): number {
@@ -74,8 +75,8 @@ export class MemoryOS {
 
   /** Verify the entire bundle before atomically importing; existing IDs are replaced. */
   importBundle(bundle: MemoryExportBundle): { imported: number; checksum: string } {
-    if (!bundle || bundle.schemaVersion !== 1 || !Array.isArray(bundle.records) || typeof bundle.exportedAt !== "string" || !Number.isFinite(Date.parse(bundle.exportedAt)) || typeof bundle.checksum !== "string") throw new Error("Invalid memory export bundle.");
-    const payload = exportPayload(bundle.exportedAt, bundle.records);
+    if (!bundle || bundle.schemaVersion !== 1 || !Array.isArray(bundle.records) || !Array.isArray(bundle.checkpoints) || typeof bundle.exportedAt !== "string" || !Number.isFinite(Date.parse(bundle.exportedAt)) || typeof bundle.checksum !== "string") throw new Error("Invalid memory export bundle.");
+    const payload = exportPayload(bundle.exportedAt, bundle.records, bundle.checkpoints);
     if (checksum(payload) !== bundle.checksum) throw new Error("Memory export checksum mismatch.");
     const seen = new Set<string>();
     for (const record of bundle.records) {
@@ -84,10 +85,32 @@ export class MemoryOS {
       validDate(record.createdAt, "createdAt"); validDate(record.updatedAt, "updatedAt"); if (record.expiresAt) validDate(record.expiresAt, "expiresAt");
       if (SECRET_LIKE.test(record.content) || SECRET_LIKE.test(record.title)) throw new Error("Memory import blocked: secret-like material detected in record " + record.id);
     }
-    const existing = this.store.get<string[]>(this.indexKey()) ?? []; const nextIds = [...new Set([...existing, ...bundle.records.map(record => record.id)])];
+    const checkpointProjects = new Set<string>();
+    for (const checkpoint of bundle.checkpoints) {
+      if (!checkpoint || typeof checkpoint.project !== "string" || !checkpoint.project.trim() ||
+          typeof checkpoint.task !== "string" || !checkpoint.task.trim() ||
+          typeof checkpoint.nextAction !== "string" || !checkpoint.nextAction.trim() ||
+          typeof checkpoint.updatedAt !== "string") throw new Error("Memory export contains an invalid checkpoint.");
+      if (checkpointProjects.has(checkpoint.project)) throw new Error("Memory export contains duplicate checkpoint projects.");
+      checkpointProjects.add(checkpoint.project);
+      validDate(checkpoint.updatedAt, "checkpoint.updatedAt");
+      if (checkpoint.expiresAt) validDate(checkpoint.expiresAt, "checkpoint.expiresAt");
+      if ([checkpoint.project, checkpoint.task, checkpoint.nextAction, ...(checkpoint.blockers ?? [])].some(value => SECRET_LIKE.test(value))) {
+        throw new Error("Memory import blocked: secret-like material detected in checkpoint " + checkpoint.project);
+      }
+    }
+    const existing = this.store.get<string[]>(this.indexKey()) ?? [];
+    const nextIds = [...new Set([...existing, ...bundle.records.map(record => record.id)])];
+    const existingProjects = this.store.get<string[]>(this.checkpointIndexKey()) ?? [];
+    const nextProjects = [...new Set([...existingProjects, ...bundle.checkpoints.map(checkpoint => checkpoint.project)])];
     if (!this.store.setMany) throw new Error("Backing store does not support atomic import; refusing a partial memory restore.");
-    this.store.setMany([...bundle.records.map(record => ({ key: this.key(record.id), value: record })), { key: this.indexKey(), value: nextIds }]);
-    return { imported: bundle.records.length, checksum: bundle.checksum };
+    this.store.setMany([
+      ...bundle.records.map(record => ({ key: this.key(record.id), value: record })),
+      ...bundle.checkpoints.map(checkpoint => ({ key: this.checkpointKey(checkpoint.project), value: checkpoint })),
+      { key: this.indexKey(), value: nextIds },
+      { key: this.checkpointIndexKey(), value: nextProjects }
+    ]);
+    return { imported: bundle.records.length, checkpointsImported: bundle.checkpoints.length, checksum: bundle.checksum };
   }
   get(id: string): MemoryRecord | undefined { return this.store.get<MemoryRecord>(this.key(id)); }
 
@@ -110,7 +133,12 @@ export class MemoryOS {
     validDate(updatedAt, "checkpoint.updatedAt");
     if (input.expiresAt) validDate(input.expiresAt, "checkpoint.expiresAt");
     const checkpoint: WorkingCheckpoint = { ...input, updatedAt };
-    this.store.set(this.checkpointKey(input.project), checkpoint);
+    if (!this.store.setMany) throw new Error("Backing store does not support atomic checkpoint/index updates; refusing a partial checkpoint write.");
+    const projects = this.store.get<string[]>(this.checkpointIndexKey()) ?? [];
+    this.store.setMany([
+      { key: this.checkpointKey(input.project), value: checkpoint },
+      { key: this.checkpointIndexKey(), value: projects.includes(input.project) ? projects : [...projects, input.project] }
+    ]);
     return checkpoint;
   }
 
@@ -159,5 +187,6 @@ export class MemoryOS {
 
   private key(id: string): string { return this.namespace + "record:" + id; }
   private indexKey(): string { return this.namespace + "__index"; }
+  private checkpointIndexKey(): string { return this.namespace + "__checkpoint_index"; }
   private checkpointKey(project: string): string { return this.namespace + "checkpoint:" + project; }
 }
