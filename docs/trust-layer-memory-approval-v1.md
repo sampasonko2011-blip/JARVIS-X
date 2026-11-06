@@ -27,3 +27,7 @@ This is a library boundary, not a complete production trust boundary. No product
 ## Promotion rule
 
 The module can be considered source-level implemented only after CI passes. Production trust enforcement remains UNPROVEN until the integration sequence above is complete and verified against the deployed gateway.
+
+
+## Broker integration hardening checkpoint
+The HQ broker now treats caller-supplied approvals as opaque signed-token data and delegates trust to an injected verifier before policy evaluation. The verifier context binds authenticated subject, action, resource, canonical sorted scope, candidate revision, audience, policy version, request ID and idempotency key. The test fixtures use opaque-token shapes; this still does not install a production identity adapter, key manager, durable replay store or connector.
