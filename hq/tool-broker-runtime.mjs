@@ -65,34 +65,57 @@ export async function executeAuthorizedTool({
     return { status: "BLOCKED", reason: "SCOPE_NOT_GRANTED", requestId, toolId: tool.id };
   }
 
+  const action = String(request.action ?? "").toLowerCase();
+  const isWrite = WRITE_ACTIONS.has(action);
+  let trustedApproval = null;
+  if (isWrite) {
+    // Treat the supplied approval as an opaque, untrusted signed token. Never
+    // trust caller-provided `approved`, `approvedBy`, or `approvalId` booleans/labels.
+    if (!request.approval || typeof request.approval !== "object") {
+      return { status: "BLOCKED", reason: "EXPLICIT_APPROVAL_REQUIRED", requestId, toolId: tool.id };
+    }
+    const approvalContext = {
+      requestId,
+      toolId: tool.id,
+      action,
+      resource: text(request.resource, 500),
+      scope: requestedScopes,
+      candidateRevision: text(request.candidateRevision, 200),
+      authenticatedSubject: text(request.authenticatedSubject, 200),
+      audience: text(request.audience, 120),
+      policyVersion: text(request.policyVersion, 80),
+      idempotencyKey,
+    };
+    if (Object.values(approvalContext).some((value) => !value || (Array.isArray(value) && !value.length))) {
+      return { status: "BLOCKED", reason: "APPROVAL_CONTEXT_INCOMPLETE", requestId, toolId: tool.id };
+    }
+    let approvalVerified = false;
+    try { approvalVerified = await verifyApproval(request.approval, approvalContext) === true; }
+    catch { approvalVerified = false; }
+    if (!approvalVerified) {
+      return { status: "BLOCKED", reason: "APPROVAL_VERIFICATION_FAILED", requestId, toolId: tool.id };
+    }
+    // Only after the trusted verifier accepts the opaque token do we construct
+    // the internal policy record required by the legacy pure policy checker.
+    trustedApproval = {
+      approved: true,
+      approvedBy: approvalContext.authenticatedSubject,
+      approvalId: text(request.approval?.payload?.jti, 200) || "verified-token",
+      requestId,
+      toolId: tool.id,
+      action,
+      scope: requestedScopes,
+    };
+  }
   const policy = assessToolRequest({
     ...request,
+    approval: trustedApproval ?? request.approval,
     toolId: tool.id,
     enabled: tool.enabled === true,
     allowedScopes: tool.allowedScopes,
   });
   if (!policy.allowed) {
     return { status: "BLOCKED", reason: policy.reason, requestId, toolId: tool.id, risk: policy.risk };
-  }
-  if (WRITE_ACTIONS.has(String(request.action).toLowerCase())) {
-    if (!(request.approval?.approved === true && request.approval.approvalId)) {
-      return { status: "BLOCKED", reason: "EXPLICIT_APPROVAL_REQUIRED", requestId, toolId: tool.id };
-    }
-    // The approval object in the request is untrusted. The caller must verify it
-    // against a trusted server-side approval record/signature bound to this exact operation.
-    let approvalVerified = false;
-    try {
-      approvalVerified = await verifyApproval(request.approval, {
-        requestId,
-        toolId: tool.id,
-        action: policy.action,
-        scope: policy.scope,
-        idempotencyKey,
-      }) === true;
-    } catch { approvalVerified = false; }
-    if (!approvalVerified) {
-      return { status: "BLOCKED", reason: "APPROVAL_VERIFICATION_FAILED", requestId, toolId: tool.id };
-    }
   }
 
   try {
