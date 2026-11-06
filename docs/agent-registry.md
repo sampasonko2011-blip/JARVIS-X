@@ -1,20 +1,24 @@
-# JARVIS-X Agent Registry
+# JARVIS-X Specialist Agent Registry
 
-## Scope
-A provider-neutral registry contract for six proposed specialist roles: engineering, research, security, evaluation, memory and operations. The registry is a governed adapter boundary, not evidence that six autonomous agents are connected.
+The primary execution boundary is `evaluation/agent-runtime.mjs` with declarative candidates in `evaluation/agent-registry.json`. `evaluation/agent-registry.mjs` is a provider-neutral registration helper; it does not connect or activate agents.
+
+## Six specialist profiles
+- Research: public-source discovery and synthesis.
+- Engineering: selected-repository review, patch proposals and sandbox tests.
+- Security: privacy, threat-model and diff review.
+- Evaluation: benchmark design, held-out tests and regression critique.
+- Memory: memory-contract and provenance analysis.
+- Operations: planning and workflow coordination.
+
+All six profiles are DISABLED/PROPOSED and use the unassigned independence group. They are not live agents and do not count as independent providers.
 
 ## Controls
-- Duplicate IDs and missing core roles are rejected.
-- Every agent has explicit role declarations, a tool allowlist, a risk class and an evidence status.
-- Tool allowlists default to empty. No ambient tool access is granted.
-- PROPOSED agents remain unavailable. Invocation requires an injected adapter and OBSERVED or VALIDATED evidence.
-- Draft/approval-required agents require an explicit VALIDATED approval marker at invocation.
-- Bounded concurrency, abort checks, non-empty objectives and output validation are enforced.
-- Adapter output is labelled OBSERVED, not VALIDATED. Independent evaluation is still required.
-- No provider is added, no API is called, no credentials are accessed and no production service is modified.
+- The runtime validates unique IDs, evidence state, activation, independence declaration, tool allowlists and data scopes.
+- Only an explicit allowlist of public/read-only/repository-diff/sandbox-test tool classes is supported.
+- A host must inject trusted handlers and an authorization function. Authorization defaults to deny.
+- A second prompt or wrapper around the same model is not independent.
+- Handler output is OBSERVED unless an independent verifier confirms it. Failed verification remains UNPROVEN.
+- No credentials, production write, merge, deployment, paid inference or background scheduling are enabled.
 
-## Current maturity
-The default six agents are PROPOSED and unavailable. This adds the registry and tests only; it does not create external agents or background autonomy.
-
-## Acceptance
-Run the focused node:test suite, full project tests, build, browser E2E, syntax checks and exact-head CI. Held-out tests must cover adapter failure, cancellation, concurrency saturation, malformed output, approval bypass attempts, duplicate IDs and tool allowlist expansion.
+## Limitations
+The current registry is declarative. It does not create six external models, establish independent operators, provide durable audit, or prove a shared-state multi-agent runtime. Exact approval authentication and durable replay protection remain host integration requirements.
