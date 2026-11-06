@@ -109,3 +109,31 @@ test("independent verification is deadline-bounded and remains unvalidated on ti
  assert.equal(runtime.audit()[0].status,"REJECTED");
  assert.equal(runtime.audit()[0].verified,false);
 });
+
+
+test("caller cancellation interrupts a pending handler immediately and retains rejection evidence",async()=>{
+ let started;
+ const began=new Promise(resolve=>{started=resolve;});
+ const controller=new AbortController();
+ const runtime=createAgentRuntime({registry:registry(agent()),timeoutMs:5000,handlers:{inspect_diff:async()=>{started();return new Promise(()=>{});}},authorize:async()=>true});
+ const pending=runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"cancel promptly",tool:"inspect_diff"},signal:controller.signal});
+ await began;
+ controller.abort(new Error("user cancelled"));
+ await assert.rejects(pending,/AGENT_INVOCATION_ABORTED/);
+ assert.equal(runtime.audit()[0].status,"REJECTED");
+ assert.equal(runtime.audit()[0].failure,"AGENT_INVOCATION_ABORTED");
+});
+
+test("caller cancellation interrupts pending authorization before handler execution",async()=>{
+ let started,calls=0;
+ const began=new Promise(resolve=>{started=resolve;});
+ const controller=new AbortController();
+ const runtime=createAgentRuntime({registry:registry(agent()),timeoutMs:5000,authorize:async()=>{started();return new Promise(()=>{});},handlers:{inspect_diff:async()=>{calls++;return {ok:true};}}});
+ const pending=runtime.run({agentId:"repo-verifier",role:"critique",task:{objective:"cancel authorization",tool:"inspect_diff"},signal:controller.signal});
+ await began;
+ controller.abort();
+ await assert.rejects(pending,/AGENT_INVOCATION_ABORTED/);
+ assert.equal(calls,0);
+ assert.equal(runtime.audit()[0].authorized,false);
+ assert.equal(runtime.audit()[0].executed,false);
+});
