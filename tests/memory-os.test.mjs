@@ -122,3 +122,21 @@ test("MemoryOS import fails closed when the backing store cannot atomically upda
   assert.throws(() => target.importBundle(bundle), /does not support atomic import/);
   assert.equal(values.size, 0);
 });
+
+
+test("MemoryOS portable bundle preserves resumable checkpoints across import", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.saveCheckpoint({ project: "jarvis-x", task: "Finish HQ memory", nextAction: "Verify export/import", blockers: ["cross-device sync remains unproven"] }, new Date("2026-11-06T05:00:00.000Z"));
+  const bundle = source.exportBundle(new Date("2026-11-06T05:01:00.000Z"));
+  assert.equal(bundle.checkpoints.length, 1);
+  const target = new MemoryOS(new InMemoryStore());
+  const result = target.importBundle(bundle);
+  assert.equal(result.checkpointsImported, 1);
+  assert.equal(target.loadCheckpoint("jarvis-x").nextAction, "Verify export/import");
+});
+
+test("MemoryOS checkpoint export rejects secret-like content", () => {
+  const memory = new MemoryOS(new InMemoryStore());
+  memory.saveCheckpoint({ project: "jarvis-x", task: "private", nextAction: "Bearer abcdefghijklmnopqrstuvwxyz123456" });
+  assert.throws(() => memory.exportBundle(), /secret-like material detected in checkpoint/);
+});
