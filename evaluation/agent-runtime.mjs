@@ -67,27 +67,34 @@ export function createAgentRuntime({ registry, handlers = {}, authorize = async 
     else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
     try {
       assert(!controller.signal.aborted, "AGENT_INVOCATION_ABORTED");
-      const allowed = await authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope });
-      assert(allowed === true, "Authorization denied");
-      evidence.authorized = true;
       assert(active < maxConcurrent, "AGENT_CONCURRENCY_LIMIT");
       active++;
       slotOwned = true;
+      // One deadline covers authorization, handler execution and independent verification.
       const timeout = new Promise((_, reject) => {
         timer = setTimeout(() => {
           controller.abort(new Error("AGENT_TIMEOUT"));
           reject(new Error("AGENT_TIMEOUT"));
         }, timeoutMs);
       });
+      const allowed = await Promise.race([
+        Promise.resolve().then(() => authorize({ agentId, role, tool, task, approval, dataAccessScope: agent.dataAccessScope })),
+        timeout
+      ]);
+      if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
+      assert(allowed === true, "Authorization denied");
+      evidence.authorized = true;
       evidence.executed = true;
       const operation = Promise.resolve().then(() => handlers[tool]({
         objective: task.objective, input: task.input, dataAccessScope: agent.dataAccessScope, signal: controller.signal
       }));
       operation.then(() => { if (slotOwned) { active--; slotOwned = false; } }, () => { if (slotOwned) { active--; slotOwned = false; } });
       const result = await Promise.race([operation, timeout]);
-      // A timeout/caller abort must not be converted into success by a late handler result.
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
-      const verified = await verify(result, { agentId, role, task, agent, tool });
+      const verified = await Promise.race([
+        Promise.resolve().then(() => verify(result, { agentId, role, task, agent, tool })),
+        timeout
+      ]);
       if (controller.signal.aborted) throw new Error("AGENT_INVOCATION_ABORTED");
       evidence.verified = verified === true;
       evidence.status = verified === true ? "VALIDATED" : "UNPROVEN";
