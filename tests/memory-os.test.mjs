@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { InMemoryStore, JsonFileMemoryStore } from "../dist/core/memory.js";
 import { MemoryOS } from "../dist/core/memory-os.js";
@@ -139,4 +140,40 @@ test("MemoryOS checkpoint export rejects secret-like content", () => {
   const memory = new MemoryOS(new InMemoryStore());
   memory.saveCheckpoint({ project: "jarvis-x", task: "private", nextAction: "Bearer abcdefghijklmnopqrstuvwxyz123456" });
   assert.throws(() => memory.exportBundle(), /secret-like material detected in checkpoint/);
+});
+
+
+function resignBundle(bundle) {
+  const payload = { schemaVersion: 1, exportedAt: bundle.exportedAt, records: bundle.records, checkpoints: bundle.checkpoints };
+  bundle.checksum = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  return bundle;
+}
+
+test("MemoryOS rejects malformed nested checkpoint fields before atomic import", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.saveCheckpoint({ project: "jarvis-x", task: "restore", nextAction: "validate" });
+  const bundle = source.exportBundle();
+  bundle.checkpoints[0].blockers = "not-an-array";
+  resignBundle(bundle);
+  const values = new InMemoryStore();
+  const target = new MemoryOS(values);
+  assert.throws(() => target.importBundle(bundle), /invalid checkpoint/);
+  assert.equal(target.loadCheckpoint("jarvis-x"), undefined);
+});
+
+test("MemoryOS scans checkpoint context references for secret-like material", () => {
+  const memory = new MemoryOS(new InMemoryStore());
+  memory.saveCheckpoint({ project: "jarvis-x", task: "restore", nextAction: "validate", contextRefs: ["Bearer abcdefghijklmnopqrstuvwxyz123456"] });
+  assert.throws(() => memory.exportBundle(), /secret-like material detected in checkpoint/);
+});
+
+test("MemoryOS rejects secret-like checkpoint context references during import", () => {
+  const source = new MemoryOS(new InMemoryStore());
+  source.saveCheckpoint({ project: "jarvis-x", task: "restore", nextAction: "validate" });
+  const bundle = source.exportBundle();
+  bundle.checkpoints[0].contextRefs = ["ghp_abcdefghijklmnopqrstuvwxyz123456"];
+  resignBundle(bundle);
+  const target = new MemoryOS(new InMemoryStore());
+  assert.throws(() => target.importBundle(bundle), /secret-like material detected in checkpoint/);
+  assert.equal(target.loadCheckpoint("jarvis-x"), undefined);
 });
