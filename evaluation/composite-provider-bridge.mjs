@@ -16,10 +16,18 @@ function providerKey(value) {
 function capabilityList(candidate) {
   const roles = [...new Set((candidate.roles ?? []).map(role => role.trim().toLocaleLowerCase("en-US")))];
   const mapped = roles.map(role => ({ role, kind: ROLE_KIND[role] })).filter(item => Boolean(item.kind));
-  return mapped.map(({ role, kind }) => ({
-    id: candidate.id + ":" + role,
+  // One provider advertises each core capability once. Preserve all source roles as
+  // strengths so aliases cannot create duplicate organs or inflate capability counts.
+  const byKind = new Map();
+  for (const item of mapped) {
+    const existing = byKind.get(item.kind) ?? [];
+    existing.push(item.role);
+    byKind.set(item.kind, existing);
+  }
+  return [...byKind.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([kind, strengths]) => ({
+    id: candidate.id + ":" + kind,
     kind,
-    strengths: [role],
+    strengths: [...new Set(strengths)].sort(),
     metadata: { candidateId: candidate.id, modelId: candidate.model_id, provider: candidate.provider }
   }));
 }
