@@ -24,7 +24,8 @@ test("agent adapter receives task, role and least-privilege tool/data scope", as
   let received;
   const bindings = createCompositeAgentBindings(
     { agents: [agent("research-agent", "operator-a")] },
-    { "research-agent": async input => { received = input; return { output: { summary: "done" } }; } }
+    { "research-agent": async input => { received = input; return { output: { summary: "done" } }; } },
+    { authorize: async () => true }
   );
   const result = await bindings.providers[0].execute({
     task: { id: "t1", objective: "research public docs" },
@@ -73,7 +74,8 @@ test("agents sharing one independence group cannot inflate composite member coun
 test("agent bridge fails closed on invalid task and malformed agent response", async () => {
   const bindings = createCompositeAgentBindings(
     { agents: [agent("agent", "operator")] },
-    { agent: async () => ({ text: "not structured output" }) }
+    { agent: async () => ({ text: "not structured output" }) },
+    { authorize: async () => true }
   );
   await assert.rejects(bindings.providers[0].execute({
     task: { id: "t", objective: " " }, role: "research", context: {}
@@ -81,4 +83,30 @@ test("agent bridge fails closed on invalid task and malformed agent response", a
   await assert.rejects(bindings.providers[0].execute({
     task: { id: "t", objective: "work" }, role: "research", context: {}
   }), /no structured output/);
+});
+
+
+test("composite agent bridge denies task execution by default and never calls adapter", async () => {
+ let calls=0;
+ const bindings=createCompositeAgentBindings({agents:[agent("agent","operator")]},{agent:async()=>{calls++;return {output:"should not run"};}});
+ await assert.rejects(bindings.providers[0].execute({task:{objective:"try bypass"},role:"research"}),/authorization denied/i);
+ assert.equal(calls,0);
+});
+
+test("composite agent bridge authorizes exact mapped role before adapter execution", async () => {
+ let calls=0,authorizedRole;
+ const bindings=createCompositeAgentBindings({agents:[agent("agent","operator")]},{agent:async()=>{calls++;return {output:"ok"};}},{authorize:async input=>{authorizedRole=input.role;return true;}});
+ await assert.rejects(bindings.providers[0].execute({task:{objective:"wrong role"},role:"coding"}),/outside the agent capability/i);
+ assert.equal(calls,0);
+ const result=await bindings.providers[0].execute({task:{objective:"approved"},role:"research"});
+ assert.equal(authorizedRole,"research");
+ assert.equal(calls,1);
+ assert.equal(result.output,"ok");
+});
+
+test("composite agent bridge rejects oversized task before authorization", async () => {
+ let authorizationCalls=0;
+ const bindings=createCompositeAgentBindings({agents:[agent("agent","operator")]},{agent:async()=>({output:"ok"})},{authorize:async()=>{authorizationCalls++;return true;}});
+ await assert.rejects(bindings.providers[0].execute({task:{objective:"x".repeat(8001)},role:"research"}),/8000-character/);
+ assert.equal(authorizationCalls,0);
 });
