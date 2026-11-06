@@ -13,6 +13,11 @@
 - Composite-agent bridge supports an explicit governed mode: pass the shared `createAgentRuntime(...)` instance as `{ runtime }`. In this mode each invocation requires `task.tool` and delegates to `runtime.run`; the compatibility adapter is not called. The runtime owns its configured handler, authorization, immutable task snapshot, timeout, cancellation, concurrency lease and independent verifier. Runtime evidence is propagated to the Provider response. The legacy bridge-only authorization path remains for compatibility and is not equivalent to governed execution.
 - Regression tests exercise the governed bridge path without any legacy adapter configured, require independent verifier evidence, and reject missing tool selection before runtime invocation.
 
+
+- Added `hq/governed-agent-host.mjs` as the explicit HQ composition boundary. `createGovernedAgentHost(...)` constructs one shared governed runtime and passes it into the composite bridge; callers cannot accidentally use the compatibility adapter path. It exposes provider bindings, readiness, unavailable entries and the runtime audit. It does not enable proposed agents or supply credentials, handlers, authenticated authorization, durable audit or network access.
+- Added `tests/governed-agent-host.test.mjs` covering shared-runtime execution through the HQ provider, independent verifier evidence, deny-by-default authorization, and required host configuration.
+- This is an injectable HQ host composition module, not evidence that a deployed HQ web/server entrypoint currently imports it. Production caller wiring and persistent authorization/audit adapters remain separate integration gates.
+
 ## Truth and safety boundaries
 - Registry entries begin DISABLED and PROPOSED. They are candidates, not discovered connected agents.
 - A second prompt or wrapper around the same model is not independent. Independence requires separate, evidenced operators/providers/execution paths.
