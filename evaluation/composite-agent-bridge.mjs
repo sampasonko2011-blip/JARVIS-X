@@ -17,6 +17,7 @@ const ELIGIBLE = new Set(["OBSERVED", "VALIDATED"]);
 export function createCompositeAgentBindings(registry, adapters, { authorize = async () => false, runtime = null } = {}) {
   if (typeof authorize !== "function") throw new TypeError("A trusted task authorization verifier is required");
   if (runtime !== null && typeof runtime.run !== "function") throw new TypeError("Governed runtime must expose run().");
+  adapters = adapters ?? {};
   const unavailable = [];
   const selected = new Map();
   for (const agent of registry?.agents ?? []) {
@@ -61,7 +62,7 @@ export function createCompositeAgentBindings(registry, adapters, { authorize = a
   const providers = [];
   const roster = [];
   for (const { agent, capabilities } of [...selected.values()].sort((a,b) => a.agent.id.localeCompare(b.agent.id))) {
-    const adapter = adapters[agent.id];
+    const adapter = adapters?.[agent.id];
     providers.push({
       id: "agent:" + agent.id,
       capabilities,
@@ -115,7 +116,7 @@ export function evaluateAgentReadiness(bindings, minimumIndependentGroups = 1) {
     minimumIndependentGroups,
     canInvoke: count >= minimumIndependentGroups,
     reason: count >= minimumIndependentGroups
-      ? "At least one eligible, explicitly enabled, adapter-backed agent is available; task-level authorization and verification remain required."
+      ? "At least one eligible, explicitly enabled agent binding is available; governed runtime or compatibility authorization and independent verification remain required."
       : "No eligible agent binding. Registry entries, app listings and installed connectors do not imply authenticated or executable agents."
   };
 }
