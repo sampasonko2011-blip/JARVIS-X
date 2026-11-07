@@ -12,7 +12,7 @@ function agent(id, role, independenceGroup) {
 
 function makeRuntime(overrides = {}) {
   const registry = { agents: [
-    agent("planner", "planning", "local-planning"),
+    agent("planner", "orchestration", "local-planning"),
     agent("reviewer", "critique", "local-review")
   ] };
   const seen = [];
@@ -42,7 +42,7 @@ test("Vegito runtime executes specialists sequentially against one shared eviden
   const result = await runtime.run({
     objective: "Inspect the selected repository safely",
     stages: [
-      { id: "plan", agentId: "planner", role: "planning", tool: "read_repository" },
+      { id: "plan", agentId: "planner", role: "orchestration", tool: "read_repository" },
       { id: "critique", agentId: "reviewer", role: "critique", tool: "read_repository" }
     ]
   });
@@ -59,7 +59,7 @@ test("Vegito runtime never synthesizes when a specialist fails independent verif
   const { runtime, getSynthesisCalls } = makeRuntime({ verify: async () => false });
   const result = await runtime.run({
     objective: "Test fail-closed behavior",
-    stages: [{ id: "plan", agentId: "planner", role: "planning", tool: "read_repository" }]
+    stages: [{ id: "plan", agentId: "planner", role: "orchestration", tool: "read_repository" }]
   });
   assert.equal(result.status, "BLOCKED");
   assert.equal(result.reason, "SPECIALIST_STAGE_NOT_COMPLETED");
@@ -70,7 +70,7 @@ test("Vegito runtime blocks disabled or unknown specialists before synthesis", a
   const { runtime, getSynthesisCalls } = makeRuntime();
   const result = await runtime.run({
     objective: "Do not infer activation",
-    stages: [{ id: "ghost", agentId: "not-registered", role: "planning", tool: "read_repository" }]
+    stages: [{ id: "ghost", agentId: "not-registered", role: "orchestration", tool: "read_repository" }]
   });
   assert.equal(result.status, "BLOCKED");
   assert.equal(getSynthesisCalls(), 0);
@@ -80,7 +80,7 @@ test("Vegito runtime blocks an unverified executive answer", async () => {
   const { runtime } = makeRuntime({ verifySynthesis: async () => false });
   const result = await runtime.run({
     objective: "Verify the final answer",
-    stages: [{ id: "plan", agentId: "planner", role: "planning", tool: "read_repository" }]
+    stages: [{ id: "plan", agentId: "planner", role: "orchestration", tool: "read_repository" }]
   });
   assert.equal(result.status, "BLOCKED");
   assert.equal(result.reason, "EXECUTIVE_OUTPUT_NOT_VERIFIED");
@@ -91,13 +91,13 @@ test("Vegito runtime rejects malformed plans and oversized objectives without ru
   const malformed = await runtime.run({
     objective: "x",
     stages: [
-      { id: "same", agentId: "planner", role: "planning", tool: "read_repository" },
+      { id: "same", agentId: "planner", role: "orchestration", tool: "read_repository" },
       { id: "same", agentId: "reviewer", role: "critique", tool: "read_repository" }
     ]
   });
   const oversized = await runtime.run({
     objective: "x".repeat(8001),
-    stages: [{ id: "plan", agentId: "planner", role: "planning", tool: "read_repository" }]
+    stages: [{ id: "plan", agentId: "planner", role: "orchestration", tool: "read_repository" }]
   });
   assert.equal(malformed.reason, "SPECIALIST_PLAN_INVALID");
   assert.equal(oversized.reason, "OBJECTIVE_INVALID");
