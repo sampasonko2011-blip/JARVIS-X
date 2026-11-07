@@ -71,7 +71,7 @@ loadButton.addEventListener("click", async () => {
   }
 });
 sendButton.addEventListener("click", async () => {
-  const text = input.value.trim();
+  const text = input.value.trim().slice(0, MAX_INPUT_CHARS);
   if (!engine || !text || busy) return;
   input.value = "";
   append("user", text);
