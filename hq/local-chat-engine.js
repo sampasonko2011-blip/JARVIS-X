@@ -26,6 +26,7 @@ function append(role, content) {
   body.textContent = content;
   item.append(title, body);
   transcript.append(item);
+  return body;
 }
 function setBusy(value) {
   busy = value;
@@ -97,10 +98,11 @@ sendButton.addEventListener("click", async () => {
     output.textContent = answer;
     messages.push({ role: "assistant", content: answer });
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
-    append("assistant", answer);
     progress.textContent = "Generated locally on this device.";
   } catch (error) {
     messages.pop();
+    const partial = transcript.lastElementChild?.querySelector("small");
+    if (partial && !partial.textContent) partial.textContent = "Generation failed before a response was produced.";
     progress.textContent = "Generation failed: " + (error instanceof Error ? error.message : "unknown error");
   } finally {
     setBusy(false);
