@@ -14,7 +14,7 @@ test("local HQ chat pins WebLLM and bundles a self-hosted browser runtime", () =
 test("local chat uses the registered small Qwen model with no cloud inference fallback", () => {
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC/);
-  assert.match(engine, /CreateMLCEngine/);
+  assert.match(engine, /CreateMLCEngine/);\n  assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);\n  assert.match(engine, /MAX_INPUT_CHARS = 4000/);
   assert.match(engine, /No cloud fallback was attempted/);
   assert.match(engine, /age-appropriate|minor/i);
   assert.doesNotMatch(engine, /fetch\s*\(|supabase|openrouter/i);
