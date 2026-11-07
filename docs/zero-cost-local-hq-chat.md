@@ -100,4 +100,8 @@ Local chat history and Memory OS are distinct:
 - OBSERVED: the HQ CSP currently has `script-src 'self'`, so an unbundled CDN import is blocked by design. Bundle and self-host the runtime rather than weakening the script policy.
 - PROPOSED: Browser-local WebLLM inference as the zero-server, zero-hosted-inference first route.
 - UNPROVEN: WebGPU availability, WebLLM model compatibility, storage persistence, speed, quality, and thermal stability on the user's actual iPad.
-- NOT COMPLETED: No runtime code, model download, deployment, or live inference is included in this architecture-only change.
+- OBSERVED: PR #83 now includes an isolated local chat page, a WebLLM 0.2.87 runtime entry point, a pinned Qwen2.5 0.5B model ID, and an esbuild bundle step.
+- VALIDATED (source-level only): The pinned model ID exists in WebLLM v0.2.87's official prebuilt model registry; its published GPU-memory estimate is 944.62 MB. This is not total RAM or download size.
+- VALIDATED (source-level only): The deployment workflow builds the self-hosted browser bundle before copying HQ assets into the Pages artifact.
+- UNPROVEN: Successful browser bundle build in CI, successful model download/load, actual local inference, performance, iPad Safari compatibility, and deployment. No physical device test has been run.
+- NOT COMPLETED: The local runtime is not yet deployed or proven to run on the user's iPad. No cloud fallback is configured.
