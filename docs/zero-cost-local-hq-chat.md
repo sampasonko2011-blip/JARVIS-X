@@ -16,7 +16,8 @@ WebLLM runs model inference in the browser using WebGPU and provides an OpenAI-c
 
 ## Runtime and model selection
 
-- Evaluate the official WebLLM runtime first; pin the exact package version in the build lockfile.
+- Evaluate the official WebLLM runtime first. The latest upstream release observed during this audit is v0.2.87 (30 Oct 2026); pin an exact, reviewed version in the lockfile rather than using a floating CDN import.
+- Bundle WebLLM into a self-hosted HQ asset during the repository build. Do not use a runtime CDN import: the current HQ Content Security Policy allows scripts only from 'self'. Preserve that policy and do not add broad third-party script origins. Permit only the minimum model-artifact network destinations during the explicit first download; inference itself must remain local.
 - Begin with a small, officially supported quantized model (initial candidate: Qwen2.5-0.5B-Instruct-q4f16_1-MLC) and keep it explicitly labelled as a lightweight local model.
 - Do not route the Qwen3.5-0.8B Safetensors candidate directly into WebLLM. The open Qwen3.5 candidate in PR #82 is evaluation-only; a compatible, verified MLC/WebLLM artifact and tokenizer/config are not established by that PR.
 - A stronger 1–1.5B candidate may be evaluated only after device memory, load time, generation speed, thermal behavior, and task quality are measured on the actual iPad.
@@ -82,12 +83,21 @@ Local chat history and Memory OS are distinct:
 5. Perform the physical iPad Safari test before claiming local inference works.
 6. Only then consider model promotion, persistent encrypted memory sync, and local specialist orchestration.
 
-## Verified technical references\n\n- WebLLM official repository and API: https://github.com/mlc-ai/web-llm (Apache-2.0; browser-local WebGPU inference, CDN option, streaming, cache backends, and built-in model registry).\n- WebLLM supported model list: https://github.com/mlc-ai/web-llm/issues/683 (Qwen2.5 0.5B q4f16 model memory estimate approximately 944.62 MB).\n- iOS Safari model-size failure report: https://github.com/mlc-ai/web-llm/issues/753 (a 135M model ran; a 3B model caused Safari tab termination on the reporter's iOS 26 device). This is an individual report, not a universal compatibility result.\n- MLC LLM iOS documentation: https://github.com/mlc-ai/mlc-llm/blob/main/docs/deploy/ios.rst (native iOS app path exists; it is a separate app and does not itself integrate the model into this HQ PWA).\n\n## Current status
+## Verified technical references
+
+- WebLLM official repository and API: https://github.com/mlc-ai/web-llm (Apache-2.0; browser-local WebGPU inference, CDN option, streaming, cache backends, and built-in model registry).
+- WebLLM supported model list: https://github.com/mlc-ai/web-llm/issues/683 (Qwen2.5 0.5B q4f16 model memory estimate approximately 944.62 MB).
+- iOS Safari model-size failure report: https://github.com/mlc-ai/web-llm/issues/753 (a 135M model ran; a 3B model caused Safari tab termination on the reporter's iOS 26 device). This is an individual report, not a universal compatibility result.
+- MLC LLM iOS documentation: https://github.com/mlc-ai/mlc-llm/blob/main/docs/deploy/ios.rst (native iOS app path exists; it is a separate app and does not itself integrate the model into this HQ PWA).
+
+## Current status
 
 - OBSERVED: The default-branch HQ already has a chat UI, but it is gated by Supabase authentication and the remote gateway.
 - OBSERVED: The default-branch README says live executive inference is not independently verified.
 - OBSERVED: The repository contains a local Ollama runner for a machine with Ollama installed; it does not make Ollama run on iPadOS.
 - OBSERVED: PR #82 adds Qwen3.5-0.8B as an evaluation-only candidate and explicitly leaves device fit/runtime compatibility unproven.
-- VALIDATED (documentation only): WebLLM provides browser-local inference, streaming, cache backends, and a built-in Qwen2.5 0.5B quantized model record.\n- PROPOSED: Browser-local WebLLM inference as the zero-server, zero-hosted-inference first route.
+- VALIDATED (documentation only): WebLLM v0.2.87 is the latest upstream release observed on 7 Nov 2026; upstream docs describe browser-local WebGPU inference, streaming, cache backends, and an OpenAI-compatible API.
+- OBSERVED: the HQ CSP currently has `script-src 'self'`, so an unbundled CDN import is blocked by design. Bundle and self-host the runtime rather than weakening the script policy.
+- PROPOSED: Browser-local WebLLM inference as the zero-server, zero-hosted-inference first route.
 - UNPROVEN: WebGPU availability, WebLLM model compatibility, storage persistence, speed, quality, and thermal stability on the user's actual iPad.
 - NOT COMPLETED: No runtime code, model download, deployment, or live inference is included in this architecture-only change.
