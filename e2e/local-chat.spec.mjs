@@ -19,5 +19,5 @@ test("local chat blocks inline styles and links to device preflight", async ({ p
   expect(inlineStyleCount).toBe(0);
   await page.getByRole("link", { name: "Device check" }).click();
   await expect(page).toHaveURL(/local-chat-preflight\.html$/);
-  await expect(page.getByRole("heading")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Prepare local JARVIS-X chat" })).toBeVisible();
 });
