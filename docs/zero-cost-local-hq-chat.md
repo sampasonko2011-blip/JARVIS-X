@@ -12,12 +12,12 @@ The current HQ chat screen is not an autonomous local model. It requires a Supab
 
 The user primarily accesses HQ from an iPad Air 5 (M1, 8 GB RAM). A local Node/Ollama daemon cannot be assumed to run on iPadOS, and a GitHub Pages static site cannot host a persistent inference server. A browser runtime using WebGPU is therefore the first no-server experiment.
 
-WebLLM runs model inference in the browser using WebGPU and provides an OpenAI-compatible chat API. Its official documentation describes browser-local execution and requires a WebGPU-capable browser. Hugging Face documents WebGPU support as version-dependent in Safari and experimental in some browser/device combinations. Physical iPad Safari compatibility is a release gate, not an assumption.
+WebLLM runs model inference in the browser using WebGPU and provides an OpenAI-compatible chat API. The official WebLLM repository documents direct CDN imports, streaming, model caching, and a prebuilt model list that includes Qwen2.5 0.5B. Its model catalog lists Qwen2.5-0.5B-Instruct-q4f16_1-MLC at approximately 945 MB of model memory. This is not the complete download size or total browser memory requirement. A WebLLM issue reports Safari on iOS 26 successfully running a much smaller 135M model but terminating the tab when attempting a 3B model. Therefore iPad Safari compatibility and usable model size remain release gates, not assumptions.
 
 ## Runtime and model selection
 
 - Evaluate the official WebLLM runtime first; pin the exact package version in the build lockfile.
-- Begin with a small, officially supported quantized model (initial candidate: Qwen2-0.5B-Instruct-q4f16_1-MLC) and keep it explicitly labelled as a lightweight local model.
+- Begin with a small, officially supported quantized model (initial candidate: Qwen2.5-0.5B-Instruct-q4f16_1-MLC) and keep it explicitly labelled as a lightweight local model.
 - Do not route the Qwen3.5-0.8B Safetensors candidate directly into WebLLM. The open Qwen3.5 candidate in PR #82 is evaluation-only; a compatible, verified MLC/WebLLM artifact and tokenizer/config are not established by that PR.
 - A stronger 1–1.5B candidate may be evaluated only after device memory, load time, generation speed, thermal behavior, and task quality are measured on the actual iPad.
 - Never claim that a 0.5B/0.6B model is equivalent to a frontier hosted model or the full intended JARVIS-X capability set.
@@ -82,12 +82,12 @@ Local chat history and Memory OS are distinct:
 5. Perform the physical iPad Safari test before claiming local inference works.
 6. Only then consider model promotion, persistent encrypted memory sync, and local specialist orchestration.
 
-## Current status
+## Verified technical references\n\n- WebLLM official repository and API: https://github.com/mlc-ai/web-llm (Apache-2.0; browser-local WebGPU inference, CDN option, streaming, cache backends, and built-in model registry).\n- WebLLM supported model list: https://github.com/mlc-ai/web-llm/issues/683 (Qwen2.5 0.5B q4f16 model memory estimate approximately 944.62 MB).\n- iOS Safari model-size failure report: https://github.com/mlc-ai/web-llm/issues/753 (a 135M model ran; a 3B model caused Safari tab termination on the reporter's iOS 26 device). This is an individual report, not a universal compatibility result.\n- MLC LLM iOS documentation: https://github.com/mlc-ai/mlc-llm/blob/main/docs/deploy/ios.rst (native iOS app path exists; it is a separate app and does not itself integrate the model into this HQ PWA).\n\n## Current status
 
 - OBSERVED: The default-branch HQ already has a chat UI, but it is gated by Supabase authentication and the remote gateway.
 - OBSERVED: The default-branch README says live executive inference is not independently verified.
 - OBSERVED: The repository contains a local Ollama runner for a machine with Ollama installed; it does not make Ollama run on iPadOS.
 - OBSERVED: PR #82 adds Qwen3.5-0.8B as an evaluation-only candidate and explicitly leaves device fit/runtime compatibility unproven.
-- PROPOSED: Browser-local WebLLM inference as the zero-server, zero-hosted-inference first route.
+- VALIDATED (documentation only): WebLLM provides browser-local inference, streaming, cache backends, and a built-in Qwen2.5 0.5B quantized model record.\n- PROPOSED: Browser-local WebLLM inference as the zero-server, zero-hosted-inference first route.
 - UNPROVEN: WebGPU availability, WebLLM model compatibility, storage persistence, speed, quality, and thermal stability on the user's actual iPad.
 - NOT COMPLETED: No runtime code, model download, deployment, or live inference is included in this architecture-only change.
