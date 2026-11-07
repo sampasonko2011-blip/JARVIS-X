@@ -46,7 +46,7 @@ test("local preflight gives only a preliminary pass when adapter exists", async 
   });
   await h.handlers.click();
   assert.match(h.result.textContent, /PRELIMINARY PASS/);
-  assert.match(h.list.innerHTML, /2000 MB estimated browser quota/);
+  assert.match(h.list.innerHTML, /1907 MB estimated browser quota/);
   assert.match(h.list.innerHTML, /8 GB reported by browser/);
   assert.equal(h.button.disabled, false);
 });
