@@ -27,7 +27,7 @@ test("local chat page loads only the self-hosted bundle and is discoverable from
   const index = read("../hq/index.html");
   const sw = read("../hq/sw.js");
   assert.match(page, /local-chat-engine\.bundle\.js/);
-  assert.doesNotMatch(page, /\\sstyle=/i);
+  assert.doesNotMatch(page, /\sstyle=/i);
   assert.match(index, /href="\.\/local-chat\.html"/);
   assert.match(sw, /local-chat-engine\.bundle\.js/);
   assert.match(sw, /local-chat\.html/);
