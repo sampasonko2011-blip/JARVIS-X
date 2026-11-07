@@ -10,9 +10,9 @@
 <link rel="stylesheet" href="./hq.css">
 </head>
 <body>
-<main class="shell" style="max-width:900px;margin:0 auto;padding:24px">
+<main class="shell local-chat-shell">
 <header class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>ON-DEVICE LOCAL CHAT</small></div></header>
-<section class="card" style="margin-top:24px">
+<section class="card local-chat-card">
 <div class="eyebrow">ZERO HOSTED INFERENCE</div>
 <h1>JARVIS-X · Local engine</h1>
 <p>Model inference runs in this browser using your device's GPU. The first load downloads model files from the configured model repositories. No cloud inference fallback exists.</p>
@@ -20,7 +20,7 @@
 <div class="actions"><button class="btn primary" id="load-model">Load local model</button><a class="btn ghost" href="./local-chat-preflight.html">Device check</a><a class="btn ghost" href="./index.html">Back to HQ</a></div>
 <p class="footnote" id="progress" role="status" aria-live="polite">No model has been downloaded.</p>
 </section>
-<section class="card" style="margin-top:16px">
+<section class="card local-chat-card-secondary">
 <h2>Conversation</h2>
 <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Load the model to begin. This conversation is held in page memory and is not synced.</small></div></div>
 <label for="message">Message</label>
