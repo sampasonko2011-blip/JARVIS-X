@@ -19,7 +19,7 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   assert.match(engine, /MAX_INPUT_CHARS = 4000/);
   assert.match(engine, /stream: true/);
   assert.match(engine, /return body;/);
-  assert.match(engine, /for await \\(const chunk of stream\\)/);
+  assert.match(engine, /for await \(const chunk of stream\)/);
   assert.match(engine, /No cloud fallback was attempted/);
   assert.match(engine, /age-appropriate|minor/i);
   assert.doesNotMatch(engine, /fetch\s*\(|supabase|openrouter/i);
