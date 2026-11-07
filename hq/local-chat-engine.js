@@ -78,12 +78,23 @@ sendButton.addEventListener("click", async () => {
   messages.push({ role: "user", content: text });
   setBusy(true);
   try {
-    const response = await engine.chat.completions.create({
+    const output = append("assistant", "");
+    let answer = "";
+    const stream = await engine.chat.completions.create({
       messages,
       temperature: 0.7,
-      max_tokens: 512
+      max_tokens: 512,
+      stream: true
     });
-    const answer = response.choices?.[0]?.message?.content || "(No text returned.)";
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (typeof delta === "string") {
+        answer += delta;
+        output.textContent = answer;
+      }
+    }
+    if (!answer) answer = "(No text returned.)";
+    output.textContent = answer;
     messages.push({ role: "assistant", content: answer });
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
     append("assistant", answer);
