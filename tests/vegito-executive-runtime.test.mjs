@@ -62,7 +62,7 @@ test("Vegito runtime never synthesizes when a specialist fails independent verif
     stages: [{ id: "plan", agentId: "planner", role: "orchestration", tool: "read_repository" }]
   });
   assert.equal(result.status, "BLOCKED");
-  assert.equal(result.reason, "SPECIALIST_STAGE_NOT_COMPLETED");
+  assert.equal(result.reason, "SPECIALIST_EVIDENCE_NOT_VALIDATED");
   assert.equal(getSynthesisCalls(), 0);
 });
 
