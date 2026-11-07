@@ -86,7 +86,7 @@ test("local Vegito adapter uses installed local Ollama and one independently ver
   const calls = [];
   const spawn = (command, args, options) => {
     calls.push({ command, args, options });
-    if (args[0] === "list") return { status: 0, stdout: "NAME ID SIZE MODIFIED\\nqwen2.5:3b abc 2GB now\\n", stderr: "" };
+    if (args[0] === "list") return { status: 0, stdout: "NAME ID SIZE MODIFIED\nqwen2.5:3b abc 2GB now\n", stderr: "" };
     return { status: 0, stdout: "one executive answer", stderr: "" };
   };
   const runtime = createLocalVegitoRuntime({
@@ -113,7 +113,7 @@ test("local Vegito adapter refuses to download a missing model", async () => {
     model: "qwen2.5:3b", registry: localRegistryFixture(),
     spawn: (command, args) => {
       calls.push(args);
-      return { status: 0, stdout: "NAME ID SIZE MODIFIED\\nother:1b abc 1GB now\\n", stderr: "" };
+      return { status: 0, stdout: "NAME ID SIZE MODIFIED\nother:1b abc 1GB now\n", stderr: "" };
     },
     authorize: async () => true, verify: async () => true, verifySynthesis: async () => true
   });
