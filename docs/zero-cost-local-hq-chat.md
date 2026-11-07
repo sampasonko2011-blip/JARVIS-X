@@ -104,4 +104,4 @@ Local chat history and Memory OS are distinct:
 - VALIDATED (source-level only): The pinned model ID exists in WebLLM v0.2.87's official prebuilt model registry; its published GPU-memory estimate is 944.62 MB. This is not total RAM or download size.
 - VALIDATED (source-level only): The deployment workflow builds the self-hosted browser bundle before copying HQ assets into the Pages artifact.
 - UNPROVEN: Successful browser bundle build in CI, successful model download/load, actual local inference, performance, iPad Safari compatibility, and deployment. No physical device test has been run.
-- NOT COMPLETED: The local runtime is not yet deployed or proven to run on the user's iPad. No cloud fallback is configured.
+- NOT COMPLETED: PR #83 remains open as a draft. Its deployment workflow only runs on `main` or manual dispatch; no production deploy was triggered by this branch. No cloud fallback is configured.
