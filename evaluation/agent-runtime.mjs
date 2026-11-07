@@ -1,6 +1,6 @@
 const ALLOWED_STATUSES = new Set(["OBSERVED", "VALIDATED", "PROPOSED", "UNPROVEN"]);
 const ALLOWED_ACTIVATION = new Set(["DISABLED", "ENABLED"]);
-const SAFE_TOOLS = new Set(["read_public_web", "read_repository", "propose_patch", "run_sandbox_tests", "read_test_results", "inspect_diff"]);
+const SAFE_TOOLS = new Set(["read_public_web", "read_repository", "propose_patch", "run_sandbox_tests", "read_test_results", "inspect_diff", "local_model_inference"]);
 function assert(condition, message) { if (!condition) throw new TypeError(message); }
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
