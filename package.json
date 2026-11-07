@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:local-chat",
     "test": "node --test",
     "benchmark": "node benchmarks/benchmark.mjs",
     "benchmark:runtime": "node benchmarks/runtime-comparison.mjs",
