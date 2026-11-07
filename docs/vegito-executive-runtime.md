@@ -17,3 +17,8 @@ hq/vegito-executive-runtime.mjs composes the governed specialist runtime under o
 ## Status
 
 The orchestration module and tests establish a source-level composition contract only. The current registry entries remain DISABLED/PROPOSED; no production host handler, local model, durable task store or gateway integration is supplied by this change. It must not be described as an activated production AI system.
+
+
+## Local Ollama host binding
+
+`hq/local-vegito-runtime.mjs` binds the executive runtime and specialist inference to one explicitly supplied, already-installed local Ollama model. It uses the existing local runner, which pins the daemon to loopback, sets no-cloud mode, passes a restricted child-process environment, checks the installed model list, never downloads weights, and does not invoke a shell. A single specialist tool (`local_model_inference`) is added to the governed runtime allowlist; each registry agent must explicitly declare it. The host caller must inject task-bound authorization and independent specialist and executive verifiers. This factory does not enable agents or install models. The local model's output remains unverified until the injected verifier accepts it; this is a local composition seam, not proof of device availability, model quality, or production integration.
