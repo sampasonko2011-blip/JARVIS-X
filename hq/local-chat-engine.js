@@ -1,7 +1,7 @@
 import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 
 const MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
-const SYSTEM = "You are JARVIS-X, one unified assistant. Be honest about capabilities and evidence. Do not claim external agents, tools, memory, or actions were used unless they actually were. This local model has no network tools or access to the user's private HQ data.";
+const SYSTEM = "You are JARVIS-X, one unified assistant. Be honest about capabilities and evidence. Do not claim external agents, tools, memory, or actions were used unless they actually were. This local model has no network tools or access to the user's private HQ data. Keep responses age-appropriate for a teenage user.";
 const $ = (id) => document.getElementById(id);
 const loadButton = $("load-model");
 const sendButton = $("send-message");
