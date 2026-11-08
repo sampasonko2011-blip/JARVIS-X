@@ -1,6 +1,6 @@
 # XMemo live-memory integration contract
 
-Status: SOURCE IMPLEMENTATION EXISTS; DEPLOYED RUNTIME STATUS UNVERIFIED. The default-branch gateway source already contains a consent-gated XMemo transport adapter in `supabase/functions/hq-gateway-v12/xmemo-memory.mjs`, wires it in `index.ts`, and includes focused tests in `tests/hq-gateway-v12-xmemo-memory.test.mjs`. This contract records required controls and remaining release evidence; it does not claim the production edge function has the XMEMO_API_KEY configured or that live read/write has been verified.
+Status: SOURCE IMPLEMENTATION EXISTS; DEPLOYED RUNTIME STATUS UNVERIFIED. The default-branch gateway source contains a consent-gated XMemo transport adapter in `supabase/functions/hq-gateway-v12/xmemo-memory.mjs`, wires it in `index.ts`, and includes focused tests in `tests/hq-gateway-v12-xmemo-memory.test.mjs`. The local-chat PR adds a source-level regression test for that gateway wiring. This contract records required controls and remaining release evidence; it does not claim the production edge function has the XMEMO_API_KEY configured or that live read/write has been verified.
 
 ## System roles
 
@@ -48,7 +48,7 @@ The existing source adapter is injected into the gateway module. Preserve this b
 
 ## Current evidence boundary
 
-OBSERVED: default-branch source defines the XMemo HTTP adapter, consent gates, UUID-scoped user paths, redaction, bounded requests/responses, timeout handling, and gateway call sites. Focused unit tests cover consent, path isolation, redaction, bounded context, HTTP failures, and transport failures.
+OBSERVED: default-branch source defines the XMemo HTTP adapter, consent gates, UUID-scoped user paths, redaction, bounded requests/responses, timeout handling, and gateway call sites. Focused unit tests cover consent, path isolation, redaction, bounded context, HTTP failures, and transport failures. The local-chat PR adds a static regression assertion that the gateway uses the authenticated user ID and explicit per-request memory_consent for both recall and store.
 
 VALIDATED: the existing adapter test suite is part of the repository CI contract; verify exact-head workflow results before release.
 
