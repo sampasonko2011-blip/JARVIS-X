@@ -6,7 +6,7 @@ test("local chat page is reachable and starts safely without loading a model", a
   await page.goto("/local-chat.html");
   await expect(page.getByRole("heading", { name: "JARVIS-X · Local engine" })).toBeVisible();
   await expect(page.getByText("NOT LOADED")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Load local model" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
   await expect(page.getByRole("textbox", { name: "Message" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
   await expect(page.getByText(/No model has been downloaded/)).toBeVisible();
@@ -20,4 +20,30 @@ test("local chat blocks inline styles and links to device preflight", async ({ p
   await page.getByRole("link", { name: "Device check" }).click();
   await expect(page).toHaveURL(/local-chat-preflight\.html$/);
   await expect(page.getByRole("heading", { level: 1, name: "Prepare local JARVIS-X chat" })).toBeVisible();
+});
+
+
+test("local chat keeps startup inference local and Memory OS disconnected", async ({ page }) => {
+  const externalRequests = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== "http://127.0.0.1:4173") externalRequests.push(url.origin);
+  });
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#cognitive-mode")).toContainText("ADAPTIVE MODE");
+  await expect(page.locator("#cognitive-state")).toContainText("does not read or write Memory OS");
+  await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
+  await expect(page.locator("#message")).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeDisabled();
+  await expect(page.locator("#progress")).toContainText("No model has been downloaded");
+  expect(externalRequests).toEqual([]);
+});
+
+test("local chat exposes a low-memory default and an optional larger local model", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const model = page.getByLabel("Local model");
+  await expect(model).toHaveValue("SmolLM2-360M-Instruct-q4f32_1-MLC");
+  await expect(model.locator("option")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
+  await expect(page.getByText(/Only the selected model downloads/)).toBeVisible();
 });

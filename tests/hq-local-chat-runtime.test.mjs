@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { selectSampling } from "../hq/cognitive-policy.js";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -71,4 +72,85 @@ test("local model load failures report the exact initialization stage and underl
   assert.match(engine, /errorMessage/);
   assert.match(engine, /LOCAL LOAD FAILED at /);
   assert.match(engine, /adapter\.limits/);
+});
+
+
+test("local chat selects bounded task-aware sampling and reflects session state without remote memory", () => {
+  const engine = read("../hq/local-chat-engine.js");
+  const policy = read("../hq/cognitive-policy.js");
+  const page = read("../hq/local-chat.html");
+  assert.match(policy, /export function selectSampling/);
+  assert.match(policy, /mode: "precision", temperature: 0\.2, top_p: 0\.85/);
+  assert.match(policy, /mode: "creative", temperature: 0\.85, top_p: 0\.95/);
+  assert.match(policy, /mode: "balanced", temperature: 0\.6, top_p: 0\.92/);
+  assert.match(engine, /top_p: sampling\.top_p/);
+  assert.match(engine, /function reflectState/);
+  assert.match(engine, /reflection\.failures/);
+  assert.match(page, /id="cognitive-mode"/);
+  assert.match(page, /does not read or write Memory OS/);
+  assert.doesNotMatch(engine, /fetch\s*\(|supabase|openrouter/i);
+});
+
+
+test("local chat delegates multilingual task classification to the shared policy", () => {
+  const engine = read("../hq/local-chat-engine.js");
+  const policy = read("../hq/cognitive-policy.js");
+  assert.match(engine, /import \{ selectSampling \} from "\.\/cognitive-policy\.js"/);
+  assert.match(policy, /normalize\("NFD"\)/);
+  assert.match(policy, /erreur\|debug/);
+  assert.match(policy, /idee\|story\|histoire/);
+});
+
+
+test("adaptive sampling classifies real English and French inputs", () => {
+  assert.equal(selectSampling("Debug this JavaScript error").mode, "precision");
+  assert.equal(selectSampling("Peux-tu vérifier cette erreur de sécurité ?").mode, "precision");
+  assert.equal(selectSampling("Fais un calcul et explique la preuve").mode, "precision");
+  assert.equal(selectSampling("Imagine une histoire créative").mode, "creative");
+  assert.equal(selectSampling("Écris une idée de jeu").mode, "creative");
+  assert.equal(selectSampling("Hello, how are you?").mode, "balanced");
+  assert.equal(selectSampling("Imagine a design and debug this code").mode, "precision");
+});
+
+test("adaptive policy classifies real English and French prompts with bounded settings", () => {
+  const cases = [
+    ["Fix this JavaScript bug", "precision"],
+    ["Corrige cette erreur dans mon script", "precision"],
+    ["Fais un audit de sécurité", "precision"],
+    ["Write a fantasy story", "creative"],
+    ["Imagine un concept original", "creative"],
+    ["Salut, comment ça va ?", "balanced"],
+    ["Explain the history of football", "balanced"],
+  ];
+  for (const [prompt, expected] of cases) {
+    const result = selectSampling(prompt);
+    assert.equal(result.mode, expected, prompt);
+    assert.ok(result.temperature >= 0 && result.temperature <= 1, prompt);
+    assert.ok(result.top_p > 0 && result.top_p <= 1, prompt);
+    assert.ok(result.frequency_penalty >= -2 && result.frequency_penalty <= 2, prompt);
+    assert.ok(result.presence_penalty >= -2 && result.presence_penalty <= 2, prompt);
+  }
+});
+
+test("precision takes precedence over creative cues in mixed prompts", () => {
+  assert.equal(selectSampling("Design a new app and debug this code").mode, "precision");
+  assert.equal(selectSampling("Conçois une idée et corrige ce bug").mode, "precision");
+});
+
+test("clearing local chat resets session-only cognitive reflection counters", () => {
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(engine, /reflection = \{ turns: 0, failures: 0, lastMode: "balanced" \}/);
+  assert.match(engine, /renderReflection\(\);[\s\S]*?transcript\.replaceChildren\(\)/);
+});
+
+test("local model selector defaults to the low-memory option and allowlists both model IDs", () => {
+  const page = read("../hq/local-chat.html");
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(page, /id="model-select"/);
+  assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
+  assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
+  assert.match(engine, /DEFAULT_MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC"/);
+  assert.match(engine, /ALLOWED_MODEL_IDS/);
+  assert.match(engine, /CreateMLCEngine\(selectedModel/);
+  assert.match(engine, /selectedModel\) && prebuiltAppConfig\.model_list/);
 });
