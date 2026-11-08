@@ -117,3 +117,23 @@ The current PR #83 implementation is narrower than the full interaction roadmap 
 - **NOT LIVE-SYNCED:** local mode does not connect to XMemo; its conversation history is not uploaded.
 
 This correction intentionally prevents roadmap items from being mistaken for delivered capabilities.
+
+
+## Release verification runbook (8 Nov 2026)
+
+Do not use a CI pass as evidence of iPad model compatibility. After the reviewed PR is merged and the Pages deployment succeeds, run this on the target iPad:
+
+1. Open the deployed HQ in Safari and navigate to **Local model chat**.
+2. Open **Device check** first. Record browser version, secure-context status, WebGPU adapter result, reported storage estimate, and any device-memory hint. A preliminary WebGPU pass is not a model-load pass.
+3. Return to Local model chat. Confirm the exact model ID and first-download disclosure. Only then select **Load local model**.
+4. Record whether the tab remains alive, whether loading reaches **Local model ready**, elapsed cold-start time, and any visible error. Do not repeatedly retry after tab termination or device overheating.
+5. If initialization succeeds, test one short French prompt, one English prompt, one simple code question, then a ten-turn conversation. Record response latency, correctness, tab stability, battery/thermal symptoms, and whether the browser becomes unresponsive.
+6. Reload the page and check whether the conversation is gone (expected: session-only) and whether the model cache is reused. Cache retention is browser-managed and may be evicted.
+7. Disconnect networking only after the first model load, then test one short prompt. A successful offline response validates cached local inference for that test only.
+8. If the browser tab closes, the model fails to initialize, or the device becomes unstable, record **REJECTED on this device/configuration**. Do not enable cloud fallback as a workaround.
+
+Record evidence without collecting private prompts or account credentials. A release report must distinguish: WebGPU available, model downloaded, model initialized, inference completed, ten-turn stability, and offline inference. Each is a separate gate.
+
+### Current release boundary
+
+PR #83 is still a draft and the Pages workflow deploys only from main or manual dispatch. This runbook is for after an authorized release; it does not imply that the feature is currently published. No live iPad test has been performed by CI.
