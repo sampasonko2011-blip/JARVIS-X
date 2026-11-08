@@ -38,3 +38,12 @@ test("local chat keeps startup inference local and Memory OS disconnected", asyn
   await expect(page.locator("#progress")).toContainText("No model has been downloaded");
   expect(externalRequests).toEqual([]);
 });
+
+test("local chat exposes a low-memory default and an optional larger local model", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const model = page.getByLabel("Local model");
+  await expect(model).toHaveValue("SmolLM2-360M-Instruct-q4f32_1-MLC");
+  await expect(model.locator("option")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
+  await expect(page.getByText(/Only the selected model downloads/)).toBeVisible();
+});
