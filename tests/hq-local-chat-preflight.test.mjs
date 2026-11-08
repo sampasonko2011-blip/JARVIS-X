@@ -10,9 +10,15 @@ function harness({ secure = true, gpu, storage, deviceMemory } = {}) {
   const button = { disabled: false, addEventListener: (name, fn) => { handlers[name] = fn; } };
   const list = { children: [], replaceChildren(...items) { this.children = items; } };
   const result = { textContent: "" };
-  const document = { querySelector(selector) {
-    return selector === "#run-checks" ? button : selector === "#checks" ? list : selector === "#result" ? result : null;
-  }};
+  const document = {
+    createElement(tag) {
+      return { tagName: tag, children: [], className: "", textContent: "", append(...items) { this.children.push(...items); } };
+    },
+    createTextNode(text) { return { textContent: text }; },
+    querySelector(selector) {
+      return selector === "#run-checks" ? button : selector === "#checks" ? list : selector === "#result" ? result : null;
+    }
+  };
   const navigator = { ...(gpu ? { gpu } : {}), ...(storage ? { storage } : {}), ...(deviceMemory ? { deviceMemory } : {}) };
   vm.runInNewContext(source, { document, navigator, window: { isSecureContext: secure } });
   return { handlers, button, list, result };
