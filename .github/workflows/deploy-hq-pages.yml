@@ -8,6 +8,7 @@ on:
       - "apex-career-os/**"
       - ".github/workflows/deploy-hq-pages.yml"
       - ".github/workflows/apex-career-os-deploy.yml"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 permissions:
