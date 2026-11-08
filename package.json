@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:local-chat",
     "test": "node --test",
     "benchmark": "node benchmarks/benchmark.mjs",
     "benchmark:runtime": "node benchmarks/runtime-comparison.mjs",
@@ -13,11 +13,16 @@
     "benchmark:live": "node scripts/run-live-benchmark.mjs",
     "test:e2e": "playwright test --config=playwright.config.mjs",
     "forge:local": "node scripts/forge-local-runner.mjs",
-    "forge:sandbox": "node scripts/forge-sandbox-runner.mjs"
+    "forge:sandbox": "node scripts/forge-sandbox-runner.mjs",
+    "build:local-chat": "esbuild hq/local-chat-engine.js --bundle --format=iife --platform=browser --target=es2022 --outfile=hq/local-chat-engine.bundle.js"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
     "typescript": "^5.8.0",
-    "@playwright/test": "^1.56.1"
+    "@playwright/test": "^1.56.1",
+    "esbuild": "0.25.12"
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "0.2.87"
   }
 }

@@ -107,3 +107,14 @@ test("adapter requires a bounded timeout", () => {
   assert.throws(() => createXMemoMemoryClient({ timeoutMs: 10 }), /xmemo_timeout_invalid/);
   assert.throws(() => createXMemoMemoryClient({ fetchImpl: null }), /xmemo_fetch_required/);
 });
+
+
+test("gateway wires XMemo through authenticated identity and explicit per-request consent", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
+  assert.match(gateway, /createXMemoMemoryClient\(\{ apiKey: Deno\.env\.get\("XMEMO_API_KEY"\) \}\)/);
+  assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
+  assert.match(gateway, /recallMemory\(task, user\.id, memoryConsent\)/);
+  assert.match(gateway, /storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
+  assert.match(gateway, /memoryConfigured: Boolean\(Deno\.env\.get\("XMEMO_API_KEY"\)\)/);
+});
