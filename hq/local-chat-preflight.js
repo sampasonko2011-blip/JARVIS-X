@@ -13,6 +13,7 @@
     button.disabled = true;
     result.textContent = 'Checking browser capabilities…';
     const checks = [];
+    try {
     const secure = window.isSecureContext;
     checks.push(row('Secure context', secure ? 'HTTPS or localhost is active.' : 'WebGPU generally requires a secure context.', secure ? 'AVAILABLE' : 'UNAVAILABLE'));
 
@@ -41,6 +42,10 @@
     result.textContent = pass
       ? 'PRELIMINARY PASS: WebGPU is exposed. Next gate is a controlled model-load test; no inference has run.'
       : 'NOT READY: this browser did not pass the WebGPU preflight. No model was downloaded and no cloud fallback was attempted.';
-    button.disabled = false;
+    } catch (error) {
+      result.textContent = 'CHECK FAILED: ' + (error instanceof Error ? error.message : 'unknown browser error') + '. No model was downloaded.';
+    } finally {
+      button.disabled = false;
+    }
   });
 })();
