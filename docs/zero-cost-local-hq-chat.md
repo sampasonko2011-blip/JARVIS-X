@@ -29,8 +29,8 @@ WebLLM runs model inference in the browser using WebGPU and provides an OpenAI-c
 2. Before model initialization, check navigator.gpu and request an adapter. Show a clear unsupported-device state if unavailable.
 3. Model download is user-initiated, reports its size/progress where the runtime exposes it, and is cancellable. Do not download weights on page load.
 4. Show the exact model ID, quantization, runtime version, and local-only status before first use.
-5. Run generation in a Web Worker where supported so the UI remains responsive. Support stop/cancel, bounded context, bounded output, and explicit error handling.
-6. Save chat history only in the existing local browser store, with a clear local-data notice and a user-visible delete/export path. Do not send local prompts, chat history, or memories to XMemo or any server in local mode.
+5. **Current implementation:** generation streams through the page's WebLLM engine, with bounded input/history and explicit error handling. Worker isolation and stop/cancel controls are deferred; do not claim them as implemented.
+6. **Current implementation:** conversation history exists only in page memory and is cleared on reload. Browser-profile persistence and user-visible export are deferred. Do not send local prompts, chat history, or memories to XMemo or any server in local mode.
 7. Keep local mode separate from cloud live mode. No implicit cloud fallback, no hidden telemetry, and no provider credentials.
 8. Mark every local response with its actual model/runtime metadata. The assistant identity remains JARVIS-X; the model is an implementation detail shown for transparency, not a separate assistant persona.
 9. Keep specialist orchestration disabled until the single-model local baseline is measured. Do not simulate 50 agents or represent multiple prompts to the same model as independent intelligence.
@@ -47,7 +47,7 @@ WebLLM runs model inference in the browser using WebGPU and provides an OpenAI-c
 ## Memory boundary
 
 Local chat history and Memory OS are distinct:
-- Local chat persistence is browser-profile storage.
+- Current local conversation history is in-memory only; browser-profile persistence is not implemented.
 - Cross-device Memory OS requires a separate authenticated, encrypted, consent-gated sync service.
 - The existing XMemo adapter is not assumed to be live or reachable from local mode.
 - Local mode must not silently upload memory. Any future export/sync action requires explicit user choice and a clear destination.
@@ -57,7 +57,7 @@ Local chat history and Memory OS are distinct:
 ### Build and static tests
 - Exact runtime and model versions are pinned.
 - No provider SDK, API key, or paid endpoint is added to the local path.
-- Unit tests cover WebGPU unavailable, adapter unavailable, model download cancellation/failure, model initialization failure, generation failure, stop, empty output, context/output bounds, and local-only no-network behavior after initialization.
+- Current tests cover preflight API/adapter failures, basic startup/navigation, bounded input/history source contracts, and prompt restoration after generation failure. Model-load cancellation/failure, stop/cancel, empty-output behavior, worker isolation, and actual offline inference still need dedicated tests.
 - Tests verify local chat cannot call the Supabase gateway, XMemo, or hosted model APIs.
 - Static scan confirms no secrets and no silent cloud fallback.
 
@@ -105,3 +105,15 @@ Local chat history and Memory OS are distinct:
 - VALIDATED (source-level only): The deployment workflow builds the self-hosted browser bundle before copying HQ assets into the Pages artifact.
 - UNPROVEN: Successful browser bundle build in CI, successful model download/load, actual local inference, performance, iPad Safari compatibility, and deployment. No physical device test has been run.
 - NOT COMPLETED: PR #83 remains open as a draft. Its deployment workflow only runs on `main` or manual dispatch; no production deploy was triggered by this branch. No cloud fallback is configured.
+
+
+## Implementation status correction (8 Nov 2026)
+
+The current PR #83 implementation is narrower than the full interaction roadmap above:
+
+- **VALIDATED in CI:** bundled WebLLM runtime, explicit user-initiated model load, WebGPU preflight, streamed generation, bounded input/history, clear-chat action, and prompt restoration after generation failure.
+- **NOT IMPLEMENTED:** worker isolation, generation cancellation/stop, persisted browser-profile chat history, export, and model-download cancellation.
+- **NOT DEVICE-VALIDATED:** actual iPad Safari model download/load/inference, performance, thermal behavior, and offline cache retention.
+- **NOT LIVE-SYNCED:** local mode does not connect to XMemo; its conversation history is not uploaded.
+
+This correction intentionally prevents roadmap items from being mistaken for delivered capabilities.
