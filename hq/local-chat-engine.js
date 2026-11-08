@@ -116,9 +116,13 @@ sendButton.addEventListener("click", async () => {
   try {
     output = append("assistant", "");
     let answer = "";
+    const sampling = selectSampling(text);
     const stream = await engine.chat.completions.create({
       messages,
-      temperature: 0.7,
+      temperature: sampling.temperature,
+      top_p: sampling.top_p,
+      frequency_penalty: sampling.frequency_penalty,
+      presence_penalty: sampling.presence_penalty,
       max_tokens: 512,
       stream: true
     });
@@ -133,12 +137,14 @@ sendButton.addEventListener("click", async () => {
     output.textContent = answer;
     messages.push({ role: "assistant", content: answer });
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
-    progress.textContent = "Generated locally on this device using " + sampling.mode + " sampling.";\n    reflectState(sampling.mode, answer);
+    progress.textContent = "Generated locally on this device using " + sampling.mode + " sampling.";
+    reflectState(sampling.mode, answer);
   } catch (error) {
     messages.pop();
     const reason = error instanceof Error ? error.message : "unknown error";
     if (output) output.textContent = "Generation failed: " + reason + ". Your message has been restored for retry.";
     input.value = text;
+    reflectState("failed", reason, true);
     progress.textContent = "Generation failed. Your message is ready to retry: " + reason;
   } finally {
     setBusy(false);
