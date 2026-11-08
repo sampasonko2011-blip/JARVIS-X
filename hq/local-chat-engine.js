@@ -16,6 +16,7 @@ const input = $("message");
 let engine = null;
 let messages = [{ role: "system", content: SYSTEM }];
 let busy = false;
+let loadStage = "idle";
 
 function append(role, content) {
   const item = document.createElement("div");
@@ -44,19 +45,29 @@ loadButton.addEventListener("click", async () => {
   }
   setBusy(true);
   status.textContent = "LOADING";
-  progress.textContent = "Checking GPU adapter…";
+  loadStage = "adapter";
+  progress.textContent = "Stage 1/3: requesting a WebGPU adapter…";
   try {
-    const adapter = await navigator.gpu.requestAdapter();
+    const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
     if (!adapter) throw new Error("No WebGPU adapter available.");
     const supported = prebuiltAppConfig.model_list.some((item) => item.model_id === MODEL_ID);
     if (!supported) throw new Error("Pinned model ID is not present in this WebLLM package.");
-    progress.textContent = "Downloading model and GPU runtime. First load may take several minutes…";
+    loadStage = "download-and-initialize";
+    const limits = adapter.limits || {};
+    const gpuSummary = [
+      "GPU adapter accepted.",
+      Number.isFinite(limits.maxBufferSize) ? "maxBufferSize=" + limits.maxBufferSize : "",
+      Number.isFinite(limits.maxStorageBufferBindingSize) ? "maxStorageBufferBindingSize=" + limits.maxStorageBufferBindingSize : ""
+    ].filter(Boolean).join(" ");
+    detail.textContent = gpuSummary + " Starting model download/initialization.";
+    progress.textContent = "Stage 2/3: downloading model and initializing WebGPU runtime. First load can take several minutes; keep Safari open.";
     engine = await CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (p) => {
         const pct = Number.isFinite(p.progress) ? Math.round(p.progress * 100) + "%" : "";
         progress.textContent = (p.text || "Preparing local model…") + (pct ? " " + pct : "");
       }
     });
+    loadStage = "ready";
     status.textContent = "READY";
     detail.textContent = "Model loaded in this browser. No hosted inference is configured.";
     progress.textContent = "Local model ready. Messages stay in this page session.";
@@ -65,8 +76,13 @@ loadButton.addEventListener("click", async () => {
   } catch (error) {
     engine = null;
     status.textContent = "LOAD FAILED";
-    detail.textContent = error instanceof Error ? error.message : "Unknown model-load error.";
-    progress.textContent = "No cloud fallback was attempted. Check browser/GPU compatibility and available memory.";
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const cause = error && typeof error === "object" && "cause" in error && error.cause
+      ? " Cause: " + String(error.cause)
+      : "";
+    detail.textContent = "Failed during " + loadStage + ". " + errorName + ": " + errorMessage + cause;
+    progress.textContent = "LOCAL LOAD FAILED at " + loadStage + ": " + errorName + ": " + errorMessage + ". No cloud fallback was attempted.";
   } finally {
     setBusy(false);
   }
