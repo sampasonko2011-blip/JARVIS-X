@@ -155,7 +155,9 @@ test("HQ security and multi-AI deployment claims stay explicit and gated", async
   assert.ok(workflow.includes("branches: [main]"));
   assert.ok(workflow.includes("path: _site"));
   assert.ok(workflow.includes("cp -R hq/. _site/hq/"));
-  assert.ok(workflow.includes("cp apex-career-os/index.html _site/index.html"));
+  assert.ok(workflow.includes("cp -R hq/. _site/"));
+  assert.ok(workflow.includes("cp apex-career-os/index.html _site/career/index.html"));
+  assert.ok(workflow.includes("cp -R hq/. _site/hq/"));
   assert.ok(workflow.includes("actions/deploy-pages@v4"));
   assert.ok(!workflow.includes("secrets."));
 });
