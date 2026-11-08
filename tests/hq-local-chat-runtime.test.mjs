@@ -143,13 +143,13 @@ test("clearing local chat resets session-only cognitive reflection counters", ()
   assert.match(engine, /renderReflection\(\);[\s\S]*?transcript\.replaceChildren\(\)/);
 });
 
-test("local model selector defaults to the low-memory option and allowlists both model IDs", () => {
+test("local model selector defaults to the smallest iPad option and allowlists all model IDs", () => {
   const page = read("../hq/local-chat.html");
   const engine = read("../hq/local-chat-engine.js");
   assert.match(page, /id="model-select"/);
-  assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
+  assert.match(page, /value="SmolLM2-135M-Instruct-q0f16-MLC"/);\n  assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
-  assert.match(engine, /DEFAULT_MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC"/);
+  assert.match(engine, /DEFAULT_MODEL_ID = "SmolLM2-135M-Instruct-q0f16-MLC"/);\n  assert.match(engine, /"SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(engine, /ALLOWED_MODEL_IDS/);
   assert.match(engine, /CreateMLCEngine\(selectedModel/);
   assert.match(engine, /selectedModel\) && prebuiltAppConfig\.model_list/);
