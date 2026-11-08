@@ -4,10 +4,20 @@
   const result = document.querySelector('#result');
   if (!button || !list || !result) return;
 
-  const row = (name, detail, status) =>
-    '<div class="log"><strong>' + name + ' <span class="tag ' +
-    (status === 'AVAILABLE' ? 'green' : status === 'UNAVAILABLE' ? 'amber' : '') +
-    '">' + status + '</span></strong><small>' + detail + '</small></div>';
+  const row = (name, detail, status) => {
+    const item = document.createElement('div');
+    item.className = 'log';
+    const heading = document.createElement('strong');
+    heading.append(document.createTextNode(name + ' '));
+    const tag = document.createElement('span');
+    tag.className = 'tag ' + (status === 'AVAILABLE' ? 'green' : status === 'UNAVAILABLE' ? 'amber' : '');
+    tag.textContent = status;
+    heading.append(tag);
+    const description = document.createElement('small');
+    description.textContent = detail;
+    item.append(heading, description);
+    return item;
+  };
 
   button.addEventListener('click', async () => {
     button.disabled = true;
@@ -36,7 +46,7 @@
     const memory = navigator.deviceMemory ? navigator.deviceMemory + ' GB reported by browser (may be absent or rounded).' : 'Browser does not expose deviceMemory.';
     checks.push(row('Device memory hint', memory, 'INFO'));
 
-    list.innerHTML = checks.join('');
+    list.replaceChildren(...checks);
     const pass = secure && gpuApi && !!adapter;
     result.textContent = pass
       ? 'PRELIMINARY PASS: WebGPU is exposed. Next gate is a controlled model-load test; no inference has run.'
