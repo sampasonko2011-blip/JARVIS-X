@@ -138,3 +138,14 @@ Record evidence without collecting private prompts or account credentials. A rel
 ### Current release boundary
 
 PR #83 is still a draft and the Pages workflow deploys only from main or manual dispatch. This runbook is for after an authorized release; it does not imply that the feature is currently published. No live iPad test has been performed by CI.
+
+## Latest engineering verification (8 Nov 2026, 03:16 UTC)
+
+- **VALIDATED:** PR head `23f1d17f1681ea68788c1070305656370cbb6f37` passed GitHub Actions run `42441897687` (verify job successful).
+- **VALIDATED by source review:** preflight diagnostics use DOM text nodes and `textContent`; no HTML-string rendering is used for browser-derived diagnostics.
+- **VALIDATED by source review:** local chat uses the pinned WebLLM runtime, requires explicit model loading, bounds prompt/history, streams output, and restores the prompt after generation failure.
+- **NOT IMPLEMENTED:** generation stop/cancel, worker isolation, persistent transcript/export, and model-download cancellation.
+- **UNPROVEN:** real-device iPad Air 5 model initialization/inference, long-session stability, offline inference, and production Pages deployment.
+- **NOT LIVE-SYNCED:** local chat does not use XMemo. Production XMemo credentials/configuration and deployed bidirectional integration remain unverified.
+
+This is the current evidence snapshot; subsequent commits require a new exact-head CI check.
