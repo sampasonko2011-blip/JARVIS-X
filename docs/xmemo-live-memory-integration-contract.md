@@ -1,6 +1,6 @@
 # XMemo live-memory integration contract
 
-Status: PROPOSED architecture contract. This document does not claim that the deployed HQ gateway is connected to XMemo.
+Status: SOURCE IMPLEMENTATION EXISTS; DEPLOYED RUNTIME STATUS UNVERIFIED. The default-branch gateway source already contains a consent-gated XMemo transport adapter in `supabase/functions/hq-gateway-v12/xmemo-memory.mjs`, wires it in `index.ts`, and includes focused tests in `tests/hq-gateway-v12-xmemo-memory.test.mjs`. This contract records required controls and remaining release evidence; it does not claim the production edge function has the XMEMO_API_KEY configured or that live read/write has been verified.
 
 ## System roles
 
@@ -18,7 +18,7 @@ Implement a provider-neutral `MemoryPort` with explicit operations:
 - `checkpoint(stateKey, content, version)`
 - `recordEvent(type, content, evidenceRefs)`
 
-The XMemo adapter must be injected into the gateway, not imported as a hidden global. A missing adapter must fail closed for writes and return a clear `memory_unavailable` result for reads. Do not silently fall back to local browser storage and present it as canonical XMemo memory.
+The existing source adapter is injected into the gateway module. Preserve this boundary in future refactors. A missing adapter must fail closed for writes and return a clear `memory_unavailable` result for reads. Do not silently fall back to local browser storage and present it as canonical XMemo memory.
 
 ## Security and privacy gates
 
@@ -48,8 +48,10 @@ The XMemo adapter must be injected into the gateway, not imported as a hidden gl
 
 ## Current evidence boundary
 
-OBSERVED: the ChatGPT session has an authenticated XMemo connector with memory read/write access.
+OBSERVED: default-branch source defines the XMemo HTTP adapter, consent gates, UUID-scoped user paths, redaction, bounded requests/responses, timeout handling, and gateway call sites. Focused unit tests cover consent, path isolation, redaction, bounded context, HTTP failures, and transport failures.
 
-UNPROVEN: deployed JARVIS-X HQ ↔ XMemo gateway authentication, live bidirectional sync, tenant isolation, deployed read-after-write, and production reliability.
+VALIDATED: the existing adapter test suite is part of the repository CI contract; verify exact-head workflow results before release.
+
+UNPROVEN: production XMEMO_API_KEY configuration, deployed edge-function version, live bidirectional read/write, deployed tenant isolation, deployed read-after-write, deletion/correction workflow, and production reliability. The HQ local browser chat intentionally does not call XMemo or upload local conversation history.
 
 No production credentials, paid services, database permissions, or deployment changes are authorized by this document.
