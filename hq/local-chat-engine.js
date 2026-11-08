@@ -33,7 +33,9 @@ function reflectState(mode, answer, failed = false) {
   if (failed) reflection.failures += 1;
   reflection.lastMode = mode;
   const panel = document.getElementById("cognitive-state");
-  if (panel) panel.textContent = "Mode: " + mode.toUpperCase() + " · Turns: " + reflection.turns + " · Errors: " + reflection.failures + " · Last output: " + (answer?.length || 0) + " chars";
+  const modeLabel = document.getElementById("cognitive-mode");
+  if (modeLabel) modeLabel.textContent = "ADAPTIVE MODE · " + mode.toUpperCase();
+  if (panel) panel.textContent = "Turns: " + reflection.turns + " · Errors: " + reflection.failures + " · Last output: " + (answer?.length || 0) + " chars";
 }
 
 function append(role, content) {
