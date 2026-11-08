@@ -21,3 +21,20 @@ test("local chat blocks inline styles and links to device preflight", async ({ p
   await expect(page).toHaveURL(/local-chat-preflight\.html$/);
   await expect(page.getByRole("heading", { level: 1, name: "Prepare local JARVIS-X chat" })).toBeVisible();
 });
+
+
+test("local chat keeps startup inference local and Memory OS disconnected", async ({ page }) => {
+  const externalRequests = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== "http://127.0.0.1:4173") externalRequests.push(url.origin);
+  });
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#cognitive-mode")).toContainText("ADAPTIVE MODE");
+  await expect(page.locator("#cognitive-state")).toContainText("does not read or write Memory OS");
+  await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
+  await expect(page.locator("#message")).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Clear chat" })).toBeDisabled();
+  await expect(page.locator("#progress")).toContainText("No model has been downloaded");
+  expect(externalRequests).toEqual([]);
+});
