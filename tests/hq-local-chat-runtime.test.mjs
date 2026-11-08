@@ -111,3 +111,28 @@ test("adaptive sampling classifies real English and French inputs", () => {
   assert.equal(selectSampling("Hello, how are you?").mode, "balanced");
   assert.equal(selectSampling("Imagine a design and debug this code").mode, "precision");
 });
+
+test("adaptive policy classifies real English and French prompts with bounded settings", () => {
+  const cases = [
+    ["Fix this JavaScript bug", "precision"],
+    ["Corrige cette erreur dans mon script", "precision"],
+    ["Fais un audit de sécurité", "precision"],
+    ["Write a fantasy story", "creative"],
+    ["Imagine un concept original", "creative"],
+    ["Salut, comment ça va ?", "balanced"],
+    ["Explain the history of football", "balanced"],
+  ];
+  for (const [prompt, expected] of cases) {
+    const result = selectSampling(prompt);
+    assert.equal(result.mode, expected, prompt);
+    assert.ok(result.temperature >= 0 && result.temperature <= 1, prompt);
+    assert.ok(result.top_p > 0 && result.top_p <= 1, prompt);
+    assert.ok(result.frequency_penalty >= -2 && result.frequency_penalty <= 2, prompt);
+    assert.ok(result.presence_penalty >= -2 && result.presence_penalty <= 2, prompt);
+  }
+});
+
+test("precision takes precedence over creative cues in mixed prompts", () => {
+  assert.equal(selectSampling("Design a new app and debug this code").mode, "precision");
+  assert.equal(selectSampling("Conçois une idée et corrige ce bug").mode, "precision");
+});
