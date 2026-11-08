@@ -58,3 +58,11 @@ test("local preflight rejects WebGPU when context is insecure", async () => {
   assert.equal(requested, false);
   assert.match(h.result.textContent, /NOT READY/);
 });
+
+
+test("local preflight restores the check button after an unexpected browser API failure", async () => {
+  const h = harness({ gpu: { requestAdapter: async () => { throw new Error("adapter exploded"); } } });
+  await h.handlers.click();
+  assert.match(h.result.textContent, /CHECK FAILED/);
+  assert.equal(h.button.disabled, false);
+});
