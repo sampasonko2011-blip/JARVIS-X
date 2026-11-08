@@ -6,7 +6,7 @@ test("local chat page is reachable and starts safely without loading a model", a
   await page.goto("/local-chat.html");
   await expect(page.getByRole("heading", { name: "JARVIS-X · Local engine" })).toBeVisible();
   await expect(page.getByText("NOT LOADED")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Load local model" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
   await expect(page.getByRole("textbox", { name: "Message" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Send" })).toBeDisabled();
   await expect(page.getByText(/No model has been downloaded/)).toBeVisible();
