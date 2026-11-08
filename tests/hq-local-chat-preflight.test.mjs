@@ -39,7 +39,7 @@ test("local preflight reports WebGPU unavailable without network or model downlo
 test("local preflight distinguishes exposed WebGPU from a usable adapter", async () => {
   const h = harness({ gpu: { requestAdapter: async () => null } });
   await h.handlers.click();
-  assert.match(h.list.innerHTML, /WebGPU API/);
+  assert.match(h.list.children.map(x => x.children[0].children.map(y => y.textContent || "").join(" ")).join(" "), /WebGPU API/);
   assert.match(h.list.children.map(x => x.children[1].textContent).join(" "), /No usable WebGPU adapter/);
   assert.match(h.result.textContent, /NOT READY/);
 });
