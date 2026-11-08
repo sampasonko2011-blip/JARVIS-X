@@ -46,7 +46,7 @@ test("local chat explains download, local-only session scope, model limits, and 
   assert.match(page, /first load downloads model files/i);
   assert.match(page, /No cloud inference fallback exists/i);
   assert.match(page, /kept in page memory and are not synced/i);
-  assert.match(page, /smaller models trade response quality for a lower memory requirement/i);
+  assert.match(page, /small starter model, not a frontier-model replacement/i);
   assert.match(page, /id="clear-chat"/);
   assert.match(engine, /clearButton\.addEventListener\("click"/);
   assert.match(engine, /Local conversation cleared/);
