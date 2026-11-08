@@ -17,7 +17,13 @@
 <h1>JARVIS-X · Local engine</h1>
 <p>Model inference runs in this browser using your device's GPU. The first load downloads model files from the configured model repositories. No cloud inference fallback exists.</p>
 <div class="loglist"><div class="log"><strong>Runtime <span class="tag" id="runtime-status">NOT LOADED</span></strong><small id="runtime-detail">Load the local model when you are ready.</small></div></div>
-<div class="actions"><button class="btn primary" id="load-model">Load local model</button><a class="btn ghost" href="./local-chat-preflight.html">Device check</a><a class="btn ghost" href="./index.html">Back to HQ</a></div>
+<label for="model-select">Local model</label>
+<select id="model-select" aria-describedby="model-help">
+<option value="SmolLM2-360M-Instruct-q4f32_1-MLC">SmolLM2 360M · low-memory · ~580 MB GPU memory</option>
+<option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5 0.5B · larger · ~945 MB GPU memory</option>
+</select>
+<p class="footnote" id="model-help">The smaller model is the safer first test on iPad Safari. Estimates are model metadata, not a guarantee of available memory. Only the selected model downloads.</p>
+<div class="actions"><button class="btn primary" id="load-model">Load selected model</button><a class="btn ghost" href="./local-chat-preflight.html">Device check</a><a class="btn ghost" href="./index.html">Back to HQ</a></div>
 <p class="footnote" id="progress" role="status" aria-live="polite">No model has been downloaded.</p>
 </section>
 <section class="card local-chat-card-secondary">
@@ -27,7 +33,7 @@
 <label for="message">Message</label>
 <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
 <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button></div>
-<p class="footnote">Model: Qwen2.5-0.5B-Instruct-q4f16_1-MLC · WebLLM 0.2.87. Local generation quality and speed depend on the device. This is a small starter model, not a frontier-model replacement.</p>
+<p class="footnote">Runtime: WebLLM 0.2.87. The selected model runs locally; smaller models trade response quality for a lower memory requirement. This is not a frontier-model replacement.</p>
 </section>
 </main>
 <script src="./local-chat-engine.bundle.js"></script>
