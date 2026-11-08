@@ -90,9 +90,11 @@ test("local chat selects bounded task-aware sampling and reflects session state 
 });
 
 
-test("local chat recognizes French precision and creative task cues", () => {
+test("local chat delegates multilingual task classification to the shared policy", () => {
   const engine = read("../hq/local-chat-engine.js");
-  assert.match(engine, /normalize\("NFD"\)/);
-  assert.match(engine, /erreur.*debogage/);
-  assert.match(engine, /idee\|story\|histoire/);
+  const policy = read("../hq/cognitive-policy.js");
+  assert.match(engine, /import \{ selectSampling \} from "\.\/cognitive-policy\.js"/);
+  assert.match(policy, /normalize\("NFD"\)/);
+  assert.match(policy, /erreur\|debug/);
+  assert.match(policy, /idee\|story\|histoire/);
 });
