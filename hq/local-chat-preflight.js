@@ -22,8 +22,7 @@
 
     let adapter = null;
     if (gpuApi && secure) {
-      try { adapter = await navigator.gpu.requestAdapter(); }
-      catch (_) { adapter = null; }
+      adapter = await navigator.gpu.requestAdapter();
     }
     checks.push(row('GPU adapter', adapter ? 'A WebGPU adapter was returned. This does not prove the model will fit.' : 'No usable WebGPU adapter was returned.', adapter ? 'AVAILABLE' : 'UNAVAILABLE'));
 
