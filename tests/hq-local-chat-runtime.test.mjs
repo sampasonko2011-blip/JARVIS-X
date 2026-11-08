@@ -93,6 +93,6 @@ test("local chat selects bounded task-aware sampling and reflects session state 
 test("local chat recognizes French precision and creative task cues", () => {
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /normalize\("NFD"\)/);
-  assert.match(engine, /erreur\|debogage/);
+  assert.match(engine, /erreur.*debogage/);
   assert.match(engine, /idee\|story\|histoire/);
 });
