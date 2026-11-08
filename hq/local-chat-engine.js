@@ -17,6 +17,24 @@ let engine = null;
 let messages = [{ role: "system", content: SYSTEM }];
 let busy = false;
 let loadStage = "idle";
+let reflection = { turns: 0, failures: 0, lastMode: "balanced" };
+
+function selectSampling(message) {
+  const text = String(message || "").toLowerCase();
+  const strict = /\b(code|bug|error|debug|git|server|architecture|script|math|calculate|prove|verify|audit|security)\b/.test(text);
+  const creative = /\b(idea|story|brainstorm|design|imagine|creative|write|name|concept)\b/.test(text);
+  if (strict) return { mode: "precision", temperature: 0.2, top_p: 0.85, frequency_penalty: 0.1, presence_penalty: 0 };
+  if (creative) return { mode: "creative", temperature: 0.85, top_p: 0.95, frequency_penalty: 0.15, presence_penalty: 0.1 };
+  return { mode: "balanced", temperature: 0.6, top_p: 0.92, frequency_penalty: 0.1, presence_penalty: 0 };
+}
+
+function reflectState(mode, answer, failed = false) {
+  reflection.turns += 1;
+  if (failed) reflection.failures += 1;
+  reflection.lastMode = mode;
+  const panel = document.getElementById("cognitive-state");
+  if (panel) panel.textContent = "Mode: " + mode.toUpperCase() + " · Turns: " + reflection.turns + " · Errors: " + reflection.failures + " · Last output: " + (answer?.length || 0) + " chars";
+}
 
 function append(role, content) {
   const item = document.createElement("div");
@@ -115,7 +133,7 @@ sendButton.addEventListener("click", async () => {
     output.textContent = answer;
     messages.push({ role: "assistant", content: answer });
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
-    progress.textContent = "Generated locally on this device.";
+    progress.textContent = "Generated locally on this device using " + sampling.mode + " sampling.";\n    reflectState(sampling.mode, answer);
   } catch (error) {
     messages.pop();
     const reason = error instanceof Error ? error.message : "unknown error";
