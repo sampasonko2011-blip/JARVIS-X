@@ -39,7 +39,7 @@ test("local chat keeps startup inference local and Memory OS disconnected", asyn
   expect(externalRequests).toEqual([]);
 });
 
-test("local chat exposes a low-memory default and an optional larger local model", async ({ page }) => {
+test("local chat defaults to the smallest iPad model and offers larger local models", async ({ page }) => {
   await page.goto("/local-chat.html");
   const model = page.getByLabel("Local model");
   await expect(model).toHaveValue("SmolLM2-135M-Instruct-q0f16-MLC");
