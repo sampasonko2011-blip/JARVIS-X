@@ -37,3 +37,27 @@ test("local chat page loads only the self-hosted bundle and is discoverable from
   assert.match(sw, /local-chat-engine\.bundle\.js/);
   assert.match(sw, /local-chat\.html/);
 });
+
+
+test("local chat explains download, local-only session scope, model limits, and clear action", () => {
+  const page = read("../hq/local-chat.html");
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(page, /first load downloads model files/i);
+  assert.match(page, /No cloud inference fallback exists/i);
+  assert.match(page, /kept in page memory and are not synced/i);
+  assert.match(page, /small starter model, not a frontier-model replacement/i);
+  assert.match(page, /id="clear-chat"/);
+  assert.match(engine, /clearButton\.addEventListener\("click"/);
+  assert.match(engine, /Local conversation cleared/);
+  assert.doesNotMatch(engine, /localStorage|sessionStorage|indexedDB/i);
+});
+
+test("device preflight never overstates WebGPU availability as successful model inference", () => {
+  const page = read("../hq/local-chat-preflight.html");
+  const script = read("../hq/local-chat-preflight.js");
+  assert.match(page, /does not download a model/i);
+  assert.match(page, /approximately 945 MB/i);
+  assert.match(page, /cannot prove that Safari can load the model/i);
+  assert.match(script, /PRELIMINARY PASS: WebGPU is exposed/i);
+  assert.match(script, /no inference has run/i);
+});
