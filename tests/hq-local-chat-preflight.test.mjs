@@ -79,12 +79,3 @@ test("local preflight uses text nodes and never parses browser-provided values a
   assert.match(source, /list\.replaceChildren\(\.\.\.checks\)/);
   assert.doesNotMatch(source, /innerHTML/);
 });
-
-
-test("preflight renders browser-derived details as text, never HTML", () => {
-  const script = read("../hq/local-chat-preflight.js");
-  assert.match(script, /description\.textContent = detail/);
-  assert.match(script, /tag\.textContent = status/);
-  assert.match(script, /list\.replaceChildren\(\.\.\.checks\)/);
-  assert.doesNotMatch(script, /list\.innerHTML|insertAdjacentHTML/);
-});
