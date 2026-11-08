@@ -1,12 +1,17 @@
 import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 
-const MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
+const DEFAULT_MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC";
+const ALLOWED_MODEL_IDS = new Set([
+  "SmolLM2-360M-Instruct-q4f32_1-MLC",
+  "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+]);
 const MAX_INPUT_CHARS = 4000;
 const MAX_HISTORY_MESSAGES = 8;
 const SYSTEM = "You are JARVIS-X, one unified assistant. Be honest about capabilities and evidence. Do not claim external agents, tools, memory, or actions were used unless they actually were. This local model has no network tools or access to the user's private HQ data. Keep responses age-appropriate for a teenage user.";
 const $ = (id) => document.getElementById(id);
 const loadButton = $("load-model");
+const modelSelect = $("model-select");
 const sendButton = $("send-message");
 const clearButton = $("clear-chat");
 const status = $("runtime-status");
@@ -66,8 +71,9 @@ loadButton.addEventListener("click", async () => {
   try {
     const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
     if (!adapter) throw new Error("No WebGPU adapter available.");
-    const supported = prebuiltAppConfig.model_list.some((item) => item.model_id === MODEL_ID);
-    if (!supported) throw new Error("Pinned model ID is not present in this WebLLM package.");
+    const selectedModel = modelSelect?.value || DEFAULT_MODEL_ID;
+    const supported = ALLOWED_MODEL_IDS.has(selectedModel) && prebuiltAppConfig.model_list.some((item) => item.model_id === selectedModel);
+    if (!supported) throw new Error("Selected model ID is not present in the allowlisted WebLLM package.");
     loadStage = "download-and-initialize";
     const limits = adapter.limits || {};
     const gpuSummary = [
@@ -77,7 +83,7 @@ loadButton.addEventListener("click", async () => {
     ].filter(Boolean).join(" ");
     detail.textContent = gpuSummary + " Starting model download/initialization.";
     progress.textContent = "Stage 2/3: downloading model and initializing WebGPU runtime. First load can take several minutes; keep Safari open.";
-    engine = await CreateMLCEngine(MODEL_ID, {
+    engine = await CreateMLCEngine(selectedModel, {
       initProgressCallback: (p) => {
         const pct = Number.isFinite(p.progress) ? Math.round(p.progress * 100) + "%" : "";
         progress.textContent = (p.text || "Preparing local model…") + (pct ? " " + pct : "");
@@ -85,7 +91,7 @@ loadButton.addEventListener("click", async () => {
     });
     loadStage = "ready";
     status.textContent = "READY";
-    detail.textContent = "Model loaded in this browser. No hosted inference is configured.";
+    detail.textContent = "Model " + selectedModel + " loaded in this browser. No hosted inference is configured.";
     progress.textContent = "Local model ready. Messages stay in this page session.";
     input.disabled = false;
     clearButton.disabled = false;
