@@ -1,0 +1,25 @@
+/* JARVIS-X Neural Observatory visual layer — additive, reduced-motion aware. */
+:root{--jx-gold:#c99a50;--jx-gold-soft:#e4bd79;--jx-ice:#82caff;--jx-deep:#07101e;--jx-glass:rgba(10,20,36,.72)}
+.jx-core-stage{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 35%,rgba(35,91,135,.24),transparent 48%),linear-gradient(145deg,#0b1424 0%,#080e19 68%,#111522 100%);border:1px solid rgba(105,169,215,.28);box-shadow:0 22px 70px #0008,inset 0 1px #ffffff12}
+.jx-core-stage:before,.jx-core-stage:after{content:"";position:absolute;pointer-events:none;z-index:-1}
+.jx-core-stage:before{inset:0;background:linear-gradient(rgba(111,177,222,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(111,177,222,.045) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
+.jx-core-stage:after{width:440px;height:440px;right:22%;top:5%;border:1px solid rgba(201,154,80,.13);border-radius:50%;box-shadow:0 0 0 24px rgba(201,154,80,.025),0 0 0 58px rgba(100,180,235,.025),0 0 90px rgba(62,153,220,.08)}
+.jx-core-head,.jx-core-layout,.jx-core-foot{position:relative;z-index:1}
+.jx-kicker{color:var(--jx-gold-soft)!important;letter-spacing:.2em!important}
+.jx-live i{background:var(--jx-ice)!important;box-shadow:0 0 12px var(--jx-ice)!important}
+.jx-core-panel{background:linear-gradient(155deg,rgba(20,36,57,.84),rgba(8,16,29,.8))!important;border:1px solid rgba(113,169,211,.24)!important;box-shadow:0 16px 42px #0005,inset 0 1px #ffffff12;backdrop-filter:blur(14px)}
+.jx-core-panel strong{color:#eaf5ff}.jx-core-stat{border-bottom-color:rgba(132,171,205,.14)!important}.jx-core-stat b{color:var(--jx-gold-soft)!important}
+.jx-orbit-scene{filter:drop-shadow(0 0 26px rgba(61,164,235,.15))}.jx-orbit-halo{border-color:rgba(104,185,242,.22)!important;box-shadow:0 0 55px rgba(66,157,224,.18),inset 0 0 35px rgba(66,157,224,.08)!important}
+.jx-orbit-one{border-color:rgba(129,201,255,.78)!important}.jx-orbit-two{border-color:rgba(211,165,91,.82)!important}.jx-orbit-three{border-color:rgba(111,174,229,.5)!important}
+.jx-globe{box-shadow:inset -22px -10px 35px #020712,0 0 36px rgba(69,164,233,.32),0 0 90px rgba(68,153,219,.15)!important}
+.jx-core-platform{border-color:rgba(205,162,94,.46)!important}.jx-core-label span{color:var(--jx-gold-soft)!important}
+.jx-core-foot{border-top-color:rgba(201,154,80,.2)!important}
+.jx-observatory-rail{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0 2px}
+.jx-telemetry{min-width:0;padding:12px 13px;border:1px solid rgba(111,170,214,.2);border-radius:12px;background:linear-gradient(145deg,rgba(18,34,54,.78),rgba(9,17,30,.72));box-shadow:inset 0 1px #ffffff0b}
+.jx-telemetry small{display:block;color:#8299b3;font-size:9px;letter-spacing:.17em;text-transform:uppercase}
+.jx-telemetry strong{display:block;margin-top:6px;color:#e7f3ff;font-size:12px;font-weight:650;letter-spacing:.035em;overflow-wrap:anywhere}
+.jx-telemetry em{display:block;margin-top:4px;color:#b99a68;font-size:10px;font-style:normal}
+.jx-telemetry .jx-signal{display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#d4a85e;box-shadow:0 0 9px #d4a85e;vertical-align:1px}
+.jx-observatory-rail+.jx-core-foot{margin-top:16px}
+@media(max-width:760px){.jx-observatory-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.jx-core-stage:after{right:-32%;top:18%;width:320px;height:320px}.jx-core-stage:before{background-size:26px 26px}}
+@media(prefers-reduced-motion:reduce){.jx-observatory-rail *{animation:none!important;transition:none!important}}
