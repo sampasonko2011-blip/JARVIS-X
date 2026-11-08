@@ -103,7 +103,8 @@ Local chat history and Memory OS are distinct:
 - OBSERVED: PR #83 now includes an isolated local chat page, a WebLLM 0.2.87 runtime entry point, a pinned Qwen2.5 0.5B model ID, and an esbuild bundle step.
 - VALIDATED (source-level only): The pinned model ID exists in WebLLM v0.2.87's official prebuilt model registry; its published GPU-memory estimate is 944.62 MB. This is not total RAM or download size.
 - VALIDATED (source-level only): The deployment workflow builds the self-hosted browser bundle before copying HQ assets into the Pages artifact.
-- UNPROVEN: Successful browser bundle build in CI, successful model download/load, actual local inference, performance, iPad Safari compatibility, and deployment. No physical device test has been run.
+- VALIDATED in CI (exact PR head `71fb4f21f935cc2d640a4451903c3154c6509409`, run `42441444088`): browser bundle build, automated tests, and source checks passed.
+- UNPROVEN: Successful model download/load in a real browser, actual local inference, performance, iPad Safari compatibility, and production deployment. No physical device test has been run.
 - NOT COMPLETED: PR #83 remains open as a draft. Its deployment workflow only runs on `main` or manual dispatch; no production deploy was triggered by this branch. No cloud fallback is configured.
 
 
