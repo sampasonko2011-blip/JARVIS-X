@@ -2,10 +2,10 @@ export function selectSampling(message) {
   const text = String(message || "")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "");
 
-  const precision = /\\b(code|bug|error|erreur|debug|debogage|git|server|serveur|architecture|script|math|maths|calculate|calcul|prove|preuve|verify|verifier|audit|security|securite|test|tester|validate|validation)\\b/.test(text);
-  const creative = /\\b(idea|idee|story|histoire|brainstorm|design|concevoir|imagine|imaginer|creative|creatif|write|ecrire|rediger|name|nom|concept|invent|invente)\\b/.test(text);
+  const precision = /\b(code|bug|error|erreur|debug|debogage|git|server|serveur|architecture|script|math|maths|calculate|calcul|prove|preuve|verify|verifier|audit|security|securite|test|tester|validate|validation)\b/.test(text);
+  const creative = /\b(idea|idee|story|histoire|brainstorm|design|concevoir|imagine|imaginer|creative|creatif|write|ecrire|rediger|name|nom|concept|invent|invente)\b/.test(text);
 
   // Precision wins when a request mixes implementation and creative wording.
   if (precision) {
