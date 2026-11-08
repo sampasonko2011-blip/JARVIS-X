@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://*.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#090d18">
 <title>JARVIS-X · Local chat</title>
@@ -19,10 +19,11 @@
 <div class="loglist"><div class="log"><strong>Runtime <span class="tag" id="runtime-status">NOT LOADED</span></strong><small id="runtime-detail">Load the local model when you are ready.</small></div></div>
 <label for="model-select">Local model</label>
 <select id="model-select" aria-describedby="model-help">
-<option value="SmolLM2-360M-Instruct-q4f32_1-MLC">SmolLM2 360M · low-memory · ~580 MB GPU memory</option>
+<option value="SmolLM2-135M-Instruct-q0f16-MLC">SmolLM2 135M · smallest iPad test · lower memory</option>
+<option value="SmolLM2-360M-Instruct-q4f32_1-MLC">SmolLM2 360M · larger · ~580 MB GPU memory</option>
 <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5 0.5B · larger · ~945 MB GPU memory</option>
 </select>
-<p class="footnote" id="model-help">The smaller model is the safer first test on iPad Safari. Estimates are model metadata, not a guarantee of available memory. Only the selected model downloads.</p>
+<p class="footnote" id="model-help">The 135M model is now the default first test for iPad Safari. It is a basic compatibility model, not a strong coding assistant. Estimates are not a guarantee of available memory. Only the selected model downloads.</p>
 <div class="actions"><button class="btn primary" id="load-model">Load selected model</button><a class="btn ghost" href="./local-chat-preflight.html">Device check</a><a class="btn ghost" href="./index.html">Back to HQ</a></div>
 <p class="footnote" id="progress" role="status" aria-live="polite">No model has been downloaded.</p>
 </section>
