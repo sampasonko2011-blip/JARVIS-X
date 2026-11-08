@@ -40,10 +40,15 @@ jobs:
           enablement: true
       - name: Build combined site artifact
         run: |
+          mkdir -p _site/career _site/hq
+          # JARVIS-X is the primary site entry point. Keep the football mission
+          # workspace available separately so it cannot replace the HQ homepage.
+          cp -R hq/. _site/
+          cp apex-career-os/index.html _site/career/index.html
+          cp apex-career-os/README.md _site/career/README.md
+          if [ -d apex-career-os/performance-archive ]; then cp -R apex-career-os/performance-archive _site/career/performance-archive; fi
+          # Retain the explicit /hq/ path as a stable alias for existing bookmarks.
           mkdir -p _site/hq
-          cp apex-career-os/index.html _site/index.html
-          cp apex-career-os/README.md _site/README.md
-          if [ -d apex-career-os/performance-archive ]; then cp -R apex-career-os/performance-archive _site/performance-archive; fi
           cp -R hq/. _site/hq/
       - name: Upload combined site
         uses: actions/upload-pages-artifact@v3
