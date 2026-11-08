@@ -73,7 +73,8 @@ test("local model load failures report the exact initialization stage and underl
   assert.match(engine, /adapter\.limits/);
 });
 
-\ntest("local chat selects bounded task-aware sampling and reflects session state without remote memory", () => {
+
+test("local chat selects bounded task-aware sampling and reflects session state without remote memory", () => {
   const engine = read("../hq/local-chat-engine.js");
   const page = read("../hq/local-chat.html");
   assert.match(engine, /function selectSampling/);
