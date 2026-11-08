@@ -136,3 +136,9 @@ test("precision takes precedence over creative cues in mixed prompts", () => {
   assert.equal(selectSampling("Design a new app and debug this code").mode, "precision");
   assert.equal(selectSampling("Conçois une idée et corrige ce bug").mode, "precision");
 });
+
+test("clearing local chat resets session-only cognitive reflection counters", () => {
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(engine, /reflection = \{ turns: 0, failures: 0, lastMode: "balanced" \}/);
+  assert.match(engine, /renderReflection\(\);[\s\S]*?transcript\.replaceChildren\(\)/);
+});
