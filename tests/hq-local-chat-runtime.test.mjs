@@ -76,11 +76,12 @@ test("local model load failures report the exact initialization stage and underl
 
 test("local chat selects bounded task-aware sampling and reflects session state without remote memory", () => {
   const engine = read("../hq/local-chat-engine.js");
+  const policy = read("../hq/cognitive-policy.js");
   const page = read("../hq/local-chat.html");
-  assert.match(engine, /function selectSampling/);
-  assert.match(engine, /mode: "precision", temperature: 0\.2, top_p: 0\.85/);
-  assert.match(engine, /mode: "creative", temperature: 0\.85, top_p: 0\.95/);
-  assert.match(engine, /mode: "balanced", temperature: 0\.6, top_p: 0\.92/);
+  assert.match(policy, /export function selectSampling/);
+  assert.match(policy, /mode: "precision", temperature: 0\.2, top_p: 0\.85/);
+  assert.match(policy, /mode: "creative", temperature: 0\.85, top_p: 0\.95/);
+  assert.match(policy, /mode: "balanced", temperature: 0\.6, top_p: 0\.92/);
   assert.match(engine, /top_p: sampling\.top_p/);
   assert.match(engine, /function reflectState/);
   assert.match(engine, /reflection\.failures/);
