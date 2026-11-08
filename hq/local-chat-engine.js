@@ -1,8 +1,9 @@
 import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 
-const DEFAULT_MODEL_ID = "SmolLM2-360M-Instruct-q4f32_1-MLC";
+const DEFAULT_MODEL_ID = "SmolLM2-135M-Instruct-q0f16-MLC";
 const ALLOWED_MODEL_IDS = new Set([
+  "SmolLM2-135M-Instruct-q0f16-MLC",
   "SmolLM2-360M-Instruct-q4f32_1-MLC",
   "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
 ]);
