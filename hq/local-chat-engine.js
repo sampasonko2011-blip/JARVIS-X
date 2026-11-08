@@ -20,14 +20,18 @@ let busy = false;
 let loadStage = "idle";
 let reflection = { turns: 0, failures: 0, lastMode: "balanced" };
 
+function renderReflection(lastOutputLength = 0) {
+  const panel = document.getElementById("cognitive-state");
+  const modeLabel = document.getElementById("cognitive-mode");
+  if (modeLabel) modeLabel.textContent = "ADAPTIVE MODE · " + reflection.lastMode.toUpperCase();
+  if (panel) panel.textContent = "Turns: " + reflection.turns + " · Errors: " + reflection.failures + " · Last output: " + lastOutputLength + " chars";
+}
+
 function reflectState(mode, answer, failed = false) {
   reflection.turns += 1;
   if (failed) reflection.failures += 1;
   reflection.lastMode = mode;
-  const panel = document.getElementById("cognitive-state");
-  const modeLabel = document.getElementById("cognitive-mode");
-  if (modeLabel) modeLabel.textContent = "ADAPTIVE MODE · " + mode.toUpperCase();
-  if (panel) panel.textContent = "Turns: " + reflection.turns + " · Errors: " + reflection.failures + " · Last output: " + (answer?.length || 0) + " chars";
+  renderReflection(answer?.length || 0);
 }
 
 function append(role, content) {
@@ -153,6 +157,8 @@ input.addEventListener("keydown", (event) => {
 });
 clearButton.addEventListener("click", () => {
   messages = [{ role: "system", content: SYSTEM }];
+  reflection = { turns: 0, failures: 0, lastMode: "balanced" };
+  renderReflection();
   transcript.replaceChildren();
   append("assistant", "Local conversation cleared.");
 });
