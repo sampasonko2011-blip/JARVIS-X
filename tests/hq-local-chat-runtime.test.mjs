@@ -61,3 +61,14 @@ test("device preflight never overstates WebGPU availability as successful model 
   assert.match(script, /PRELIMINARY PASS: WebGPU is exposed/i);
   assert.match(script, /no inference has run/i);
 });
+
+test("local model load failures report the exact initialization stage and underlying cause", () => {
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(engine, /loadStage = "adapter"/);
+  assert.match(engine, /loadStage = "download-and-initialize"/);
+  assert.match(engine, /Failed during " \+ loadStage/);
+  assert.match(engine, /errorName/);
+  assert.match(engine, /errorMessage/);
+  assert.match(engine, /LOCAL LOAD FAILED at /);
+  assert.match(engine, /adapter\.limits/);
+});
