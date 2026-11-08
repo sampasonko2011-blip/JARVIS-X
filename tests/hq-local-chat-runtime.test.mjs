@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { selectSampling } from "../hq/cognitive-policy.js";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -98,4 +99,15 @@ test("local chat delegates multilingual task classification to the shared policy
   assert.match(policy, /normalize\("NFD"\)/);
   assert.match(policy, /erreur\|debug/);
   assert.match(policy, /idee\|story\|histoire/);
+});
+
+
+test("adaptive sampling classifies real English and French inputs", () => {
+  assert.equal(selectSampling("Debug this JavaScript error").mode, "precision");
+  assert.equal(selectSampling("Peux-tu vérifier cette erreur de sécurité ?").mode, "precision");
+  assert.equal(selectSampling("Fais un calcul et explique la preuve").mode, "precision");
+  assert.equal(selectSampling("Imagine une histoire créative").mode, "creative");
+  assert.equal(selectSampling("Écris une idée de jeu").mode, "creative");
+  assert.equal(selectSampling("Hello, how are you?").mode, "balanced");
+  assert.equal(selectSampling("Imagine a design and debug this code").mode, "precision");
 });
