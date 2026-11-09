@@ -46,4 +46,6 @@ Every request must include `Authorization: Bearer <Supabase access token>`, the 
 
 ## Current integration boundary
 
-The local chat UI is not connected to this endpoint yet. A server-side endpoint existing does not establish a live XMemo connection or persistent memory in the iPad UI. The XMemo key must be configured, the function deployed, and the client integration tested before claiming end-to-end memory is active.
+The local chat UI is wired in source to this endpoint with an unchecked-by-default, per-turn consent control. It reuses the signed-in HQ session in the same browser tab, refreshes an expired session, retrieves only marked untrusted context, and stores the completed local turn only when the user opted in. Local inference remains on-device; memory calls are separate HTTPS requests.
+
+This source integration does not establish a live XMemo connection or persistent memory in the iPad UI. The XMemo key must be configured, the function deployed, and authenticated end-to-end recall/store plus cross-user isolation tested before claiming live memory is active.
