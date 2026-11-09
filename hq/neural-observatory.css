@@ -35,3 +35,100 @@
 @keyframes jx-link-drift{to{stroke-dashoffset:-80}}
 @keyframes jx-node-pulse{0%,100%{opacity:.48}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.jx-neural-links,.jx-neural-nodes circle{animation:none!important}}
+
+
+/* Stark Observatory × Nexus Neural: executive command-deck refinement. */
+:root{
+  --jx-amber:#d5a65e;
+  --jx-amber-dim:rgba(213,166,94,.16);
+  --jx-blue:#75c8f4;
+  --jx-blue-dim:rgba(91,174,226,.13);
+  --jx-line:rgba(116,174,218,.19);
+}
+body{
+  background:
+    radial-gradient(ellipse at 78% 4%,rgba(44,117,167,.12),transparent 36%),
+    radial-gradient(ellipse at 12% 82%,rgba(180,132,66,.055),transparent 34%),
+    #070c15;
+}
+.shell{background:transparent}
+.side{
+  background:linear-gradient(180deg,rgba(8,17,30,.97),rgba(7,12,22,.98));
+  border-right:1px solid var(--jx-line);
+  box-shadow:12px 0 44px rgba(0,0,0,.16);
+}
+.brand .mark{
+  border:1px solid rgba(120,196,239,.4);
+  box-shadow:0 0 24px rgba(80,173,226,.14),inset 0 0 16px rgba(80,173,226,.09);
+}
+.nav button,.nav a{
+  border:1px solid transparent;
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.nav button:hover,.nav a:hover{
+  background:rgba(67,139,188,.10);
+  border-color:rgba(112,185,229,.18);
+}
+.nav button.active{
+  background:linear-gradient(100deg,rgba(64,142,193,.19),rgba(15,31,49,.52));
+  border-color:rgba(111,190,238,.28);
+  box-shadow:inset 2px 0 0 var(--jx-blue),0 0 20px rgba(59,144,198,.08);
+}
+.main{background:transparent}
+.top{
+  border-bottom:1px solid rgba(111,170,214,.14);
+  background:linear-gradient(180deg,rgba(8,15,26,.78),rgba(8,15,26,.24));
+  backdrop-filter:blur(18px);
+}
+.top h1{letter-spacing:-.035em}
+.eyebrow,.hint{color:#8ebbd7}
+.card{
+  background:linear-gradient(148deg,rgba(15,27,43,.92),rgba(9,16,28,.94));
+  border-color:rgba(107,165,207,.19);
+  box-shadow:0 15px 42px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.035);
+}
+.cardhead{border-bottom-color:rgba(113,169,211,.12)}
+.card h2{letter-spacing:-.018em}
+.metric{color:#e9f5ff}
+.metric small{color:var(--jx-amber)}
+.tag.green{border-color:rgba(105,198,163,.26)}
+.tag.amber{border-color:rgba(213,166,94,.3);color:#e5bd7b}
+.btn.primary{
+  background:linear-gradient(120deg,#24638a,#19476b);
+  border:1px solid rgba(128,205,246,.35);
+  box-shadow:0 5px 20px rgba(37,115,164,.16),inset 0 1px rgba(255,255,255,.12);
+}
+.btn.primary:hover{filter:brightness(1.12)}
+input,textarea,select,.textarea{
+  background:rgba(4,11,20,.72);
+  border-color:rgba(110,171,216,.24);
+}
+input:focus,textarea:focus,select:focus,.textarea:focus{
+  outline:2px solid rgba(117,200,244,.22);
+  border-color:rgba(117,200,244,.62);
+}
+.log{
+  background:linear-gradient(120deg,rgba(16,31,49,.64),rgba(8,17,29,.56));
+  border-color:rgba(108,168,210,.16);
+}
+.jx-core-stage{
+  border-color:rgba(116,190,232,.34);
+  box-shadow:0 26px 80px rgba(0,0,0,.35),0 0 44px rgba(56,137,187,.07),inset 0 1px rgba(255,255,255,.06);
+}
+.jx-core-stage:after{
+  border-color:rgba(213,166,94,.18);
+  box-shadow:0 0 0 24px rgba(213,166,94,.025),0 0 0 58px rgba(100,180,235,.03),0 0 110px rgba(62,153,220,.1);
+}
+.jx-core-panel{border-radius:16px}
+.jx-telemetry{
+  background:linear-gradient(145deg,rgba(18,38,59,.88),rgba(7,15,27,.84));
+  border-color:rgba(112,180,224,.24);
+}
+.jx-telemetry strong{font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+  .side{box-shadow:none}
+  .top{backdrop-filter:blur(12px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav button,.nav a{transition:none}
+}
