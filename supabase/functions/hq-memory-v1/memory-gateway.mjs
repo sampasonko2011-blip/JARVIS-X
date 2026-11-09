@@ -62,7 +62,7 @@ async function readBoundedJson(req) {
  *   memoryClient: {recall: Function, store: Function}
  * }} options
  */
-export function createMemoryGateway(options = {}) {
+export function createMemoryGateway(options) {
   const {
     allowedEmails = "",
     allowedOrigins = [],
