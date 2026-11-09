@@ -12,7 +12,7 @@ function httpsUrl(value, label) {
 
 function resourceMetadataUrls(resource) {
   const url = new URL(resource);
-  const path = url.pathname.replace(/^\\/+|\\/+$/g, "");
+  const path = url.pathname.split("/").filter(Boolean).join("/");
   return path
     ? [new URL(WELL_KNOWN + "oauth-protected-resource/" + path, url.origin).href,
        new URL(WELL_KNOWN + "oauth-protected-resource", url.origin).href]
@@ -62,7 +62,7 @@ export async function discoverXMemoOAuth({
   if (!protectedResource) throw lastError ?? new Error("oauth_resource_metadata_unavailable");
 
   const metadataResource = httpsUrl(protectedResource.resource, "oauth_metadata_resource");
-  if (metadataResource.href.replace(/\\/$/, "") !== resourceUrl.href.replace(/\\/$/, "")) {
+  if (metadataResource.href !== resourceUrl.href) {
     throw new Error("oauth_resource_metadata_mismatch");
   }
   const authorizationServers = protectedResource.authorization_servers;
@@ -84,7 +84,7 @@ export async function discoverXMemoOAuth({
   if (!authorizationServer) throw lastError ?? new Error("oauth_server_metadata_unavailable");
 
   const discoveredIssuer = httpsUrl(authorizationServer.issuer, "oauth_discovered_issuer");
-  if (discoveredIssuer.href.replace(/\\/$/, "") !== issuer.href.replace(/\\/$/, "")) {
+  if (discoveredIssuer.href !== issuer.href) {
     throw new Error("oauth_issuer_mismatch");
   }
   const authorizationEndpoint = httpsUrl(authorizationServer.authorization_endpoint, "oauth_authorization_endpoint");
