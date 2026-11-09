@@ -83,7 +83,7 @@ test("fails closed when DCR, PKCE, or scopes are not confirmed", async () => {
   await assert.rejects(registerXMemoOAuthClient({
     metadata: { ...metadata, registrationEndpoint: null }, redirectUri, fetchImpl: fakeFetch({}),
   }), /oauth_dynamic_registration_unavailable/);
-  await assert.rejects(buildXMemoAuthorizationUrl({
+  assert.throws(() => buildXMemoAuthorizationUrl({
     metadata: { ...metadata, supportsS256: false }, clientId: "x", redirectUri, pkce,
   }), /oauth_pkce_s256_required/);
   await assert.rejects(registerXMemoOAuthClient({
@@ -95,7 +95,7 @@ test("rejects redirect URIs that are not HTTPS or contain query state", async ()
   await assert.rejects(registerXMemoOAuthClient({
     metadata, redirectUri: "http://example.com/callback", fetchImpl: fakeFetch({}),
   }), /oauth_redirect_uri_must_be_https/);
-  await assert.rejects(buildXMemoAuthorizationUrl({
+  assert.throws(() => buildXMemoAuthorizationUrl({
     metadata, clientId: "x", redirectUri: "https://example.com/callback?x=1", pkce,
   }), /oauth_redirect_uri_query_or_fragment_forbidden/);
 });
