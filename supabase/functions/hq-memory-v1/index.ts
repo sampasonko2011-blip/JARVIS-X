@@ -57,6 +57,6 @@ const handle = createMemoryGateway({
   authenticate,
   consumeRateLimit: (_userId, key, token) => consumeRateLimit(key, token),
   memoryClient,
-} as any);
+});
 
 Deno.serve(handle);
