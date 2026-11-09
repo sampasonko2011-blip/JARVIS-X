@@ -88,3 +88,19 @@ test("reports missing PKCE S256 or required scopes instead of silently accepting
   assert.equal(result.supportsS256, false);
   assert.equal(result.requiredScopesAvailable, false);
 });
+
+test("preserves issuer path when constructing RFC 8414 metadata URL", async () => {
+  const pathIssuerMetadata = {
+    ...serverMetadata,
+    issuer: "https://auth.xmemo.dev/tenant/alpha",
+  };
+  const fetchImpl = fakeFetch({
+    "https://xmemo.dev/.well-known/oauth-protected-resource/mcp": {
+      resource: "https://xmemo.dev/mcp",
+      authorization_servers: ["https://auth.xmemo.dev/tenant/alpha"],
+    },
+    "https://auth.xmemo.dev/.well-known/oauth-authorization-server/tenant/alpha": pathIssuerMetadata,
+  });
+  const result = await discoverXMemoOAuth({ fetchImpl });
+  assert.equal(result.issuer, "https://auth.xmemo.dev/tenant/alpha");
+});
