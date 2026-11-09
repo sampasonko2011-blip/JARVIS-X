@@ -55,7 +55,7 @@ async function readBoundedJson(req) {
 
 export function createMemoryGateway({
   allowedEmails = "",
-  allowedOrigins = [],
+  allowedOrigins = /** @type {string[]} */ ([]),
   authenticate,
   consumeRateLimit,
   memoryClient,
