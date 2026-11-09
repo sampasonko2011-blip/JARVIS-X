@@ -9,7 +9,6 @@ const PUBLISHABLE_KEY = (() => {
   } catch { /* use legacy key below */ }
   return Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 })();
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const allowedOrigins = [
   "https://sampasonko2011-blip.github.io",
   "http://localhost:3000",
@@ -26,13 +25,13 @@ async function authenticate(token: string) {
   return await response.json();
 }
 
-async function consumeRateLimit(userId: string, key: "minute" | "day") {
-  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) throw new Error("rate_limit_config_missing");
+async function consumeRateLimit(userId: string, key: "minute" | "day", token: string) {
+  if (!SUPABASE_URL || !PUBLISHABLE_KEY || !token) throw new Error("rate_limit_config_missing");
   const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/consume_hq_rate_limit", {
     method: "POST",
     headers: {
-      apikey: SERVICE_ROLE_KEY,
-      Authorization: "Bearer " + SERVICE_ROLE_KEY,
+      apikey: PUBLISHABLE_KEY,
+      Authorization: "Bearer " + token,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ p_user_id: userId, p_limit_key: key }),
@@ -56,7 +55,7 @@ const handle = createMemoryGateway({
   allowedEmails: Deno.env.get("JX_MEMORY_ALLOWED_EMAILS") ?? "",
   allowedOrigins,
   authenticate,
-  consumeRateLimit,
+  consumeRateLimit: (userId, key, token) => consumeRateLimit(userId, key, token),
   memoryClient,
 });
 
