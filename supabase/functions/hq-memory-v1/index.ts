@@ -25,7 +25,7 @@ async function authenticate(token: string) {
   return await response.json();
 }
 
-async function consumeRateLimit(userId: string, key: "minute" | "day", token: string) {
+async function consumeRateLimit(key: "minute" | "day", token: string) {
   if (!SUPABASE_URL || !PUBLISHABLE_KEY || !token) throw new Error("rate_limit_config_missing");
   const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/consume_hq_rate_limit", {
     method: "POST",
@@ -34,7 +34,7 @@ async function consumeRateLimit(userId: string, key: "minute" | "day", token: st
       Authorization: "Bearer " + token,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ p_user_id: userId, p_limit_key: key }),
+    body: JSON.stringify({ p_limit_key: key }),
     signal: AbortSignal.timeout(8_000),
   });
   if (!response.ok) throw new Error("rate_limit_unavailable");
@@ -55,7 +55,7 @@ const handle = createMemoryGateway({
   allowedEmails: Deno.env.get("JX_MEMORY_ALLOWED_EMAILS") ?? "",
   allowedOrigins,
   authenticate,
-  consumeRateLimit: (userId, key, token) => consumeRateLimit(userId, key, token),
+  consumeRateLimit: (_userId, key, token) => consumeRateLimit(key, token),
   memoryClient,
 });
 
