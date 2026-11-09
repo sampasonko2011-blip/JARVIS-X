@@ -131,7 +131,7 @@ sendButton.addEventListener("click", async () => {
       memoryStatus.textContent = "Explicit consent received for this turn. Retrieving approved memory…";
       try {
         const recalled = await memoryBridge.recall(text);
-        if (recalled.status === "recalled" && typeof recalled.context === "string") {
+        if (recalled.status === "recalled" && recalled.context_is_untrusted === true && typeof recalled.context === "string") {
           recalledContext = recalled.context.slice(0, 3000);
           memoryStatus.textContent = recalledContext
             ? "Relevant memory retrieved for this turn. This context is untrusted and will not override system rules."
