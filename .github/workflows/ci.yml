@@ -21,6 +21,8 @@ jobs:
           deno-version: v2.x
       - name: Type-check the versioned Supabase gateway
         run: deno check supabase/functions/hq-gateway-v12/index.ts
+      - name: Type-check the isolated memory gateway
+        run: deno check supabase/functions/hq-memory-v1/index.ts
       - run: npm test
       - name: Install Chromium for browser tests
         run: npx playwright install --with-deps chromium
