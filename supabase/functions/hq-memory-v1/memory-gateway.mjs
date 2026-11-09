@@ -58,7 +58,7 @@ async function readBoundedJson(req) {
  *   allowedEmails?: string,
  *   allowedOrigins?: string[],
  *   authenticate: (token: string) => Promise<{id: string, email?: string, is_anonymous?: boolean} | null>,
- *   consumeRateLimit: (userId: string, key: "minute" | "day") => Promise<{allowed: boolean, reset_at?: string, limit_key?: string, request_limit?: number, remaining?: number}>,
+ *   consumeRateLimit: (userId: string, key: "minute" | "day", token: string) => Promise<{allowed: boolean, reset_at?: string, limit_key?: string, request_limit?: number, remaining?: number}>,
  *   memoryClient: {recall: Function, store: Function}
  * }} options
  */
@@ -125,8 +125,8 @@ export function createMemoryGateway({
     )) return response({ error: "task_or_answer_invalid" }, 400, origin, origins);
 
     try {
-      const minute = await consumeRateLimit(user.id, "minute");
-      const day = await consumeRateLimit(user.id, "day");
+      const minute = await consumeRateLimit(user.id, "minute", token);
+      const day = await consumeRateLimit(user.id, "day", token);
       const denied = !minute?.allowed ? minute : !day?.allowed ? day : null;
       if (denied) {
         const reset = Date.parse(denied.reset_at);
