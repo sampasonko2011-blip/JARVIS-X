@@ -46,3 +46,10 @@ test("overview accurately distinguishes source-integrated gateway and XMemo from
   assert.match(html, /Executive gateway \/ capabilities/);
   assert.match(html, /optional local tool execution is disabled by default/);
 });
+
+test("HQ exposes an explicit stable link to the separate football career workspace", async () => {
+  const html = await read("../hq/index.html");
+  assert.match(html, /href="\/JARVIS-X\/career\//);
+  assert.match(html, /Football mission · Sampa\.co/);
+  assert.match(html, /aria-label="Open separate Sampa\.co football career workspace"/);
+});
