@@ -127,12 +127,17 @@ export function createMemoryGateway(options = {}) {
 
     try {
       const minute = await consumeRateLimit(user.id, "minute", token);
-      const day = await consumeRateLimit(user.id, "day", token);
-      const denied = !minute?.allowed ? minute : !day?.allowed ? day : null;
-      if (denied) {
-        const reset = Date.parse(denied.reset_at);
+      const deniedMinute = !minute?.allowed ? minute : null;
+      if (deniedMinute) {
+        const reset = Date.parse(deniedMinute.reset_at);
         const retryAfter = Number.isFinite(reset) ? Math.max(1, Math.min(86400, Math.ceil((reset - Date.now()) / 1000))) : 60;
-        return response({ error: "rate_limit_exceeded", retry_after_seconds: retryAfter }, 429, origin, origins);
+        return response({ error: "rate_limit_exceeded", retry_after_seconds: retryAfter, limit: "minute" }, 429, origin, origins);
+      }
+      const day = await consumeRateLimit(user.id, "day", token);
+      if (!day?.allowed) {
+        const reset = Date.parse(day.reset_at);
+        const retryAfter = Number.isFinite(reset) ? Math.max(1, Math.min(86400, Math.ceil((reset - Date.now()) / 1000))) : 60;
+        return response({ error: "rate_limit_exceeded", retry_after_seconds: retryAfter, limit: "day" }, 429, origin, origins);
       }
     } catch {
       return response({ error: "rate_limit_service_unavailable" }, 503, origin, origins);
