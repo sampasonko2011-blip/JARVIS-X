@@ -51,6 +51,10 @@ test("service worker ignores mutations, cross-origin requests, and non-shell ass
 test("service worker serves cached shell navigation when network fails", async () => {
   const { listeners } = await loadWorker({
     fetchImpl: async () => { throw new Error("offline"); },
+    cacheMatchImpl: async (key) => {
+      const url = typeof key === "string" ? key : key?.url || "";
+      return url.endsWith("/index.html") ? new Response("cached shell", { status: 200 }) : undefined;
+    },
   });
   let responsePromise;
   listeners.get("fetch")({
@@ -156,4 +160,23 @@ test("offline Mission Control navigation serves the cached Mission Control page"
   const response = await responsePromise;
   assert.equal(response.status, 200);
   assert.equal(await response.text(), "cached Mission Control");
+});
+
+
+test("offline Local Chat navigation never falls back to the HQ homepage", async () => {
+  const { listeners } = await loadWorker({
+    fetchImpl: async () => { throw new Error("offline"); },
+    cacheMatchImpl: async (key) => {
+      const url = typeof key === "string" ? key : key?.url || "";
+      if (url.endsWith("/index.html")) return new Response("HQ homepage", { status: 200 });
+      return undefined;
+    },
+  });
+  let responsePromise;
+  listeners.get("fetch")({
+    request: { method: "GET", url: "https://example.test/JARVIS-X/hq/local-chat.html", mode: "navigate" },
+    respondWith(promise) { responsePromise = promise; },
+  });
+  const response = await responsePromise;
+  assert.equal(response.type, "error");
 });
