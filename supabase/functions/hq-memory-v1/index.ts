@@ -55,7 +55,7 @@ const handle = createMemoryGateway({
   allowedEmails: Deno.env.get("JX_MEMORY_ALLOWED_EMAILS") ?? "",
   allowedOrigins,
   authenticate,
-  consumeRateLimit: (_userId, key, token) => consumeRateLimit(key, token),
+  consumeRateLimit: (_userId: string, key: "minute" | "day", token: string) => consumeRateLimit(key, token),
   memoryClient,
 });
 
