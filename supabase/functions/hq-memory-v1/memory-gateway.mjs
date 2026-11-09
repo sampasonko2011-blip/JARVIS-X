@@ -62,13 +62,14 @@ async function readBoundedJson(req) {
  *   memoryClient: {recall: Function, store: Function}
  * }} options
  */
-export function createMemoryGateway({
-  allowedEmails = "",
-  allowedOrigins = /** @type {string[]} */ ([]),
-  authenticate,
-  consumeRateLimit,
-  memoryClient,
-} = {}) {
+export function createMemoryGateway(options = {}) {
+  const {
+    allowedEmails = "",
+    allowedOrigins = [],
+    authenticate,
+    consumeRateLimit,
+    memoryClient,
+  } = options;
   if (typeof authenticate !== "function" || typeof consumeRateLimit !== "function" ||
       !memoryClient || typeof memoryClient.recall !== "function" || typeof memoryClient.store !== "function") {
     throw new TypeError("memory_gateway_dependencies_required");
