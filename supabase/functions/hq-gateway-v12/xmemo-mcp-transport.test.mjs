@@ -14,6 +14,7 @@ test("initializes MCP, lists tools, calls a tool and closes its session", async 
   const calls = [];
   const fetchImpl = async (url, options) => {
     calls.push({ url, options });
+    if (options.method === "DELETE") return response(null, 204);
     const message = JSON.parse(options.body);
     if (message.method === "initialize") {
       assert.equal(options.headers["MCP-Protocol-Version"], undefined);
