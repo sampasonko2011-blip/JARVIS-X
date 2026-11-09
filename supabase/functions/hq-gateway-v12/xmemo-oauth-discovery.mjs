@@ -72,7 +72,7 @@ export async function discoverXMemoOAuth({
   const issuer = httpsUrl(authorizationServers[0], "oauth_issuer");
   // RFC 8414 inserts the well-known path between the authority and issuer path.
   // Do not discard a path-bearing issuer or silently query a different issuer.
-  const issuerPath = issuer.pathname.replace(/^\\/+|\\/+$/g, "");
+  const issuerPath = issuer.pathname.replace(/^\/+|\/+$/g, "");
   const metadataCandidates = [
     new URL(WELL_KNOWN + "oauth-authorization-server" + (issuerPath ? "/" + issuerPath : ""), issuer.origin).href,
     new URL(WELL_KNOWN + "openid-configuration" + (issuerPath ? "/" + issuerPath : ""), issuer.origin).href,
