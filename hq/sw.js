@@ -1,4 +1,4 @@
-const CACHE = 'jarvis-x-hq-shell-v12';
+const CACHE = 'jarvis-x-hq-shell-v13';
 const SHELL = ['./', './index.html', './hq.css', './hq.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-engine.bundle.js'];
 
 self.addEventListener('install', (event) => {
@@ -31,7 +31,10 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(async () => {
-        const cached = await caches.match(request) || await caches.match('./index.html');
+        // Serve only the exact requested page from cache. Falling back to index.html
+        // makes missing/offline routes look like successful redirects to HQ and
+        // hides the actual navigation failure (notably for Local Chat).
+        const cached = await caches.match(request);
         return cached || Response.error();
       })
     );

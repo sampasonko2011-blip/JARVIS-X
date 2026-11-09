@@ -110,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v12'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v13'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
@@ -120,7 +120,8 @@ test("HQ service worker restricts caching and only replaces shell navigation off
   assert.ok(sw.includes("if (url.origin !== self.location.origin) return"));
   assert.ok(sw.includes("const allowed = new Set(SHELL.map"));
   assert.ok(sw.includes("if (request.mode === 'navigate')"));
-  assert.ok(sw.includes("const cached = await caches.match(request) || await caches.match('./index.html')"));
+  assert.ok(sw.includes("const cached = await caches.match(request)"));
+  assert.ok(!sw.includes("caches.match('./index.html')"), "failed page navigations must not silently become the HQ homepage");
 });
 
 
