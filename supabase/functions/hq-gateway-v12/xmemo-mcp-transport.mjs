@@ -60,7 +60,7 @@ export function createXMemoMcpClient({
       Accept: "application/json, text/event-stream",
       "Content-Type": "application/json",
     };
-    if (protocolVersion) headers["MCP-Protocol-Version"] = protocolVersion;
+    if (protocolVersion && (initialized || message.method !== "initialize")) headers["MCP-Protocol-Version"] = protocolVersion;
     if (sessionId) headers["Mcp-Session-Id"] = sessionId;
     const response = await fetchImpl(MCP_ENDPOINT, {
       method: "POST",
