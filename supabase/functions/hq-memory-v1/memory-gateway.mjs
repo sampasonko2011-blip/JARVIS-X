@@ -53,6 +53,15 @@ async function readBoundedJson(req) {
   }
 }
 
+/**
+ * @param {{
+ *   allowedEmails?: string,
+ *   allowedOrigins?: string[],
+ *   authenticate: (token: string) => Promise<{id: string, email?: string, is_anonymous?: boolean} | null>,
+ *   consumeRateLimit: (userId: string, key: "minute" | "day") => Promise<{allowed: boolean, reset_at?: string, limit_key?: string, request_limit?: number, remaining?: number}>,
+ *   memoryClient: {recall: Function, store: Function}
+ * }} options
+ */
 export function createMemoryGateway({
   allowedEmails = "",
   allowedOrigins = /** @type {string[]} */ ([]),
