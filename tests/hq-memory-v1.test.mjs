@@ -62,8 +62,13 @@ test("unlisted account cannot access memory", async () => {
 test("rate limit failure and denial fail closed", async () => {
   const unavailable = setup({ consumeRateLimit: async () => { throw new Error("db unavailable"); } });
   assert.equal((await unavailable.handle(request("recall", { query: "x", memory_consent: true }))).status, 503);
-  const limited = setup({ consumeRateLimit: async () => ({ allowed: false, reset_at: new Date(Date.now() + 60000).toISOString() }) });
+  const limitedCalls = [];
+  const limited = setup({ consumeRateLimit: async (_id, key) => {
+    limitedCalls.push(key);
+    return { allowed: false, reset_at: new Date(Date.now() + 60000).toISOString() };
+  } });
   assert.equal((await limited.handle(request("recall", { query: "x", memory_consent: true }))).status, 429);
+  assert.deepEqual(limitedCalls, ["minute"]);
 });
 
 test("invalid payloads and origins are rejected", async () => {
