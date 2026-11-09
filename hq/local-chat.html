@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://*.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://xfewajxkqntflfntisut.supabase.co https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://*.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#090d18">
 <title>JARVIS-X · Local chat</title>
@@ -34,6 +34,7 @@
 <label for="message">Message</label>
 <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
 <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button></div>
+<div class="integration" style="margin-top:1rem"><strong>Persistent memory · opt-in per turn</strong><p>Sign in from HQ Chat in this same browser tab first. Memory stays off unless you enable it here for a specific turn. When enabled, the local conversation may send that turn to your authenticated memory service; inference remains on this device.</p><label class="checkrow"><input id="local-memory-consent" type="checkbox"><span><strong>Allow memory recall and save for this turn</strong><small>Off by default. Recalled notes are treated as untrusted context. This does not send your message to a hosted AI model.</small></span></label><p id="local-memory-status" class="footnote" role="status" aria-live="polite">Memory off. No memory request will be made.</p><a class="btn ghost" href="./index.html#view-chat">Sign in or manage session in HQ Chat ↗</a></div>
 <p class="footnote">Runtime: WebLLM 0.2.87. The selected model runs locally; smaller models trade response quality for a lower memory requirement. This is a small starter model, not a frontier-model replacement.</p>
 </section>
 </main>
