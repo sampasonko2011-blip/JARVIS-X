@@ -34,3 +34,15 @@ test("decorative neural constellation is accessible and telemetry avoids false l
   assert.match(js, /Live execution requires separate verification/);
   assert.match(js, /dataset\.observatoryReady/);
 });
+
+
+test("overview accurately distinguishes source-integrated gateway and XMemo from deployed verification", async () => {
+  const html = await read("../hq/index.html");
+  assert.match(html, /consent-gated XMemo adapter are integrated in source/);
+  assert.match(html, /deployed gateway configuration and live memory read\/write remain unverified/);
+  assert.match(html, /browser-local WebGPU chat does not access XMemo/);
+  assert.match(html, /Secure sign-in \/ XMemo gateway/);
+  assert.match(html, /SOURCE INTEGRATED/);
+  assert.match(html, /Executive gateway \/ capabilities/);
+  assert.match(html, /optional local tool execution is disabled by default/);
+});
