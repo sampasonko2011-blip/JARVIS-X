@@ -106,8 +106,10 @@ export async function discoverXMemoOAuth({
       && authorizationServer.code_challenge_methods_supported.includes("S256"),
     supportsAuthorizationCode: Array.isArray(authorizationServer.grant_types_supported)
       ? authorizationServer.grant_types_supported.includes("authorization_code")
-      : true,
+      : null,
     supportedScopes: scopes,
-    requiredScopesAvailable: scopes.length === 0 || ["memory:read", "memory:write"].every(scope => scopes.includes(scope)),
+    requiredScopesAvailable: scopes.length === 0
+      ? null
+      : ["memory:read", "memory:write"].every(scope => scopes.includes(scope)),
   });
 }
