@@ -106,3 +106,14 @@ test("invalid inputs are rejected before network access", async () => {
   assert.throws(() => bridge.remember("task", ""), /memory_record_invalid/);
   assert.equal(calls, 0);
 });
+
+test("local chat exposes per-turn opt-in without a checked default and trusts only marked recall", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../hq/local-chat.html", import.meta.url), "utf8");
+  const engine = await readFile(new URL("../hq/local-chat-engine.js", import.meta.url), "utf8");
+  assert.match(html, /id="local-memory-consent" type="checkbox"/);
+  assert.doesNotMatch(html, /id="local-memory-consent"[^>]*checked/);
+  assert.match(engine, /const useMemory = memoryConsent\?\.checked === true/);
+  assert.match(engine, /recalled\.context_is_untrusted === true/);
+  assert.match(engine, /messages\[0\]\.content = SYSTEM/);
+});
