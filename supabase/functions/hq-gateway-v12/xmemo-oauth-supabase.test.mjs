@@ -12,7 +12,8 @@ function fakeFetch(rows = []) {
   return async (url, options) => {
     calls.push({ url: String(url), options });
     if (String(url).includes("consume_hq_xmemo_oauth_transaction")) {
-      return new Response(JSON.stringify(rows.shift() ?? []), { status: 200 });
+      const row = rows.shift();
+      return new Response(JSON.stringify(row ? [row] : []), { status: 200 });
     }
     return new Response(null, { status: 204 });
   };
