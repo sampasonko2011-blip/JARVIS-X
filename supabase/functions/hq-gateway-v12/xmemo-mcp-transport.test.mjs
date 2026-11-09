@@ -46,7 +46,7 @@ test("initializes MCP, lists tools, calls a tool and closes its session", async 
   const result = await client.callTool("recall", { query: "test", limit: 1 });
   assert.equal(result.content[0].text, "ok");
   assert.equal(await client.close(), true);
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 5);
 });
 
 test("rejects use before initialize, untrusted endpoint, and empty token", () => {
