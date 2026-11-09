@@ -9,6 +9,7 @@
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>JARVIS-X HQ</title>
 <link rel="stylesheet" href="./hq.css">
+<link rel="stylesheet" href="./neural-observatory.css">
 </head>
 <body>
 <div class="shell">
@@ -33,7 +34,7 @@
 </section>
 
 <div class="grid">
-<div class="card hero span12"><div class="eyebrow">SYSTEM POSTURE / 01</div><h2>Capability is not proof. Every claim earns its status.</h2><p>JARVIS-X HQ is the command surface for your existing system: task framing, decision records, persistent local notes, and an evidence ledger. This first slice is intentionally honest: the interface works offline, but the hosted executive runtime, remote memory, account security, and tool execution are not connected yet. Encrypted portable export/import is available; automatic sync is not.</p><div class="actions"><button class="btn primary" data-go="workspace">＋ Create task brief</button><button class="btn ghost" data-go="audit">Review evidence ledger ↗</button></div></div>
+<div class="card hero span12"><div class="eyebrow">SYSTEM POSTURE / 01</div><h2>Capability is not proof. Every claim earns its status.</h2><p>JARVIS-X HQ is the command surface for your existing system: task framing, decision records, persistent local notes, and an evidence ledger. This interface works offline. The authenticated executive gateway and consent-gated XMemo adapter are integrated in source; deployed gateway configuration and live memory read/write remain unverified. The separate browser-local WebGPU chat does not access XMemo. Encrypted portable export/import is available; automatic sync is not. Manual cross-device handoff only.</p><div class="actions"><button class="btn primary" data-go="workspace">＋ Create task brief</button><button class="btn ghost" data-go="audit">Review evidence ledger ↗</button></div></div>
 <div class="card span4"><div class="cardhead"><h2>Saved work</h2><span class="tag">LOCAL</span></div><div class="metric" id="metric-notes">0 <small>items</small></div><div class="metriclabel">Briefs and memory notes on this device</div><div class="metricbar"><span id="bar-notes"></span></div></div>
 <div class="card span4"><div class="cardhead"><h2>Evidence records</h2><span class="tag">TRACEABLE</span></div><div class="metric" id="metric-ledger">0 <small>records</small></div><div class="metriclabel">Observations you have actually logged</div><div class="metricbar"><span id="bar-ledger"></span></div></div>
 <div class="card span4"><div class="cardhead"><h2>System identity</h2><span class="tag">SINGLE IDENTITY</span></div><div class="metric">JARVIS-X</div><div class="metriclabel">Internal adapters stay behind the execution boundary; live execution is verified separately</div><div class="metricbar"><span class="csp-inline-4"></span></div></div>
@@ -46,8 +47,8 @@
 <div class="card span5"><div class="cardhead"><h2>System readiness</h2><span class="tag amber">PARTIAL</span></div><div class="rows">
 <div class="rowitem"><span class="statusdot csp-inline-5"></span><div><strong>Offline interface</strong><p>Available after first successful load and service-worker installation.</p></div><span class="tag green">LOCAL</span></div>
 <div class="rowitem"><span class="statusdot"></span><div><strong>Persistent local records</strong><p>Stored in this browser profile only; not synced to other devices.</p></div><span class="tag green">READY</span></div>
-<div class="rowitem"><span class="statusdot"></span><div><strong>Secure sign-in / sync</strong><p>Needs a trusted identity and backend service.</p></div><span class="tag amber">UNBUILT</span></div>
-<div class="rowitem"><span class="statusdot"></span><div><strong>Model and tool orchestration</strong><p>Needs authorized adapters, secrets, permissions, and execution tests.</p></div><span class="tag amber">UNBUILT</span></div>
+<div class="rowitem"><span class="statusdot"></span><div><strong>Secure sign-in / XMemo gateway</strong><p>Auth and consent-gated XMemo are integrated in source; deployed credentials, live round-trip, and automatic sync remain unverified.</p></div><span class="tag amber">SOURCE INTEGRATED</span></div>
+<div class="rowitem"><span class="statusdot"></span><div><strong>Executive gateway / capabilities</strong><p>Single-core gateway is source-integrated. Hosted inference remains budget-gated; optional local tool execution is disabled by default. Browser-local chat is a separate offline lane.</p></div><span class="tag amber">GATED</span></div>
 </div></div>
 </div>
 </section>
@@ -105,4 +106,5 @@
 </main></div>
 <script src="./hq.js"></script>
 <script type="module" src="./forge.js"></script>
+<script src="./neural-observatory.js" defer></script>
 </body></html>
