@@ -1,5 +1,5 @@
 /* JARVIS-X Arrival Experience — cinematic, optional, accessible and lightweight. */
-.jx-arrival{position:fixed;inset:0;z-index:10000;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;background:radial-gradient(ellipse at 50% 44%,#153c50 0,#0b1a2a 29%,#070d18 65%,#04070e 100%);color:#effaff;opacity:1;visibility:visible;transition:opacity .85s ease,visibility .85s}
+.jx-arrival{position:fixed;inset:0;z-index:10000;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;background:radial-gradient(ellipse at 50% 44%,rgba(21,60,80,.72) 0,rgba(11,26,42,.66) 29%,rgba(7,13,24,.54) 65%,rgba(4,7,14,.42) 100%);backdrop-filter:blur(3px) saturate(1.18);color:#effaff;opacity:1;visibility:visible;transition:opacity .85s ease,visibility .85s}
 .jx-arrival.is-exiting{opacity:0;visibility:hidden;pointer-events:none}
 .jx-arrival-stars,.jx-arrival-grid{position:absolute;inset:0;pointer-events:none}
 .jx-arrival-stars{opacity:.55;background-image:radial-gradient(1px 1px at 8% 18%,#d7faff 98%,transparent),radial-gradient(1px 1px at 21% 72%,#e3bd7c 98%,transparent),radial-gradient(2px 2px at 73% 21%,#9bd8ff 98%,transparent),radial-gradient(1px 1px at 88% 66%,#d7faff 98%,transparent),radial-gradient(1px 1px at 44% 11%,#fff 98%,transparent),radial-gradient(1px 1px at 61% 84%,#9bd8ff 98%,transparent);background-size:390px 310px;animation:jx-star-drift 65s linear infinite}
@@ -29,3 +29,41 @@
 @keyframes jx-orbit-turn{to{transform:rotateX(73deg) rotate(385deg)}}
 @media(max-width:600px){.jx-arrival-top,.jx-arrival-bottom{padding:18px 17px;font-size:7px;letter-spacing:.09em}.jx-arrival-top span:last-child{max-width:130px;text-align:right}.jx-arrival-bottom span:nth-child(2){display:none}.jx-arrival-center{width:88vw}.jx-arrival-center>p:not(.jx-arrival-kicker){font-size:12px}.jx-arrival-sequence{gap:8px;font-size:7px}.jx-arrival-sequence i{width:13px}}
 @media(prefers-reduced-motion:reduce){.jx-arrival-stars,.jx-arrival-core,.jx-arrival-orbit:before,.jx-arrival-orbit:after{animation:none!important}.jx-arrival,.jx-arrival-enter{transition:none!important}}
+
+
+/* Spatial airlock: keep the real cockpit visible and animate the existing shell into position. */
+.jx-airlock-center{width:min(92vw,760px);padding:12px 0 18px}
+.jx-airlock-center .jx-arrival-orbit{width:clamp(112px,16vw,164px);margin-bottom:18px}
+.jx-airlock-center h1{font:600 clamp(32px,5.2vw,58px)/.98 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.075em}
+.jx-airlock-center>p:not(.jx-arrival-kicker){margin:12px auto 14px;max-width:500px}
+.jx-boot-readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 auto 17px;max-width:690px;text-align:left}
+.jx-boot-readout span{display:block;min-width:0;padding:9px 10px;border:1px solid rgba(125,213,226,.24);border-radius:7px;background:rgba(4,13,24,.52);font:8px/1.5 ui-monospace,monospace;letter-spacing:.08em;color:#91b2c5}
+.jx-boot-readout i{display:inline-block;width:5px;height:5px;margin-right:7px;border-radius:50%;background:#79dce2;box-shadow:0 0 9px #79dce2}
+.jx-boot-readout b{display:block;margin:3px 0 0 12px;color:#e5c58e;font-weight:600;overflow-wrap:anywhere}
+.jx-boot-readout span:nth-child(1) b{color:#9be3e5}
+.jx-boot-readout span:nth-child(2) b,.jx-boot-readout span:nth-child(3) b{color:#e5c58e}
+.jx-arrival-sequence{margin-bottom:14px}
+.jx-arrival-enter{padding:12px 17px;border-radius:7px;background:linear-gradient(110deg,rgba(49,137,157,.94),rgba(133,202,208,.94));color:#03121d}
+.jx-arrival-skip{font:8px ui-monospace,monospace;letter-spacing:.12em}
+@media(prefers-reduced-motion:no-preference){
+ .jx-arrival:not(.is-exiting)~.shell>.side{animation:jx-panel-dock .85s cubic-bezier(.16,1,.3,1) both}
+ .jx-arrival:not(.is-exiting)~.shell>.main{animation:jx-bridge-dock .9s cubic-bezier(.16,1,.3,1) both}
+ .jx-boot-readout span{animation:jx-boot-resolve .55s ease both}
+ .jx-boot-readout span:nth-child(2){animation-delay:.12s}
+ .jx-boot-readout span:nth-child(3){animation-delay:.24s}
+}
+@keyframes jx-panel-dock{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:translateX(0)}}
+@keyframes jx-bridge-dock{from{opacity:.35;transform:translateY(12px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes jx-boot-resolve{from{opacity:0;transform:translateY(5px);border-color:transparent}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){
+ .jx-airlock-center{width:92vw}
+ .jx-boot-readout{grid-template-columns:1fr;gap:5px;max-width:310px}
+ .jx-boot-readout span{padding:7px 9px}
+ .jx-airlock-center .jx-arrival-orbit{width:106px;margin-bottom:12px}
+ .jx-airlock-center h1{font-size:clamp(28px,8vw,42px)}
+ .jx-airlock-center>p:not(.jx-arrival-kicker){font-size:11px;margin:8px auto 10px}
+ .jx-airlock-center .jx-arrival-sequence{margin-bottom:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .jx-arrival:not(.is-exiting)~.shell>.side,.jx-arrival:not(.is-exiting)~.shell>.main,.jx-boot-readout span{animation:none!important}
+}
