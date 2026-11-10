@@ -77,7 +77,7 @@
   if(thread&&typeof MutationObserver!=="undefined")new MutationObserver(applySearch).observe(thread,{childList:true,subtree:true});
   document.querySelector("#jx-transcript-copy")?.addEventListener("click",async()=>{
     const lines=[...(thread?.querySelectorAll(".log:not([hidden])")||[])].map(node=>node.innerText.trim()).filter(Boolean);
-    const payload=lines.join("\\n\\n");
+    const payload=lines.join("\n\n");
     const status=document.querySelector("#chat-gateway-status");
     if(!payload){if(status)status.textContent="No visible messages to copy.";return;}
     try{if(!navigator.clipboard?.writeText)throw new Error("Clipboard API unavailable");await navigator.clipboard.writeText(payload);if(status)status.textContent="Visible transcript copied to clipboard.";}catch{if(status)status.textContent="Clipboard access unavailable in this browser context. Select the messages and copy manually.";}
