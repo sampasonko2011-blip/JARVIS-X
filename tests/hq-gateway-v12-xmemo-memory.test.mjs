@@ -115,7 +115,7 @@ test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and
   assert.match(gateway, /createXMemoOAuthRouter\(\)/);
   assert.match(gateway, /\/auth\/xmemo\/start/);
   assert.match(gateway, /\/auth\/xmemo\/callback/);
-  assert.match(gateway, /OAuth-backed MCP is the active memory adapter/);
+  assert.match(gateway, /Prefer authenticated OAuth MCP/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /recallMemory\(task, user\.id, memoryConsent\)/);
   assert.match(gateway, /storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
