@@ -393,6 +393,47 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "account_not_allowlisted" }, 403, origin);
   }
 
+  // Dedicated memory endpoints let users verify recall/write without enabling
+  // paid model inference. Both require an explicit per-request consent flag.
+  const isXMemoRecall = url.pathname.endsWith("/memory/xmemo/recall");
+  const isXMemoRemember = url.pathname.endsWith("/memory/xmemo/remember");
+  if (isXMemoRecall || isXMemoRemember) {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    let minuteLimit;
+    let dayLimit;
+    try {
+      minuteLimit = await consumeRateLimit(user.id, "minute");
+      dayLimit = await consumeRateLimit(user.id, "day");
+    } catch {
+      return jsonResponse({ error: "rate_limit_service_unavailable" }, 503, origin);
+    }
+    const denied = !minuteLimit.allowed ? minuteLimit : !dayLimit.allowed ? dayLimit : null;
+    if (denied) {
+      const retryAfter = Math.max(1, Math.min(86_400, Math.ceil((Date.parse(denied.reset_at) - Date.now()) / 1000)));
+      return jsonResponse({ error: "rate_limit_exceeded", limit: denied.limit_key, retry_after_seconds: retryAfter }, 429, origin);
+    }
+    let memoryBody: Record<string, unknown>;
+    try { memoryBody = await readJsonBounded(req); }
+    catch { return jsonResponse({ error: "invalid_memory_payload" }, 400, origin); }
+    if (memoryBody.consent !== true) return jsonResponse({ error: "explicit_memory_consent_required" }, 403, origin);
+    try {
+      if (isXMemoRecall) {
+        if (typeof memoryBody.query !== "string" || !memoryBody.query.trim() || memoryBody.query.length > 12_000) {
+          return jsonResponse({ error: "memory_query_invalid" }, 400, origin);
+        }
+        const result = await xmemoOAuthRouter.recall(user.id, memoryBody.query);
+        return jsonResponse({ ok: true, ...result }, result.status === "not_connected" ? 409 : 200, origin);
+      }
+      if (typeof memoryBody.content !== "string" || !memoryBody.content.trim() || memoryBody.content.length > 18_000) {
+        return jsonResponse({ error: "memory_content_invalid" }, 400, origin);
+      }
+      const result = await xmemoOAuthRouter.remember(user.id, memoryBody.content);
+      return jsonResponse({ ok: true, ...result }, result.status === "not_connected" ? 409 : 200, origin);
+    } catch {
+      return jsonResponse({ error: "xmemo_memory_operation_failed" }, 502, origin);
+    }
+  }
+
   // XMemo OAuth routes are authenticated, allowlisted, and database-rate-limited.
   const isXMemoOAuthStart = url.pathname.endsWith("/auth/xmemo/start");
   const isXMemoOAuthCallback = url.pathname.endsWith("/auth/xmemo/callback");
