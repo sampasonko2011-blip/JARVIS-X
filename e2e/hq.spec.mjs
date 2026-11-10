@@ -41,6 +41,19 @@ test.beforeEach(async ({ page }) => {
   await enterHQ(page);
 });
 
+test("clear draft resets the composer counter and local presence state", async ({ page }) => {
+  const input = page.locator("#chat-compose");
+  const counter = page.locator("#chat-draft-count");
+  const presence = page.locator("#jx-chat-presence");
+  await input.fill("A draft that should be cleared");
+  await expect(counter).toContainText("30 / 12000");
+  await expect(presence).toHaveText("READY FOR TRANSMISSION");
+  await page.locator("#chat-clear-draft").click();
+  await expect(input).toHaveValue("");
+  await expect(counter).toContainText("0 / 12000");
+  await expect(presence).toHaveText("STANDING BY");
+});
+
 test("cinematic arrival is keyboard-dismissible and returns focus to the workspace", async ({ page }) => {
   await page.evaluate(() => sessionStorage.removeItem("jx-hq-arrival-seen"));
   await page.reload();
