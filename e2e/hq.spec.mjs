@@ -45,6 +45,8 @@ test("clear draft resets the composer counter and local presence state", async (
   const input = page.locator("#chat-compose");
   const counter = page.locator("#chat-draft-count");
   const presence = page.locator("#jx-chat-presence");
+  await page.locator('[data-view="chat"]').click();
+  await expect(input).toBeVisible();
   await input.fill("A draft that should be cleared");
   await expect(counter).toContainText("30 / 12000");
   await expect(presence).toHaveText("READY FOR TRANSMISSION");
