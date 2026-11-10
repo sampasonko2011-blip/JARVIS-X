@@ -86,6 +86,7 @@ test("cinematic arrival is session-scoped, skippable, accessible and precached",
   assert.match(html, /id="jx-arrival"/);
   assert.match(html, /aria-modal="true"/);
   assert.match(html, /arrival-experience\.css/);
+  assert.match(html, /observatory-premium\.css/);
   assert.match(html, /arrival-experience\.js/);
   assert.match(js, /prefers-reduced-motion/);
   assert.match(js, /sessionStorage/);
@@ -93,7 +94,7 @@ test("cinematic arrival is session-scoped, skippable, accessible and precached",
   assert.match(js, /jx-hq-arrival-seen/);
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(css, /jx-arrival-enter/);
-  assert.match(sw, /jarvis-x-hq-shell-v16/);
+  assert.match(sw, /jarvis-x-hq-shell-v17/);
   assert.match(sw, /arrival-experience\.css/);
   assert.match(sw, /arrival-experience\.js/);
 });
