@@ -110,7 +110,7 @@ test("conversation command strip supports local search, transcript copy and acce
   assert.match(js, /applySearch/);
   assert.match(js, /navigator\.clipboard\.writeText/);
   assert.match(js, /aria-pressed/);
-  assert.match(js, /event\.key==="\/" /);
+  assert.match(js, /event\.key==="\\\/"\)/);
   assert.match(css, /data-focus-mode/);
   assert.match(css, /jx-transcript-tools/);
 });
