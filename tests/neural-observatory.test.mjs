@@ -115,3 +115,14 @@ test("conversation command strip supports local search, transcript copy and acce
   assert.match(css, /data-focus-mode/);
   assert.match(css, /jx-transcript-tools/);
 });
+
+test("global Locked-In Mode is reversible, keyboard-exitable and session-local", async () => {
+  const html = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../hq/observatory-premium.css", import.meta.url), "utf8");
+  const js = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+  assert.match(html, /id="jx-global-focus"/);
+  assert.match(css, /\.shell\.jx-global-focus/);
+  assert.match(js, /setGlobalFocus\(!globalShell\.classList\.contains\('jx-global-focus'\)\)/);
+  assert.match(js, /event\.key==='Escape'.*setGlobalFocus\(false\)/);
+  assert.doesNotMatch(js, /localStorage\.setItem\([^)]*focus/i);
+});
