@@ -12,7 +12,7 @@
     overlay.setAttribute("aria-hidden","true");
     overlay.setAttribute("inert","");
     try{sessionStorage.setItem("jx-hq-arrival-seen","1")}catch{}
-    window.setTimeout(()=>overlay.remove(),reduced?0:900);
+    window.setTimeout(()=>{overlay.remove();document.querySelector('#page-title')?.focus({preventScroll:true});},reduced?0:900);
   };
   let seen=false;
   try{seen=sessionStorage.getItem("jx-hq-arrival-seen")==="1"}catch{}
