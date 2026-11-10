@@ -11,8 +11,20 @@
 <link rel="stylesheet" href="./hq.css">
 <link rel="stylesheet" href="./neural-observatory.css">
 <link rel="stylesheet" href="./conversation-experience.css">
+<link rel="stylesheet" href="./arrival-experience.css">
 </head>
 <body>
+<div class="jx-arrival" id="jx-arrival" role="dialog" aria-modal="true" aria-labelledby="jx-arrival-title" aria-describedby="jx-arrival-copy">
+  <div class="jx-arrival-stars" aria-hidden="true"></div><div class="jx-arrival-grid" aria-hidden="true"></div>
+  <div class="jx-arrival-top"><span>JARVIS-X <i> / </i> NEURAL OBSERVATORY</span><span>EXECUTIVE ENVIRONMENT <b>·</b> PRIVATE WORKSPACE</span></div>
+  <div class="jx-arrival-center"><div class="jx-arrival-orbit" aria-hidden="true"><div class="jx-arrival-core"><span></span></div><i class="jx-arrival-satellite one"></i><i class="jx-arrival-satellite two"></i><i class="jx-arrival-satellite three"></i></div>
+    <p class="jx-arrival-kicker">COMPOSITION OVER COMPETITION</p><h1 id="jx-arrival-title">The Observatory<br><em>is yours.</em></h1><p id="jx-arrival-copy">One executive identity. A universe of governed capabilities. Every signal earns its place.</p>
+    <div class="jx-arrival-sequence" aria-hidden="true"><span>CORE</span><i></i><span>CONTEXT</span><i></i><span>COMMAND</span></div>
+    <button class="jx-arrival-enter" id="jx-arrival-enter" type="button"><span>ENTER THE HQ</span><b>↗</b></button>
+    <button class="jx-arrival-skip" id="jx-arrival-skip" type="button">Skip intro</button>
+  </div>
+  <div class="jx-arrival-bottom"><span>LOCAL-FIRST · EVIDENCE-LED</span><span>NO SILENT CLOUD FALLBACK</span><span>UNKNOWN ≠ ZERO</span></div>
+</div>
 <div class="shell">
 <aside class="side">
 <div class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>HQ / FIELD SYSTEM</small></div></div>
@@ -139,6 +151,7 @@
 </main></div>
 <script src="./hq.js"></script>
 <script src="./conversation-experience.js" defer></script>
+<script src="./arrival-experience.js" defer></script>
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>
 </body></html>
