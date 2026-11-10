@@ -1,9 +1,18 @@
 import { test, expect } from "@playwright/test";
 
+async function enterHQ(page) {
+  const enter = page.locator("#jx-arrival-enter");
+  if (await enter.isVisible().catch(() => false)) {
+    await enter.click();
+    await expect(page.locator("#jx-arrival")).toHaveCount(0, { timeout: 2500 });
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await enterHQ(page);
 });
 
 
