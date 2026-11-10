@@ -77,7 +77,7 @@ test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the h
   assert.match(xmemoOAuthStore, /AES-GCM/);
   assert.match(xmemoOAuthStore, /additionalData/);
   assert.match(xmemoOAuthStore, /hq_xmemo_oauth_credentials/);
-  assert.match(xmemoOAuthStore, /JX_ENCRYPTION_SECRET/);
+  assert.match(xmemoOAuthRouter, /JX_ENCRYPTION_SECRET/);
   assert.match(xmemo, /REDACTED_SECRET/);
   assert.doesNotMatch(gateway, /createXMemoMemoryClient|XMEMO_API_KEY/);
 });
