@@ -53,3 +53,23 @@ test("HQ exposes an explicit stable link to the separate football career workspa
   assert.match(html, /Football mission · Sampa\.co/);
   assert.match(html, /aria-label="Open separate Sampa\.co football career workspace"/);
 });
+
+test("Conversation Nexus preserves authenticated chat contracts while adding the advanced iPad interface", async () => {
+  const html = await read("../hq/index.html");
+  const css = await read("../hq/conversation-experience.css");
+  const js = await read("../hq/conversation-experience.js");
+  for (const id of ["chat-thread","chat-compose","chat-send","chat-check-gateway","chat-memory-consent","chat-auth-send","chat-xmemo-connect","chat-xmemo-recall","chat-xmemo-remember","chat-execution-mode","chat-orchestration-mode"]) assert.match(html, new RegExp('id="'+id+'"'));
+  assert.match(html, /conversation-experience\.css/);
+  assert.match(html, /conversation-experience\.js/);
+  assert.match(html, /data-chat-prompt/);
+  assert.match(css, /@media\(max-width:560px\)/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(js, /No network, model calls or simulated streaming/);
+  assert.match(js, /Draft remains local until you transmit/);
+});
+
+test("service worker precaches the complete observatory and conversation experience under a new cache version", async () => {
+  const sw = await read("../hq/sw.js");
+  assert.match(sw, /jarvis-x-hq-shell-v14/);
+  for (const asset of ["conversation-experience.css","conversation-experience.js","neural-observatory.css","neural-observatory.js"]) assert.match(sw,new RegExp(asset.replace(".","\\.")));
+});
