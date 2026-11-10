@@ -67,3 +67,18 @@
 @media(prefers-reduced-motion:reduce){
  .jx-arrival:not(.is-exiting)~.shell>.side,.jx-arrival:not(.is-exiting)~.shell>.main,.jx-boot-readout span{animation:none!important}
 }
+
+
+/* Spatial airlock boot readout — honest UI states, never backend telemetry. */
+.jx-airlock-center{width:min(92vw,760px)}
+.jx-boot-readout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;max-width:690px;margin:0 auto 24px;text-align:left}
+.jx-boot-readout>span{display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px 13px;border:1px solid rgba(113,216,220,.2);border-radius:9px;background:linear-gradient(145deg,rgba(12,35,49,.62),rgba(5,13,25,.66));font:8px ui-monospace,monospace;letter-spacing:.12em;color:#82a8ba}
+.jx-boot-readout>span i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#78dfe0;box-shadow:0 0 12px #78dfe0;animation:jx-readout-pulse 2s ease-in-out infinite}
+.jx-boot-readout>span:nth-child(2) i{background:#d8b476;box-shadow:0 0 12px #d8b476;animation-delay:.35s}
+.jx-boot-readout>span:nth-child(3) i{background:#a8b5c5;box-shadow:0 0 9px #a8b5c5;animation-delay:.7s}
+.jx-boot-readout b{font-size:9px;color:#e5f5fa;letter-spacing:.08em}
+.jx-arrival.is-exiting .jx-arrival-orbit{transform:scale(1.22);filter:brightness(1.5) drop-shadow(0 0 48px #4ad6d9aa)}
+.jx-arrival.is-exiting .jx-arrival-center{transition:transform .72s cubic-bezier(.16,1,.3,1),opacity .55s ease;transform:translateY(-8px) scale(1.035);opacity:0}
+@keyframes jx-readout-pulse{0%,100%{opacity:.55;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+@media(max-width:620px){.jx-boot-readout{grid-template-columns:1fr;max-width:330px;gap:6px}.jx-boot-readout>span{flex-direction:row;align-items:center;gap:9px;padding:9px 11px}.jx-boot-readout b{margin-left:auto;text-align:right}.jx-arrival-top span:nth-child(2){display:none}.jx-arrival-bottom span:nth-child(2){display:none}}
+@media(prefers-reduced-motion:reduce){.jx-boot-readout>span i{animation:none}.jx-arrival.is-exiting .jx-arrival-center{transition:none}}
