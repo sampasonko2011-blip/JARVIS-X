@@ -388,6 +388,7 @@ test("zero-model mock chat works with the live budget disabled and is labelled a
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
+  await page.locator(".jx-advanced-drawer summary").click();
   await page.locator("#chat-execution-mode").selectOption("mock");
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
