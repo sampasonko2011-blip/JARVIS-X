@@ -372,28 +372,36 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "account_not_allowlisted" }, 403, origin);
   }
 
-  // XMemo OAuth routes are authenticated and allowlisted like all HQ operations.
-  if (url.pathname.endsWith("/auth/xmemo/start")) {
+  // XMemo OAuth routes are authenticated, allowlisted, and database-rate-limited.
+  const isXMemoOAuthStart = url.pathname.endsWith("/auth/xmemo/start");
+  const isXMemoOAuthCallback = url.pathname.endsWith("/auth/xmemo/callback");
+  if (isXMemoOAuthStart || isXMemoOAuthCallback) {
     if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    let minuteLimit;
+    let dayLimit;
     try {
-      const started = await xmemoOAuthRouter.start(user.id);
-      return jsonResponse({ ok: true, authorization_url: started.authorizationUrl, expires_in: started.expiresIn }, 200, origin);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "oauth_start_failed";
-      return jsonResponse({ error: message.slice(0, 120) }, 502, origin);
+      minuteLimit = await consumeRateLimit(user.id, "minute");
+      dayLimit = await consumeRateLimit(user.id, "day");
+    } catch {
+      return jsonResponse({ error: "rate_limit_service_unavailable" }, 503, origin);
     }
-  }
-  if (url.pathname.endsWith("/auth/xmemo/callback")) {
-    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
-    let callbackBody: Record<string, unknown>;
-    try { callbackBody = await readJsonBounded(req); }
-    catch { return jsonResponse({ error: "invalid_callback_payload" }, 400, origin); }
+    const denied = !minuteLimit.allowed ? minuteLimit : !dayLimit.allowed ? dayLimit : null;
+    if (denied) {
+      const retryAfter = Math.max(1, Math.min(86_400, Math.ceil((Date.parse(denied.reset_at) - Date.now()) / 1000)));
+      return jsonResponse({ error: "rate_limit_exceeded", limit: denied.limit_key, retry_after_seconds: retryAfter }, 429, origin);
+    }
     try {
-      await xmemoOAuthRouter.complete(user.id, callbackBody);
-      return jsonResponse({ ok: true, connected: true }, 200, origin);
+      if (isXMemoOAuthStart) {
+        const started = await xmemoOAuthRouter.start(user.id);
+        return jsonResponse({ ok: true, authorization_url: started.authorizationUrl, expires_in: started.expiresIn }, 200, origin);
+      }
+      const callbackBody = await readJsonBounded(req);
+      const result = await xmemoOAuthRouter.complete(user.id, callbackBody);
+      return jsonResponse({ ok: true, ...result }, 200, origin);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "oauth_callback_failed";
-      return jsonResponse({ error: message.slice(0, 120), connected: false }, 400, origin);
+      const message = error instanceof Error ? error.message : "xmemo_oauth_failed";
+      const safeClientError = /^(oauth_(state_invalid|transaction_missing_expired_or_replayed|authorization_code_invalid|callback_parameters_missing))$/.test(message);
+      return jsonResponse({ error: safeClientError ? message : "xmemo_oauth_unavailable", connected: false }, safeClientError ? 400 : 502, origin);
     }
   }
 
