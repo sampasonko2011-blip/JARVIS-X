@@ -303,7 +303,7 @@ async function storeConversationMemory(task: string, answer: string, userId: str
     task,
     "JARVIS-X response:",
     answer,
-  ].join("\\n\\n");
+  ].join("\n\n");
   try {
     const result = await xmemoOAuthRouter.remember(userId, content);
     return result.status;
