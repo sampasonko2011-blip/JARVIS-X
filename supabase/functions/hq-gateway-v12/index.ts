@@ -280,14 +280,37 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
   return row as { allowed: boolean; limit_key: string; request_limit: number; remaining: number; reset_at: string };
 }
 
-const xmemoMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
+// OAuth-backed MCP is the active memory adapter for this release candidate.
+// Legacy REST/API-key memory remains in source for rollback only and is not called.
+const xmemoOAuthRouter = createXMemoOAuthRouter();
 
 async function recallMemory(task: string, userId: string, consent: boolean) {
-  return await xmemoMemory.recall(task, userId, { consent });
+  if (!consent) return { status: "not_consented", context: "" };
+  try {
+    const result = await xmemoOAuthRouter.recall(userId, task);
+    if (result.status === "not_connected") return { status: "not_connected", context: "" };
+    return result;
+  } catch {
+    return { status: "unavailable", context: "" };
+  }
 }
 
 async function storeConversationMemory(task: string, answer: string, userId: string, taskType: string, consent: boolean) {
-  return await xmemoMemory.store(task, answer, userId, taskType, { consent });
+  if (!consent) return "not_consented";
+  const content = [
+    "JARVIS-X HQ conversation memory",
+    "Task type: " + (typeof taskType === "string" ? taskType.slice(0, 80) : "unknown"),
+    "User request:",
+    task,
+    "JARVIS-X response:",
+    answer,
+  ].join("\\n\\n");
+  try {
+    const result = await xmemoOAuthRouter.remember(userId, content);
+    return result.status;
+  } catch {
+    return "failed";
+  }
 }
 
 const EXECUTIVE_CONFIG = Object.freeze({
@@ -336,7 +359,6 @@ async function invokeOpenAIResponses(input: unknown, instructions: string, tools
   return data;
 }
 Deno.serve(async (req: Request) => {
-  const xmemoOAuthRouter = createXMemoOAuthRouter();
   const origin = req.headers.get("origin") ?? "";
   const url = new URL(req.url);
   if (req.method === "OPTIONS") {
