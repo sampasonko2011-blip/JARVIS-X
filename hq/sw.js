@@ -1,5 +1,5 @@
-const CACHE = 'jarvis-x-hq-shell-v14';
-const SHELL = ['./', './index.html', './hq.css', './hq.js', './neural-observatory.css', './neural-observatory.js', './conversation-experience.css', './conversation-experience.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-engine.bundle.js'];
+const CACHE = 'jarvis-x-hq-shell-v15';
+const SHELL = ['./', './index.html', './hq.css', './hq.js', './neural-observatory.css', './neural-observatory.js', './conversation-experience.css', './conversation-experience.js', './arrival-experience.css', './arrival-experience.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-engine.bundle.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
