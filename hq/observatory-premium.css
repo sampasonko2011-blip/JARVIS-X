@@ -1,0 +1,149 @@
+/* JARVIS-X Premium Observatory layer — visual-only enhancement, no runtime or network behavior. */
+:root{
+  color-scheme:dark;
+  --jx-panel:rgba(10,19,33,.76);
+  --jx-panel-raised:rgba(17,31,50,.84);
+  --jx-line:rgba(133,184,220,.17);
+  --jx-line-hot:rgba(105,216,222,.42);
+  --jx-text:#eaf4ff;
+  --jx-muted:#8da4bc;
+  --jx-cyan:#76e3e2;
+  --jx-amber:#d8b476;
+}
+html{background:#060b14;scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(ellipse at 78% 5%,rgba(27,87,122,.16),transparent 35rem),
+    radial-gradient(ellipse at 8% 48%,rgba(32,67,101,.12),transparent 38rem),
+    #070c15;
+  color:var(--jx-text);
+}
+body:before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.16;
+  background-image:linear-gradient(rgba(117,177,216,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(117,177,216,.055) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(180deg,#000,transparent 78%);
+}
+.shell{isolation:isolate}
+.side{
+  background:linear-gradient(180deg,rgba(10,18,31,.97),rgba(6,12,22,.96));
+  border-right:1px solid var(--jx-line);
+  box-shadow:18px 0 55px rgba(0,0,0,.18),inset -1px 0 rgba(255,255,255,.025);
+  backdrop-filter:blur(22px);
+}
+.brand{padding-bottom:22px;border-bottom:1px solid var(--jx-line)}
+.brand .mark{
+  background:radial-gradient(circle at 35% 28%,#b8ffff,#4dced2 24%,#155174 62%,#091827 80%);
+  border:1px solid rgba(142,228,236,.5);
+  box-shadow:0 0 22px rgba(76,211,221,.25),inset 0 1px rgba(255,255,255,.55);
+}
+.brand strong{letter-spacing:.16em}
+.brand small{letter-spacing:.19em;color:#7897b1}
+.navlabel{color:var(--jx-amber);letter-spacing:.22em}
+.nav button,.nav a{
+  border:1px solid transparent;
+  border-radius:10px;
+  transition:background .2s,border-color .2s,transform .2s,color .2s;
+}
+.nav button:hover,.nav a:hover{
+  background:linear-gradient(100deg,rgba(64,135,164,.16),rgba(26,48,70,.2));
+  border-color:rgba(114,190,213,.18);
+  transform:translateX(2px);
+}
+.nav button.active{
+  background:linear-gradient(100deg,rgba(50,143,157,.2),rgba(18,37,56,.74));
+  border-color:rgba(110,219,221,.28);
+  box-shadow:inset 2px 0 var(--jx-cyan),0 7px 22px rgba(0,0,0,.16);
+  color:#f0ffff;
+}
+.nav .ico{color:#8edee2}
+.hq-mission-link{
+  border:1px solid var(--jx-line);
+  border-radius:10px;
+  background:rgba(12,25,41,.56);
+  transition:border-color .2s,background .2s;
+}
+.hq-mission-link:hover{border-color:var(--jx-line-hot);background:rgba(20,45,63,.72)}
+.sidefoot{border-top:1px solid var(--jx-line);color:#8299b0}
+.main{min-width:0}
+.top{
+  position:relative;
+  background:linear-gradient(110deg,rgba(9,17,29,.86),rgba(12,23,38,.68));
+  border:1px solid var(--jx-line);
+  border-top:0;
+  border-radius:0 0 18px 18px;
+  box-shadow:0 14px 36px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter:blur(18px);
+}
+.top h1{letter-spacing:-.045em}
+.top .eyebrow{color:var(--jx-amber);letter-spacing:.2em}
+.statusrow .pill{
+  background:rgba(11,23,38,.72);
+  border:1px solid var(--jx-line);
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+.view:not(.hide){animation:jx-view-arrive .32s ease both}
+.card{
+  border-color:var(--jx-line);
+  background:linear-gradient(148deg,rgba(16,29,47,.84),rgba(8,16,28,.9));
+  box-shadow:0 16px 40px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter:blur(14px);
+}
+.grid>.card{transition:border-color .22s,box-shadow .22s,transform .22s}
+.grid>.card:hover{
+  border-color:rgba(111,194,218,.28);
+  box-shadow:0 20px 48px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.055);
+}
+.cardhead{border-bottom-color:var(--jx-line)}
+.cardhead h2,.section-title{letter-spacing:-.035em}
+.hero{background:radial-gradient(ellipse at 90% 0,rgba(52,125,153,.16),transparent 48%),linear-gradient(145deg,rgba(17,34,52,.92),rgba(8,17,29,.94))}
+.btn{transition:transform .18s,border-color .18s,box-shadow .18s,background .18s}
+.btn:hover{transform:translateY(-1px)}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{
+  outline:2px solid var(--jx-cyan);
+  outline-offset:3px;
+  box-shadow:0 0 0 5px rgba(118,227,226,.12);
+}
+::selection{background:rgba(91,205,211,.3);color:#fff}
+*{scrollbar-color:rgba(100,160,190,.42) rgba(7,15,25,.6);scrollbar-width:thin}
+.jx-core-stage{
+  border-color:rgba(113,191,222,.32);
+  border-radius:22px;
+  box-shadow:0 28px 85px rgba(0,0,0,.34),0 0 55px rgba(33,113,151,.09),inset 0 1px rgba(255,255,255,.08);
+}
+.jx-core-stage .jx-core-head h2{font-size:clamp(22px,3vw,34px)}
+.jx-core-panel,.jx-rail-card{border-radius:16px}
+.jx-chat-main{border-radius:19px}
+.jx-chat-topline{backdrop-filter:blur(18px)}
+.jx-chat-thread{overscroll-behavior:contain}
+.jx-chat-thread .log.jx-message-user{align-self:flex-end;border-radius:15px 4px 15px 15px;border-color:rgba(216,180,118,.28);background:linear-gradient(140deg,rgba(51,43,34,.7),rgba(18,25,34,.94))}
+.jx-chat-thread .log.jx-message-user:before{left:auto;right:-1px;background:linear-gradient(180deg,#d8b476,#8b9db1)}
+.jx-chat-thread .log.jx-message-system{border-style:dashed;border-color:rgba(216,180,118,.28);background:rgba(28,26,24,.52)}
+.jx-chat-thread .log.jx-message-system:before{background:var(--jx-amber)}
+.jx-chat-thread .log.jx-message-assistant{align-self:flex-start}
+.jx-composer-wrap{position:sticky;bottom:0}
+.jx-chat-rail .jx-rail-card{box-shadow:0 16px 38px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.045)}
+@keyframes jx-view-arrive{from{opacity:.55;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){
+  .top{border-radius:0 0 14px 14px}
+  .jx-chat-layout{grid-template-columns:minmax(0,1fr)}
+  .jx-chat-rail{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  .top{gap:12px;padding:16px}
+  .statusrow{flex-wrap:wrap}
+  .jx-chat-rail{grid-template-columns:minmax(0,1fr)}
+  .jx-chat-heading{flex-direction:column}
+  .jx-chat-heading-state{width:100%;box-sizing:border-box}
+  .jx-chat-thread{padding:18px 12px}
+  .jx-chat-thread .log{max-width:94%}
+  .jx-prompt-grid{grid-template-columns:minmax(0,1fr)}
+  .jx-chat-composer-wrap{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .jx-composer-tools{gap:8px}
+  .jx-compose-hint{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .view:not(.hide){animation:none}
+  .nav button,.nav a,.grid>.card,.btn{transition:none}
+}
