@@ -109,12 +109,17 @@ test("adapter requires a bounded timeout", () => {
 });
 
 
-test("gateway wires XMemo through authenticated identity and explicit per-request consent", async () => {
+test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and explicit per-request consent", async () => {
   const { readFile } = await import("node:fs/promises");
   const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
-  assert.match(gateway, /createXMemoMemoryClient\(\{ apiKey: Deno\.env\.get\("XMEMO_API_KEY"\) \}\)/);
+  assert.match(gateway, /createXMemoOAuthRouter\(\)/);
+  assert.match(gateway, /\/auth\/xmemo\/start/);
+  assert.match(gateway, /\/auth\/xmemo\/callback/);
+  assert.match(gateway, /OAuth-backed MCP is the active memory adapter/);
   assert.match(gateway, /const memoryConsent = body\.memory_consent === true/);
   assert.match(gateway, /recallMemory\(task, user\.id, memoryConsent\)/);
   assert.match(gateway, /storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
-  assert.match(gateway, /memoryConfigured: Boolean\(Deno\.env\.get\("XMEMO_API_KEY"\)\)/);
+  assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth"/);
+  assert.match(gateway, /memoryConfigured: Boolean\(Deno\.env\.get\("JX_ENCRYPTION_SECRET"\)/);
+  assert.doesNotMatch(gateway, /createXMemoMemoryClient|XMEMO_API_KEY/);
 });
