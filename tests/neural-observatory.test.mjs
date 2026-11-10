@@ -62,6 +62,9 @@ test("Conversation Nexus preserves authenticated chat contracts while adding the
   assert.match(html, /conversation-experience\.css/);
   assert.match(html, /conversation-experience\.js/);
   assert.match(html, /data-chat-prompt/);
+  assert.match(js, /jx-chat-welcome/);
+  const chatClient = await read("../hq/hq.js");
+  assert.match(chatClient, /jx-message-\x27\+esc\(x\.role\)/);
   assert.match(css, /@media\(max-width:560px\)/);
   assert.match(css, /prefers-reduced-motion:reduce/);
   assert.match(js, /No network, model calls or simulated streaming/);
