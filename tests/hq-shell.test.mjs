@@ -279,7 +279,7 @@ test("XMemo memory is separately opt-in and does not imply device synchronizatio
   assert.ok(html.includes("effectiveMemoryConsent=executionMode==='live'&&memoryConsent"));
   assert.ok(html.includes("memory_consent:effectiveMemoryConsent"));
   assert.ok(html.includes("does not enable automatic device sync"));
-  assert.ok(html.includes("encrypted portable export/import"));
+  assert.ok(html.includes("Encrypted backup created locally. Nothing was uploaded; keep the passphrase safe."));
   assert.ok(gateway.includes("const memoryConsent = body.memory_consent === true;"));
   assert.ok(gateway.includes('memoryConsent ? await recallMemory(task, user.id)'));
   assert.ok(gateway.includes(': "not_consented";'));
