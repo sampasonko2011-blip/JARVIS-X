@@ -73,8 +73,8 @@ test("Conversation Nexus preserves authenticated chat contracts while adding the
 
 test("service worker precaches the complete observatory and conversation experience under a new cache version", async () => {
   const sw = await read("../hq/sw.js");
-  assert.match(sw, /jarvis-x-hq-shell-v16/);
-  for (const asset of ["conversation-experience.css","conversation-experience.js","neural-observatory.css","neural-observatory.js"]) assert.match(sw,new RegExp(asset.replace(".","\\.")));
+  assert.match(sw, /jarvis-x-hq-shell-v17/);
+  for (const asset of ["conversation-experience.css","conversation-experience.js","neural-observatory.css","neural-observatory.js","observatory-premium.css"]) assert.match(sw,new RegExp(asset.replace(".","\\.")));
 });
 
 
