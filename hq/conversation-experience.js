@@ -56,6 +56,40 @@
     if(status)observer.observe(status,{childList:true,subtree:true,characterData:true});
     window.setTimeout(()=>{observer.disconnect();view.dataset.chatState=input?.value?"composing":"idle";if(orb)orb.textContent="STANDING BY";},9000);
   });
+  const search=document.querySelector("#jx-transcript-search");
+  const results=document.querySelector("#jx-transcript-results");
+  const applySearch=()=>{
+    const query=(search?.value||"").trim().toLocaleLowerCase();
+    const messages=[...(thread?.querySelectorAll(".log")||[])];
+    let visible=0;
+    for(const message of messages){
+      const match=!query||message.textContent.toLocaleLowerCase().includes(query);
+      message.hidden=!match;
+      if(match)visible++;
+    }
+    if(results)results.textContent=query?visible+" / "+messages.length+" messages match":"All "+messages.length+" messages visible";
+  };
+  search?.addEventListener("input",applySearch);
+  search?.addEventListener("keydown",event=>{if(event.key==="Escape"&&search.value){search.value="";applySearch();}});
+  document.addEventListener("keydown",event=>{
+    if(event.key==="/"&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||"")){event.preventDefault();search?.focus();}
+  });
+  if(thread&&typeof MutationObserver!=="undefined")new MutationObserver(applySearch).observe(thread,{childList:true,subtree:true});
+  document.querySelector("#jx-transcript-copy")?.addEventListener("click",async()=>{
+    const lines=[...(thread?.querySelectorAll(".log:not([hidden])")||[])].map(node=>node.innerText.trim()).filter(Boolean);
+    const payload=lines.join("\\n\\n");
+    const status=document.querySelector("#chat-gateway-status");
+    if(!payload){if(status)status.textContent="No visible messages to copy.";return;}
+    try{if(!navigator.clipboard?.writeText)throw new Error("Clipboard API unavailable");await navigator.clipboard.writeText(payload);if(status)status.textContent="Visible transcript copied to clipboard.";}catch{if(status)status.textContent="Clipboard access unavailable in this browser context. Select the messages and copy manually.";}
+  });
+  document.querySelector("#jx-chat-focus")?.addEventListener("click",event=>{
+    const button=event.currentTarget;
+    const active=view.dataset.focusMode!=="true";
+    view.dataset.focusMode=String(active);
+    button.setAttribute("aria-pressed",String(active));
+    button.textContent=active?"EXIT FOCUS":"FOCUS MODE";
+  });
   update();
   refreshCount();
+  applySearch();
 })();
