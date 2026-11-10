@@ -87,6 +87,34 @@ document.querySelector('#chat-xmemo-connect')?.addEventListener('click',async()=
   status.textContent='XMemo connection was not started: '+String(error.message||error)+'. No memory was changed.';
  }finally{button.disabled=false;}
 });
+document.querySelector('#chat-xmemo-recall')?.addEventListener('click',async()=>{
+ const button=document.querySelector('#chat-xmemo-recall'),status=document.querySelector('#chat-xmemo-memory-status'),query=document.querySelector('#chat-xmemo-query').value.trim();
+ if(!query){status.textContent='Enter a recall query first. No request was sent.';return;}
+ button.disabled=true;status.textContent='Requesting consented XMemo recall…';
+ try{
+  const session=await jxEnsureSession();if(!session)throw new Error('Sign in to HQ first.');
+  const response=await fetch(JX_GATEWAY_V12+'/memory/xmemo/recall',{method:'POST',cache:'no-store',headers:{apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({consent:true,query})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(typeof result.error==='string'?result.error:'XMemo recall returned HTTP '+response.status);
+  status.textContent=result.status==='recalled'?String(result.context||'').slice(0,3000):'Recall completed: '+String(result.status||'unknown')+'. No matching context was returned.';
+ }catch(error){status.textContent='XMemo recall failed: '+String(error.message||error)+'. No memory was changed.';}
+ finally{button.disabled=false;}
+});
+document.querySelector('#chat-xmemo-remember')?.addEventListener('click',async()=>{
+ const button=document.querySelector('#chat-xmemo-remember'),status=document.querySelector('#chat-xmemo-memory-status'),content=document.querySelector('#chat-xmemo-note').value.trim();
+ if(!content){status.textContent='Write a durable project note first. No request was sent.';return;}
+ if(!confirm('Save this note to your XMemo account? Do not include passwords, tokens, or sensitive personal information.'))return;
+ button.disabled=true;status.textContent='Saving your approved project note to XMemo…';
+ try{
+  const session=await jxEnsureSession();if(!session)throw new Error('Sign in to HQ first.');
+  const response=await fetch(JX_GATEWAY_V12+'/memory/xmemo/remember',{method:'POST',cache:'no-store',headers:{apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({consent:true,content})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(typeof result.error==='string'?result.error:'XMemo save returned HTTP '+response.status);
+  status.textContent=result.status==='stored'?'Saved to XMemo. '+String(result.receipt||'').slice(0,800):'XMemo save status: '+String(result.status||'unknown');
+  document.querySelector('#chat-xmemo-note').value='';
+ }catch(error){status.textContent='XMemo save failed: '+String(error.message||error)+'. No success is claimed.';}
+ finally{button.disabled=false;}
+});
 document.querySelector('#chat-auth-signout')?.addEventListener('click',async()=>{const s=await jxEnsureSession().catch(()=>null);if(s){try{await fetch(JX_SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+s.access_token}});}catch{}}try{sessionStorage.removeItem('jx-auth-session')}catch{}jxSaveSession(null);gatewayReady=false;document.querySelector('#chat-send').disabled=true;document.querySelector('#chat-connection-tag').textContent='SIGN-IN REQUIRED';document.querySelector('#chat-connection-tag').className='tag amber';document.querySelector('#chat-gateway-status').textContent='Signed out. No message can be sent until you sign in again.';});
 let jxLastHealth=null;
 async function checkChatGateway(){const status=document.querySelector('#chat-gateway-status'),tag=document.querySelector('#chat-connection-tag'),send=document.querySelector('#chat-send');gatewayReady=false;send.disabled=true;tag.textContent='CHECKING GATEWAY';tag.className='tag amber';status.textContent='Checking your authenticated JARVIS-X gateway…';const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);try{const s=await jxEnsureSession();if(!s)throw new Error('Sign in with your verified email link first.');const response=await fetch(JX_GATEWAY+'/health',{method:'GET',cache:'no-store',headers:{Accept:'application/json',apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+s.access_token},signal:controller.signal});const health=await response.json().catch(()=>({}));if(!response.ok)throw new Error(typeof health.error==='string'?health.error:'Gateway health returned HTTP '+response.status);if(!health||health.ok!==true||health.mode!=='single-primary-multipass'||health.auth!=='verified-supabase-session')throw new Error('Gateway health response does not match the deployed JARVIS-X contract.');if(health.providerConfigured!==true)throw new Error('JARVIS-X inference is not configured on the server. No message was sent.');if(health.rateLimits!=='database-backed')throw new Error('Server-side request limits are not confirmed. Chat remains disabled.');jxLastHealth={ok:health.ok,service:health.service,mode:health.mode,auth:health.auth,providerConfigured:health.providerConfigured,rateLimits:health.rateLimits};gatewayReady=true;send.disabled=false;tag.textContent='JARVIS-X · READY';tag.className='tag green';status.textContent='Authenticated JARVIS-X gateway verified. Server reports database-backed request limits; a successful reply is still required to validate live inference.';}catch(error){tag.textContent='GATEWAY NOT VERIFIED';tag.className='tag amber';const detail=error?.name==='AbortError'?'Gateway health check timed out after 8 seconds':String(error.message||error);status.textContent='JARVIS-X chat unavailable: '+detail+'. Nothing was sent.';}finally{clearTimeout(timeout);}return gatewayReady;}document.querySelector('#chat-check-gateway').addEventListener('click',checkChatGateway);
