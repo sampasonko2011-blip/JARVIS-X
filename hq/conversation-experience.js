@@ -22,6 +22,7 @@
     if(detail)detail.textContent=composing?"Draft remains local until you transmit":"Interface ready · runtime not presumed";
   };
   input?.addEventListener("input",update);
+  document.querySelector("#chat-clear-draft")?.addEventListener("click",()=>{if(input){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));}});
   input?.addEventListener("focus",()=>{view.dataset.chatState=input.value?"composing":"idle";});
   document.querySelectorAll("[data-chat-prompt]").forEach(button=>button.addEventListener("click",()=>{
     if(!input)return;
