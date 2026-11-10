@@ -50,6 +50,7 @@ test("cinematic arrival is keyboard-dismissible and returns focus to the workspa
   await page.keyboard.press("Escape");
   await expect(arrival).toHaveCount(0, { timeout: 2500 });
   await expect(page.locator('[data-view="chat"]')).toBeVisible();
+  await expect(page.locator('#page-title')).toBeFocused();
 });
 
 test("creates a memory, survives reload, and deletes it with confirmation", async ({ page }) => {
