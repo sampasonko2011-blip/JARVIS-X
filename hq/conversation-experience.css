@@ -47,3 +47,8 @@
 @media(max-width:800px){.jx-chat-layout{grid-template-columns:1fr}.jx-chat-main{min-height:640px}.jx-chat-rail{grid-template-columns:repeat(2,minmax(0,1fr))}.jx-advanced-drawer{grid-column:span 2}}
 @media(max-width:560px){.jx-chat-heading{display:block}.jx-chat-heading-state{margin-top:12px;width:max-content;max-width:100%}.jx-chat-rail{grid-template-columns:1fr}.jx-advanced-drawer{grid-column:auto}.jx-chat-main{min-height:620px}.jx-chat-thread{max-height:52vh;padding:17px 12px}.jx-chat-thread .log{max-width:96%}.jx-prompt-grid{grid-template-columns:1fr}.jx-chat-topline{padding:13px}.jx-chat-sessionbar{gap:8px;font-size:7px}.jx-composer-tools{gap:8px}.jx-compose-hint{display:none}.jx-send-button{padding:9px 10px}.jx-chat-actions{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){.jx-state-orb:after,.jx-welcome-orbit:before,.jx-welcome-orbit:after,.jx-chat-thread .log{animation:none!important;transition:none!important}}
+
+.jx-chat-thread .jx-message-user{align-self:flex-end;border-color:#8872c755;border-radius:15px 4px 15px 15px;background:linear-gradient(135deg,#292346aa,#121b30ee)}
+.jx-chat-thread .jx-message-user:before{left:auto;right:-1px;background:linear-gradient(180deg,#b39aff,#8b78cf,#d4ad70)}
+.jx-chat-thread .jx-message-user strong{color:#c4b4ff}
+.jx-chat-thread .jx-message-system{border-color:#d4ad7044;background:linear-gradient(135deg,#2c2619aa,#111b29ee)}
