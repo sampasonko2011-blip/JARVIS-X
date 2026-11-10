@@ -17,9 +17,17 @@ function decodeBase64Url(value) {
 
 function decodeKey(value) {
   if (typeof value !== "string" || !value.trim()) throw new Error("oauth_encryption_key_missing");
-  const decoded = decodeBase64Url(value.trim());
-  if (decoded.byteLength !== 32) throw new Error("oauth_encryption_key_invalid");
-  return decoded;
+  const trimmed = value.trim();
+  // Prefer an explicitly base64url-encoded 32-byte key. Also accept a
+  // password-manager-generated high-entropy secret of >=32 UTF-8 bytes;
+  // longer values are reduced to a fixed 256-bit AES key with SHA-256.
+  try {
+    const decoded = decodeBase64Url(trimmed);
+    if (decoded.byteLength === 32) return decoded;
+  } catch { /* use raw secret material below */ }
+  const raw = new TextEncoder().encode(trimmed);
+  if (raw.byteLength < 32) throw new Error("oauth_encryption_key_invalid");
+  return raw;
 }
 
 function assertUserId(userId) {
@@ -51,7 +59,12 @@ export function createXMemoOAuthSupabaseAdapters({
   now = () => Date.now(),
 } = {}) {
   const config = assertConfig({ supabaseUrl, serviceRoleKey, encryptionKey, fetchImpl, cryptoImpl });
-  const keyPromise = cryptoImpl.subtle.importKey("raw", config.keyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  const keyPromise = (async () => {
+    const keyBytes = config.keyBytes.byteLength === 32
+      ? config.keyBytes
+      : new Uint8Array(await cryptoImpl.subtle.digest("SHA-256", config.keyBytes));
+    return await cryptoImpl.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  })();
 
   async function seal(userId, value) {
     assertUserId(userId);
