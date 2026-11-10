@@ -10,6 +10,7 @@ import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
 import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
+import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
 const ALLOWED_ORIGINS = new Set([
@@ -335,6 +336,7 @@ async function invokeOpenAIResponses(input: unknown, instructions: string, tools
   return data;
 }
 Deno.serve(async (req: Request) => {
+  const xmemoOAuthRouter = createXMemoOAuthRouter();
   const origin = req.headers.get("origin") ?? "";
   const url = new URL(req.url);
   if (req.method === "OPTIONS") {
@@ -368,6 +370,31 @@ Deno.serve(async (req: Request) => {
   }
   if (typeof user.email !== "string" || !allowedEmails.includes(user.email.trim().toLowerCase())) {
     return jsonResponse({ error: "account_not_allowlisted" }, 403, origin);
+  }
+
+  // XMemo OAuth routes are authenticated and allowlisted like all HQ operations.
+  if (url.pathname.endsWith("/auth/xmemo/start")) {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    try {
+      const started = await xmemoOAuthRouter.start(user.id);
+      return jsonResponse({ ok: true, authorization_url: started.authorizationUrl, expires_in: started.expiresIn }, 200, origin);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "oauth_start_failed";
+      return jsonResponse({ error: message.slice(0, 120) }, 502, origin);
+    }
+  }
+  if (url.pathname.endsWith("/auth/xmemo/callback")) {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    let callbackBody: Record<string, unknown>;
+    try { callbackBody = await readJsonBounded(req); }
+    catch { return jsonResponse({ error: "invalid_callback_payload" }, 400, origin); }
+    try {
+      await xmemoOAuthRouter.complete(user.id, callbackBody);
+      return jsonResponse({ ok: true, connected: true }, 200, origin);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "oauth_callback_failed";
+      return jsonResponse({ error: message.slice(0, 120), connected: false }, 400, origin);
+    }
   }
 
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
