@@ -41,6 +41,17 @@ test.beforeEach(async ({ page }) => {
   await enterHQ(page);
 });
 
+test("cinematic arrival is keyboard-dismissible and returns focus to the workspace", async ({ page }) => {
+  await page.evaluate(() => sessionStorage.removeItem("jx-hq-arrival-seen"));
+  await page.reload();
+  const arrival = page.locator("#jx-arrival");
+  await expect(arrival).toBeVisible();
+  await expect(page.locator("#jx-arrival-enter")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(arrival).toHaveCount(0, { timeout: 2500 });
+  await expect(page.locator('[data-view="chat"]')).toBeVisible();
+});
+
 test("creates a memory, survives reload, and deletes it with confirmation", async ({ page }) => {
   await page.locator('[data-view="memory"]').click();
   await page.locator("#memory-title").fill("Browser persistence proof");
