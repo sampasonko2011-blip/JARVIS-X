@@ -76,3 +76,24 @@ test("service worker precaches the complete observatory and conversation experie
   assert.match(sw, /jarvis-x-hq-shell-v14/);
   for (const asset of ["conversation-experience.css","conversation-experience.js","neural-observatory.css","neural-observatory.js"]) assert.match(sw,new RegExp(asset.replace(".","\\.")));
 });
+
+
+test("cinematic arrival is session-scoped, skippable, accessible and precached", async () => {
+  const html = await read("../hq/index.html");
+  const css = await read("../hq/arrival-experience.css");
+  const js = await read("../hq/arrival-experience.js");
+  const sw = await read("../hq/sw.js");
+  assert.match(html, /id="jx-arrival"/);
+  assert.match(html, /aria-modal="true"/);
+  assert.match(html, /arrival-experience\.css/);
+  assert.match(html, /arrival-experience\.js/);
+  assert.match(js, /prefers-reduced-motion/);
+  assert.match(js, /sessionStorage/);
+  assert.match(js, /Escape/);
+  assert.match(js, /jx-hq-arrival-seen/);
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(css, /jx-arrival-enter/);
+  assert.match(sw, /jarvis-x-hq-shell-v15/);
+  assert.match(sw, /arrival-experience\.css/);
+  assert.match(sw, /arrival-experience\.js/);
+});
