@@ -10,6 +10,7 @@ import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
 import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
+import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
 const ALLOWED_ORIGINS = new Set([
@@ -279,14 +280,42 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
   return row as { allowed: boolean; limit_key: string; request_limit: number; remaining: number; reset_at: string };
 }
 
-const xmemoMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
+// Prefer authenticated OAuth MCP. Keep the legacy REST adapter only as a
+// transition fallback until this user completes OAuth; never fall back after an
+// OAuth-connected account encounters a refresh, transport, or authorization error.
+const xmemoOAuthRouter = createXMemoOAuthRouter();
+const xmemoLegacyMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
 
 async function recallMemory(task: string, userId: string, consent: boolean) {
-  return await xmemoMemory.recall(task, userId, { consent });
+  if (!consent) return { status: "not_consented", context: "" };
+  try {
+    const result = await xmemoOAuthRouter.recall(userId, task);
+    if (result.status === "not_connected") return await xmemoLegacyMemory.recall(task, userId, { consent });
+    return result;
+  } catch {
+    return { status: "unavailable", context: "" };
+  }
 }
 
 async function storeConversationMemory(task: string, answer: string, userId: string, taskType: string, consent: boolean) {
-  return await xmemoMemory.store(task, answer, userId, taskType, { consent });
+  if (!consent) return "not_consented";
+  const content = [
+    "JARVIS-X HQ conversation memory",
+    "Task type: " + (typeof taskType === "string" ? taskType.slice(0, 80) : "unknown"),
+    "User request:",
+    task,
+    "JARVIS-X response:",
+    answer,
+  ].join("\n\n");
+  try {
+    const result = await xmemoOAuthRouter.remember(userId, content);
+    if (result.status === "not_connected") {
+      return await xmemoLegacyMemory.store(task, answer, userId, taskType, { consent });
+    }
+    return result.status;
+  } catch {
+    return "failed";
+  }
 }
 
 const EXECUTIVE_CONFIG = Object.freeze({
@@ -370,6 +399,80 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "account_not_allowlisted" }, 403, origin);
   }
 
+  // Dedicated memory endpoints let users verify recall/write without enabling
+  // paid model inference. Both require an explicit per-request consent flag.
+  const isXMemoRecall = url.pathname.endsWith("/memory/xmemo/recall");
+  const isXMemoRemember = url.pathname.endsWith("/memory/xmemo/remember");
+  if (isXMemoRecall || isXMemoRemember) {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    let minuteLimit;
+    let dayLimit;
+    try {
+      minuteLimit = await consumeRateLimit(user.id, "minute");
+      dayLimit = await consumeRateLimit(user.id, "day");
+    } catch {
+      return jsonResponse({ error: "rate_limit_service_unavailable" }, 503, origin);
+    }
+    const denied = !minuteLimit.allowed ? minuteLimit : !dayLimit.allowed ? dayLimit : null;
+    if (denied) {
+      const retryAfter = Math.max(1, Math.min(86_400, Math.ceil((Date.parse(denied.reset_at) - Date.now()) / 1000)));
+      return jsonResponse({ error: "rate_limit_exceeded", limit: denied.limit_key, retry_after_seconds: retryAfter }, 429, origin);
+    }
+    let memoryBody: Record<string, unknown>;
+    try { memoryBody = await readJsonBounded(req); }
+    catch { return jsonResponse({ error: "invalid_memory_payload" }, 400, origin); }
+    if (memoryBody.consent !== true) return jsonResponse({ error: "explicit_memory_consent_required" }, 403, origin);
+    try {
+      if (isXMemoRecall) {
+        if (typeof memoryBody.query !== "string" || !memoryBody.query.trim() || memoryBody.query.length > 12_000) {
+          return jsonResponse({ error: "memory_query_invalid" }, 400, origin);
+        }
+        const result = await xmemoOAuthRouter.recall(user.id, memoryBody.query);
+        return jsonResponse({ ok: true, ...result }, result.status === "not_connected" ? 409 : 200, origin);
+      }
+      if (typeof memoryBody.content !== "string" || !memoryBody.content.trim() || memoryBody.content.length > 18_000) {
+        return jsonResponse({ error: "memory_content_invalid" }, 400, origin);
+      }
+      const result = await xmemoOAuthRouter.remember(user.id, memoryBody.content);
+      return jsonResponse({ ok: true, ...result }, result.status === "not_connected" ? 409 : 200, origin);
+    } catch {
+      return jsonResponse({ error: "xmemo_memory_operation_failed" }, 502, origin);
+    }
+  }
+
+  // XMemo OAuth routes are authenticated, allowlisted, and database-rate-limited.
+  const isXMemoOAuthStart = url.pathname.endsWith("/auth/xmemo/start");
+  const isXMemoOAuthCallback = url.pathname.endsWith("/auth/xmemo/callback");
+  if (isXMemoOAuthStart || isXMemoOAuthCallback) {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405, origin);
+    let minuteLimit;
+    let dayLimit;
+    try {
+      minuteLimit = await consumeRateLimit(user.id, "minute");
+      dayLimit = await consumeRateLimit(user.id, "day");
+    } catch {
+      return jsonResponse({ error: "rate_limit_service_unavailable" }, 503, origin);
+    }
+    const denied = !minuteLimit.allowed ? minuteLimit : !dayLimit.allowed ? dayLimit : null;
+    if (denied) {
+      const retryAfter = Math.max(1, Math.min(86_400, Math.ceil((Date.parse(denied.reset_at) - Date.now()) / 1000)));
+      return jsonResponse({ error: "rate_limit_exceeded", limit: denied.limit_key, retry_after_seconds: retryAfter }, 429, origin);
+    }
+    try {
+      if (isXMemoOAuthStart) {
+        const started = await xmemoOAuthRouter.start(user.id);
+        return jsonResponse({ ok: true, authorization_url: started.authorizationUrl, expires_in: started.expiresIn }, 200, origin);
+      }
+      const callbackBody = await readJsonBounded(req);
+      const result = await xmemoOAuthRouter.complete(user.id, callbackBody);
+      return jsonResponse({ ok: true, ...result }, 200, origin);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "xmemo_oauth_failed";
+      const safeClientError = /^(oauth_(state_invalid|transaction_missing_expired_or_replayed|authorization_code_invalid|callback_parameters_missing))$/.test(message);
+      return jsonResponse({ error: safeClientError ? message : "xmemo_oauth_unavailable", connected: false }, safeClientError ? 400 : 502, origin);
+    }
+  }
+
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("identity"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
@@ -389,8 +492,8 @@ Deno.serve(async (req: Request) => {
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
       chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
-      memoryProvider: "xmemo",
-      memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
+      memoryProvider: "xmemo-mcp-oauth-preferred",
+      memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",

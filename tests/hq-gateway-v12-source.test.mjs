@@ -7,6 +7,9 @@ const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cogn
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-execution.mjs", import.meta.url), "utf8");
 const xmemo = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-memory.mjs", import.meta.url), "utf8");
+const xmemoMcp = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-mcp-transport.mjs", import.meta.url), "utf8");
+const xmemoOAuthRouter = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-oauth-router.mjs", import.meta.url), "utf8");
+const xmemoOAuthStore = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-oauth-supabase.mjs", import.meta.url), "utf8");
 const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 const hqClient = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
 const serviceWorker = await readFile(new URL("../hq/sw.js", import.meta.url), "utf8");
@@ -56,19 +59,37 @@ test("v12 preserves authentication, allowlisting, rate limits, and fail-closed b
 });
 
 
-test("XMemo transport is isolated, account-scoped, bounded, and separately consent-gated", () => {
-  assert.match(gateway, /createXMemoMemoryClient/);
+test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the hosted tool surface", () => {
+  assert.match(gateway, /createXMemoOAuthRouter/);
+  assert.match(gateway, /\/auth\/xmemo\/start/);
+  assert.match(gateway, /\/auth\/xmemo\/callback/);
+  assert.match(gateway, /\/memory\/xmemo\/recall/);
+  assert.match(gateway, /\/memory\/xmemo\/remember/);
   assert.match(gateway, /body\.memory_consent === true/);
-  assert.match(gateway, /await recallMemory\(task, user\.id, memoryConsent\)/);
-  assert.match(gateway, /await storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
-  assert.match(xmemo, /memoryPathForUser/);
-  assert.match(xmemo, /UUID_PATTERN/);
-  assert.match(xmemo, /consent !== true/);
-  assert.match(xmemo, /AbortSignal\.timeout/);
-  assert.match(xmemo, /Cache-Control": "no-store"/);
+  assert.match(gateway, /memoryBody\.consent !== true/);
+  assert.match(gateway, /Prefer authenticated OAuth MCP/);
+  assert.match(xmemoOAuthRouter, /createXMemoMcpClient/);
+  assert.match(xmemoOAuthRouter, /refreshXMemoAccessToken/);
+  assert.match(xmemoOAuthRouter, /recall_context/);
+  assert.match(xmemoOAuthRouter, /remember/);
+  assert.match(xmemoMcp, /Streamable HTTP MCP client/);
+  assert.match(xmemoMcp, /MCP-Protocol-Version/);
+  assert.match(xmemoOAuthStore, /AES-GCM/);
+  assert.match(xmemoOAuthStore, /additionalData/);
+  assert.match(xmemoOAuthStore, /hq_xmemo_oauth_credentials/);
+  assert.match(hqClient, /chat-xmemo-connect/);
+  assert.match(hqClient, /memory\/xmemo\/recall/);
+  assert.match(hqClient, /memory\/xmemo\/remember/);
+  assert.match(hqHtml, /id="chat-xmemo-connect"/);
+  assert.match(hqHtml, /id="chat-xmemo-recall"/);
+  assert.match(hqHtml, /id="chat-xmemo-remember"/);
+  assert.match(xmemoOAuthRouter, /JX_ENCRYPTION_SECRET/);
   assert.match(xmemo, /REDACTED_SECRET/);
-  assert.match(xmemo, /MAX_CONTEXT_CHARS/);
-  assert.doesNotMatch(gateway, /const XMEMO_BASE_URL/);
+  assert.match(gateway, /createXMemoMemoryClient/);
+  assert.match(gateway, /XMEMO_API_KEY/);
+  assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory\.recall/);
+  assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory\.store/);
+  assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth-preferred"/);
 });
 
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
