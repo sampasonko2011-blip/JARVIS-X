@@ -12,7 +12,7 @@ import { redactForMemory } from "./xmemo-memory.mjs";
 
 export const XMEMO_HQ_CALLBACK_URI = "https://sampasonko2011-blip.github.io/JARVIS-X/hq/xmemo-oauth-callback.html";
 const XMEMO_RESOURCE = "https://xmemo.dev/mcp";
-const MEMORY_PATH = "projects/jarvis-x-hq/conversations";
+const MEMORY_PATH = "work/jarvis-x-hq";
 let metadataPromise = null;
 let registrationPromise = null;
 
