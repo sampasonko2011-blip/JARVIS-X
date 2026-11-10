@@ -9,6 +9,7 @@ import { createMockExecutionResult } from "./mock-execution.mjs";
 import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
+import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
@@ -279,15 +280,17 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
   return row as { allowed: boolean; limit_key: string; request_limit: number; remaining: number; reset_at: string };
 }
 
-// OAuth-backed MCP is the active memory adapter for this release candidate.
-// Legacy REST/API-key memory remains in source for rollback only and is not called.
+// Prefer authenticated OAuth MCP. Keep the legacy REST adapter only as a
+// transition fallback until this user completes OAuth; never fall back after an
+// OAuth-connected account encounters a refresh, transport, or authorization error.
 const xmemoOAuthRouter = createXMemoOAuthRouter();
+const xmemoLegacyMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
 
 async function recallMemory(task: string, userId: string, consent: boolean) {
   if (!consent) return { status: "not_consented", context: "" };
   try {
     const result = await xmemoOAuthRouter.recall(userId, task);
-    if (result.status === "not_connected") return { status: "not_connected", context: "" };
+    if (result.status === "not_connected") return await xmemoLegacyMemory.recall(task, userId, { consent });
     return result;
   } catch {
     return { status: "unavailable", context: "" };
@@ -306,6 +309,9 @@ async function storeConversationMemory(task: string, answer: string, userId: str
   ].join("\n\n");
   try {
     const result = await xmemoOAuthRouter.remember(userId, content);
+    if (result.status === "not_connected") {
+      return await xmemoLegacyMemory.store(task, answer, userId, taskType, { consent });
+    }
     return result.status;
   } catch {
     return "failed";
@@ -486,8 +492,8 @@ Deno.serve(async (req: Request) => {
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
       chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
-      memoryProvider: "xmemo-mcp-oauth",
-      memoryConfigured: Boolean(Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")),
+      memoryProvider: "xmemo-mcp-oauth-preferred",
+      memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",
