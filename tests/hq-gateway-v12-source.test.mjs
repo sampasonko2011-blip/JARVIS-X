@@ -85,7 +85,11 @@ test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the h
   assert.match(hqHtml, /id="chat-xmemo-remember"/);
   assert.match(xmemoOAuthRouter, /JX_ENCRYPTION_SECRET/);
   assert.match(xmemo, /REDACTED_SECRET/);
-  assert.doesNotMatch(gateway, /createXMemoMemoryClient|XMEMO_API_KEY/);
+  assert.match(gateway, /createXMemoMemoryClient/);
+  assert.match(gateway, /XMEMO_API_KEY/);
+  assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory\.recall/);
+  assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory\.store/);
+  assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth-preferred"/);
 });
 
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
