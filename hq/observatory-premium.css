@@ -147,3 +147,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .view:not(.hide){animation:none}
   .nav button,.nav a,.grid>.card,.btn{transition:none}
 }
+
+
+/* Global Locked-In Mode — full-shell focus with a persistent exit control. */
+.shell.jx-global-focus{grid-template-columns:minmax(0,1fr)}
+.shell.jx-global-focus>.side{display:none}
+.shell.jx-global-focus>.main{max-width:1760px;padding-inline:clamp(18px,4vw,64px)}
+.shell.jx-global-focus .top{position:sticky;top:0;z-index:30;backdrop-filter:blur(22px)}
+.jx-global-focus-toggle{cursor:pointer;color:var(--jx-cyan);border-color:var(--jx-line-hot);background:rgba(9,25,39,.82);font:700 10px ui-monospace,monospace;letter-spacing:.1em;transition:background .2s,border-color .2s,box-shadow .2s}
+.jx-global-focus-toggle[aria-pressed="true"]{color:#07131c;background:var(--jx-cyan);border-color:var(--jx-cyan);box-shadow:0 0 24px rgba(118,227,226,.2)}
+.shell.jx-global-focus .jx-core-stage{max-width:1480px;margin-inline:auto}
+.shell.jx-global-focus .grid{max-width:1480px;margin-inline:auto}
+@media(prefers-reduced-motion:no-preference){
+ .shell>.side{transition:opacity .28s ease,transform .34s cubic-bezier(.2,.75,.2,1)}
+ .shell.jx-global-focus>.side{opacity:0;transform:translateX(-18px)}
+}
+@media(prefers-reduced-motion:reduce){.jx-global-focus-toggle{transition:none}}
+@media(max-width:700px){.shell.jx-global-focus>.main{padding-inline:14px}.jx-global-focus-toggle{font-size:9px;padding:7px 9px}}
