@@ -120,7 +120,7 @@ test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and
   assert.match(gateway, /recallMemory\(task, user\.id, memoryConsent\)/);
   assert.match(gateway, /storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
   assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth-preferred"/);
-  assert.match(gateway, /memoryConfigured: Boolean\(Deno\.env\.get\("JX_ENCRYPTION_SECRET"\)/);
+  assert.match(gateway, /memoryConfigured: Boolean\\(\\(Deno\\.env\\.get\\("JX_ENCRYPTION_SECRET"\\)/);
   assert.match(gateway, /createXMemoMemoryClient/);
   assert.match(gateway, /XMEMO_API_KEY/);
   assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory/);
