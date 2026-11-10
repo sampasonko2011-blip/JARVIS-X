@@ -9,7 +9,6 @@ import { createMockExecutionResult } from "./mock-execution.mjs";
 import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
-import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
@@ -446,8 +445,8 @@ Deno.serve(async (req: Request) => {
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
       chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
-      memoryProvider: "xmemo",
-      memoryConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
+      memoryProvider: "xmemo-mcp-oauth",
+      memoryConfigured: Boolean(Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",
