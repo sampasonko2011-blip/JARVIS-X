@@ -52,3 +52,11 @@
 .jx-chat-thread .jx-message-user:before{left:auto;right:-1px;background:linear-gradient(180deg,#b39aff,#8b78cf,#d4ad70)}
 .jx-chat-thread .jx-message-user strong{color:#c4b4ff}
 .jx-chat-thread .jx-message-system{border-color:#d4ad7044;background:linear-gradient(135deg,#2c2619aa,#111b29ee)}
+
+/* Transcript command strip: search, export and distraction-free focus. */
+.jx-transcript-tools{display:grid;grid-template-columns:minmax(180px,1fr) auto auto;align-items:center;gap:10px;padding:10px clamp(13px,2.5vw,22px);border-bottom:1px solid #8bcbd51a;background:linear-gradient(90deg,#0c1a2a,#0b1726)}
+.jx-transcript-search{display:flex;align-items:center;gap:9px;min-width:0;padding:8px 11px;border:1px solid #6c91a344;border-radius:9px;background:#06111d;color:#8ba7bc}.jx-transcript-search:focus-within{border-color:#6bdcdb99;box-shadow:0 0 0 2px #64d9d522}.jx-transcript-search>span{font-size:17px;color:#d4ad70}.jx-transcript-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#eaf8ff;font-size:11px}.jx-transcript-search input::placeholder{color:#68839a}.jx-transcript-search kbd{padding:2px 5px;border:1px solid #7591a533;border-radius:4px;color:#7793a9;font:9px ui-monospace,monospace}
+.jx-transcript-results{color:#7f9bb0;font:8px ui-monospace,monospace;white-space:nowrap}.jx-transcript-actions{display:flex;gap:6px}.jx-transcript-actions button{padding:8px 9px;border:1px solid #648aa044;border-radius:8px;background:#102337;color:#a8c2d4;font:8px ui-monospace,monospace;letter-spacing:.06em;white-space:nowrap}.jx-transcript-actions button:hover,.jx-transcript-actions button[aria-pressed="true"]{border-color:#75d8d799;color:#9df0eb;background:#12303a}
+.jx-chat-view[data-focus-mode="true"] .jx-chat-layout{grid-template-columns:minmax(0,1fr)}.jx-chat-view[data-focus-mode="true"] .jx-chat-rail{display:none}.jx-chat-view[data-focus-mode="true"] .jx-chat-main{min-height:min(78vh,900px)}.jx-chat-thread .log[hidden]{display:none!important}
+@media(max-width:700px){.jx-transcript-tools{grid-template-columns:minmax(0,1fr) auto}.jx-transcript-results{grid-column:1/-1;grid-row:2}.jx-transcript-actions button{font-size:7px;padding:8px 6px}.jx-transcript-search kbd{display:none}}
+@media(prefers-reduced-motion:reduce){.jx-transcript-search,.jx-transcript-actions button{transition:none!important}}
