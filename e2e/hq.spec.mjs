@@ -1,6 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 
+async function enterHQ(page) {
+  const enter = page.locator("#jx-arrival-enter");
+  if (await enter.isVisible().catch(() => false)) {
+    await enter.click();
+    await expect(page.locator("#jx-arrival")).toHaveCount(0, { timeout: 2500 });
+  }
+}
+
 async function installGatewayFetchMock(page, config) {
   await page.addInitScript(() => {
     const nativeFetch = window.fetch.bind(window);
@@ -30,6 +38,34 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/index.html");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await enterHQ(page);
+});
+
+test("clear draft resets the composer counter and local presence state", async ({ page }) => {
+  const input = page.locator("#chat-compose");
+  const counter = page.locator("#chat-draft-count");
+  const presence = page.locator("#jx-chat-presence");
+  await page.locator('[data-view="chat"]').click();
+  await expect(input).toBeVisible();
+  await input.fill("A draft that should be cleared");
+  await expect(counter).toContainText("30 / 12000");
+  await expect(presence).toHaveText("READY FOR TRANSMISSION");
+  await page.locator("#chat-clear-draft").click();
+  await expect(input).toHaveValue("");
+  await expect(counter).toContainText("0 / 12000");
+  await expect(presence).toHaveText("STANDING BY");
+});
+
+test("cinematic arrival is keyboard-dismissible and returns focus to the workspace", async ({ page }) => {
+  await page.evaluate(() => sessionStorage.removeItem("jx-hq-arrival-seen"));
+  await page.reload();
+  const arrival = page.locator("#jx-arrival");
+  await expect(arrival).toBeVisible();
+  await expect(page.locator("#jx-arrival-enter")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(arrival).toHaveCount(0, { timeout: 2500 });
+  await expect(page.locator('[data-view="chat"]')).toBeVisible();
+  await expect(page.locator('#page-title')).toBeFocused();
 });
 
 test("creates a memory, survives reload, and deletes it with confirmation", async ({ page }) => {
@@ -368,6 +404,7 @@ test("zero-model mock chat works with the live budget disabled and is labelled a
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('[data-view="chat"]').click();
+  await page.locator(".jx-advanced-drawer").filter({ hasText: "ROUTING & EXECUTION" }).locator("summary").click();
   await page.locator("#chat-execution-mode").selectOption("mock");
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
@@ -516,4 +553,40 @@ test("Capability Forge exposes Nano Banana, XMemo, and portable export under one
   await expect(page.locator("#capability-registry")).toContainText("DISABLED BY DEFAULT");
   await expect(page.locator("#view-forge")).not.toContainText("open-weight model candidates");
   await expect(page.locator("#view-forge")).not.toContainText("provider picker");
+});
+
+
+test("iPad Air viewport layouts remain inside the screen in portrait and landscape", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
+    await page.setViewportSize(viewport);
+    await page.reload();
+    const layout = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+      main: Math.round(document.querySelector(".main")?.getBoundingClientRect().width || 0),
+      shell: Math.round(document.querySelector(".shell")?.getBoundingClientRect().width || 0),
+    }));
+    expect(layout.document, JSON.stringify({ viewport, layout })).toBeLessThanOrEqual(layout.viewport);
+    expect(layout.main, JSON.stringify({ viewport, layout })).toBeGreaterThan(0);
+    expect(layout.shell, JSON.stringify({ viewport, layout })).toBeLessThanOrEqual(layout.viewport);
+    await expect(page.locator("#page-title")).toBeVisible();
+    await expect(page.locator("#jx-global-focus")).toBeVisible();
+  }
+});
+
+test("global Locked-In Mode retracts navigation and always exposes a working exit", async ({ page }) => {
+  const shell = page.locator(".shell");
+  const side = page.locator(".shell > .side");
+  const toggle = page.locator("#jx-global-focus");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(shell).toHaveClass(/jx-global-focus/);
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(toggle).toHaveText("EXIT FOCUS");
+  await expect(side).toBeHidden();
+  await page.keyboard.press("Escape");
+  await expect(shell).not.toHaveClass(/jx-global-focus/);
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(toggle).toHaveText("FOCUS MODE");
+  await expect(side).toBeVisible();
 });
