@@ -539,3 +539,39 @@ test("Capability Forge exposes Nano Banana, XMemo, and portable export under one
   await expect(page.locator("#view-forge")).not.toContainText("open-weight model candidates");
   await expect(page.locator("#view-forge")).not.toContainText("provider picker");
 });
+
+
+test("iPad Air viewport layouts remain inside the screen in portrait and landscape", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
+    await page.setViewportSize(viewport);
+    await page.reload();
+    const layout = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+      main: Math.round(document.querySelector(".main")?.getBoundingClientRect().width || 0),
+      shell: Math.round(document.querySelector(".shell")?.getBoundingClientRect().width || 0),
+    }));
+    expect(layout.document, JSON.stringify({ viewport, layout })).toBeLessThanOrEqual(layout.viewport);
+    expect(layout.main, JSON.stringify({ viewport, layout })).toBeGreaterThan(0);
+    expect(layout.shell, JSON.stringify({ viewport, layout })).toBeLessThanOrEqual(layout.viewport);
+    await expect(page.locator("#page-title")).toBeVisible();
+    await expect(page.locator("#jx-global-focus")).toBeVisible();
+  }
+});
+
+test("global Locked-In Mode retracts navigation and always exposes a working exit", async ({ page }) => {
+  const shell = page.locator(".shell");
+  const side = page.locator(".shell > .side");
+  const toggle = page.locator("#jx-global-focus");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(shell).toHaveClass(/jx-global-focus/);
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(toggle).toHaveText("EXIT FOCUS");
+  await expect(side).toBeHidden();
+  await page.keyboard.press("Escape");
+  await expect(shell).not.toHaveClass(/jx-global-focus/);
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect(toggle).toHaveText("FOCUS MODE");
+  await expect(side).toBeVisible();
+});
