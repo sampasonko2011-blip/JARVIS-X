@@ -317,3 +317,14 @@ body.jx-sun-mode .jx-core-stage,body.jx-sun-mode .jx-v25-control-dock{border-col
 .jx-v25-idle-panel p{color:#8fa8a2;font:11px/1.6 var(--jx-mono);}
 .jx-v25-idle-panel button{min-height:44px;padding:10px 18px;border:1px solid rgba(0,245,212,.5);border-radius:8px;background:#061c1a;color:#eaffff;font:10px var(--jx-mono);}
 @media(prefers-reduced-motion:reduce){.shell:not(.local-chat-shell) .jx-orbit-scene:before,.shell:not(.local-chat-shell) .jx-orbit-scene:after{display:none;}}
+
+
+/* V25 #5 piezo crystal and #8 spatial origami wing assembly. */
+.jx-v25-piezo-crystal{position:absolute;z-index:3;left:50%;top:50%;width:clamp(38px,5vw,62px);aspect-ratio:.72;transform:translate(-50%,-50%) rotate(45deg);clip-path:polygon(50% 0,88% 22%,100% 72%,50% 100%,0 72%,12% 22%);background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(0,245,212,.8) 22%,rgba(114,9,183,.82) 58%,rgba(255,0,110,.68));border:1px solid rgba(225,255,255,.8);box-shadow:0 0 22px rgba(0,245,212,.7),0 0 54px rgba(114,9,183,.5);opacity:.86;pointer-events:none;}
+.jx-v25-piezo-crystal:after{content:"";position:absolute;inset:9%;clip-path:polygon(50% 0,100% 70%,50% 100%,0 70%);background:linear-gradient(145deg,rgba(255,255,255,.62),rgba(0,245,212,.12) 48%,rgba(5,8,30,.24));}
+.jx-v25-origami-wings{position:absolute;z-index:2;left:50%;top:50%;width:150%;height:72%;transform:translate(-50%,-50%);pointer-events:none;perspective:500px;}
+.jx-v25-origami-wings i{position:absolute;top:18%;width:43%;height:62%;border:1px solid rgba(0,245,212,.56);background:linear-gradient(145deg,rgba(0,245,212,.18),rgba(114,9,183,.10) 55%,rgba(255,255,255,.04));clip-path:polygon(0 50%,70% 0,100% 42%,42% 100%);filter:drop-shadow(0 0 12px rgba(0,245,212,.32));}
+.jx-v25-origami-wings i:first-child{left:0;transform:rotateY(34deg) rotateZ(-12deg);transform-origin:right center;}
+.jx-v25-origami-wings i:last-child{right:0;transform:scaleX(-1) rotateY(34deg) rotateZ(-12deg);transform-origin:left center;}
+body.jx-sun-mode .jx-v25-piezo-crystal{filter:sepia(.22) saturate(.85);box-shadow:0 0 26px rgba(255,208,116,.5),0 0 56px rgba(184,94,42,.25);}
+@media(prefers-reduced-motion:reduce){.jx-v25-piezo-crystal,.jx-v25-origami-wings i{transition:none!important;}}
