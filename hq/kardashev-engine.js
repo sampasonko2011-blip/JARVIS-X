@@ -37,6 +37,19 @@ overview?.addEventListener('pointerleave',()=>{pointer.active=false},{passive:tr
 overview?.addEventListener('pointerdown',e=>{const scene=e.target.closest('.jx-orbit-scene');if(scene){scene.classList.remove('jx-shockwave');void scene.offsetWidth;scene.classList.add('jx-shockwave');setTimeout(()=>scene.classList.remove('jx-shockwave'),850)}},{passive:true});
 
  // JARVIS-X HQ v25: explicit Sun Mode handoff and active-screen idle curtain.
+ const reactorScene=document.querySelector('.jx-orbit-scene');
+ if(reactorScene&&!reactorScene.querySelector('.jx-v25-piezo-crystal')){
+   const crystal=document.createElement('span');
+   crystal.className='jx-v25-piezo-crystal';
+   crystal.setAttribute('aria-hidden','true');
+   const wings=document.createElement('span');
+   wings.className='jx-v25-origami-wings';
+   wings.setAttribute('aria-hidden','true');
+   const wingLeft=document.createElement('i');
+   const wingRight=document.createElement('i');
+   wings.append(wingLeft,wingRight);
+   reactorScene.append(crystal,wings);
+ }
  const overviewStage=document.querySelector('.jx-core-stage');
  if(overviewStage&&!document.querySelector('.jx-v25-control-dock')){
    const dock=document.createElement('section');
