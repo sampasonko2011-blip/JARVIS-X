@@ -11,7 +11,8 @@
    syncRuntimeStatus();
    new MutationObserver(syncRuntimeStatus).observe(runtimeStatus,{childList:true,characterData:true,subtree:true});
  }
-\n const waveSelect=$('jx-focus-wave');
+
+ const waveSelect=$('jx-focus-wave');
  const focusToggle=$('jx-local-focus-toggle');
  focusToggle?.addEventListener('click',()=>{const shell=document.querySelector('.local-chat-shell');if(!shell)return;const active=shell.classList.toggle('jx-global-focus');focusToggle.setAttribute('aria-pressed',String(active));focusToggle.textContent=active?'EXIT LOCKED-IN MODE':'ENTER LOCKED-IN MODE';syncFocus();});
  function audioContext(){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio is not supported in this browser.');if(!audio)audio=new C();if(audio.state==='suspended')audio.resume().catch(()=>{});return audio}
