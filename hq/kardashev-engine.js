@@ -36,5 +36,114 @@ overview?.addEventListener('pointermove',e=>{const r=overview.getBoundingClientR
 overview?.addEventListener('pointerleave',()=>{pointer.active=false},{passive:true});
 overview?.addEventListener('pointerdown',e=>{const scene=e.target.closest('.jx-orbit-scene');if(scene){scene.classList.remove('jx-shockwave');void scene.offsetWidth;scene.classList.add('jx-shockwave');setTimeout(()=>scene.classList.remove('jx-shockwave'),850)}},{passive:true});
 
+ // JARVIS-X HQ v25: explicit Sun Mode handoff and active-screen idle curtain.
+ const reactorScene=document.querySelector('.jx-orbit-scene');
+ if(reactorScene&&!reactorScene.querySelector('.jx-v25-piezo-crystal')){
+   const crystal=document.createElement('span');
+   crystal.className='jx-v25-piezo-crystal';
+   crystal.setAttribute('aria-hidden','true');
+   const wings=document.createElement('span');
+   wings.className='jx-v25-origami-wings';
+   wings.setAttribute('aria-hidden','true');
+   const wingLeft=document.createElement('i');
+   const wingRight=document.createElement('i');
+   wings.append(wingLeft,wingRight);
+   reactorScene.append(crystal,wings);
+ }
+ const overviewStage=document.querySelector('.jx-core-stage');
+ if(overviewStage&&!document.querySelector('.jx-v25-control-dock')){
+   const dock=document.createElement('section');
+   dock.className='jx-v25-control-dock';
+   dock.setAttribute('aria-label','Mode Soleil and screen controls');
+   const sunButton=document.createElement('button');
+   sunButton.type='button';
+   sunButton.className='jx-v25-sun-toggle';
+   sunButton.setAttribute('aria-pressed','false');
+   sunButton.textContent='MODE SOLEIL · OFF';
+   const shortcutButton=document.createElement('button');
+   shortcutButton.type='button';
+   shortcutButton.className='jx-v25-shortcut';
+   shortcutButton.textContent='OPEN ALARMY SHORTCUT';
+   shortcutButton.disabled=true;
+   const sunStatus=document.createElement('span');
+   sunStatus.className='jx-v25-status';
+   sunStatus.setAttribute('role','status');
+   sunStatus.setAttribute('aria-live','polite');
+   sunStatus.textContent='Visual shield off · alarm handoff not armed';
+   dock.append(sunButton,shortcutButton,sunStatus);
+   overviewStage.append(dock);
+   let sunMode=false;
+   sunButton.addEventListener('click',()=>{
+     sunMode=!sunMode;
+     document.body.classList.toggle('jx-sun-mode',sunMode);
+     sunButton.setAttribute('aria-pressed',String(sunMode));
+     sunButton.textContent=sunMode?'MODE SOLEIL · ON':'MODE SOLEIL · OFF';
+     shortcutButton.disabled=!sunMode;
+     sunStatus.textContent=sunMode
+       ?'Warm visual shield active · open your configured iOS Shortcut explicitly'
+       :'Visual shield off · no alarm handoff requested';
+   });
+   shortcutButton.addEventListener('click',()=>{
+     if(!sunMode)return;
+     sunStatus.textContent='Shortcuts handoff requested · confirm the Alarmy shortcut in iOS';
+     window.location.href='shortcuts://run-shortcut?name=Alarmy';
+   });
+ }
+
+ // The OLED curtain is an in-page visual idle feature. It pauses while Safari hides
+ // the page and never claims to wake the device or trigger a background alarm.
+ let idleTimer=0;
+ let idleCurtain=null;
+ const IDLE_LIMIT_MS=30*60*1000;
+ function removeIdleCurtain(){
+   if(!idleCurtain)return;
+   idleCurtain.remove();
+   idleCurtain=null;
+   resetIdleTimer();
+ }
+ function showIdleCurtain(){
+   idleTimer=0;
+   if(document.hidden||idleCurtain)return;
+   idleCurtain=document.createElement('div');
+   idleCurtain.className='jx-v25-idle-curtain';
+   idleCurtain.setAttribute('role','dialog');
+   idleCurtain.setAttribute('aria-modal','true');
+   idleCurtain.setAttribute('aria-label','Screen rest');
+   const panel=document.createElement('div');
+   panel.className='jx-v25-idle-panel';
+   const heading=document.createElement('strong');
+   heading.textContent='CORE IN REST STATE';
+   const detail=document.createElement('p');
+   detail.textContent='The display curtain is active. This page cannot wake iPadOS or run a background alarm.';
+   const resume=document.createElement('button');
+   resume.type='button';
+   resume.textContent='RESUME HQ';
+   resume.addEventListener('click',removeIdleCurtain);
+   panel.append(heading,detail,resume);
+   idleCurtain.append(panel);
+   document.body.append(idleCurtain);
+   resume.focus();
+ }
+ function resetIdleTimer(){
+   if(idleTimer)window.clearTimeout(idleTimer);
+   idleTimer=0;
+   if(document.hidden||idleCurtain)return;
+   idleTimer=window.setTimeout(showIdleCurtain,IDLE_LIMIT_MS);
+ }
+ ['pointerdown','pointermove','keydown','touchstart'].forEach(type=>{
+   document.addEventListener(type,()=>{
+     if(idleCurtain){
+       if(type==='keydown')removeIdleCurtain();
+       return;
+     }
+     resetIdleTimer();
+   },{passive:type!=='keydown'});
+ });
+ document.addEventListener('visibilitychange',()=>{
+   if(document.hidden){if(idleTimer)window.clearTimeout(idleTimer);idleTimer=0;}
+   else resetIdleTimer();
+ });
+ resetIdleTimer();
+
  window.addEventListener('pagehide',()=>{stopFocus();if(audio?.state==='running')audio.suspend().catch(()=>{})});
 })();
