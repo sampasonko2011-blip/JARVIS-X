@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
 
 async function enterHQ(page) {
-  const enter = page.locator("#jx-arrival-enter");
-  if (await enter.isVisible().catch(() => false)) {
-    await enter.click();
-    await expect(page.locator("#jx-arrival")).toHaveCount(0, { timeout: 2500 });
+  const arrival = page.locator("#jx-arrival");
+  if (await arrival.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await expect(arrival).toHaveCount(0, { timeout: 5000 });
   }
+  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 test.beforeEach(async ({ page }) => {
