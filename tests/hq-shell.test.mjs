@@ -335,6 +335,10 @@ test("Local Chat v20 is a full three-rail cockpit and preserves the engine contr
   assert.ok(css.includes("@media(max-width:760px)"));
   assert.ok(engine.includes("jx-local-focus-toggle"));
   assert.ok(engine.includes("jx-audio-toggle"));
+  assert.ok(css.includes("KARDASHEV-II VISUAL PASS"));
+  assert.ok(css.includes("rgba(0,245,212,.38)"));
+  assert.ok(engine.includes("rgba(0,245,212,.65)"), "particle opacity must use the v22 cyan level");
+  assert.ok(engine.includes("(1-dist/105)*.22"), "link opacity must use the v22 connection level");
   assert.doesNotThrow(() => new vm.Script(engine, { filename: "hq/kardashev-engine.js" }));
 });
 
