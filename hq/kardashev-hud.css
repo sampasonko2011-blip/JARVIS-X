@@ -14,7 +14,7 @@ body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;backg
 #message{grid-area:input;min-height:84px;resize:vertical;width:100%;background:rgba(2,8,19,.92);color:#f4fbff;border:1px solid rgba(104,244,235,.25);border-radius:13px;padding:14px;outline:none}
 #message:focus{border-color:var(--jx-cyan);box-shadow:0 0 22px rgba(104,244,235,.14)}
 .local-chat-card-secondary>.actions{grid-area:actions;margin:0;align-self:start}
-.local-chat-card-secondary>.integration:nth-of-type(2){grid-area:memory;align-self:stretch;min-width:0;padding:14px;border:1px solid rgba(232,201,143,.2);border-radius:14px;background:linear-gradient(180deg,rgba(42,34,26,.2),rgba(7,14,27,.6))}
+.local-chat-card-secondary>.jx-memory-panel{grid-area:memory;align-self:stretch;min-width:0;padding:14px;border:1px solid rgba(232,201,143,.2);border-radius:14px;background:linear-gradient(180deg,rgba(42,34,26,.2),rgba(7,14,27,.6))}
 .local-chat-card-secondary>.footnote{grid-area:runtime;align-self:end}
 .local-chat-shell .neural-core-stage{position:relative;display:grid;place-items:center;min-height:125px;margin:0 0 8px;isolation:isolate}
 .local-chat-shell .neural-core-stage:before,.local-chat-shell .neural-core-stage:after{content:"";position:absolute;width:112px;height:112px;border:1px solid rgba(104,244,235,.32);border-radius:50%;transform:perspective(420px) rotateX(68deg) rotateZ(-22deg);box-shadow:0 0 24px rgba(104,244,235,.08);animation:jx-ring 18s linear infinite}
