@@ -19,7 +19,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   };
   const caches = {
     open: async () => cache,
-    keys: async () => ["jarvis-x-hq-shell-v21", "jarvis-x-hq-shell-v22", "jarvis-x-hq-shell-v23", "jarvis-x-hq-shell-v24", "unrelated-cache"],
+    keys: async () => ["jarvis-x-hq-shell-v21", "jarvis-x-hq-shell-v22", "jarvis-x-hq-shell-v23", "jarvis-x-hq-shell-v24", "jarvis-x-hq-shell-v25", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
     match: cacheMatchImpl ? cacheMatchImpl : async function (key) { return key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined; },
   };
@@ -97,8 +97,9 @@ test("service worker precaches the app shell and activates without deleting unre
   await activatePromise;
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v21"));
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v22"));
-  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v23"), "previous v22 cache must be retired");
-  assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v24"), "active v23 cache must be retained");
+  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v23"), "previous v23 cache must be retired");
+  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v24"), "previous v24 cache must be retired");
+  assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v25"), "active v25 cache must be retained");
   assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "unrelated-cache"));
   assert.ok(lifecycleCalls.some((call) => call[0] === "claim"));
 });
