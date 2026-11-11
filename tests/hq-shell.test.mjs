@@ -110,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v22'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v23'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
@@ -349,4 +349,24 @@ test("HQ arrival overlay auto-dismisses without removing its manual skip control
   assert.ok(arrival.includes('addEventListener("click",dismiss)'));
   assert.ok(html.includes('id="jx-arrival-skip"'));
   assert.ok(html.includes('id="jx-arrival-enter"'));
+});
+
+
+test("HQ Command Overview uses the holographic layer on its actual shell and core selectors", async () => {
+  const html = await read("hq/index.html");
+  const css = await read("hq/kardashev-hud.css");
+  const engine = await read("hq/kardashev-engine.js");
+  assert.ok(html.includes('class="shell"'));
+  assert.ok(html.includes('class="side"'));
+  assert.ok(html.includes('class="jx-core-stage"'));
+  assert.ok(html.includes('class="jx-orbit-scene"'));
+  assert.ok(css.includes(".shell:not(.local-chat-shell)"));
+  assert.ok(css.includes(".shell:not(.local-chat-shell)>.side"));
+  assert.ok(css.includes(".shell:not(.local-chat-shell) .card"));
+  assert.ok(css.includes(".shell:not(.local-chat-shell) .jx-core-stage"));
+  assert.ok(css.includes(".shell:not(.local-chat-shell) .jx-orbit-scene"));
+  assert.ok(css.includes("rgba(10,22,46,.78)"));
+  assert.ok(css.includes("blur(28px) saturate(220%)"));
+  assert.ok(css.includes("jarvis-x-hq-shell-v23") === false, "cache version belongs in the service worker");
+  assert.ok(engine.includes("document.createElement('canvas')"));
 });
