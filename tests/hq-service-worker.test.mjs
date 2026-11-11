@@ -19,7 +19,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   };
   const caches = {
     open: async () => cache,
-    keys: async () => ["jarvis-x-hq-shell-v1", "unrelated-cache"],
+    keys: async () => ["jarvis-x-hq-shell-v19", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
     match: cacheMatchImpl ? cacheMatchImpl : async function (key) { return key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined; },
   };
@@ -95,7 +95,7 @@ test("service worker precaches the app shell and activates without deleting unre
   let activatePromise;
   listeners.get("activate")({ waitUntil(promise) { activatePromise = promise; } });
   await activatePromise;
-  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v1"));
+  assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v19"));
   assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "unrelated-cache"));
   assert.ok(lifecycleCalls.some((call) => call[0] === "claim"));
 });

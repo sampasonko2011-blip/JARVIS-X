@@ -110,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v19'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v20'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
@@ -319,4 +319,30 @@ test("HQ mainline keeps the isolated container runner command wired", async () =
   assert.ok(runner.includes("runIsolatedGguf"));
   assert.ok(containerRunner.includes("--network=none"));
   assert.ok(containerRunner.includes("--pull=never"));
+});
+
+test("Local Chat v20 is a full three-rail cockpit and preserves the engine contract", async () => {
+  const html = await read("hq/local-chat.html");
+  const css = await read("hq/kardashev-hud.css");
+  const engine = await read("hq/kardashev-engine.js");
+  for (const id of ["runtime-status","runtime-detail","model-select","model-help","load-model","progress","cognitive-mode","cognitive-state","transcript","message","send-message","clear-chat","local-memory-consent","local-memory-status","jx-local-focus-toggle","jx-audio-toggle","jx-focus-wave","jx-audio-status"]) {
+    assert.ok(html.includes('id="' + id + '"'), "Local Chat must preserve engine control #" + id);
+  }
+  assert.match(html, /class="card local-chat-card jx-model-rail"/);
+  assert.match(html, /class="jx-chat-stage"/);
+  assert.match(html, /class="jx-control-rail"/);
+  assert.ok(css.includes('grid-template-areas:"brand brand brand" "model center controls"'));
+  assert.ok(css.includes("@media(max-width:760px)"));
+  assert.ok(engine.includes("jx-local-focus-toggle"));
+  assert.ok(engine.includes("jx-audio-toggle"));
+  assert.doesNotThrow(() => new vm.Script(engine, { filename: "hq/kardashev-engine.js" }));
+});
+
+test("HQ arrival overlay auto-dismisses without removing its manual skip controls", async () => {
+  const arrival = await read("hq/arrival-experience.js");
+  const html = await read("hq/index.html");
+  assert.ok(arrival.includes("autoDismissTimer=window.setTimeout(dismiss,1200)"));
+  assert.ok(arrival.includes('addEventListener("click",dismiss)'));
+  assert.ok(html.includes('id="jx-arrival-skip"'));
+  assert.ok(html.includes('id="jx-arrival-enter"'));
 });

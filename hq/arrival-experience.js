@@ -6,7 +6,9 @@
   const enter=document.querySelector("#jx-arrival-enter");
   const skip=document.querySelector("#jx-arrival-skip");
   const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  let autoDismissTimer=0;
   const dismiss=()=>{
+    if(autoDismissTimer)window.clearTimeout(autoDismissTimer);
     if(overlay.classList.contains("is-exiting"))return;
     overlay.classList.add("is-exiting");
     overlay.setAttribute("aria-hidden","true");
@@ -31,4 +33,6 @@
   });
   if(reduced){overlay.classList.add("reduced-motion")}
   requestAnimationFrame(()=>enter?.focus({preventScroll:true}));
+  // Arrival is decorative: never block the live cockpit waiting for a click.
+  autoDismissTimer=window.setTimeout(dismiss,1200);
 })();
