@@ -130,3 +130,27 @@ button:not(.skip-btn){
  box-shadow:0 8px 24px rgba(0,245,212,.12)!important;
 }
 @media(prefers-reduced-motion:reduce){#neural-constellation-canvas{opacity:.38!important}}
+
+/* Explicitly target the real Local Chat DOM; its orbital rings are pseudo-elements. */
+.shell.local-chat-shell>.jx-model-rail,
+.shell.local-chat-shell>.jx-chat-stage,
+.shell.local-chat-shell>.jx-control-rail>.integration{
+ background:linear-gradient(145deg,rgba(10,22,46,.66),rgba(6,12,26,.48))!important;
+ -webkit-backdrop-filter:blur(26px) saturate(205%)!important;
+ backdrop-filter:blur(26px) saturate(205%)!important;
+ border:1px solid rgba(0,245,212,.38)!important;
+ box-shadow:0 22px 54px rgba(0,0,0,.68),0 0 28px rgba(0,245,212,.16),inset 0 1px 0 rgba(255,255,255,.2)!important;
+}
+.local-chat-shell .neural-core-stage:before{
+ border:2px dashed rgba(0,245,212,.78)!important;
+ box-shadow:0 0 25px rgba(0,245,212,.38)!important;
+}
+.local-chat-shell .neural-core-stage:after{
+ border:1.5px solid rgba(181,23,158,.72)!important;
+ box-shadow:0 0 36px rgba(114,9,183,.46)!important;
+}
+.local-chat-shell .log{
+ background:linear-gradient(135deg,rgba(0,245,212,.13),rgba(114,9,183,.16),rgba(4,10,22,.7))!important;
+ border:1px solid rgba(0,245,212,.38)!important;
+ box-shadow:0 8px 24px rgba(0,245,212,.12)!important;
+}
