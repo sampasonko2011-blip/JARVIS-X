@@ -13,7 +13,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('jarvis-x-hq-shell-') && key !== CACHE)
+        keys.filter((key) => key.startsWith('jarvis-x-hq-shell-') && key !== CACHE && key !== 'jarvis-x-hq-shell-v25')
           .map((key) => caches.delete(key))
       ))
       .then(() => self.clients.claim())
