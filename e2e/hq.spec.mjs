@@ -2,11 +2,19 @@ import { test, expect } from "@playwright/test";
 
 
 async function enterHQ(page) {
+  const arrival = page.locator("#jx-arrival");
   const enter = page.locator("#jx-arrival-enter");
-  if (await enter.isVisible().catch(() => false)) {
-    await enter.click();
-    await expect(page.locator("#jx-arrival")).toHaveCount(0, { timeout: 2500 });
+
+  // Prefer the documented keyboard dismissal path: it cannot be intercepted
+  // by the overlay itself and mirrors the dedicated accessibility test.
+  if (await arrival.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await expect(arrival).toHaveCount(0, { timeout: 5000 });
   }
+
+  // Some builds omit the arrival overlay entirely; ensure the workspace is
+  // ready before downstream tests interact with navigation or vault controls.
+  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 async function installGatewayFetchMock(page, config) {
