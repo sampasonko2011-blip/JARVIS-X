@@ -110,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v20'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v22'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
@@ -335,6 +335,10 @@ test("Local Chat v20 is a full three-rail cockpit and preserves the engine contr
   assert.ok(css.includes("@media(max-width:760px)"));
   assert.ok(engine.includes("jx-local-focus-toggle"));
   assert.ok(engine.includes("jx-audio-toggle"));
+  assert.ok(css.includes("KARDASHEV-II VISUAL PASS"));
+  assert.ok(css.includes("rgba(0,245,212,.38)"));
+  assert.ok(engine.includes("rgba(0,245,212,.65)"), "particle opacity must use the v22 cyan level");
+  assert.ok(engine.includes("(1-dist/105)*.22"), "link opacity must use the v22 connection level");
   assert.doesNotThrow(() => new vm.Script(engine, { filename: "hq/kardashev-engine.js" }));
 });
 
