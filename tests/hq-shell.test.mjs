@@ -110,7 +110,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v24'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v25'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
@@ -369,4 +369,19 @@ test("HQ Command Overview uses the holographic layer on its actual shell and cor
   assert.ok(css.includes("blur(28px) saturate(220%)"));
   assert.ok(css.includes("jarvis-x-hq-shell-v23") === false, "cache version belongs in the service worker");
   assert.ok(engine.includes("document.createElement('canvas')"));
+});
+
+
+test("HQ v25 includes explicit Sun Mode handoff and an active-screen-only rest curtain", async () => {
+  const engine = await read("hq/kardashev-engine.js");
+  const css = await read("hq/kardashev-hud.css");
+  const sw = await read("hq/sw.js");
+  assert.match(engine, /MODE SOLEIL/);
+  assert.match(engine, /shortcuts:\/\/run-shortcut\?name=Alarmy/);
+  assert.match(engine, /30\*60\*1000/);
+  assert.match(engine, /document\.hidden/);
+  assert.match(engine, /jx-v25-idle-curtain/);
+  assert.match(css, /jx-sun-mode/);
+  assert.match(css, /jx-v25-idle-curtain/);
+  assert.match(sw, /jarvis-x-hq-shell-v25/);
 });
