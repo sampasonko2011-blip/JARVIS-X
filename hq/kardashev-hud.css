@@ -91,6 +91,10 @@ body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;backg
 /* Prevent the absolute focus control from inheriting the full grid-area width. */
 .local-chat-shell #jx-local-focus-toggle{left:50%;right:auto;width:max-content;max-width:calc(100% - 24px);transform:translateX(-50%);white-space:nowrap}
 
+/* Fix inherited legacy absolute positioning: focus control belongs in the right rail, not over the audio panel. */
+.local-chat-shell .jx-focus-panel #jx-local-focus-toggle{position:static!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:block;width:100%!important;max-width:none!important;transform:none!important;z-index:auto!important;white-space:normal}
+
+
 
 /* KARDASHEV-II VISUAL PASS — vivid plasma palette and layered holographic glass. */
 :root{--jx-void:#02040a;--jx-cyan:#00f5d4;--jx-violet:#7209b7;--jx-pink:#ff006e;--jx-gold:#fee440;--jx-glass:rgba(8,14,28,.52);--jx-edge:rgba(0,245,212,.38)}
