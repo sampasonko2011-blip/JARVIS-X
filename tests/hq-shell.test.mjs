@@ -377,11 +377,15 @@ test("HQ v25 includes explicit Sun Mode handoff and an active-screen-only rest c
   const css = await read("hq/kardashev-hud.css");
   const sw = await read("hq/sw.js");
   assert.match(engine, /MODE SOLEIL/);
+  assert.match(engine, /jx-v25-piezo-crystal/);
+  assert.match(engine, /jx-v25-origami-wings/);
   assert.match(engine, /shortcuts:\/\/run-shortcut\?name=Alarmy/);
   assert.match(engine, /30\*60\*1000/);
   assert.match(engine, /document\.hidden/);
   assert.match(engine, /jx-v25-idle-curtain/);
   assert.match(css, /jx-sun-mode/);
+  assert.match(css, /jx-v25-piezo-crystal/);
+  assert.match(css, /jx-v25-origami-wings/);
   assert.match(css, /jx-v25-idle-curtain/);
   assert.match(sw, /jarvis-x-hq-shell-v25/);
 });
