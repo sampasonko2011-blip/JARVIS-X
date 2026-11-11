@@ -335,6 +335,7 @@ test("Local Chat v20 is a full three-rail cockpit and preserves the engine contr
   assert.ok(css.includes("@media(max-width:760px)"));
   assert.ok(engine.includes("jx-local-focus-toggle"));
   assert.ok(engine.includes("jx-audio-toggle"));
+  assert.doesNotThrow(() => new vm.Script(engine, { filename: "hq/kardashev-engine.js" }));
 });
 
 test("HQ arrival overlay auto-dismisses without removing its manual skip controls", async () => {
