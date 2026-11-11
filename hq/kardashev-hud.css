@@ -238,3 +238,46 @@ body:after{z-index:0}
  .shell:not(.local-chat-shell) .jx-globe-grid,
  .shell:not(.local-chat-shell) .jx-orbit-halo{animation:none!important}
 }
+
+/* KARDASHEV-II v24 — depth and interaction layer, scoped to the HQ overview. */
+.shell:not(.local-chat-shell){perspective:1400px;transform-style:preserve-3d}
+.shell:not(.local-chat-shell)>.side,
+.shell:not(.local-chat-shell)>.main .card,
+.shell:not(.local-chat-shell) .jx-core-stage{
+ background:linear-gradient(145deg,rgba(8,18,38,.48),rgba(4,9,20,.30))!important;
+ -webkit-backdrop-filter:blur(26px) saturate(220%);
+ backdrop-filter:blur(26px) saturate(220%);
+ border-color:rgba(0,245,212,.38);
+ box-shadow:0 24px 50px rgba(0,0,0,.58),0 0 26px rgba(0,245,212,.13),inset 0 1px rgba(255,255,255,.2);
+}
+.shell:not(.local-chat-shell) .jx-core-stage{isolation:isolate;overflow:hidden}
+.shell:not(.local-chat-shell) .jx-core-stage:before{
+ content:"";position:absolute;inset:auto -15% -55%;height:68%;z-index:-1;pointer-events:none;
+ background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(0,245,212,.18) 28px 29px,transparent 30px 54px),
+ repeating-linear-gradient(90deg,transparent 0 27px,rgba(114,9,183,.16) 28px 29px,transparent 30px 54px);
+ transform:perspective(420px) rotateX(68deg);transform-origin:top center;
+ mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 85%);
+}
+.shell:not(.local-chat-shell) .jx-orbit-scene{transform-style:preserve-3d;cursor:pointer;touch-action:manipulation}
+.shell:not(.local-chat-shell) .jx-orbit-one{animation:jx-v24-orbit-a 12s linear infinite}
+.shell:not(.local-chat-shell) .jx-orbit-two{animation:jx-v24-orbit-b 17s linear infinite}
+.shell:not(.local-chat-shell) .jx-orbit-three{animation:jx-v24-orbit-c 23s linear infinite}
+.shell:not(.local-chat-shell) .jx-globe{animation:jx-v24-core-pulse 4s ease-in-out infinite}
+.shell:not(.local-chat-shell) .jx-orbit-scene.jx-shockwave:after{
+ content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;border:2px solid rgba(0,245,212,.9);
+ border-radius:50%;transform:translate(-50%,-50%) scale(.2);opacity:0;pointer-events:none;
+ animation:jx-v24-shockwave .8s ease-out forwards;box-shadow:0 0 28px rgba(0,245,212,.55),inset 0 0 18px rgba(114,9,183,.4)
+}
+.shell:not(.local-chat-shell) .card,.shell:not(.local-chat-shell) .side .nav button{transition:transform .24s cubic-bezier(.16,1,.3,1),border-color .24s,box-shadow .24s}
+@media(hover:hover) and (pointer:fine){
+ .shell:not(.local-chat-shell) .card:hover{transform:translateY(-3px) translateZ(8px);border-color:rgba(0,245,212,.65);box-shadow:0 24px 52px rgba(0,0,0,.62),0 0 26px rgba(0,245,212,.18)}
+}
+.shell:not(.local-chat-shell) .card:active,.shell:not(.local-chat-shell) .side .nav button:active{transform:translateY(-1px) scale(.995);border-color:rgba(0,245,212,.7)}
+@keyframes jx-v24-orbit-a{from{transform:rotateX(72deg) rotateZ(0)}to{transform:rotateX(72deg) rotateZ(360deg)}}
+@keyframes jx-v24-orbit-b{from{transform:rotateY(66deg) rotateZ(360deg)}to{transform:rotateY(66deg) rotateZ(0)}}
+@keyframes jx-v24-orbit-c{from{transform:rotateX(48deg) rotateY(34deg) rotateZ(0)}to{transform:rotateX(48deg) rotateY(34deg) rotateZ(360deg)}}
+@keyframes jx-v24-core-pulse{0%,100%{filter:brightness(1) saturate(1.1)}50%{filter:brightness(1.35) saturate(1.45)}}
+@keyframes jx-v24-shockwave{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(15)}}
+@media(prefers-reduced-motion:reduce){
+ .shell:not(.local-chat-shell) .jx-orbit-one,.shell:not(.local-chat-shell) .jx-orbit-two,.shell:not(.local-chat-shell) .jx-orbit-three,.shell:not(.local-chat-shell) .jx-globe{animation:none!important}
+}
