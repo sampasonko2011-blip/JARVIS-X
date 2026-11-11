@@ -1,0 +1,435 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "default_activation": "DISABLED",
+    "eligible_evidence": [
+      "OBSERVED",
+      "VALIDATED"
+    ],
+    "independence_rule": "One agent per actual operator/vendor/security domain; names and wrappers do not establish independence.",
+    "least_privilege": "Every enabled agent must declare allowedTools and dataAccessScope.",
+    "discovery_is_not_access": true,
+    "no_implicit_credentials": true
+  },
+  "agents": [
+    {
+      "id": "public-web-research-agent",
+      "kind": "research-agent",
+      "roles": [
+        "research",
+        "critique"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_public_web"
+      ],
+      "dataAccessScope": "public-only",
+      "note": "Architecture candidate only; no connected/authenticated agent or executable adapter is asserted."
+    },
+    {
+      "id": "repository-engineering-agent",
+      "kind": "coding-agent",
+      "roles": [
+        "coding",
+        "code-review"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "propose_patch",
+        "run_sandbox_tests"
+      ],
+      "dataAccessScope": "explicitly-selected-repository-branch-only",
+      "note": "Must not write protected branches, merge, deploy or read secrets."
+    },
+    {
+      "id": "security-review-agent",
+      "kind": "security-agent",
+      "roles": [
+        "security-review",
+        "critique"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "inspect_diff",
+        "read_test_results"
+      ],
+      "dataAccessScope": "selected-diff-and-test-artifacts-only",
+      "note": "Static review candidate; no independent operator or security service has been connected."
+    },
+    {
+      "id": "evaluation-agent",
+      "kind": "evaluation-agent",
+      "roles": [
+        "benchmarking",
+        "verification",
+        "critique"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "run_sandbox_tests",
+        "read_test_results",
+        "inspect_diff"
+      ],
+      "dataAccessScope": "sandbox-test-artifacts-and-selected-diff-only",
+      "note": "Must use held-out tests and independent evidence; a second prompt to the same model is not independence."
+    },
+    {
+      "id": "memory-steward-agent",
+      "kind": "memory-agent",
+      "roles": [
+        "memory-analysis",
+        "research"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "read_test_results"
+      ],
+      "dataAccessScope": "explicitly-authorized-memory-contract-and-test-artifacts-only",
+      "note": "No personal memory source, secrets, or persistent store is connected by this registry entry."
+    },
+    {
+      "id": "operations-coordinator-agent",
+      "kind": "operations-agent",
+      "roles": [
+        "planning",
+        "tool-orchestration"
+      ],
+      "activation": "DISABLED",
+      "status": "PROPOSED",
+      "independenceGroup": "unassigned-operator",
+      "allowedTools": [
+        "read_repository",
+        "read_test_results"
+      ],
+      "dataAccessScope": "selected-project-metadata-and-test-artifacts-only",
+      "note": "Planning-only candidate; no background scheduling, production mutation, paid action or deployment."
+    }
+  ],
+  "profiles": [
+    {
+      "id": "claude-style-engineering",
+      "label": "Claude-style engineering",
+      "aliases": [
+        "claude",
+        "claude-style",
+        "claude-coding",
+        "anthropic"
+      ],
+      "agentId": "repository-engineering-agent",
+      "capabilities": [
+        "long-context-code-analysis",
+        "architecture",
+        "code-review",
+        "debugging",
+        "test-design"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "gpt-general-reasoning",
+      "label": "GPT-style general reasoning",
+      "aliases": [
+        "gpt",
+        "chatgpt",
+        "openai",
+        "gpt-style"
+      ],
+      "agentId": "evaluation-agent",
+      "capabilities": [
+        "general-reasoning",
+        "planning",
+        "synthesis",
+        "structured-analysis",
+        "evaluation"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "gemini-multimodal",
+      "label": "Gemini-style multimodal analysis",
+      "aliases": [
+        "gemini",
+        "google-ai",
+        "multimodal"
+      ],
+      "agentId": "public-web-research-agent",
+      "capabilities": [
+        "multimodal-analysis",
+        "document-understanding",
+        "visual-reasoning",
+        "research-synthesis"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "perplexity-research",
+      "label": "Perplexity-style grounded research",
+      "aliases": [
+        "perplexity",
+        "research-ai",
+        "web-research"
+      ],
+      "agentId": "public-web-research-agent",
+      "capabilities": [
+        "web-research",
+        "source-discovery",
+        "citation-checking",
+        "fact-verification"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "deepseek-reasoning-coding",
+      "label": "DeepSeek-style reasoning and coding",
+      "aliases": [
+        "deepseek",
+        "reasoning-coder"
+      ],
+      "agentId": "repository-engineering-agent",
+      "capabilities": [
+        "multi-step-reasoning",
+        "algorithm-design",
+        "coding",
+        "debugging",
+        "math-analysis"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "qwen-multilingual",
+      "label": "Qwen-style multilingual capability",
+      "aliases": [
+        "qwen",
+        "tongyi"
+      ],
+      "agentId": "evaluation-agent",
+      "capabilities": [
+        "multilingual-reasoning",
+        "translation",
+        "structured-extraction",
+        "coding"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "llama-local",
+      "label": "Llama-style local and open-model capability",
+      "aliases": [
+        "llama",
+        "meta-ai",
+        "local-model"
+      ],
+      "agentId": "operations-coordinator-agent",
+      "capabilities": [
+        "local-deployment-planning",
+        "offline-workflow-design",
+        "open-model-evaluation"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "mistral-efficient",
+      "label": "Mistral-style efficient reasoning",
+      "aliases": [
+        "mistral",
+        "codestral"
+      ],
+      "agentId": "repository-engineering-agent",
+      "capabilities": [
+        "efficient-reasoning",
+        "code-completion",
+        "technical-summarization"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "grok-live-context",
+      "label": "Grok-style live-context analysis",
+      "aliases": [
+        "grok",
+        "xai"
+      ],
+      "agentId": "public-web-research-agent",
+      "capabilities": [
+        "live-context-research",
+        "trend-analysis",
+        "source-comparison"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    },
+    {
+      "id": "copilot-workflow",
+      "label": "Copilot-style coding workflow",
+      "aliases": [
+        "copilot",
+        "github-copilot",
+        "coding-copilot"
+      ],
+      "agentId": "repository-engineering-agent",
+      "capabilities": [
+        "repository-navigation",
+        "code-completion",
+        "pull-request-review",
+        "test-guidance"
+      ],
+      "provider": {
+        "kind": "capability-profile",
+        "vendor": null,
+        "model": null,
+        "connected": false
+      },
+      "execution": {
+        "mode": "governed-agent-runtime",
+        "enabled": false,
+        "reason": "PROFILE_ONLY_UNTIL_REAL_AGENT_ADAPTER_AND_APPROVAL_ARE_VALIDATED"
+      },
+      "note": "Capability/style mapping only. Does not connect, invoke, impersonate, or claim access to the named provider or model."
+    }
+  ],
+  "selectionPolicy": {
+    "mode": "evidence-gated",
+    "objective": "Select the best available capability for the task while preserving one JARVIS-X objective and evidence ledger.",
+    "candidateRequirements": [
+      "explicit-provider-and-model-identity",
+      "verified-adapter-and-authentication-state",
+      "declared-tool-and-data-scope",
+      "cost-and-latency-envelope",
+      "task-relevant-evaluation-suite"
+    ],
+    "evaluation": [
+      "baseline-comparison",
+      "held-out-task-retest",
+      "independent-output-verification",
+      "security-and-privacy-regression",
+      "cost-and-latency-measurement"
+    ],
+    "replacement": "PROPOSE_ONLY_UNTIL_USER_APPROVAL",
+    "fusion": "PROPOSE_ONLY_WHEN_COMPLEMENTARY_CAPABILITIES_AND_INTEROPERABLE_TASK_CONTRACTS_ARE_VALIDATED",
+    "fallback": "FAIL_CLOSED_OR_USE_CURRENTLY_AVAILABLE_CAPABILITY_WITH_TRANSPARENT_DISCLOSURE",
+    "prohibit": [
+      "select_by_brand_or_claimed_benchmark_alone",
+      "auto_enable_provider",
+      "auto_spend",
+      "auto_replace_active_provider",
+      "claim_uninvoked_model_participation"
+    ]
+  },
+  "compositionPolicy": {
+    "architecture": "one-shared-objective-one-task-plan-one-evidence-ledger-one-final-response",
+    "specialists": "parallel_or_sequential_specialist_work_may_be_composed_only_through_scoped_task_contracts",
+    "independence": "shared vendor or operator does not count as independent verification",
+    "synthesis": "JARVIS-X owns final synthesis; specialist outputs are evidence inputs, not competing final answers"
+  }
+}

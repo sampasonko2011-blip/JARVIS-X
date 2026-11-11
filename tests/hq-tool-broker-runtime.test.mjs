@@ -4,13 +4,11 @@ import { executeAuthorizedTool } from "../hq/tool-broker-runtime.mjs";
 
 const tool = { id: "records", enabled: true, allowedScopes: ["record:123:read", "record:123:update"] };
 const approval = {
-  approved: true,
-  approvedBy: "owner",
-  approvalId: "approval-123",
-  requestId: "request-123",
-  toolId: "records",
-  action: "update",
-  scope: ["record:123:update"],
+  payload: {
+    jti: "approval-123", requestId: "request-123", toolId: "records",
+    action: "update", scope: "record:123:update",
+  },
+  signature: "opaque-test-signature",
 };
 function request(overrides = {}) {
   return {
@@ -20,6 +18,11 @@ function request(overrides = {}) {
     action: "update",
     scope: ["record:123:update"],
     approval,
+    resource: "record:123",
+    candidateRevision: "rev-1",
+    authenticatedSubject: "owner",
+    audience: "jarvis-x-tool-broker",
+    policyVersion: "v1",
     payload: { value: "new-value" },
     ...overrides,
   };
@@ -43,7 +46,7 @@ test("tool broker executes only after scope, approval, audit, output, and world-
     },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
-    verifyApproval: async (candidate, binding) => candidate.approved === true && candidate.requestId === binding.requestId && candidate.toolId === binding.toolId && candidate.action === binding.action && JSON.stringify([...candidate.scope].sort()) === JSON.stringify([...binding.scope].sort()),
+    verifyApproval: async (candidate, binding) => candidate.payload?.requestId === binding.requestId && candidate.payload?.toolId === binding.toolId && candidate.payload?.action === binding.action && candidate.payload?.scope === binding.scope,
     async audit(event) { events.push(event.event); },
   });
   assert.equal(result.status, "EXECUTED");
@@ -80,24 +83,24 @@ test("tool broker rejects approvals bound to a different action or request", asy
     async executor() { calls++; return { ok: true, worldState: "updated" }; },
     validateOutput: validOutput,
     verifyWorldState: validWorldState,
-    verifyApproval: async () => true,
+    verifyApproval: async (candidate, binding) => candidate.payload?.requestId === binding.requestId && candidate.payload?.action === binding.action && candidate.payload?.scope === binding.scope,
     audit: auditOk,
   };
   const wrongRequest = await executeAuthorizedTool({
     ...base,
-    request: request({ approval: { ...approval, requestId: "another-request" } }),
+    request: request({ approval: { ...approval, payload: { ...approval.payload, requestId: "another-request" } } }),
   });
-  assert.equal(wrongRequest.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongRequest.reason, "APPROVAL_VERIFICATION_FAILED");
   const wrongAction = await executeAuthorizedTool({
     ...base,
-    request: request({ approval: { ...approval, action: "delete" } }),
+    request: request({ approval: { ...approval, payload: { ...approval.payload, action: "delete" } } }),
   });
-  assert.equal(wrongAction.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongAction.reason, "APPROVAL_VERIFICATION_FAILED");
   const wrongScope = await executeAuthorizedTool({
     ...base,
-    request: request({ approval: { ...approval, scope: ["record:999:update"] } }),
+    request: request({ approval: { ...approval, payload: { ...approval.payload, scope: "record:999:update" } } }),
   });
-  assert.equal(wrongScope.reason, "EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(wrongScope.reason, "APPROVAL_VERIFICATION_FAILED");
   assert.equal(calls, 0);
 });
 
@@ -167,5 +170,57 @@ test("tool broker blocks before execution if the pre-execution audit fails", asy
     async audit() { throw new Error("audit unavailable"); },
   });
   assert.equal(result.reason, "PRE_EXECUTION_AUDIT_FAILED");
+  assert.equal(calls, 0);
+});
+
+
+test("tool broker accepts opaque signed-token shape only after trusted verifier and binds complete approval context", async () => {
+  let calls = 0;
+  let seen;
+  const token = { payload: { jti: "jti-1", requestId: "request-123", toolId: "records", action: "update", scope: "record:123:update" }, signature: "opaque-signature" };
+  const result = await executeAuthorizedTool({
+    request: request({
+      approval: token,
+      resource: "record:123",
+      candidateRevision: "rev-7",
+      authenticatedSubject: "owner-1",
+      audience: "jarvis-x-tool-broker",
+      policyVersion: "v1",
+    }),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    async verifyApproval(candidate, context) {
+      seen = context;
+      return candidate === token &&
+        context.authenticatedSubject === "owner-1" &&
+        context.resource === "record:123" &&
+        context.candidateRevision === "rev-7" &&
+        context.audience === "jarvis-x-tool-broker" &&
+        context.policyVersion === "v1";
+    },
+    audit: auditOk,
+  });
+  assert.equal(result.status, "EXECUTED");
+  assert.equal(calls, 1);
+  assert.equal(seen.requestId, "request-123");
+  assert.equal(seen.action, "update");
+  assert.equal(seen.scope, "record:123:update");
+});
+
+test("tool broker blocks incomplete signed approval context before executor", async () => {
+  let calls = 0;
+  const result = await executeAuthorizedTool({
+    request: request({ approval: { payload: {}, signature: "opaque" }, authenticatedSubject: "" }),
+    tool,
+    async executor() { calls++; return { ok: true, worldState: "updated" }; },
+    validateOutput: validOutput,
+    verifyWorldState: validWorldState,
+    verifyApproval: async () => true,
+    audit: auditOk,
+  });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.reason, "APPROVAL_CONTEXT_INCOMPLETE");
   assert.equal(calls, 0);
 });
