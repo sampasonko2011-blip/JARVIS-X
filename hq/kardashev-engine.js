@@ -3,7 +3,15 @@
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  let audio=null,focus=null,enabled=false,raf=0,canvas=null,ctx=null,w=0,h=0,dpr=1,nodes=[];
  const $=id=>document.getElementById(id);
- const waveSelect=$('jx-focus-wave');
+
+ // Mirror only the local runtime's own status into the right-rail readout.
+ const runtimeStatus=$('runtime-status'),liveStatus=$('jx-status-label');
+ if(runtimeStatus&&liveStatus){
+   const syncRuntimeStatus=()=>{liveStatus.textContent=runtimeStatus.textContent.trim()||'STATUS UNKNOWN'};
+   syncRuntimeStatus();
+   new MutationObserver(syncRuntimeStatus).observe(runtimeStatus,{childList:true,characterData:true,subtree:true});
+ }
+\n const waveSelect=$('jx-focus-wave');
  const focusToggle=$('jx-local-focus-toggle');
  focusToggle?.addEventListener('click',()=>{const shell=document.querySelector('.local-chat-shell');if(!shell)return;const active=shell.classList.toggle('jx-global-focus');focusToggle.setAttribute('aria-pressed',String(active));focusToggle.textContent=active?'EXIT LOCKED-IN MODE':'ENTER LOCKED-IN MODE';syncFocus();});
  function audioContext(){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio is not supported in this browser.');if(!audio)audio=new C();if(audio.state==='suspended')audio.resume().catch(()=>{});return audio}
