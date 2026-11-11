@@ -1,6 +1,6 @@
 /* JARVIS-X Kardashev HUD — visual layer only; application hooks stay in the HTML. */
-:root{--jx-void:#030711;--jx-cyan:#68f4eb;--jx-violet:#9270ff;--jx-pink:#ff5ca8;--jx-gold:#e8c98f;--jx-glass:rgba(7,17,32,.72);--jx-edge:rgba(104,244,235,.22);--jx-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-#neural-constellation-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.42}
+:root{--jx-void:#030711;--jx-cyan:#00f5d4;--jx-violet:#7209b7;--jx-pink:#ff006e;--jx-gold:#fee440;--jx-glass:rgba(7,17,32,.58);--jx-edge:rgba(0,245,212,.38);--jx-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#neural-constellation-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.78;filter:drop-shadow(0 0 5px rgba(0,245,212,.35))}
 body{background-color:var(--jx-void);background-image:radial-gradient(ellipse at 50% 0%,rgba(36,104,137,.22),transparent 52%),radial-gradient(ellipse at 100% 90%,rgba(91,42,151,.16),transparent 48%)}
 body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(1,4,11,.56) 100%)}
 .shell.local-chat-shell{position:relative;z-index:1;display:grid;grid-template-columns:minmax(250px,290px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"brand brand" "model conversation";gap:16px;width:100%;max-width:none;min-height:100vh;min-height:100dvh;margin:0;padding:clamp(12px,2vw,24px);align-items:stretch;perspective:1400px}
@@ -90,3 +90,43 @@ body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;backg
 
 /* Prevent the absolute focus control from inheriting the full grid-area width. */
 .local-chat-shell #jx-local-focus-toggle{left:50%;right:auto;width:max-content;max-width:calc(100% - 24px);transform:translateX(-50%);white-space:nowrap}
+
+
+/* KARDASHEV-II VISUAL PASS — vivid plasma palette and layered holographic glass. */
+:root{--jx-void:#02040a;--jx-cyan:#00f5d4;--jx-violet:#7209b7;--jx-pink:#ff006e;--jx-gold:#fee440;--jx-glass:rgba(8,14,28,.52);--jx-edge:rgba(0,245,212,.38)}
+body{
+ background-color:#02040a;
+ background-image:
+ radial-gradient(circle at 50% 18%,rgba(0,245,212,.22) 0%,transparent 45%),
+ radial-gradient(circle at 80% 75%,rgba(114,9,183,.28) 0%,transparent 50%),
+ radial-gradient(circle at 15% 80%,rgba(255,0,110,.14) 0%,transparent 45%),
+ #02040a;
+}
+#neural-constellation-canvas{opacity:.78!important;filter:drop-shadow(0 0 6px rgba(0,245,212,.42))}
+.glass-panel,.hud-card,section.panel,.local-chat-shell>section,.hq-cockpit-shell>aside,.hq-cockpit-shell>section{
+ background:linear-gradient(145deg,rgba(10,22,46,.66),rgba(6,12,26,.48))!important;
+ -webkit-backdrop-filter:blur(26px) saturate(205%)!important;
+ backdrop-filter:blur(26px) saturate(205%)!important;
+ border:1px solid rgba(0,245,212,.38)!important;
+ box-shadow:0 22px 54px rgba(0,0,0,.68),0 0 28px rgba(0,245,212,.16),inset 0 1px 0 rgba(255,255,255,.2)!important;
+}
+.neural-orb{
+ background:radial-gradient(circle at 35% 30%,#fff 0%,#bafff7 9%,#00f5d4 32%,#7209b7 72%,rgba(255,0,110,.5) 100%)!important;
+ box-shadow:0 0 42px rgba(0,245,212,.95),0 0 88px rgba(0,245,212,.68),0 0 132px rgba(114,9,183,.72)!important;
+ border:1px solid rgba(255,255,255,.68)!important;
+}
+.orbital-ring-inner,[class*="ring-inner"]{border:2px dashed rgba(0,245,212,.78)!important;box-shadow:0 0 25px rgba(0,245,212,.38)!important}
+.orbital-ring-outer,[class*="ring-outer"]{border:1.5px solid rgba(181,23,158,.72)!important;box-shadow:0 0 36px rgba(114,9,183,.46)!important}
+button:not(.skip-btn){
+ background:linear-gradient(135deg,rgba(0,245,212,.24),rgba(114,9,183,.32));
+ border-color:rgba(0,245,212,.65);
+ color:#fff;
+ text-shadow:0 0 8px rgba(0,245,212,.5);
+ box-shadow:0 0 18px rgba(0,245,212,.22),inset 0 1px 0 rgba(255,255,255,.2);
+}
+.message-assistant,.msg-ai{
+ background:linear-gradient(135deg,rgba(0,245,212,.14),rgba(114,9,183,.15))!important;
+ border:1px solid rgba(0,245,212,.45)!important;
+ box-shadow:0 8px 24px rgba(0,245,212,.12)!important;
+}
+@media(prefers-reduced-motion:reduce){#neural-constellation-canvas{opacity:.38!important}}
