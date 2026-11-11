@@ -19,7 +19,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   };
   const caches = {
     open: async () => cache,
-    keys: async () => ["jarvis-x-hq-shell-v19", "unrelated-cache"],
+    keys: async () => ["jarvis-x-hq-shell-v20", "jarvis-x-hq-shell-v21", "unrelated-cache"],
     delete: async (key) => { cacheCalls.push(["delete", key]); return true; },
     match: cacheMatchImpl ? cacheMatchImpl : async function (key) { return key === "./index.html" ? new Response("cached shell", { status: 200 }) : undefined; },
   };
