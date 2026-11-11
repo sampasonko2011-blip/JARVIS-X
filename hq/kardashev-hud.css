@@ -21,7 +21,12 @@ body:after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;backg
 .local-chat-shell .neural-core-stage:after{width:154px;height:154px;border-color:rgba(146,112,255,.3);transform:perspective(420px) rotateY(67deg) rotateZ(18deg);animation-direction:reverse;animation-duration:25s}
 .local-chat-shell .neural-orb{position:relative;z-index:1;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 4%,#a9fff6 10%,#38c8d4 32%,#5551b8 70%,#10182c 100%);box-shadow:0 0 28px #68f4eb99,0 0 68px #7656dc66,inset -8px -10px 20px #030711;animation:jx-orb 5s ease-in-out infinite}
 .local-chat-shell .neural-core-label{position:absolute;top:calc(50% + 44px);font:8px var(--jx-mono);letter-spacing:.24em;color:#a8c8d7}
-.local-chat-shell .neural-core-label b{color:var(--jx-gold);font-weight:500}\n#jx-local-focus-toggle{position:absolute;top:calc(50% + 68px);padding:7px 10px;font:8px var(--jx-mono);letter-spacing:.08em}\n.local-chat-shell.jx-global-focus{grid-template-columns:0 minmax(0,1fr) 0}\n.local-chat-shell.jx-global-focus>.local-chat-card{visibility:hidden;pointer-events:none}\n.local-chat-shell.jx-global-focus .jx-memory-panel{display:none}\n.local-chat-shell.jx-global-focus .local-chat-card-secondary{grid-column:2;grid-row:2}
+.local-chat-shell .neural-core-label b{color:var(--jx-gold);font-weight:500}
+#jx-local-focus-toggle{position:absolute;top:calc(50% + 68px);padding:7px 10px;font:8px var(--jx-mono);letter-spacing:.08em}
+.local-chat-shell.jx-global-focus{grid-template-columns:0 minmax(0,1fr) 0}
+.local-chat-shell.jx-global-focus>.local-chat-card{visibility:hidden;pointer-events:none}
+.local-chat-shell.jx-global-focus .jx-memory-panel{display:none}
+.local-chat-shell.jx-global-focus .local-chat-card-secondary{grid-column:2;grid-row:2}
 .jx-audio-controls{display:grid;gap:10px;margin-top:16px;padding:12px;border:1px solid rgba(104,244,235,.16);border-radius:12px;background:rgba(3,10,22,.56)}
 .jx-audio-controls button{width:100%;min-height:42px;border:1px solid rgba(104,244,235,.3);border-radius:10px;background:linear-gradient(110deg,rgba(104,244,235,.16),rgba(146,112,255,.18));color:#e9fbff;font:10px var(--jx-mono);letter-spacing:.06em}
 .jx-audio-controls select{width:100%;padding:10px;border:1px solid rgba(104,244,235,.22);border-radius:9px;background:#071321;color:#eaf8ff}
