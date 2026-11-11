@@ -1,5 +1,5 @@
-const CACHE = 'jarvis-x-hq-shell-v25';
-const SHELL = ['./', './index.html', './hq.css', './hq.js', './neural-observatory.css', './neural-observatory.js', './conversation-experience.css', './conversation-experience.js', './arrival-experience.css', './arrival-experience.js', './observatory-premium.css', './kardashev-hud.css', './kardashev-engine.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-engine.bundle.js'];
+const CACHE = 'jarvis-x-hq-shell-v26';
+const SHELL = ['./', './index.html', './hq.css', './hq.js', './neural-observatory.css', './neural-observatory.js', './conversation-experience.css', './conversation-experience.js', './arrival-experience.css', './arrival-experience.js', './observatory-premium.css', './kardashev-hud.css', './kardashev-engine.js', './observatory.html', './observatory.css', './observatory.js', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-engine.bundle.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
