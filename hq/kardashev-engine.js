@@ -28,5 +28,12 @@
  function resize(){if(!canvas||!ctx)return;dpr=Math.min(window.devicePixelRatio||1,1.5);w=window.innerWidth;h=window.innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
  function draw(){if(document.hidden){raf=0;return}ctx.clearRect(0,0,w,h);for(let i=0;i<nodes.length;i++){const a=nodes[i];a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>w)a.vx*=-1;if(a.y<0||a.y>h)a.vy*=-1;ctx.fillStyle='rgba(0,245,212,.65)';ctx.beginPath();ctx.arc(a.x,a.y,1.15,0,Math.PI*2);ctx.fill();for(let j=i+1;j<nodes.length;j++){const b=nodes[j],dist=Math.hypot(a.x-b.x,a.y-b.y);if(dist<105){ctx.strokeStyle='rgba(0,245,212,'+(1-dist/105)*.22+')';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}raf=requestAnimationFrame(draw)}
  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;stopFocus()}else if(!reduced&&!raf)draw()});window.addEventListener('resize',resize,{passive:true});setupCanvas();
+// Pointer/touch proximity gives particles a local response without requesting device-motion permission.
+let pointer={x:-1e4,y:-1e4,active:false};
+const overview=document.querySelector('.shell:not(.local-chat-shell)');
+overview?.addEventListener('pointermove',e=>{const r=overview.getBoundingClientRect();pointer={x:e.clientX-r.left,y:e.clientY-r.top,active:true}},{passive:true});
+overview?.addEventListener('pointerleave',()=>{pointer.active=false},{passive:true});
+overview?.addEventListener('pointerdown',e=>{const scene=e.target.closest('.jx-orbit-scene');if(scene){scene.classList.remove('jx-shockwave');void scene.offsetWidth;scene.classList.add('jx-shockwave');setTimeout(()=>scene.classList.remove('jx-shockwave'),850)}},{passive:true});
+
  window.addEventListener('pagehide',()=>{stopFocus();if(audio?.state==='running')audio.suspend().catch(()=>{})});
 })();
