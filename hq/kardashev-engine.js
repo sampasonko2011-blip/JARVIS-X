@@ -3,7 +3,7 @@
  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  let audio=null,focus=null,enabled=false,raf=0,canvas=null,ctx=null,w=0,h=0,dpr=1,nodes=[];
  const $=id=>document.getElementById(id);
- const waveSelect=$('jx-focus-wave');
+ const waveSelect=$('jx-focus-wave');\n const focusToggle=$('jx-local-focus-toggle');\n focusToggle?.addEventListener('click',()=>{const shell=document.querySelector('.local-chat-shell');if(!shell)return;const active=shell.classList.toggle('jx-global-focus');focusToggle.setAttribute('aria-pressed',String(active));focusToggle.textContent=active?'EXIT LOCKED-IN MODE':'ENTER LOCKED-IN MODE';syncFocus();});
  function audioContext(){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio is not supported in this browser.');if(!audio)audio=new C();if(audio.state==='suspended')audio.resume().catch(()=>{});return audio}
  function tone(a=432,b=528,d=.075){if(!enabled)return;try{const c=audioContext();[a,b].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(i?.006:.009,c.currentTime+.012);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+d);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+d+.02)})}catch(e){const s=$('jx-audio-status');if(s)s.textContent=e.message}}
  function stopFocus(){if(!focus)return;const old=focus;focus=null;try{old.gain.gain.cancelScheduledValues(audio.currentTime);old.gain.gain.setTargetAtTime(.0001,audio.currentTime,.08);setTimeout(()=>{try{old.left.stop();old.right.stop()}catch{}},450)}catch{}}
