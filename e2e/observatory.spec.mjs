@@ -21,14 +21,14 @@ test("mode and opt-in audio preference persist into Local Chat without a second 
 });
 
 test("viewport touch creates a ripple and plays sound only after explicit opt-in", async ({ page }) => {
-  await page.evaluate(() => window.__jxLastCue = null);
+  await page.evaluate(() => window.__jxAudioProfile = null);
   await page.locator("body").click({ position: { x: 30, y: 30 } });
-  expect(await page.evaluate(() => window.__jxLastCue)).toBe(null);
+  expect(await page.evaluate(() => window.__jxAudioProfile)).toBe(null);
   await page.locator("#audio-toggle").click();
   await page.locator('[data-mode="focus"]').click();
   await page.locator("body").click({ position: { x: 35, y: 40 } });
   await expect(page.locator("#jx-ripple-layer")).toHaveCount(1);
-  expect(await page.evaluate(() => window.__jxLastCue)).toBe("focus");
+  await expect.poll(() => page.evaluate(() => window.__jxAudioProfile)).toBe("focus");
 });
 
 test("Focus mode folds both wings in 3D and keeps the central workspace visible", async ({ page }) => {
