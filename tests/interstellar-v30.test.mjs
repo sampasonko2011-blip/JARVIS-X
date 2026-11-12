@@ -23,8 +23,8 @@ test('Interstellar v30 is wired into Observatory and the offline shell', async (
   assert.doesNotThrow(() => new vm.Script(js));
 });
 
-test('Local Chat keeps shared spatial preference bridge', async () => {
-  const [html, spatial] = await Promise.all([read('local-chat.html'), read('spatial-mode.js')]);
+test('Local Chat loads Interstellar v30 and exposes honest browser dictation support', async () => {
+  const [html, spatial, css, js] = await Promise.all([read('local-chat.html'), read('spatial-mode.js'), read('interstellar-v30.css'), read('interstellar-v30.js')]);
   assert.match(html, /spatial-mode\.css/);
   assert.match(html, /spatial-mode\.js/);
   for (const key of ['jarvis_x_active_mode', 'jarvis_x_auto_audio', 'jarvis_x_volume']) {
