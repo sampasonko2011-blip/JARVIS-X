@@ -27,7 +27,7 @@ test("viewport touch creates a ripple and plays sound only after explicit opt-in
   await page.locator("#audio-toggle").click();
   await page.locator('[data-mode="focus"]').click();
   await page.locator("body").click({ position: { x: 35, y: 40 } });
-  await expect.poll(() => page.evaluate(() => Number(document.querySelector("#synapses")?.dataset.rippleCount || 0))).toBeGreaterThan(0);
+  await expect(page.locator("#jx-ripple-layer")).toHaveCount(1);
   expect(await page.evaluate(() => window.__jxLastCue)).toBe("focus");
 });
 
