@@ -8,3 +8,8 @@
 .sanctuary{z-index:1}
 .dock{z-index:5}
 #synapses,.nebula,.orbit,.breath-halo,.shockwave{pointer-events:none}
+
+/* v28: decorative layers never intercept cockpit navigation or touch controls. */
+#synapses,.nebula,.astrolabe .orbit,.breath-halo,.shockwave{pointer-events:none}
+.dock{z-index:30;pointer-events:auto}
+.dock a,.dock button{position:relative;z-index:31;pointer-events:auto}
