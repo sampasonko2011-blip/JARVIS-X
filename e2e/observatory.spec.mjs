@@ -14,7 +14,7 @@ test("mode and opt-in audio preference persist into Local Chat without a second 
   expect(await page.evaluate(() => localStorage.getItem("jarvis_x_active_mode"))).toBe("focus");
   expect(await page.evaluate(() => localStorage.getItem("jarvis_x_auto_audio"))).toBe("true");
 
-  await page.locator('a[href="./local-chat.html"]').first().click();
+  await page.locator('.dock a[href="./local-chat.html"]').click();
   await expect(page.locator("body")).toHaveClass(/mode-focus/);
   await expect(page.locator("#jx-audio-status")).toContainText("AUTO-SYNC");
   await expect(page.locator("#jx-audio-toggle")).toHaveCount(0);
