@@ -1,99 +1,17 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#030711">
-<meta name="description" content="JARVIS-X Spatial Observatory">
-<title>JARVIS-X // Spatial Observatory</title>
-<link rel="stylesheet" href="./observatory.css">
-</head>
-<body>
-<canvas id="synapses" aria-hidden="true"></canvas>
-<div class="nebula" aria-hidden="true"></div>
-<div class="grid-floor" aria-hidden="true"></div>
-
-<header class="topline">
-  <a href="./index.html">JARVIS-X <span>// OBSERVATORY</span></a>
-  <div class="live"><i aria-hidden="true"></i> CORE SYSTEM ONLINE</div>
-</header>
-
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#030711"><title>JARVIS-X // Spatial Observatory</title><link rel="stylesheet" href="./observatory.css"><script src="./spatial-mode.js" defer></script><script src="./observatory.js" defer></script></head>
+<body class="mode-normal">
+<canvas id="synapses" aria-hidden="true"></canvas><div class="nebula" aria-hidden="true"></div>
+<header class="topline"><a href="./observatory.html">JARVIS-X <span>// OBSERVATORY</span></a><div class="live"><i></i> CORE SYSTEM ONLINE</div></header>
 <main class="cockpit">
-  <aside class="wing wing-left" aria-label="Synaptic telemetry">
-    <span class="reticle" aria-hidden="true"></span>
-    <div class="eyebrow">01 // SYNAPTIC TELEMETRY</div>
-    <div class="readout">
-      <small>INTERACTION FIELD</small>
-      <strong>TOUCH TO<br>TO PULSE</strong>
-      <p>Tap the central crystal or move your pointer to disturb the particle field.</p>
-    </div>
-    <div class="telemetry"><span>PARTICLE FIELD</span><b>ACTIVE</b><span>RENDER MODE</span><b>CANVAS 2D</b></div>
-    <a class="wing-link" href="./local-chat.html">OPEN LOCAL CHAT ↗</a>
-  </aside>
-
-  <section class="sanctuary" aria-label="Central observatory">
-    <div class="core-label"><span>CORE // 05</span><span>PIEZO-SYNAPTIC ENGINE</span></div>
-    <div class="astrolabe" id="astrolabe" role="button" tabindex="0" aria-label="Trigger central crystal pulse">
-      <span class="orbit orbit-a" aria-hidden="true"></span>
-      <span class="orbit orbit-b" aria-hidden="true"></span>
-      <span class="orbit orbit-c" aria-hidden="true"></span>
-      <span class="crystal" aria-hidden="true"><i></i><b></b></span>
-      <span class="shockwave" id="shockwave" aria-hidden="true"></span>
-    </div>
-    <h1 class="hero-title">SPATIAL <em>OBSERVATORY</em></h1>
-    <p class="hero-copy">One integrated command space. Explore the core, focus the field, or enter a quieter display state.</p>
-    <div class="modes" role="group" aria-label="Display modes">
-      <button class="mode active" type="button" data-mode="normal">NORMAL</button>
-      <button class="mode" type="button" data-mode="focus">FOCUS</button>
-      <button class="mode" type="button" data-mode="sun">SUNSET</button>
-    </div>
-    <p class="status-line" id="mode-status" aria-live="polite">NORMAL DISPLAY · VISUAL PROFILE ACTIVE</p>
-    <div class="alarm-row">
-      <label for="alarm-time">ALARM SHORTCUT TIME</label>
-      <input id="alarm-time" type="time" value="07:00">
-      <button id="open-shortcut" type="button">OPEN ALARMY SHORTCUT</button>
-    </div>
-  </section>
-
-  <aside class="wing wing-right" aria-label="Core controls">
-    <span class="reticle" aria-hidden="true"></span>
-    <div class="eyebrow">02 // CORE CONTROL</div>
-    <div class="readout">
-      <small>COMMAND INTERFACE</small>
-      <strong>TOUCH<br>TO PULSE</strong>
-      <p>Activate the core or switch the observatory display profile.</p>
-    </div>
-    <div class="control-list">
-      <button id="pulse" type="button">TRIGGER CORE PULSE <b>↗</b></button>
-      <button id="go-focus" type="button">ENTER FOCUS <b>↗</b></button>
-      <button id="go-sun" type="button">ENTER SUNSET <b>↗</b></button>
-    </div>
-    <div class="notice">SUNSET CURTAIN RUNS ONLY WHILE THIS PAGE IS ACTIVE. iPadOS may suspend Safari in the background.</div>
-    <a class="wing-link" href="./local-chat.html">OPEN LOCAL CHAT ↗</a>
-  </aside>
-</main>
-
-<nav class="dock" aria-label="HQ navigation">
-  <a href="./index.html">OVERVIEW</a>
-  <a href="./local-chat.html">LOCAL CHAT</a>
-  <a href="./mission-control.html">TASK WORKSPACE</a>
-  <a href="./index.html#vault">VAULT</a>
-</nav>
-
-<div class="sleep-curtain" id="sleep-curtain" role="dialog" aria-label="Rest state">
-  <div><span>JARVIS-X / LOW POWER</span><h2>REST STATE</h2><p>Tap anywhere to return to the observatory.</p></div>
-</div>
-
-<div class="ignition" id="ignition" role="dialog" aria-label="JARVIS-X Observatory initialization">
-  <div class="ignition-beam" aria-hidden="true"></div>
-  <div class="boot-copy">
-    <p>JARVIS-X // SPATIAL SYSTEM INITIALIZATION</p>
-    <h1>JARVIS<em>-X</em></h1>
-    <p>PIEZO-SYNAPTIC CORE ONLINE</p>
-    <button id="skip-boot" type="button">SKIP INTRO</button>
-  </div>
-</div>
-
-<script src="./observatory.js" defer></script>
-</body>
-</html>
+<aside class="wing wing-left"><div class="eyebrow">01 // SYNAPTIC TELEMETRY</div><h2>NEURAL CORE</h2><div class="readout"><small>INTERACTION FIELD</small><strong>TOUCH TO PULSE</strong><p>Screen-wide synaptic field · tap anywhere to create a ripple.</p></div><div class="telemetry"><span>PARTICLE FIELD</span><b>ACTIVE</b><span>ACTIVE PROFILE</span><b id="active-profile">NORMAL</b><span>AUDIO</span><b id="audio-state">OFF</b></div><div class="control-list"><button data-open-drawer="briefs">TASK BRIEFS ↗</button><button data-open-drawer="vault">MEMORY VAULT ↗</button></div></aside>
+<section class="sanctuary"><div class="core-label"><span>CORE // 05</span><span>PIEZO-SYNAPTIC ENGINE</span></div><div class="astrolabe" id="astrolabe" role="button" tabindex="0" aria-label="Trigger central crystal pulse"><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="orbit orbit-c"></span><span class="breath-halo" id="breath-halo"></span><span class="crystal"></span><span class="shockwave" id="shockwave"></span></div><h1 class="hero-title">SPATIAL <em>OBSERVATORY</em></h1><p class="hero-copy">One integrated command space. Explore the core, focus the field, or enter a quieter display state.</p>
+<div class="modes"><button class="mode active" data-mode="normal">NORMAL</button><button class="mode" data-mode="focus">FOCUS · 40 HZ</button><button class="mode" data-mode="sun">SUNSET</button></div><p class="status-line" id="mode-status" aria-live="polite">NORMAL DISPLAY · VISUAL PROFILE ACTIVE</p>
+<div class="alarm-row"><span id="breath-cue">BREATHE · INHALE 5s / EXHALE 5s</span><label for="alarm-time">WAKE TIME</label><input id="alarm-time" type="time" value="07:00"><button id="open-shortcut">OPEN JARVIS_ALARMY ↗</button></div>
+<div class="audio-row"><button id="audio-toggle" aria-pressed="false">ENABLE AUTO-SYNC AUDIO</button><span id="audio-status">Sound is off until explicitly enabled.</span></div></section>
+<aside class="wing wing-right"><div class="eyebrow">02 // COMMAND SUBSYSTEMS</div><h2>EXECUTION</h2><p class="hero-copy">Each screen touch creates a visual pulse. Audio is optional and begins only after explicit opt-in.</p><div class="control-list"><button id="pulse">TRIGGER CORE PULSE ↗</button><button id="go-focus">ENTER FOCUS ↗</button><button id="go-sun">ENTER SUNSET ↗</button><button data-open-drawer="coach">ATHLETE RECOVERY ↗</button><a href="./local-chat.html" class="control-link">LAUNCH NEURAL CHAT ↗</a></div><p class="notice">Audio beat labels describe sound design, not a proven cognitive or sleep treatment. No background alarm is guaranteed by Safari.</p></aside></main>
+<nav class="dock"><a href="./observatory.html">OBSERVATORY</a><a href="./local-chat.html">LOCAL CHAT</a><button data-open-drawer="briefs">TASK BRIEFS</button><button data-open-drawer="vault">MEMORY VAULT</button></nav>
+<section class="drawer" id="jx-holo-drawer" aria-hidden="true"><div class="drawer-card"><div class="drawer-head"><span id="drawer-kicker">SUBSYSTEM</span><button id="close-drawer">CLOSE [ESC]</button></div><h2 id="drawer-title">MODULE</h2><div id="drawer-body"></div></div></section>
+<div class="sleep-curtain" id="sleep-curtain" role="dialog" aria-label="Rest state"><div><span>JARVIS-X / LOW POWER</span><h2>REST STATE</h2><p>Tap anywhere to return. iPadOS may suspend background timers.</p></div></div>
+<div class="ignition" id="ignition"><div class="ignition-beam"></div><div class="boot-copy"><p>JARVIS-X // SPATIAL SYSTEM INITIALIZATION</p><h1>JARVIS<em>-X</em></h1><button id="skip-boot">SKIP INTRO</button></div></div>
+</body></html>
