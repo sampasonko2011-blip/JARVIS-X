@@ -56,7 +56,7 @@ test("integrated drawers work and neither page links to the legacy index", async
   for (const name of ["briefs", "vault", "coach"]) {
     await page.locator('[data-open-drawer="' + name + '"]').first().click();
     await expect(page.locator("#jx-holo-drawer")).toHaveClass(/is-open/);
-    await page.locator("#jx-close-drawer").click();
+    await page.locator("#close-drawer").click();
   }
   const legacyLinks = await page.locator('a[href*="index.html"]').count();
   expect(legacyLinks).toBe(0);
