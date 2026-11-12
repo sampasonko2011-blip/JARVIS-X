@@ -34,3 +34,24 @@ test("v31 service worker and clean shell are wired", async ({ page }) => {
  expect(await page.locator('script[src="./observatory-v31.js"]').count()).toBe(1);
  const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v31");
 });
+test("every bottom dock control is interactive and opens its matching module", async ({ page }) => {
+ await page.setViewportSize({width:820,height:1180});
+ await page.goto("/observatory.html");
+ await page.evaluate(()=>localStorage.clear());
+ await page.reload();
+ await page.locator("#skip-boot").click();
+ const plus=page.locator(".dock #v29-open");
+ await plus.click();
+ await expect(page.locator("#v29-launcher")).toHaveClass(/open/);
+ await page.locator("#v29-close").click();
+ const modules=["chat","agents","briefs","vault","prompts","image","recovery","telemetry"];
+ for (const type of modules) {
+   const control=page.locator(`.dock [data-v29-add="${type}"]`);
+   await expect(control).toBeVisible();
+   await control.click();
+   await expect(page.locator(`.v29-panel[data-type="${type}"]`)).toBeVisible();
+ }
+ await expect(page.locator(".v29-panel")).toHaveCount(modules.length);
+ await expect(page.locator('.dock a[href="./observatory.html"]')).toBeVisible();
+ await expect(page.locator('.dock a[href="./local-chat.html"]')).toBeVisible();
+});
