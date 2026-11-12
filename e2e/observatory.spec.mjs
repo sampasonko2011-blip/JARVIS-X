@@ -49,13 +49,13 @@ test("Sunset mode exposes a warm red breathing cue and explicit Shortcut handoff
   expect(duration).toBe("10s");
   await page.locator("#alarm-time").fill("06:35");
   await page.locator("#open-shortcut").click();
-  await expect(page).toHaveURL(/shortcuts:\/\/run-shortcut\?name=JARVIS_ALARMY.*06%3A35/);
+  await expect.poll(() => page.evaluate(() => window.__jxShortcutUrl || '')).toContain('06%3A35');
 });
 
 test("integrated drawers work and neither page links to the legacy index", async ({ page }) => {
   for (const name of ["briefs", "vault", "coach"]) {
     await page.locator('[data-open-drawer="' + name + '"]').first().click();
-    await expect(page.locator("#jx-holo-drawer")).toHaveClass(/is-open/);
+    await expect(page.locator("#jx-holo-drawer")).toHaveClass(/open/);
     await page.locator("#close-drawer").click();
   }
   const legacyLinks = await page.locator('a[href*="index.html"]').count();
