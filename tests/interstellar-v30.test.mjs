@@ -12,7 +12,7 @@ test('Interstellar v30 is wired into Observatory and the offline shell', async (
   assert.match(html, /id="jx-interstellar-v30"/);
   assert.match(html, /interstellar-v30\.css/);
   assert.match(html, /interstellar-v30\.js/);
-  assert.match(sw, /jarvis-x-hq-shell-v30/);
+  assert.match(sw, /jarvis-x-hq-shell-v31/);
   assert.match(sw, /\.\/interstellar-v30\.css/);
   assert.match(sw, /\.\/interstellar-v30\.js/);
   assert.match(css, /prefers-reduced-motion/);
