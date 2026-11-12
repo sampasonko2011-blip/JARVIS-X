@@ -43,4 +43,11 @@ test('Local Chat loads Interstellar v30 and exposes honest browser dictation sup
     assert.ok(spatial.includes(key), 'missing shared key: ' + key);
   }
   assert.match(spatial, /mode-sun/);
+  assert.match(html, /interstellar-v30\.css/);
+  assert.match(html, /interstellar-v30\.js/);
+  assert.match(html, /id="jx-interstellar-v30"/);
+  assert.match(html, /id="voice-dictation"/);
+  assert.match(js, /SpeechRecognition/);
+  assert.match(js, /Voice dictation is not available in this browser/);
+  assert.match(css, /mode-sun/);
 });
