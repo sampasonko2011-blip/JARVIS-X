@@ -5,7 +5,7 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let w=0,h=0,dpr=1,frame=0,rotation=0,last=0;
 const stars=Array.from({length:150},(_,i)=>{const arm=i%4,angle=Math.random()*Math.PI*8+arm*Math.PI/2,r=Math.pow(Math.random(),.62)*Math.min(innerWidth,innerHeight)*.58;return{angle,r,z:Math.random(),size:.35+Math.random()*(i%17===0?2.2:1.1),speed:(Math.random()-.5)*.00008,color:i%5===0?'gold':i%3===0?'violet':'cyan',x:0,y:0,vx:0,vy:0}});
 const bursts=[];
-function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);canvas.style.width='100%';canvas.style.height='100%';ctx.setTransform(dpr,0,0,dpr,0,0)}
+function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
 function colors(c,a){return c==='gold'?'rgba(255,200,107,'+a+')':c==='violet'?'rgba(154,114,255,'+a+')':'rgba(72,245,228,'+a+')'}
 function point(s,t){const a=s.angle+rotation+s.r*.0018+t*s.speed;const arm=s.r*.18;return{x:w*.5+Math.cos(a)*s.r+Math.cos(a*2.8)*arm,y:h*.48+Math.sin(a)*s.r*.48+Math.sin(a*2.8)*arm*.48}}
 function drawDisk(cx,cy){ctx.save();ctx.translate(cx,cy);ctx.rotate(rotation*.55);for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(0,0,105+i*17,17+i*3,0,0,Math.PI*2);ctx.strokeStyle=i%2?'rgba(72,245,228,.24)':'rgba(255,200,107,.42)';ctx.lineWidth=i===1?2.2:1;ctx.shadowBlur=16;ctx.shadowColor=i%2?'#48f5e4':'#ffc86b';ctx.stroke()}ctx.restore()}
