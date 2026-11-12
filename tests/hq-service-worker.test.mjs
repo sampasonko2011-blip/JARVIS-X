@@ -88,6 +88,8 @@ test("service worker precaches the app shell and activates without deleting unre
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./mission-control.html")), "Mission Control must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./spatial-mode.js")), "shared v28 mode/audio module must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./spatial-mode.css")), "shared v28 mode styles must be precached");
   const precache = lifecycleCalls.find((call) => call[0] === "addAll")?.[1] ?? [];
   assert.equal(new Set(precache).size, precache.length, "precache asset URLs must be unique or Cache.addAll can reject installation");
   assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
@@ -99,7 +101,7 @@ test("service worker precaches the app shell and activates without deleting unre
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v22"));
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v23"), "previous v23 cache must be retired");
   assert.ok(cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v24"), "previous v24 cache must be retired");
-  assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v25"), "active v25 cache must be retained");
+  assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "jarvis-x-hq-shell-v25"), "explicitly retained v25 cache must remain available during migration");
   assert.ok(!cacheCalls.some((call) => call[0] === "delete" && call[1] === "unrelated-cache"));
   assert.ok(lifecycleCalls.some((call) => call[0] === "claim"));
 });

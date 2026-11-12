@@ -284,13 +284,18 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
     ],
     audits: [],
   };
-  page.once("dialog", dialog => dialog.accept());
   await page.locator('[data-view="settings"]').click();
+  const rejected = page.waitForEvent("dialog").then(async dialog => {
+    expect(dialog.type()).toBe("alert");
+    expect(dialog.message()).toContain("duplicate record IDs");
+    await dialog.accept();
+  });
   await page.locator("#import-file").setInputFiles({
     name: "duplicate-ids.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(invalidBackup)),
   });
+  await rejected;
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
 });
 

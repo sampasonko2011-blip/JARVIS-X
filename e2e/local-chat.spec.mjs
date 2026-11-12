@@ -57,7 +57,8 @@ test("local chat renders the v20 three-rail cockpit at iPad landscape width", as
   await expect(page.locator(".jx-chat-stage")).toBeVisible();
   await expect(page.locator(".jx-control-rail")).toBeVisible();
   await expect(page.locator("#jx-status-label")).toHaveText("NOT LOADED");
-  await expect(page.locator("#jx-audio-toggle")).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("#jx-audio-status")).toHaveText("AUTO-SYNC · OFF · NORMAL");
+  await expect(page.locator("#jx-audio-toggle")).toHaveCount(0);
   const columns = await shell.evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length);
   expect(columns).toBe(3);
   await page.locator("#jx-local-focus-toggle").click({ position: { x: 12, y: 12 } });
