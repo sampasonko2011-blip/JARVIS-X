@@ -17,7 +17,7 @@ if(boot){
  boot.addEventListener('pointerdown',e=>{if(e.target.closest('#skip-boot'))return;skip()},{passive:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')skip()});
  $('#skip-boot')?.addEventListener('click',skip);
- if(!reduced){boot.classList.add('jx-v32-act-1');window.setTimeout(()=>{if(!skipped){boot.classList.remove('jx-v32-act-1');boot.classList.add('jx-v32-act-2')}},720);window.setTimeout(()=>{if(!skipped){boot.classList.remove('jx-v32-act-2');boot.classList.add('jx-v32-act-3')}},1450);window.setTimeout(skip,2800)}else skip();
+ if(!reduced){boot.classList.add('jx-v32-act-1');window.setTimeout(()=>{if(!skipped){boot.classList.remove('jx-v32-act-1');boot.classList.add('jx-v32-act-2')}},600);window.setTimeout(()=>{if(!skipped){boot.classList.remove('jx-v32-act-2');boot.classList.add('jx-v32-act-3')}},1200);window.setTimeout(skip,2050)}else skip();
 }
 /* One canvas prism and one set of three canvas rings: retire the legacy DOM duplicates. */
 $('.astrolabe>.crystal')?.setAttribute('aria-hidden','true');
