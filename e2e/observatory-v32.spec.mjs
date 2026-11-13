@@ -25,7 +25,7 @@ test("v32 dock stays pinned and the focus timer stops at zero", async ({ page })
   await expect(clock).toHaveText("25:00");
   await page.clock.install();
   await page.locator(".jx-v32-actions button", { hasText: "START" }).click();
-  await page.clock.fastForward(25 * 60 * 1000);
+  await page.clock.runFor(25 * 60 * 1000);
   await expect(clock).toHaveText("00:00");
   await expect(page.locator(".jx-v32-status")).toContainText("Session complete");
   await expect(page.locator(".jx-v32-actions button", { hasText: "START" })).toBeEnabled();
