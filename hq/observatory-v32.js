@@ -71,7 +71,7 @@ display();window.addEventListener('pagehide',()=>halt(''));
 const entries=[
  ['FOOT PRO','foot-pro'],['RESET HUD','reset']
 ];
-entries.forEach(([label,key])=>{if(dock.querySelector('[data-jx-v32="'+key+'"]'))return;const b=document.createElement(key==='foot-pro'?'a':'button');if(key==='foot-pro'){b.href='../apex-career-os/index.html';b.setAttribute('aria-label','Open APEX CAREER OS / SAMPA.CO')}else b.type='button';b.dataset.jxV32=key;b.textContent=label;dock.append(b)});
+entries.forEach(([label,key])=>{if(dock.querySelector('[data-jx-v32="'+key+'"]'))return;const b=document.createElement(key==='foot-pro'?'a':'button');if(key==='foot-pro'){b.href=location.pathname.includes('/hq/')?'../career/index.html':'./career/index.html';b.setAttribute('aria-label','Open APEX CAREER OS / SAMPA.CO')}else b.type='button';b.dataset.jxV32=key;b.textContent=label;dock.append(b)});
 dock.querySelectorAll('[data-v29-add="agents"]').forEach(b=>{b.textContent='AGENTS IA'});
 dock.querySelectorAll('[data-v29-add="briefs"]').forEach(b=>{b.textContent='OBJECTIFS'});
 dock.querySelectorAll('[data-v29-add="vault"]').forEach(b=>{b.textContent='MÉMOIRE'});
