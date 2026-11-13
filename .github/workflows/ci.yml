@@ -37,6 +37,12 @@ jobs:
         run: node --check scripts/provider-smoke.mjs
       - name: Validate HQ service worker syntax
         run: node --check hq/sw.js
+      - name: Validate Observatory v32 scripts
+        run: |
+          node --check hq/observatory.js
+          node --check hq/observatory-v31.js
+          node --check hq/observatory-v32.js
+          node --check hq/interstellar-v30.js
       - name: Validate local runtime preflight syntax
         run: node --check hq/local-chat-preflight.js
       - name: Validate HQ chat client syntax
