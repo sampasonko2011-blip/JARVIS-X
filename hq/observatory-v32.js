@@ -71,7 +71,7 @@ display();window.addEventListener('pagehide',()=>halt(''));
 const entries=[
  ['FOOT PRO','foot-pro'],['RESET HUD','reset']
 ];
-entries.forEach(([label,key])=>{if(dock.querySelector('[data-jx-v32="'+key+'"]'))return;const b=document.createElement('button');b.type='button';b.dataset.jxV32=key;b.textContent=label;dock.append(b)});
+entries.forEach(([label,key])=>{if(dock.querySelector('[data-jx-v32="'+key+'"]'))return;const b=document.createElement(key==='foot-pro'?'a':'button');if(key==='foot-pro'){b.href='../apex-career-os/index.html';b.setAttribute('aria-label','Open APEX CAREER OS / SAMPA.CO')}else b.type='button';b.dataset.jxV32=key;b.textContent=label;dock.append(b)});
 dock.querySelectorAll('[data-v29-add="agents"]').forEach(b=>{b.textContent='AGENTS IA'});
 dock.querySelectorAll('[data-v29-add="briefs"]').forEach(b=>{b.textContent='OBJECTIFS'});
 dock.querySelectorAll('[data-v29-add="vault"]').forEach(b=>{b.textContent='MÉMOIRE'});
@@ -82,7 +82,7 @@ function showInfo(title,bodyText){
  let overlay=$('#jx-v32-info');if(!overlay){overlay=document.createElement('section');overlay.id='jx-v32-info';overlay.className='jx-v32-info';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','jx-v32-info-title');const card=document.createElement('div');card.className='jx-v32-info-card';const h=document.createElement('h2');h.id='jx-v32-info-title';const p=document.createElement('p');const close=document.createElement('button');close.type='button';close.textContent='CLOSE';close.addEventListener('click',()=>overlay.classList.remove('open'));card.append(h,p,close);overlay.append(card);overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open')});document.body.append(overlay);overlay._title=h;overlay._copy=p}
  overlay._title.textContent=title;overlay._copy.textContent=bodyText;overlay.classList.add('open');overlay.querySelector('button')?.focus();
 }
-dock.querySelector('[data-jx-v32="foot-pro"]')?.addEventListener('click',()=>showInfo('FOOT PRO // CAREER WORKSPACE','This is a navigation placeholder for the separate Sampa.co football-career workspace. No external account or service is connected from this Observatory page.'));
+
 dock.querySelector('[data-jx-v32="reset"]')?.addEventListener('click',()=>{try{localStorage.removeItem('jarvis_x_v31_panel_geometry');localStorage.removeItem('jarvis_x_v30_panel_sizes');localStorage.removeItem('jarvis_x_v29_positions')}catch{}showInfo('HUD GEOMETRY RESET','Saved panel positions and sizes were cleared. Reload the Observatory to restore the default layout.')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#jx-v32-info')?.classList.remove('open')});
 /* Opt-in 40 Hz binaural pulse, only after a user gesture and only in Focus mode. */
