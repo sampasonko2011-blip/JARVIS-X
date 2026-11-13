@@ -4,6 +4,7 @@ test('Interstellar v30 boots in Observatory and persists panel resize', async ({
   const failures = [];
   page.on('pageerror', error => failures.push(error.message));
   await page.goto('/observatory.html');
+  await page.locator('#skip-boot').click().catch(() => {});
   await expect(page.locator('#jx-interstellar-v30')).toBeVisible();
   const assets = await Promise.all([
     page.request.get('/interstellar-v30.css'),
@@ -12,19 +13,21 @@ test('Interstellar v30 boots in Observatory and persists panel resize', async ({
   expect(assets.every(response => response.ok())).toBeTruthy();
 
   await page.locator('#v29-open').click();
-  await page.locator('[data-v29-add="agents"]').click();
+  await page.locator('.v29-launcher [data-v29-add="agents"]').click();
   const panel = page.locator('.v29-panel[data-type="agents"]');
   await expect(panel).toBeVisible();
-  const resize = panel.locator('.v30-resize');
   const before = await panel.boundingBox();
   if (!before) throw new Error('Agent panel has no layout box');
-  await page.mouse.move(before.x + before.width - 14, before.y + before.height - 14);
+  const resize = panel.locator('.jx-v31-resize');
+  const handle = await resize.boundingBox();
+  if (!handle) throw new Error('v31 resize handle has no layout box');
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
   await page.mouse.down();
-  await page.mouse.move(before.x + before.width + 26, before.y + before.height + 22);
+  await page.mouse.move(handle.x + handle.width / 2 + 45, handle.y + handle.height / 2 + 30);
   await page.mouse.up();
   await expect.poll(async () => page.evaluate(() => {
-    const sizes = JSON.parse(localStorage.getItem('jarvis_x_v30_panel_sizes') || '{}');
-    return sizes.agents?.w || 0;
+    const geometry = JSON.parse(localStorage.getItem('jarvis_x_v31_panel_geometry') || '{}');
+    return geometry.agents?.width || 0;
   })).toBeGreaterThan(Math.round(before.width));
   expect(failures).toEqual([]);
 });

@@ -20,7 +20,7 @@ test("mode and opt-in audio preference persist into Local Chat without a second 
   await expect(page.locator("#jx-audio-toggle")).toHaveCount(0);
 });
 
-test("viewport touch creates a ripple and plays sound only after explicit opt-in", async ({ page }) => {
+test("viewport touch creates a ripple and audio remains opt-in", async ({ page }) => {
   await page.evaluate(() => window.__jxAudioProfile = null);
   await page.locator("body").click({ position: { x: 30, y: 30 } });
   expect(await page.evaluate(() => window.__jxAudioProfile)).toBe(null);
@@ -28,39 +28,45 @@ test("viewport touch creates a ripple and plays sound only after explicit opt-in
   await page.locator('[data-mode="focus"]').click();
   await page.locator("body").click({ position: { x: 35, y: 40 } });
   await expect(page.locator("#jx-ripple-layer")).toHaveCount(1);
-  await expect.poll(() => page.evaluate(() => window.__jxAudioProfile)).toBe("focus");
+  await expect.poll(() => page.evaluate(() => window.JXSpatial?.enabled)).toBe(true);
+  expect(await page.evaluate(() => localStorage.getItem("jarvis_x_auto_audio"))).toBe("true");
+  await expect(page.locator("#audio-toggle")).toHaveAttribute("aria-pressed", "true");
 });
 
-test("Focus mode folds both wings in 3D and keeps the central workspace visible", async ({ page }) => {
+test("Focus mode keeps the v31 canvas starburst and unified workspace visible", async ({ page }) => {
   await page.locator('[data-mode="focus"]').click();
-  const left = await page.locator(".wing-left").evaluate(el => getComputedStyle(el).transform);
-  const right = await page.locator(".wing-right").evaluate(el => getComputedStyle(el).transform);
-  expect(left).not.toBe("none");
-  expect(right).not.toBe("none");
+  await expect(page.locator("body")).toHaveClass(/mode-focus/);
+  await expect(page.locator("#jx-interstellar-v30")).toBeVisible();
+  await expect(page.locator("#astrolabe")).toBeVisible();
+  await expect(page.locator(".wing")).toHaveCount(0);
   await expect(page.locator(".sanctuary")).toBeVisible();
-  await expect(page.locator("#go-sun")).toBeVisible();
 });
 
-test("Sunset mode exposes a warm red breathing cue and explicit Shortcut handoff", async ({ page }) => {
+test("Sunset mode exposes a warm breathing cue and explicit Shortcut handoff", async ({ page }) => {
   await page.locator('[data-mode="sun"]').click();
   await expect(page.locator("body")).toHaveClass(/mode-sun/);
   await expect(page.locator("#breath-cue")).toContainText("5s");
   const duration = await page.locator("#breath-halo").evaluate(el => getComputedStyle(el).animationDuration);
   expect(duration).toBe("10s");
   await page.locator("#alarm-time").fill("06:35");
+  await page.evaluate(() => {
+    window.addEventListener("jx-shortcut-handoff", event => {
+      window.__capturedShortcutUrl = event.detail.url;
+      event.preventDefault();
+    }, { once: true });
+  });
   await page.locator("#open-shortcut").click();
-  await expect.poll(() => page.evaluate(() => window.__jxShortcutUrl || '')).toContain('06%3A35');
+  await expect.poll(() => page.evaluate(() => window.__capturedShortcutUrl || "")).toContain("06%3A35");
 });
 
-test("integrated drawers work and neither page links to the legacy index", async ({ page }) => {
-  for (const name of ["briefs", "vault", "coach"]) {
-    await page.locator('[data-open-drawer="' + name + '"]').first().click();
-    await expect(page.locator("#jx-holo-drawer")).toHaveClass(/open/);
-    await page.locator("#close-drawer").click();
+test("unified HUD modules open from the dock and neither page links to the legacy index", async ({ page }) => {
+  for (const type of ["briefs", "vault", "recovery"]) {
+    await page.locator('.dock [data-v29-add="' + type + '"]').click();
+    await expect(page.locator('.v29-panel[data-type="' + type + '"]')).toBeVisible();
   }
   const legacyLinks = await page.locator('a[href*="index.html"]').count();
   expect(legacyLinks).toBe(0);
-  await page.locator('a[href="./local-chat.html"]').first().click();
+  await page.locator('a[href="./local-chat.html"]').click();
   expect(await page.locator('a[href*="index.html"]').count()).toBe(0);
   await expect(page.locator('a[href="./observatory.html"]')).toBeVisible();
 });
