@@ -18,7 +18,7 @@
 #jx-interstellar-v30{z-index:0}
 .jx-v30-touch-flare{display:none!important}
 .v29-panels{z-index:120!important}
-.v29-panel.jx-v32-side{position:fixed!important;z-index:125!important;width:min(268px,28vw)!important;min-height:180px;padding:15px!important;border:1px solid #48f5e4a8!important;background:linear-gradient(145deg,#07182cf2,#050914f5)!important;clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.v29-panel.jx-v32-side{position:fixed!important;z-index:125!important;width:min(268px,28vw);min-height:180px;padding:15px!important;border:1px solid #48f5e4a8!important;background:linear-gradient(145deg,#07182cf2,#050914f5)!important;clip-path:polygon(0 12px,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
 .v29-panel.jx-v32-left{left:14px;top:clamp(150px,22vh,230px)}
 .v29-panel.jx-v32-right{right:14px;left:auto;top:clamp(150px,22vh,230px)}
 .jx-v32-side:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(#48f5e40c 1px,transparent 1px),linear-gradient(90deg,#48f5e40c 1px,transparent 1px);background-size:18px 18px;mask-image:linear-gradient(135deg,#000,transparent 88%)}
