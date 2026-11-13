@@ -8,7 +8,7 @@ function attach(panel){
  const type=panel.dataset.type||'panel',all=read(),saved=all[type]||{};
  const rect=panel.getBoundingClientRect(),w=saved.width||Math.min(rect.width||340,innerWidth*.92),h=saved.height||rect.height||260;
  const left=saved.left??clamp(rect.left,8,Math.max(8,innerWidth-w-8)),top=saved.top??clamp(rect.top,72,Math.max(72,innerHeight-h-90));
- const set=(x,y,width,height)=>{panel.style.setProperty('--jx31-left',x+'px');panel.style.setProperty('--jx31-top',y+'px');panel.style.setProperty('--jx31-width',width+'px');panel.style.setProperty('--jx31-height',height+'px')};
+ let geometryAnimation=null;const set=(x,y,width,height)=>{geometryAnimation?.cancel();geometryAnimation=panel.animate([{left:x+'px',top:y+'px',width:width+'px',height:height+'px'}],{duration:0,fill:'forwards'});};
  let g={left,top,width:w,height:h};set(g.left,g.top,g.width,g.height);
  const handle=panel.querySelector('.v29-handle');if(handle){handle.textContent='✥ MOVE';handle.setAttribute('aria-label','Move '+type+' panel');}
  const resize=document.createElement('button');resize.type='button';resize.className='jx-v31-resize';resize.textContent='↘';resize.setAttribute('aria-label','Resize '+type+' panel');panel.append(resize);
