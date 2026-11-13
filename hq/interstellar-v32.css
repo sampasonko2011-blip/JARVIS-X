@@ -14,7 +14,7 @@
 @keyframes jx-v32-supernova{0%{transform:scale(.2);opacity:1}65%{transform:scale(34);opacity:.9}100%{transform:scale(54);opacity:0}}
 @keyframes jx-v32-lock{0%{transform:scale(.92);opacity:0;box-shadow:0 0 0 #48f5e4}100%{transform:scale(1);opacity:1;box-shadow:0 0 35px #48f5e422}}
 /* The canvas prism/rings are the single source of truth; hide legacy CSS/DOM duplicates. */
-.astrolabe>.crystal,.astrolabe>.orbit{display:none!important}
+.astrolabe>.crystal,.astrolabe>.orbit,.astrolabe:before,.astrolabe:after{display:none!important}
 #jx-interstellar-v30{z-index:0}
 .jx-v30-touch-flare{display:none!important}
 .v29-panels{z-index:120!important}
