@@ -12,6 +12,7 @@ test("v32 installs two persistent HUD panels without duplicate resize handles or
   await expect(page.locator("#v29-panels [data-type='v32-command']")).toBeVisible();
   await expect(page.locator("#v29-panels .jx-v31-resize")).toHaveCount(2);
   await expect(page.locator("#v29-panels .v30-resize")).toHaveCount(0);
+  await expect(page.locator('.dock a[data-jx-v32="foot-pro"]')).toHaveAttribute("href", "../apex-career-os/index.html");
   expect(await page.locator("[style]").count()).toBe(0);
   expect(await page.evaluate(() => window.JXObservatoryV32?.version)).toBe(32);
 });
