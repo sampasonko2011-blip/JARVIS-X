@@ -25,7 +25,7 @@
   background: rgba(8, 25, 39, .58);
   color: #d8fbff;
 }
-#voice-dictation-status {
+#jx-voice-status {
   display: block;
   position: relative;
   clear: both;
@@ -45,7 +45,7 @@
 }
 @media (max-width: 560px) {
   .jx-slash-chip { flex: 1 1 calc(50% - 8px); }
-  #voice-dictation-status { max-width: 100%; }
+  #jx-voice-status { max-width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   #jx-chat-cosmos { filter: none; }
