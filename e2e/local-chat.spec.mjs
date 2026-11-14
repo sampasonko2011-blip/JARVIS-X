@@ -4,6 +4,7 @@ test("local chat page is reachable and starts safely without loading a model", a
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
   await expect(page.getByRole("heading", { name: "JARVIS-X · Local engine" })).toBeVisible();
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
@@ -15,6 +16,7 @@ test("local chat page is reachable and starts safely without loading a model", a
 
 test("local chat blocks inline styles and links to device preflight", async ({ page }) => {
   await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
   const inlineStyleCount = await page.locator("[style]").count();
   expect(inlineStyleCount).toBe(0);
   await page.getByRole("link", { name: "Device check" }).click();
@@ -41,6 +43,7 @@ test("local chat keeps startup inference local and Memory OS disconnected", asyn
 
 test("local chat defaults to the smallest iPad model and offers larger local models", async ({ page }) => {
   await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
   const model = page.getByLabel("Local model");
   await expect(model).toHaveValue("SmolLM2-135M-Instruct-q0f16-MLC");
   await expect(model.locator("option")).toHaveCount(3);
