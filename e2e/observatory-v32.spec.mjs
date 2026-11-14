@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
+  await page.clock.install();
   await page.goto("/observatory.html");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -23,7 +24,6 @@ test("v32 dock stays pinned and the focus timer stops at zero", async ({ page })
   const clock = page.locator(".jx-v32-clock");
   await page.locator(".jx-v32-actions button", { hasText: "25 MIN" }).click();
   await expect(clock).toHaveText("25:00");
-  await page.clock.install();
   await page.locator(".jx-v32-actions button", { hasText: "START" }).click();
   await page.clock.runFor(25 * 60 * 1000);
   await expect(clock).toHaveText("00:00");
