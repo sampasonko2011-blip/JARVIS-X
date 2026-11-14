@@ -24,7 +24,7 @@ test('v29 spatial audio persists mode, enablement and volume', async () => {
 
 test('v29 Service Worker uses its own cache and precaches the new module', async () => {
   const sw = await read('../hq/sw.js');
-  assert.match(sw, /jarvis-x-hq-shell-v33/);
+  assert.match(sw, /jarvis-x-hq-shell-v34/);
   assert.match(sw, /observatory-v29\.js/);
   assert.match(sw, /clients\.claim/);
 });
