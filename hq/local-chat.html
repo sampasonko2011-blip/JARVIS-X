@@ -12,13 +12,17 @@
 <link rel="stylesheet" href="./spatial-mode.css">
 <link rel="stylesheet" href="./interstellar-v30.css">
 <link rel="stylesheet" href="./interstellar-v32.css">
+<link rel="stylesheet" href="./local-chat-v33.css">
 <script src="./spatial-mode.js" defer></script>
 <script src="./interstellar-v30.js" defer></script>
+<script src="./local-chat-v33.js" defer></script>
 </head>
 <body>
 <canvas id="jx-interstellar-v30" aria-hidden="true"></canvas>
+<canvas id="jx-chat-cosmos" aria-hidden="true"></canvas>
+<div class="jx-circadian-shield" aria-hidden="true"></div>
 <main class="shell local-chat-shell">
-<header class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>ON-DEVICE LOCAL CHAT</small></div><a class="jx-observatory-link" href="./observatory.html">← OBSERVATORY</a><span id="jx-mode-status" aria-live="polite">NORMAL · AUTO-SYNC</span></header>
+<header class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>ON-DEVICE LOCAL CHAT</small></div><a class="jx-observatory-link jx-vision-back" href="./observatory.html">← OBSERVATORY</a><span id="jx-mode-status" aria-live="polite">NORMAL · AUTO-SYNC</span></header>
 
 <aside class="card local-chat-card jx-model-rail" aria-label="Model and device controls">
   <div class="eyebrow">ZERO HOSTED INFERENCE</div>
@@ -43,6 +47,25 @@
   </div>
   <div class="integration jx-cognitive-panel"><strong id="cognitive-mode">ADAPTIVE MODE · BALANCED · AWAITING INPUT</strong><p id="cognitive-state">State reflection is session-local. It tracks turns and failures only; it does not read or write Memory OS.</p></div>
   <h2>Conversation</h2>
+
+  <div class="jx-chat-toolbar" aria-label="Conversation tools">
+    <div class="jx-toolbar-group">
+      <button class="jx-vision-pill" id="jx-toggle-inspector" type="button" aria-expanded="false" aria-controls="jx-inspector-drawer">⌘ INSPECTOR</button>
+      <button class="jx-vision-pill" id="jx-voice-mic" type="button" aria-pressed="false">VOICE INPUT</button>
+    </div>
+    <span class="footnote" id="jx-voice-status" role="status" aria-live="polite">Dictation support depends on your browser; speech recognition may use browser-managed services.</span>
+  </div>
+  <div class="jx-slash-bar" aria-label="Quick prompts">
+    <button class="jx-slash-chip" type="button" data-slash-prompt="Explain this clearly, step by step: "> /EXPLAIN </button>
+    <button class="jx-slash-chip" type="button" data-slash-prompt="Summarize the key points: "> /SUMMARY </button>
+    <button class="jx-slash-chip" type="button" data-slash-prompt="Help me plan this with clear steps: "> /PLAN </button>
+    <button class="jx-slash-chip" type="button" data-slash-prompt="Review this code and identify bugs: "> /REVIEW </button>
+  </div>
+  <section class="jx-inspector-drawer" id="jx-inspector-drawer" aria-label="Local pinned replies">
+    <h3>LOCAL PIN VAULT</h3>
+    <p class="footnote">Pins are stored only in this browser's local storage. They are not Memory OS and are not synced to another device.</p>
+    <div class="jx-vault-list" aria-live="polite"></div>
+  </section>
   <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Load the model to begin. The last 8 messages are kept in page memory and are not synced. Input limit: 4,000 characters.</small></div></div>
   <label for="message">Message</label>
   <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
