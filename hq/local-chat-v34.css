@@ -275,3 +275,16 @@ body.mode-sun .jx-circadian-shield { opacity: .72; }
 .jx-inspector-drawer > .jx-control-rail > * {
   pointer-events: auto;
 }
+
+
+/* Final specificity guard: hq.css declares the generic .shell grid. */
+html body main.shell.local-chat-shell {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto;
+  grid-auto-columns: minmax(0, 1fr);
+  width: min(880px, 100%);
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
