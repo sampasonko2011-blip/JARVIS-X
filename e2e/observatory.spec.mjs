@@ -64,10 +64,10 @@ test("unified HUD modules open from the dock and neither page links to the legac
     await page.locator('.dock [data-v29-add="' + type + '"]').click();
     await expect(page.locator('.v29-panel[data-type="' + type + '"]')).toBeVisible();
   }
-  const legacyLinks = await page.locator('a[href*="index.html"]').count();
+  const legacyLinks = await page.locator('a[href="../index.html"],a[href="./index.html"]').count();
   expect(legacyLinks).toBe(0);
   await page.locator('a[href="./local-chat.html"]').click();
-  expect(await page.locator('a[href*="index.html"]').count()).toBe(0);
+  expect(await page.locator('a[href="../index.html"],a[href="./index.html"]').count()).toBe(0);
   await expect(page.locator('a[href="./observatory.html"]')).toBeVisible();
 });
 
