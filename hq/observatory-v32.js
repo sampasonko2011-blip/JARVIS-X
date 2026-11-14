@@ -64,7 +64,7 @@ const display=()=>{readout.textContent=String(Math.floor(remaining/60)).padStart
 const halt=message=>{if(interval)window.clearInterval(interval);interval=0;start.disabled=false;if(message)status.textContent=message;display()};
 short.addEventListener('click',()=>{halt('25-minute session selected.');remaining=1500;display()});
 long.addEventListener('click',()=>{halt('50-minute session selected.');remaining=3000;display()});
-start.addEventListener('click',()=>{if(interval||remaining<=0)return;start.disabled=true;status.textContent='Focus session running.';interval=window.setInterval(()=>{remaining=Math.max(0,remaining-1);display();if(remaining===0)halt('Session complete · timer stopped at 00:00.')},1000)});
+start.addEventListener('click',()=>{if(interval||remaining<=0)return;start.disabled=true;deadline=Date.now()+remaining*1000;status.textContent='Focus session running.';interval=window.setInterval(()=>{remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));display();if(remaining===0)halt('Session complete · timer stopped at 00:00.')},1000)});
 stop.addEventListener('click',()=>halt('Session stopped.'));
 display();window.addEventListener('pagehide',()=>halt(''));
 /* Dock: retain existing forge buttons and add reliable touch targets for all requested destinations. */
