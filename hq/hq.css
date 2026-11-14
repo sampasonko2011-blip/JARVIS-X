@@ -62,3 +62,30 @@
 
 /* Separate Spatial Observatory entry point; external CSS keeps the HQ CSP strict. */
 .jx-observatory-launch{position:fixed;z-index:1000;top:12px;right:14px;padding:11px 15px;border:1px solid rgba(0,245,212,.55);border-radius:30px;background:rgba(4,18,32,.88);color:#00f5d4;text-decoration:none;font:10px ui-monospace,monospace;letter-spacing:.12em;backdrop-filter:blur(14px)}.jx-observatory-launch:focus-visible{outline:2px solid white;outline-offset:3px}
+
+
+/* Mobile HQ navigation: keep the sidebar and its scrollable nav inside the
+   viewport while allowing the nav itself to scroll horizontally. */
+@media (max-width: 900px) {
+  .shell > .side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+    box-sizing: border-box;
+  }
+  .shell > .side > .csp-inline-1 {
+    width: 0;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 0 !important;
+    overflow: hidden;
+  }
+  .shell > .side .nav {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}
