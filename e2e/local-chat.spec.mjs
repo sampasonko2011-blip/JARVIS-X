@@ -48,30 +48,33 @@ test("local chat defaults to the smallest iPad model and offers larger local mod
   await expect(page.getByText(/Only the selected model downloads/)).toBeVisible();
 });
 
-test("local chat renders the v20 three-rail cockpit at iPad landscape width", async ({ page }) => {
+test("local chat v34 is single-column and keeps legacy controls inside Inspector", async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
   await page.goto("/local-chat.html");
   const shell = page.locator(".local-chat-shell");
   await expect(shell).toHaveCSS("display", "grid");
-  await expect(page.locator(".jx-model-rail")).toBeVisible();
   await expect(page.locator(".jx-chat-stage")).toBeVisible();
-  await expect(page.locator(".jx-control-rail")).toBeVisible();
+  await expect(page.locator(".jx-model-rail")).toBeHidden();
+  await expect(page.locator(".jx-control-rail")).toBeHidden();
+  await expect(page.locator(".jx-inspector-drawer .jx-model-rail")).toHaveCount(1);
+  await expect(page.locator(".jx-inspector-drawer .jx-control-rail")).toHaveCount(1);
+  await expect(page.locator("#model-select")).toHaveCount(1);
   await expect(page.locator("#jx-status-label")).toHaveText("NOT LOADED");
-  await expect(page.locator("#jx-audio-status")).toHaveText("AUTO-SYNC · OFF · NORMAL");
-  await expect(page.locator("#jx-audio-toggle")).toHaveCount(0);
-  const columns = await shell.evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length);
-  expect(columns).toBe(3);
+  const columns = await shell.evaluate((node) => getComputedStyle(node).gridTemplateColumns.trim().split(/\\s+/).length);
+  expect(columns).toBe(1);
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
+  await expect(page.locator(".jx-model-rail")).toBeVisible();
+  await expect(page.locator(".jx-control-rail")).toBeVisible();
   await page.locator("#jx-local-focus-toggle").click({ position: { x: 12, y: 12 } });
   await expect(shell).toHaveClass(/jx-global-focus/);
-  await expect(page.locator(".jx-model-rail")).toBeHidden();
 });
 
-test("local chat stacks controls without horizontal overflow at iPad portrait width", async ({ page }) => {
+test("local chat v34 stays within iPad portrait width with Inspector closed", async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.goto("/local-chat.html");
-  await expect(page.locator(".jx-model-rail")).toBeVisible();
+  await expect(page.locator(".jx-model-rail")).toBeHidden();
   await expect(page.locator(".jx-chat-stage")).toBeVisible();
-  await expect(page.locator(".jx-control-rail")).toBeVisible();
+  await expect(page.locator(".jx-control-rail")).toBeHidden();
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     content: document.querySelector(".local-chat-shell").scrollWidth,
