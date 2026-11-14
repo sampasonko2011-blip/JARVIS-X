@@ -1,0 +1,52 @@
+/* JARVIS-X Local Chat v35 — visual polish, CSP-safe. */
+:root {
+  --jx35-glass: rgba(6, 12, 24, .34);
+}
+.jx-chat-stage {
+  background: var(--jx35-glass) !important;
+  backdrop-filter: blur(28px) saturate(205%);
+  -webkit-backdrop-filter: blur(28px) saturate(205%);
+}
+#jx-chat-cosmos {
+  opacity: .98;
+  filter: brightness(1.28) saturate(1.18);
+}
+.jx-slash-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.jx-slash-chip {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-color: rgba(101, 243, 225, .32);
+  background: rgba(8, 25, 39, .58);
+  color: #d8fbff;
+}
+#voice-dictation-status {
+  display: block;
+  position: relative;
+  clear: both;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.45;
+  margin: 8px 0 12px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+#message + .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+@media (max-width: 560px) {
+  .jx-slash-chip { flex: 1 1 calc(50% - 8px); }
+  #voice-dictation-status { max-width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #jx-chat-cosmos { filter: none; }
+}
