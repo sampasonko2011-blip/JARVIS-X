@@ -246,3 +246,32 @@ body.mode-sun .jx-circadian-shield { opacity: .72; }
 .jx-inspector-drawer>.jx-control-rail>.integration{min-width:0;overflow-wrap:anywhere}
 .jx-inspector-drawer[hidden]{display:none!important}
 @media(max-width:640px){.shell.local-chat-shell{width:100%;padding:10px}.jx-inspector-drawer>.jx-control-rail{grid-template-columns:minmax(0,1fr)}.jx-chat-stage{padding:13px}#transcript{max-height:52vh}}
+
+
+/* v34 CI repair: defeat legacy .shell grid declarations and prevent Inspector
+   telemetry panels from intercepting taps on model/device controls. */
+.shell.local-chat-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-flow: row;
+  width: min(880px, 100%);
+  max-width: 880px;
+  margin-inline: auto;
+}
+.jx-inspector-drawer {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(0, 1fr);
+}
+.jx-inspector-drawer > .jx-model-rail {
+  position: relative;
+  z-index: 2;
+}
+.jx-inspector-drawer > .jx-control-rail {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+.jx-inspector-drawer > .jx-control-rail > * {
+  pointer-events: auto;
+}
