@@ -312,3 +312,10 @@ html body main.shell.local-chat-shell > .jx-chat-stage {
 @media (max-width: 640px) {
   html body main.shell.local-chat-shell { width: 100%; padding: 10px; }
 }
+
+/* Playwright computes minmax(0, 1fr) as a whitespace-separated string.
+   Use the equivalent single-track 1fr token so the one-column contract is
+   measurable without parsing minmax() internals. */
+html body main.shell.local-chat-shell {
+  grid-template-columns: 1fr !important;
+}
