@@ -89,3 +89,58 @@
     overscroll-behavior-x: contain;
   }
 }
+
+
+/* Mobile overflow correction: constrain the flex sidebar's text rail and
+   keep navigation overflow inside its own horizontal scroller. */
+@media (max-width: 900px) {
+  html, body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .shell > .side {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: clip;
+    box-sizing: border-box;
+  }
+  .shell > .side > .csp-inline-1 {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 52px) !important;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .shell > .side .nav {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    box-sizing: border-box;
+  }
+  .shell > .side .nav > * {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+  .shell > .side .hq-mission-link {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    box-sizing: border-box;
+  }
+}
