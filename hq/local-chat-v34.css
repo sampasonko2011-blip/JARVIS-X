@@ -319,3 +319,17 @@ html body main.shell.local-chat-shell > .jx-chat-stage {
 html body main.shell.local-chat-shell {
   grid-template-columns: 1fr !important;
 }
+
+
+/* Exact selector asserted by e2e/local-chat.spec.mjs:67.
+   Keep this last so the legacy .shell grid cannot restore side tracks. */
+html body main.local-chat-shell,
+html body .local-chat-shell {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-auto-flow: row !important;
+  width: min(880px, 100%);
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
