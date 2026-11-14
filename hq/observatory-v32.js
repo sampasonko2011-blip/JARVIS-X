@@ -59,7 +59,7 @@ const timerControls=document.createElement('div');timerControls.className='jx-v3
 const start=document.createElement('button'),short=document.createElement('button'),long=document.createElement('button'),stop=document.createElement('button');
 start.type=short.type=long.type=stop.type='button';start.textContent='START';short.textContent='25 MIN';long.textContent='50 MIN';stop.textContent='STOP';
 timerControls.append(short,long,start,stop);timer.append(timerTitle,readout,timerControls);rightContent.append(timer);
-let remaining=1500,interval=0;
+let remaining=1500,interval=0,deadline=0;
 const display=()=>{readout.textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0')};
 const halt=message=>{if(interval)window.clearInterval(interval);interval=0;start.disabled=false;if(message)status.textContent=message;display()};
 short.addEventListener('click',()=>{halt('25-minute session selected.');remaining=1500;display()});
