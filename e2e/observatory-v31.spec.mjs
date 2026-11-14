@@ -32,7 +32,7 @@ test("v31 service worker and clean shell are wired", async ({ page }) => {
  expect(shell).not.toContain("SYNAPTIC TELEMETRY");
  expect(await page.locator('link[href="./interstellar-v31.css"]').count()).toBe(1);
  expect(await page.locator('script[src="./observatory-v31.js"]').count()).toBe(1);
- const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v31");
+ const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v32");
 });
 test("every bottom dock control is interactive and opens its matching module", async ({ page }) => {
  await page.setViewportSize({width:820,height:1180});
