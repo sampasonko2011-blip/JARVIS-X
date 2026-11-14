@@ -357,3 +357,13 @@ html body main.shell.local-chat-shell > .jx-chat-stage {
   grid-area: center !important;
   grid-column: 1 !important;
 }
+
+
+/* Inspector children retain legacy named areas from the former three-rail
+   shell; reset those areas when they become ordinary drawer grid children. */
+html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-model-rail,
+html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-control-rail {
+  grid-area: auto !important;
+  min-width: 0;
+  max-width: 100%;
+}
