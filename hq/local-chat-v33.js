@@ -52,8 +52,6 @@
     height = Math.max(1, window.innerHeight);
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     if (!nodes.length) {
       for (let i = 0; i < NODE_COUNT; i += 1) {
