@@ -106,7 +106,7 @@
         if (node.y > height) node.y = 0;
       }
       context.beginPath();
-      context.fillStyle = "rgba(" + (node.gold ? secondary : primary) + ",.68)";
+      context.fillStyle = "rgba(" + (node.gold ? secondary : primary) + ",.92)";
       context.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
       context.fill();
       for (let j = index + 1; j < nodes.length; j += 1) {
@@ -114,7 +114,7 @@
         const distance = Math.hypot(node.x - other.x, node.y - other.y);
         if (distance < 105) {
           context.beginPath();
-          context.strokeStyle = "rgba(" + primary + "," + ((1 - distance / 105) * 0.13) + ")";
+          context.strokeStyle = "rgba(" + primary + "," + ((1 - distance / 105) * 0.24) + ")";
           context.lineWidth = 0.65;
           context.moveTo(node.x, node.y);
           context.lineTo(other.x, other.y);

@@ -106,10 +106,10 @@ test("local chat v33 loads its VisionOS layer without inline styles or duplicate
   expect(errors).toEqual([]);
 });
 
-test("local chat v33 slash prompts populate the existing message input", async ({ page }) => {
+test("local chat v35 quick prompts populate the existing message input", async ({ page }) => {
   await page.goto("/local-chat.html");
-  await page.getByRole("button", { name: /EXPLAIN/ }).click();
-  await expect(page.locator("#message")).toHaveValue("Explain this clearly, step by step: ");
+  await page.getByRole("button", { name: /PLAN-FOOT/ }).click();
+  await expect(page.locator("#message")).toHaveValue("Aide-moi à construire un plan football concret : ");
   await expect(page.locator("#load-model")).toBeEnabled();
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
 });
