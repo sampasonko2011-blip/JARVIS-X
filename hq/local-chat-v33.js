@@ -275,7 +275,7 @@
   const input = $("#message");
   document.querySelectorAll("[data-slash-prompt]").forEach((chip) => {
     chip.addEventListener("click", () => {
-      if (!input || input.disabled) return;
+      if (!input) return;
       input.value = chip.getAttribute("data-slash-prompt") || "";
       input.focus();
       input.dispatchEvent(new Event("input", { bubbles: true }));
