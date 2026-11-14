@@ -367,3 +367,35 @@ html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-control-rail {
   min-width: 0;
   max-width: 100%;
 }
+
+
+/* Final reset of the legacy Kardashev grid shorthand/areas.
+   The Inspector now owns both rails; the shell has only brand + conversation. */
+html body main.shell.local-chat-shell {
+  grid: none !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  grid-template-areas: "brand" "center" !important;
+  width: min(880px, 100%) !important;
+  max-width: 880px !important;
+  margin-inline: auto !important;
+  min-width: 0 !important;
+}
+html body main.shell.local-chat-shell > .brand {
+  grid-area: brand !important;
+  min-width: 0 !important;
+}
+html body main.shell.local-chat-shell > .jx-chat-stage {
+  grid-area: center !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-model-rail,
+html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-control-rail {
+  grid-area: auto !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
