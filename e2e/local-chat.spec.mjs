@@ -116,9 +116,9 @@ test("local chat v33 adds opt-in tools only to assistant replies", async ({ page
     const title = document.createElement("strong");
     title.textContent = "JARVIS-X (local)";
     const body = document.createElement("small");
-    body.textContent = "A test response.";
     item.append(title, body);
     document.querySelector("#transcript").append(item);
+    window.setTimeout(() => { body.textContent = "A streamed test response."; }, 30);
   });
   await expect(page.locator("#transcript .jx-msg-actions")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "PIN LOCAL" })).toBeVisible();
