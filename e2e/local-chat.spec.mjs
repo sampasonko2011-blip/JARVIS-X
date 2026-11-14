@@ -82,3 +82,45 @@ test("local chat stacks controls without horizontal overflow at iPad portrait wi
   }));
   expect(dimensions.content, JSON.stringify(dimensions.offenders)).toBeLessThanOrEqual(dimensions.viewport + 1);
 });
+
+
+test("local chat v33 loads its VisionOS layer without inline styles or duplicate return links", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#jx-chat-cosmos")).toHaveCount(1);
+  await expect(page.locator(".jx-circadian-shield")).toHaveCount(1);
+  await expect(page.locator(".jx-vision-back")).toHaveCount(1);
+  await expect(page.locator("#jx-inspector-drawer")).toBeHidden();
+  await expect(page.getByRole("button", { name: /INSPECTOR/ })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("[style]")).toHaveCount(0);
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
+  await expect(page.locator("#jx-inspector-drawer")).toBeVisible();
+  await expect(page.locator(".jx-vault-list")).toContainText("No local pins yet");
+  expect(errors).toEqual([]);
+});
+
+test("local chat v33 slash prompts populate the existing message input", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /EXPLAIN/ }).click();
+  await expect(page.locator("#message")).toHaveValue("Explain this clearly, step by step: ");
+  await expect(page.locator("#load-model")).toBeEnabled();
+  await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
+});
+
+test("local chat v33 adds opt-in tools only to assistant replies", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => {
+    const item = document.createElement("div");
+    item.className = "log";
+    const title = document.createElement("strong");
+    title.textContent = "JARVIS-X (local)";
+    const body = document.createElement("small");
+    item.append(title, body);
+    document.querySelector("#transcript").append(item);
+    window.setTimeout(() => { body.textContent = "A streamed test response."; }, 30);
+  });
+  await expect(page.locator("#transcript .jx-msg-actions")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "PIN LOCAL" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "SPEAK" })).toBeVisible();
+});
