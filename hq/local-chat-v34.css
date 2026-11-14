@@ -235,16 +235,14 @@ body.mode-sun .jx-circadian-shield { opacity: .72; }
   .jx-circadian-shield { transition: none; }
 }
 
-/* v34 true single-column shell */
-.local-chat-shell{display:grid;grid-template-columns:minmax(0,1fr);width:min(900px,100%);max-width:900px;margin-inline:auto;align-items:start}
-.local-chat-shell>.brand,.local-chat-shell>.jx-chat-stage{grid-column:1;min-width:0}
-.local-chat-shell>.jx-chat-stage{width:100%;box-sizing:border-box;border-radius:26px;background:rgba(6,13,27,.68);border-color:rgba(180,225,245,.18);box-shadow:0 28px 76px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.13);backdrop-filter:blur(28px) saturate(185%);-webkit-backdrop-filter:blur(28px) saturate(185%)}
+/* v34: actual root shell is .shell.local-chat-shell in local-chat.html. */
+.shell.local-chat-shell{display:grid;grid-template-columns:minmax(0,1fr);width:min(880px,100%);max-width:880px;min-height:100vh;margin:0 auto;padding:clamp(12px,2vw,24px);gap:14px;align-items:start}
+.shell.local-chat-shell>.brand,.shell.local-chat-shell>.jx-chat-stage{grid-column:1;min-width:0;width:100%}
+.shell.local-chat-shell>.brand{position:sticky;top:8px;z-index:30}
+.jx-chat-stage{width:100%;max-width:100%;box-sizing:border-box;border-radius:26px;background:rgba(6,13,27,.68);border-color:rgba(180,225,245,.18);box-shadow:0 28px 76px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.13);backdrop-filter:blur(28px) saturate(185%);-webkit-backdrop-filter:blur(28px) saturate(185%)}
 .jx-inspector-drawer{grid-template-columns:minmax(0,1fr)}
-.jx-inspector-drawer>.local-chat-card,.jx-inspector-drawer>.jx-control-rail{width:100%;min-width:0;box-sizing:border-box}
-.jx-inspector-drawer>.jx-control-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.jx-inspector-drawer>.jx-model-rail,.jx-inspector-drawer>.jx-control-rail{display:grid;width:100%;min-width:0;box-sizing:border-box;margin:0}
+.jx-inspector-drawer>.jx-control-rail{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
 .jx-inspector-drawer>.jx-control-rail>.integration{min-width:0;overflow-wrap:anywhere}
-.jx-inspector-drawer>.jx-control-rail>.jx-memory-panel{grid-column:1/-1}
-.jx-inspector-drawer>.local-chat-card{margin:0}
-.jx-inspector-drawer .jx-control-rail{gap:10px}
 .jx-inspector-drawer[hidden]{display:none!important}
-@media(max-width:640px){.local-chat-shell{width:100%;padding:10px}.jx-inspector-drawer>.jx-control-rail{grid-template-columns:minmax(0,1fr)}.jx-inspector-drawer>.jx-control-rail>.jx-memory-panel{grid-column:1}.jx-chat-stage{padding:13px}#transcript{max-height:52vh}}
+@media(max-width:640px){.shell.local-chat-shell{width:100%;padding:10px}.jx-inspector-drawer>.jx-control-rail{grid-template-columns:minmax(0,1fr)}.jx-chat-stage{padding:13px}#transcript{max-height:52vh}}
