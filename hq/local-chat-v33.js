@@ -247,6 +247,10 @@
   if (transcript) {
     const observer = new MutationObserver((records) => {
       records.forEach((record) => {
+        const target = record.target && record.target.nodeType === Node.ELEMENT_NODE
+          ? record.target
+          : record.target && record.target.parentElement;
+        if (target && target.closest) attachMessageTools(target.closest(".log"));
         record.addedNodes.forEach((node) => {
           if (node.nodeType !== Node.ELEMENT_NODE) return;
           if (node.matches && node.matches(".log")) attachMessageTools(node);
