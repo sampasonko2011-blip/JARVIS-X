@@ -60,7 +60,7 @@ test("local chat v34 is single-column and keeps legacy controls inside Inspector
   await expect(page.locator(".jx-inspector-drawer .jx-control-rail")).toHaveCount(1);
   await expect(page.locator("#model-select")).toHaveCount(1);
   await expect(page.locator("#jx-status-label")).toHaveText("NOT LOADED");
-  const columns = await shell.evaluate((node) => getComputedStyle(node).gridTemplateColumns.trim().split(/\\s+/).length);
+  const columns = await shell.evaluate((node) => getComputedStyle(node).gridTemplateColumns.trim().split(/\s+/).length);
   expect(columns).toBe(1);
   await page.getByRole("button", { name: /INSPECTOR/ }).click();
   await expect(page.locator(".jx-model-rail")).toBeVisible();
