@@ -39,7 +39,7 @@ test("discovers XMemo resource and authorization server metadata without credent
 
 test("rejects a resource outside the reviewed XMemo MCP origin", async () => {
   await assert.rejects(
-    discoverXMemoOAuth({ resource: "https://attacker.example/mcp", fetchImpl: fakeFetch({}) }),
+    discoverXMemoOAuth({ resource: "https://attacker.com/mcp", fetchImpl: fakeFetch({}) }),
     /oauth_resource_not_approved/,
   );
 });
@@ -48,7 +48,7 @@ test("rejects resource metadata that points to a different resource", async () =
   const fetchImpl = fakeFetch({
     "https://xmemo.dev/.well-known/oauth-protected-resource/mcp": {
       ...resourceMetadata,
-      resource: "https://attacker.example/mcp",
+      resource: "https://attacker.com/mcp",
     },
   });
   await assert.rejects(discoverXMemoOAuth({ fetchImpl }), /oauth_resource_metadata_mismatch/);
@@ -69,10 +69,10 @@ test("rejects issuer mismatch", async () => {
     "https://xmemo.dev/.well-known/oauth-protected-resource/mcp": resourceMetadata,
     "https://auth.xmemo.dev/.well-known/oauth-authorization-server": {
       ...serverMetadata,
-      issuer: "https://attacker.example",
+      issuer: "https://attacker.com",
     },
   });
-  await assert.rejects(discoverXMemoOAuth({ fetchImpl, allowedIssuerHosts: ["auth.xmemo.dev", "attacker.example"] }), /oauth_issuer_mismatch/);
+  await assert.rejects(discoverXMemoOAuth({ fetchImpl, allowedIssuerHosts: ["auth.xmemo.dev", "attacker.com"] }), /oauth_issuer_mismatch/);
 });
 
 test("reports missing PKCE S256 or required scopes instead of silently accepting", async () => {
