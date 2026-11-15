@@ -25,7 +25,7 @@ const agentStrip=make("div","jx42-agent-strip");agentStrip.setAttribute("aria-la
 const composer=make("div","jx42-composer");
 const actions=message.parentElement?.querySelector(".actions");
 composer.append(message);if(actions){composer.append(actions);const voiceStatus=$("voice-dictation-status");if(voiceStatus)composer.append(voiceStatus)}
-dock.append(agentStrip,composer);shell.append(dock);
+const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);shell.append(dock);
 const drawer=$("jx-inspector-drawer");
 const modelRail=shell.querySelector(".jx-model-rail")||drawer?.querySelector(".jx-model-rail");
 const controlRail=shell.querySelector(".jx-control-rail")||drawer?.querySelector(".jx-control-rail");
@@ -56,6 +56,6 @@ const xmemoConsent=$("local-memory-consent");if(xmemoConsent){const label=xmemoC
 const focus=$("jx-local-focus-toggle");if(focus)focus.addEventListener("click",()=>{const on=focus.getAttribute("aria-pressed")==="true";focus.setAttribute("aria-pressed",String(!on));focus.textContent=on?"ENTER LOCKED-IN MODE":"EXIT LOCKED-IN MODE"});
 if(voice)voice.setAttribute("aria-label","Voice dictation");
 const syncDisabled=()=>{if(message.disabled)send.disabled=true;};new MutationObserver(syncDisabled).observe(message,{attributes:true,attributeFilter:["disabled"]});
-const oldClear=$("clear-chat");if(oldClear){const clear=button("jx42-pill","CLEAR",()=>oldClear.click());clear.hidden=true}
+const oldClear=$("clear-chat");if(oldClear){oldClear.textContent="Clear";oldClear.setAttribute("aria-label","Clear chat")}
 refreshAgents();refreshCount();
 })();
