@@ -22,7 +22,9 @@
     else if (/\b(research|source|citation|latest|compare|evidence|analyse|analyze)\b/.test(normalized)) { intent="research"; temperature=0.35; }
     else if (/\b(plan|strategy|roadmap|priorit|architecture|design)\b/.test(normalized)) { intent="strategy"; temperature=0.45; }
     else if (/\b(write|draft|story|creative|brainstorm)\b/.test(normalized)) { intent="creative"; temperature=0.8; }
-    const savedMode=read("jarvis_x_active_mode","normal");\n    const mode=["normal","focus","sun"].includes(savedMode)?savedMode:"normal";\n    return { intent, temperature:clamp(temperature,0.1,1), mode, selectedAgent:read("jarvis_x_chat_selected_agent","JARVIS-X CORE").slice(0,64), execution:"local-model-only" };
+    const savedMode=read("jarvis_x_active_mode","normal");
+    const mode=["normal","focus","sun"].includes(savedMode)?savedMode:"normal";
+    return { intent, temperature:clamp(temperature,0.1,1), mode, selectedAgent:read("jarvis_x_chat_selected_agent","JARVIS-X CORE").slice(0,64), execution:"local-model-only" };
   }
   function buildSystemPrompt(selection) {
     const pinned=readList("jarvis_x_local_vault",5), missions=readList("jarvis_x_local_briefs",3);
