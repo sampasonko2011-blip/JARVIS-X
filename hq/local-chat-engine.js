@@ -100,6 +100,7 @@ loadButton.addEventListener("click", async () => {
     });
     loadStage = "ready";
     status.textContent = "READY";
+    window.JARVIS_BRAIN_V36?.setProviderStatus({provider:"local-m1",label:"LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED"});
     detail.textContent = "Model " + selectedModel + " loaded in this browser. No hosted inference is configured.";
     progress.textContent = "Local model ready. Messages stay in this page session.";
     input.disabled = false;
@@ -177,6 +178,7 @@ sendButton.addEventListener("click", async () => {
       if (typeof delta === "string") {
         answer += delta;
         output.textContent = answer;
+    window.JARVIS_BRAIN_V36?.setProviderStatus({provider:"local-m1",label:"LOCAL M1 · ANSWER GENERATED ON DEVICE"});
       }
     }
     if (!answer) answer = "(No text returned.)";
