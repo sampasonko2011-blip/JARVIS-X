@@ -180,5 +180,5 @@ test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a t
   assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
   assert.match(engine, /max_tokens: 384/);
   assert.match(engine, /memoryBridge\.remember/);
-  assert.match(engine, /explicitLocalMemory/);
+  assert.match(engine, /explicitMemoryNote/);
 });
