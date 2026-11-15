@@ -26,9 +26,11 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
   const dialog = page.getByRole("dialog", { name: "ENGINE & MODEL" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByLabel("Local model")).toHaveCount(1);
+  await expect(dialog.getByLabel("Local model")).toBeVisible();
   await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(5);
+  await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
+  await expect(dialog.locator("#jx-provider-status")).toBeVisible();
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await expect(page.locator("#message")).toBeDisabled();
 });
