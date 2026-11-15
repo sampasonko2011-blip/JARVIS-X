@@ -2,6 +2,7 @@ const MAX_OBJECTIVE_CHARS = 12_000;
 const MAX_MEMORY_CHARS = 8_000;
 const MAX_INPUT_CHARS = 32_000;
 const MAX_OUTPUT_CHARS = 12_000;
+const ALLOWED_EXECUTIVE_PROVIDERS = new Set(["openai", "openrouter", "gemini", "groq", "cerebras", "nvidia", "sambanova", "mistral", "github-models"]);
 
 function requireText(value, code, maxLength) {
   if (typeof value !== "string" || !value.trim() || value.length > maxLength) {
@@ -81,7 +82,7 @@ export async function executeCognitiveKernel(options) {
 
   const input = buildExecutiveEnvelope(task, memoryContext, mode, availableCapabilities);
   const raw = await invokeCore(input, mode);
-  if (!raw || raw.provider !== "openai") throw new Error("cognitive_kernel_core_identity_invalid");
+  if (!raw || !ALLOWED_EXECUTIVE_PROVIDERS.has(raw.provider)) throw new Error("cognitive_kernel_core_identity_invalid");
   const model = requireText(raw.model, "cognitive_kernel_model_identity_missing", 200);
   const answer = requireText(raw.output, "cognitive_kernel_output_invalid", MAX_OUTPUT_CHARS);
 
