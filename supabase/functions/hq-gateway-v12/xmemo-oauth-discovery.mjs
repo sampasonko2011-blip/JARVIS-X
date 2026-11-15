@@ -21,12 +21,12 @@ function normalizeAllowedHosts(value) {
   const hosts = [];
   for (const entry of entries) {
     if (typeof entry !== "string") throw new Error("oauth_issuer_allowlist_invalid");
-    const host = entry.trim().toLowerCase().replace(/\\.$/, "");
+    const host = entry.trim().toLowerCase().replace(/\.$/, "");
     // Exact DNS names only: no wildcards, ports, URL fragments, IP literals,
     // localhost, single-label hosts, or private-use suffixes.
     if (!host || host.length > 253 ||
-        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(host) ||
-        /^(?:localhost|.*\\.(?:localhost|local|internal|test|invalid|example))$/.test(host) ||
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host) ||
+        /^(?:localhost|.*\.(?:localhost|local|internal|test|invalid|example))$/.test(host) ||
         /^[0-9.]+$/.test(host)) {
       throw new Error("oauth_issuer_allowlist_invalid");
     }
@@ -38,7 +38,7 @@ function normalizeAllowedHosts(value) {
 
 function allowlistedHttpsUrl(value, label, allowedHosts) {
   const url = httpsUrl(value, label);
-  const hostname = url.hostname.toLowerCase().replace(/\\.$/, "");
+  const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
   if (hostname.includes(":") || /^[0-9.]+$/.test(hostname) || !allowedHosts.includes(hostname)) {
     throw new Error(label + "_host_not_allowed");
   }
@@ -109,7 +109,7 @@ export async function discoverXMemoOAuth({
 
   // Validate the issuer host BEFORE constructing or fetching its metadata URL.
   const issuer = allowlistedHttpsUrl(authorizationServers[0], "oauth_issuer", allowedHosts);
-  const issuerPath = issuer.pathname.replace(/^\\/+|\\/+$/g, "");
+  const issuerPath = issuer.pathname.replace(/^\/+|\/+$/g, "");
   const metadataCandidates = [
     new URL(WELL_KNOWN + "oauth-authorization-server" + (issuerPath ? "/" + issuerPath : ""), issuer.origin).href,
     new URL(WELL_KNOWN + "openid-configuration" + (issuerPath ? "/" + issuerPath : ""), issuer.origin).href,
