@@ -125,3 +125,97 @@ test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and
   assert.match(gateway, /XMEMO_API_KEY/);
   assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory/);
 });
+
+
+test("OAuth discovery rejects non-allowlisted issuers before any request to their host", async () => {
+  const { discoverXMemoOAuth } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-discovery.mjs");
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes("oauth-protected-resource")) {
+      return new Response(JSON.stringify({
+        resource: "https://xmemo.dev/mcp",
+        authorization_servers: ["https://attacker.example"],
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    throw new Error("unexpected external metadata request");
+  };
+  await assert.rejects(
+    () => discoverXMemoOAuth({ fetchImpl }),
+    /oauth_issuer_host_not_allowed/
+  );
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].startsWith("https://xmemo.dev/"));
+});
+
+test("OAuth discovery accepts only the default exact XMemo issuer host", async () => {
+  const { discoverXMemoOAuth } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-discovery.mjs");
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes("oauth-protected-resource")) {
+      return new Response(JSON.stringify({
+        resource: "https://xmemo.dev/mcp",
+        authorization_servers: ["https://xmemo.dev"],
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({
+      issuer: "https://xmemo.dev",
+      authorization_endpoint: "https://xmemo.dev/oauth/authorize",
+      token_endpoint: "https://xmemo.dev/oauth/token",
+      registration_endpoint: "https://xmemo.dev/oauth/register",
+      code_challenge_methods_supported: ["S256"],
+      grant_types_supported: ["authorization_code"],
+      scopes_supported: ["memory:read", "memory:write"],
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  const result = await discoverXMemoOAuth({ fetchImpl });
+  assert.equal(result.issuer, "https://xmemo.dev/");
+  assert.deepEqual(result.allowedIssuerHosts, ["xmemo.dev"]);
+  assert.equal(calls.length, 2);
+});
+
+test("OAuth discovery rejects loopback, private IP, localhost, wildcard and empty allowlist entries", async () => {
+  const { discoverXMemoOAuth } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-discovery.mjs");
+  for (const host of ["127.0.0.1", "10.0.0.2", "[::1]", "localhost", "*.example.com", ""]) {
+    await assert.rejects(
+      () => discoverXMemoOAuth({ allowedIssuerHosts: [host], fetchImpl: async () => { throw new Error("must not fetch"); } }),
+      /oauth_issuer_allowlist_(invalid|empty)/
+    );
+  }
+});
+
+test("OAuth discovery rejects private, loopback and external issuer values before contacting them", async () => {
+  const { discoverXMemoOAuth } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-discovery.mjs");
+  for (const issuer of ["https://127.0.0.1", "https://10.1.2.3", "https://localhost", "https://metadata.attacker.example"]) {
+    let externalCalls = 0;
+    const fetchImpl = async (url) => {
+      if (String(url).includes("oauth-protected-resource")) {
+        return new Response(JSON.stringify({ resource: "https://xmemo.dev/mcp", authorization_servers: [issuer] }), { status: 200 });
+      }
+      externalCalls++;
+      throw new Error("must not fetch issuer metadata");
+    };
+    await assert.rejects(() => discoverXMemoOAuth({ fetchImpl }), /oauth_issuer_host_not_allowed/);
+    assert.equal(externalCalls, 0);
+  }
+});
+
+test("OAuth discovery rejects OAuth endpoints outside the exact issuer allowlist", async () => {
+  const { discoverXMemoOAuth } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-discovery.mjs");
+  const fetchImpl = async (url) => {
+    if (String(url).includes("oauth-protected-resource")) {
+      return new Response(JSON.stringify({ resource: "https://xmemo.dev/mcp", authorization_servers: ["https://xmemo.dev"] }), { status: 200 });
+    }
+    return new Response(JSON.stringify({
+      issuer: "https://xmemo.dev",
+      authorization_endpoint: "https://auth.attacker.example/authorize",
+      token_endpoint: "https://xmemo.dev/oauth/token",
+      registration_endpoint: "https://xmemo.dev/oauth/register",
+      code_challenge_methods_supported: ["S256"],
+      grant_types_supported: ["authorization_code"],
+      scopes_supported: ["memory:read", "memory:write"],
+    }), { status: 200 });
+  };
+  await assert.rejects(() => discoverXMemoOAuth({ fetchImpl }), /oauth_authorization_endpoint_host_not_allowed/);
+});
