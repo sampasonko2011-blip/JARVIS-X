@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const shell=document.querySelector("main.local-chat-shell");
 const stage=document.querySelector(".jx-chat-stage");
-const header=shell?.querySelector(":scope > .brand");
+const header=shell?.querySelector(".brand");
 const transcript=$("transcript"),message=$("message"),send=$("send-message"),voice=$("voice-dictation");
 if(!shell||!stage||!header||!transcript||!message||!send)return;
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
