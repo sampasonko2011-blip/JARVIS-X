@@ -1,7 +1,7 @@
 /* JARVIS-X v42 — Stark Command Studio. External stylesheet only; strict CSP safe. */
 :root{--jx42-bg:rgba(7,17,31,.88);--jx42-line:rgba(108,218,240,.28);--jx42-cyan:#72f2e4;--jx42-gold:#ffc76a;--jx42-text:#effaff}
 html,body{width:100%;height:100%;min-height:0!important;margin:0;overflow:hidden!important;overscroll-behavior:none}
-body{height:100dvh;min-height:100dvh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)!important;box-sizing:border-box}
+body{height:100dvh;min-height:100dvh;padding:0!important;box-sizing:border-box}
 .local-chat-shell{display:flex!important;flex-direction:column!important;gap:10px!important;width:100%!important;max-width:none!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;margin:0!important;padding:10px clamp(10px,2vw,24px) max(8px,env(safe-area-inset-bottom))!important;box-sizing:border-box!important;overflow:hidden!important}
 .local-chat-shell>.brand{position:relative!important;inset:auto!important;top:auto!important;flex:0 0 auto!important;display:flex;align-items:center;gap:10px;min-height:46px;margin:0!important;padding:7px 12px!important;border-radius:16px!important}
 .local-chat-shell>.brand #jx-mode-status{margin-left:auto}
