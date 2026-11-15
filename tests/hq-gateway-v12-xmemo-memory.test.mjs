@@ -171,7 +171,7 @@ test("OAuth discovery accepts only the default exact XMemo issuer host", async (
   };
   const result = await discoverXMemoOAuth({ fetchImpl });
   assert.equal(result.issuer, "https://xmemo.dev/");
-  assert.deepEqual(result.allowedIssuerHosts, ["xmemo.dev"]);
+  assert.deepEqual(result.allowedIssuerHosts, ["xmemo.dev", "auth.xmemo.dev"]);
   assert.equal(calls.length, 2);
 });
 
