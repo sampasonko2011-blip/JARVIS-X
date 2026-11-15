@@ -73,9 +73,43 @@
     <h3>LOCAL PIN VAULT</h3>
     <p class="footnote">Pins are stored only in this browser's local storage. They are not Memory OS and are not synced to another device.</p>
     <p id="jx-xmemo-sync-status" class="jx-xmemo-sync-status" role="status" aria-live="polite">LOCAL VAULT ACTIVE · CLOUD REQUIRES PER-TURN CONSENT</p>
+    <section class="jx-governance-panel" aria-labelledby="jx-provider-heading">
+      <h3 id="jx-provider-heading">PROVIDER & FAILOVER</h3>
+      <p id="jx-provider-status" class="jx-provider-status" role="status" aria-live="polite">LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED</p>
+      <p id="jx-provider-alert" class="jx-provider-alert" role="alert" hidden></p>
+      <small>Local Chat runs on-device. Cloud failover is not connected or enabled here.</small>
+    </section>
+    <section class="jx-governance-panel" aria-labelledby="jx-agent-heading">
+      <h3 id="jx-agent-heading">CUSTOM AGENT FACTORY</h3>
+      <label for="jx-agent-select">Spécialiste actif</label>
+      <select id="jx-agent-select"><option value="JARVIS-X CORE">JARVIS-X CORE</option></select>
+      <ul id="jx-agent-list" class="jx-agent-list" aria-live="polite"></ul>
+      <form id="jx-agent-form" class="jx-governance-form">
+        <label for="jx-agent-name">Nom de l'agent</label><input id="jx-agent-name" maxlength="48" required>
+        <label for="jx-agent-description">Spécialité (facultatif)</label><input id="jx-agent-description" maxlength="120">
+        <label for="jx-agent-instructions">Instructions de tâche</label><textarea id="jx-agent-instructions" rows="3" maxlength="900" required minlength="12"></textarea>
+        <button class="btn ghost" type="submit">CRÉER UN AGENT LOCAL</button>
+      </form>
+      <small>Maximum 12 profils locaux. Ils ne créent pas de modèles ni d'agents externes.</small>
+    </section>
+    <section class="jx-governance-panel" aria-labelledby="jx-upgrade-heading">
+      <h3 id="jx-upgrade-heading">UPGRADE APPROVAL PANEL</h3>
+      <p>Propositions locales uniquement. Maximum 3 itérations. Aucun changement automatique du code, du serveur ou des règles de sécurité.</p>
+      <form id="jx-upgrade-form" class="jx-governance-form">
+        <label for="jx-upgrade-type">Type de proposition</label>
+        <select id="jx-upgrade-type"><option value="prompt">Préférence de prompt</option><option value="temperature">Température (0.10–0.92)</option></select>
+        <label for="jx-upgrade-title">Titre</label><input id="jx-upgrade-title" maxlength="72" required>
+        <label for="jx-upgrade-content">Contenu / valeur</label><textarea id="jx-upgrade-content" rows="3" maxlength="1200" required></textarea>
+        <button class="btn ghost" type="submit">AJOUTER À LA FILE D'APPROBATION</button>
+      </form>
+      <p id="jx-upgrade-status" role="status" aria-live="polite"></p>
+      <div id="jx-upgrade-proposals" class="jx-upgrade-proposals" aria-live="polite"></div>
+    </section>
     <div class="jx-vault-list" aria-live="polite"></div>
   </section>
   <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Load the model to begin. The last 4 messages are kept in page memory and are not synced. Input limit: 4,000 characters.</small></div></div>
+  <label for="jx-agent-select-chat">Agent / mode spécialiste</label>
+  <select id="jx-agent-select-chat" aria-label="Spécialiste actif"><option value="JARVIS-X CORE">JARVIS-X CORE</option></select>
   <label for="message">Message</label>
   <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
   <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button><button class="btn ghost" id="voice-dictation" type="button" aria-pressed="false">START VOICE DICTATION</button></div><p id="voice-dictation-status" class="footnote" role="status" aria-live="polite">Voice dictation availability depends on this browser.</p>
