@@ -179,7 +179,7 @@ sendButton.addEventListener("click", async () => {
     messages.push({ role: "assistant", content: answer });
     messages[0].content = SYSTEM;
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
-    output = null; answer = ""; recalledContext = "";
+
     const telemetry = cognitiveRoute && cognitiveBrain
       ? cognitiveBrain.record(cognitiveRoute, { status: "completed-local" })
       : null;
@@ -202,6 +202,7 @@ sendButton.addEventListener("click", async () => {
       }
     }
     reflectState(sampling.mode, answer);
+    output = null; answer = ""; recalledContext = "";
     if (useMemory) {
       try {
         const stored = await memoryBridge.remember(text, answer);
