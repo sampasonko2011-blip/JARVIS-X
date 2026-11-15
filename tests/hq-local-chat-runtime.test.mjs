@@ -16,7 +16,7 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
-  assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);
+  assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
   assert.match(engine, /MAX_INPUT_CHARS = 4000/);
   assert.match(engine, /stream: true/);
   assert.match(engine, /buildSystemPrompt\(cognitiveRoute\)/);
@@ -168,4 +168,17 @@ test("v39 local chat injects a compact live JARVIS-X system prompt before every 
   assert.match(engine, /messages\[0\]\.content = systemPrompt/);
   assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
   assert.match(engine, /cognitiveBrain\.record/);
+});
+
+test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a two-turn memory bound", () => {
+  const brain = read("../hq/jarvis-brain-v36.js");
+  const engine = read("../hq/local-chat-engine.js");
+  assert.match(brain, /explicitMemoryNote/);
+  assert.match(brain, /storeLocalMemory/);
+  assert.match(brain, /sanitizeResponse/);
+  assert.match(brain, /retiens/);
+  assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
+  assert.match(engine, /max_tokens: 384/);
+  assert.match(engine, /memoryBridge\.remember/);
+  assert.match(engine, /explicitLocalMemory/);
 });
