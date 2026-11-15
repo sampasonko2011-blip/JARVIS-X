@@ -37,5 +37,7 @@
     ].join("\n");
   }
   function record(selection,result) { return {intent:selection.intent,temperature:selection.temperature,status:String(result?.status||"unknown"),execution:"local-model-only"}; }
-  const api=Object.freeze({route,analyzeCognitiveRoute:route,systemContext:buildSystemPrompt,buildSystemPrompt,record});\n  window.JARVIS_BRAIN_V36=api;\n  window.JARVIS_SOVEREIGN_BRAIN=api;
+  const api=Object.freeze({route,analyzeCognitiveRoute:route,systemContext:buildSystemPrompt,buildSystemPrompt,record});
+  window.JARVIS_BRAIN_V36=api;
+  window.JARVIS_SOVEREIGN_BRAIN=api;
 })();
