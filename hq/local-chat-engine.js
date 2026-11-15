@@ -176,8 +176,8 @@ sendButton.addEventListener("click", async () => {
     messages.push({ role: "assistant", content: answer });
     messages[0].content = SYSTEM;
     messages = [messages[0], ...messages.slice(1).slice(-MAX_HISTORY_MESSAGES)];
-    const telemetry = cognitiveRoute && window.JARVIS_BRAIN_V36
-      ? window.JARVIS_BRAIN_V36.record(cognitiveRoute, { status: "completed-local" })
+    const telemetry = cognitiveRoute && cognitiveBrain
+      ? cognitiveBrain.record(cognitiveRoute, { status: "completed-local" })
       : null;
     progress.textContent = "Generated locally on this device using " + sampling.mode + " sampling." + (telemetry ? " · " + telemetry.intent + " · temp " + telemetry.temperature : "");
     reflectState(sampling.mode, answer);
