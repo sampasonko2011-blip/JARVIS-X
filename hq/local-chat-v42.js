@@ -1,12 +1,11 @@
 (() => {
 "use strict";
-window.__JX42_BOOT = "started";
 const $=id=>document.getElementById(id);
 const shell=document.querySelector("main.local-chat-shell");
 const stage=document.querySelector(".jx-chat-stage");
 const header=shell?.querySelector(".brand");
 const transcript=$("transcript"),message=$("message"),send=$("send-message"),voice=$("voice-dictation");
-if(!shell||!stage||!header||!transcript||!message||!send){window.__JX42_BOOT="missing-prerequisite";return;}
+if(!shell||!stage||!header||!transcript||!message||!send)return;
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const button=(cls,label,fn)=>{const b=make("button",cls,label);b.type="button";b.addEventListener("click",fn);return b};
 const modal=(id,title)=>{const back=make("div","jx42-modal-backdrop");back.id=id;back.hidden=true;back.setAttribute("aria-hidden","true");const panel=make("section","jx42-modal");panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-label",title);const head=make("div","jx42-modal-head");const h=make("h2","",title);const close=button("jx42-modal-close","×",()=>closeModal(back));close.setAttribute("aria-label","Fermer");head.append(h,close);const body=make("div","jx42-modal-body");panel.append(head,body);back.append(panel);document.body.append(back);back.addEventListener("click",e=>{if(e.target===back)closeModal(back)});return{back,body,close,panel}};
@@ -60,5 +59,4 @@ if(voice)voice.setAttribute("aria-label","Voice dictation");
 const syncDisabled=()=>{if(message.disabled)send.disabled=true;};new MutationObserver(syncDisabled).observe(message,{attributes:true,attributeFilter:["disabled"]});
 const oldClear=$("clear-chat");if(oldClear){oldClear.textContent="Clear";oldClear.setAttribute("aria-label","Clear chat")}
 refreshAgents();refreshCount();
-window.__JX42_BOOT = "ready";
 })();
