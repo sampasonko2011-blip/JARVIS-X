@@ -192,7 +192,7 @@ sendButton.addEventListener("click", async () => {
         : "Demande de mémoire détectée, mais stockage local indisponible.";
       if (useMemory && saved.status === "stored-local") {
         try {
-          const synced = await memoryBridge.remember("Mémoire explicitement demandée : " + memoryNote, "Note enregistrée depuis la demande explicite de l'utilisateur.");
+          const synced = await memoryBridge.remember("Mémoire explicitement demandée : " + memoryNote, answer);
           memoryStatus.textContent = synced.status === "stored"
             ? "Note enregistrée localement et synchronisée via le service mémoire authentifié."
             : "Note enregistrée localement ; synchronisation distante : " + String(synced.status || "unknown") + ".";
@@ -203,7 +203,7 @@ sendButton.addEventListener("click", async () => {
     }
     reflectState(sampling.mode, answer);
     output = null; answer = ""; recalledContext = "";
-    if (useMemory) {
+    if (useMemory && !memoryNote) {
       try {
         const stored = await memoryBridge.remember(text, answer);
         memoryStatus.textContent = stored.status === "stored"
