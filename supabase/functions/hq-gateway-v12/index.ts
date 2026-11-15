@@ -665,9 +665,15 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "live_inference_disabled", executive_identity: "JARVIS-X", model_calls: 0 }, 403, origin);
   }
 
+  const providerEnvironment = Deno.env.toObject();
+  const configuredCascadeProviders = providerEnvironment.JX_ENABLE_PROVIDER_CASCADE === "true"
+    ? listProviderConfiguration(providerEnvironment)
+    : [];
+  const openAIConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret) && EXECUTIVE_CONFIG.model);
   const missingProviderConfig: string[] = [];
-  if (!Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
-  if (!EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
+  if (configuredCascadeProviders.length === 0 && !Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
+  if (configuredCascadeProviders.length === 0 && !EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
+  if (configuredCascadeProviders.length === 0 && !openAIConfigured && missingProviderConfig.length === 0) missingProviderConfig.push("EXECUTIVE_PROVIDER_CONFIGURATION");
   if (missingProviderConfig.length > 0) {
     const requestedIdentity = "JARVIS-X";
     const requestedModel = EXECUTIVE_CONFIG.model;
