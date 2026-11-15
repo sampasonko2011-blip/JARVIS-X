@@ -2,6 +2,7 @@ const MAX_OBJECTIVE_CHARS = 12_000;
 const MAX_MEMORY_CHARS = 8_000;
 const MAX_INPUT_CHARS = 32_000;
 const MAX_OUTPUT_CHARS = 12_000;
+const ALLOWED_EXECUTIVE_PROVIDERS = new Set(["openai", "openrouter", "gemini", "groq", "cerebras", "nvidia", "sambanova", "mistral", "github-models"]);
 
 function requireText(value, code, maxLength) {
   if (typeof value !== "string" || !value.trim() || value.length > maxLength) {
@@ -18,7 +19,7 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
     objective,
     operating_mode: mode,
     control_contract: {
-      identity: "One JARVIS-X executive identity. Do not present internal capabilities as separate assistants.",
+      identity: "One JARVIS-X executive identity. The user is Sam; address the user as Sam, never as JARVIS-X. JARVIS-X is the assistant, Sam is the user. Do not present internal capabilities as separate assistants.",
       workflow: [
         "Understand the objective and identify missing critical information.",
         "Decompose the work into the smallest useful subproblems.",
@@ -81,7 +82,7 @@ export async function executeCognitiveKernel(options) {
 
   const input = buildExecutiveEnvelope(task, memoryContext, mode, availableCapabilities);
   const raw = await invokeCore(input, mode);
-  if (!raw || raw.provider !== "openai") throw new Error("cognitive_kernel_core_identity_invalid");
+  if (!raw || !ALLOWED_EXECUTIVE_PROVIDERS.has(raw.provider)) throw new Error("cognitive_kernel_core_identity_invalid");
   const model = requireText(raw.model, "cognitive_kernel_model_identity_missing", 200);
   const answer = requireText(raw.output, "cognitive_kernel_output_invalid", MAX_OUTPUT_CHARS);
 

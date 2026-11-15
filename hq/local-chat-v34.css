@@ -429,3 +429,26 @@ body {
   margin: 10px 0 14px;
   overflow-wrap: anywhere;
 }
+
+
+/* v41 XMemo sync status badge */
+.jx-xmemo-sync-status { display:inline-flex; max-width:100%; padding:8px 12px; border:1px solid rgba(115,190,255,.35); border-radius:999px; color:#b8dcff; font-size:.72rem; letter-spacing:.04em; overflow-wrap:anywhere; }
+
+/* v41 Tranche 2 governed local controls */
+.jx-governance-panel{margin:14px 0;padding:14px;border:1px solid rgba(115,190,255,.22);border-radius:14px;background:rgba(9,18,34,.72);min-width:0}
+.jx-governance-panel h3{margin:0 0 10px;color:#b8dcff;font-size:.78rem;letter-spacing:.08em}
+.jx-governance-panel p,.jx-governance-panel small{color:#c4d2e3;font-size:.78rem;line-height:1.55;overflow-wrap:anywhere}
+.jx-governance-form{display:grid;gap:8px;margin-top:12px}
+.jx-governance-form label{color:#d6e5f5;font-size:.76rem}
+.jx-governance-form input,.jx-governance-form textarea,.jx-governance-form select,#jx-agent-select,#jx-agent-select-chat{width:100%;min-width:0;padding:10px;color:#edf6ff;background:#101b2d;border:1px solid rgba(130,180,225,.3);border-radius:9px;font:inherit}
+.jx-governance-form textarea{resize:vertical}
+.jx-agent-list{margin:8px 0;padding-left:20px;color:#c4d2e3;font-size:.78rem}
+.jx-provider-status{padding:9px 11px;border-radius:9px;border:1px solid rgba(115,190,255,.3)}
+.jx-provider-alert:not([hidden]){padding:10px;border:1px solid #d69b45;border-radius:9px;color:#ffe0a6;background:rgba(120,72,12,.2)}
+.jx-upgrade-proposals{display:grid;gap:10px;margin-top:12px}
+.jx-upgrade-card{padding:12px;border:1px solid rgba(130,180,225,.24);border-radius:10px;min-width:0}
+.jx-upgrade-card strong{display:block;color:#e8f2ff;font-size:.78rem;overflow-wrap:anywhere}
+.jx-upgrade-card p{white-space:pre-wrap;overflow-wrap:anywhere}
+.jx-upgrade-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.jx-upgrade-actions button{min-height:38px}
+#jx-agent-select-chat{margin:6px 0 12px}

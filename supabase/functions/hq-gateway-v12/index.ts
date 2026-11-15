@@ -9,6 +9,7 @@ import { createMockExecutionResult } from "./mock-execution.mjs";
 import { executeCognitiveKernel } from "./cognitive-kernel.mjs";
 import { createDefaultCapabilityRegistry } from "./default-capabilities.mjs";
 import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
+import { invokeProviderCascade, listProviderConfiguration } from "./provider-cascade.mjs";
 import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
@@ -334,6 +335,14 @@ function extractResponsesText(data: any) {
   return chunks.join("\n");
 }
 async function invokeOpenAIResponses(input: unknown, instructions: string, tools: unknown[]) {
+  // The multi-provider adapter is opt-in twice: the release-wide live gate and
+  // JX_ENABLE_PROVIDER_CASCADE plus per-provider enable flags. No key alone activates it.
+  const providerEnv = Deno.env.toObject();
+  if (providerEnv.JX_ENABLE_PROVIDER_CASCADE === "true" &&
+      listProviderConfiguration(providerEnv).length > 0) {
+    const routed = await invokeProviderCascade({ input, instructions, tools, env: providerEnv });
+    return { ...routed.response, provider: routed.provider };
+  }
   const config = EXECUTIVE_CONFIG;
   const apiKey = Deno.env.get(config.secret);
   if (!apiKey) throw new Error("provider_secret_missing_openai");
@@ -361,7 +370,7 @@ async function invokeOpenAIResponses(input: unknown, instructions: string, tools
   if (!(returnedModel === configuredModel || returnedModel.startsWith(configuredModel + "-") || returnedModel.startsWith(configuredModel))) {
     throw new Error("provider_model_identity_mismatch_openai");
   }
-  return data;
+  return { ...data, provider: "openai" };
 }
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
@@ -656,9 +665,15 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "live_inference_disabled", executive_identity: "JARVIS-X", model_calls: 0 }, 403, origin);
   }
 
+  const providerEnvironment = Deno.env.toObject();
+  const configuredCascadeProviders = providerEnvironment.JX_ENABLE_PROVIDER_CASCADE === "true"
+    ? listProviderConfiguration(providerEnvironment)
+    : [];
+  const openAIConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret) && EXECUTIVE_CONFIG.model);
   const missingProviderConfig: string[] = [];
-  if (!Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
-  if (!EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
+  if (configuredCascadeProviders.length === 0 && !Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
+  if (configuredCascadeProviders.length === 0 && !EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
+  if (configuredCascadeProviders.length === 0 && !openAIConfigured && missingProviderConfig.length === 0) missingProviderConfig.push("EXECUTIVE_PROVIDER_CONFIGURATION");
   if (missingProviderConfig.length > 0) {
     const requestedIdentity = "JARVIS-X";
     const requestedModel = EXECUTIVE_CONFIG.model;
@@ -737,7 +752,7 @@ Deno.serve(async (req: Request) => {
                   invokeOpenAIResponses(request.input, request.instructions, request.tools),
               });
               return {
-                provider: "openai",
+                provider: loop.provider,
                 model: loop.model,
                 output: loop.answer,
                 providerCalls: loop.modelCalls,
@@ -749,7 +764,7 @@ Deno.serve(async (req: Request) => {
         })();
     const executionMode = result.executionMode ?? "single-core-cognitive-kernel";
     const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
-    const reportedProvider = PRIMARY_PROVIDER;
+    const reportedProvider = result.providersUsed[0]?.provider ?? PRIMARY_PROVIDER;
     const reportedModel = result.providersUsed[0]?.model ?? EXECUTIVE_CONFIG.model;
     const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
     try {
@@ -778,7 +793,7 @@ Deno.serve(async (req: Request) => {
       memory: { provider: "xmemo", read_status: memory.status, write_status: memoryWriteStatus },
     }, 200, origin);
   } catch (error) {
-    const code = error instanceof Error && /^(provider_http_\d+_|provider_empty_output_|provider_model_identity_|provider_secret_missing_|provider_secrets_missing_|provider_interaction_status_|provider_incomplete_response_|provider_model_missing_|responses_tool_)/.test(error.message)
+    const code = error instanceof Error && /^(provider_http_\d+_|provider_empty_output_|provider_model_identity_|provider_secret_missing_|provider_secrets_missing_|provider_interaction_status_|provider_incomplete_response_|provider_model_missing_|provider_cascade_|provider_response_|provider_tool_|responses_tool_)/.test(error.message)
       ? error.message.slice(0, 120)
       : "provider_request_failed";
     try {

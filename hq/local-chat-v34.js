@@ -20,7 +20,8 @@
       // On iPad Safari the drawer can open below the visible viewport. Scroll
       // the document (not an inner panel) so the model controls are reachable.
       requestAnimationFrame(() => {
-        drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        const firstControl = model?.querySelector("#load-model") || model;
+        firstControl?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       });
     }
   };

@@ -54,6 +54,7 @@ export async function executeResponsesToolLoop(options = {}) {
   let toolCalls = 0;
   const capabilitiesUsed = [];
   let returnedModel = "";
+  let returnedProvider = "openai";
   while (modelCalls < MAX_MODEL_CALLS) {
     const serializedInput = JSON.stringify(input);
     if (typeof serializedInput !== "string" || serializedInput.length > MAX_SERIALIZED_INPUT_CHARS) fail("responses_tool_input_too_large");
@@ -66,12 +67,13 @@ export async function executeResponsesToolLoop(options = {}) {
     if (!response || response.status !== "completed") fail("responses_tool_model_incomplete");
     if (typeof response.model !== "string" || !response.model.trim()) fail("responses_tool_model_identity_missing");
     returnedModel = response.model;
+    returnedProvider = typeof response.provider === "string" ? response.provider : "openai";
     const output = Array.isArray(response.output) ? response.output : [];
     const calls = output.filter(item => item?.type === "function_call");
     if (calls.length === 0) {
       const answer = extractText(response);
       if (!answer) fail("responses_tool_final_output_empty");
-      return Object.freeze({ answer, model: returnedModel, modelCalls, toolCalls, capabilitiesUsed: Object.freeze([...capabilitiesUsed]) });
+      return Object.freeze({ answer, model: returnedModel, provider: returnedProvider, modelCalls, toolCalls, capabilitiesUsed: Object.freeze([...capabilitiesUsed]) });
     }
     const outputs = [];
     for (const call of calls) {

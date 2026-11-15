@@ -33,7 +33,7 @@ function createRuntime() {
 
 async function discover() {
   if (!metadataPromise) {
-    metadataPromise = discoverXMemoOAuth().catch((error) => {
+    metadataPromise = discoverXMemoOAuth({ allowedIssuerHosts: Deno.env.get("XMEMO_ALLOWED_ISSUER_HOSTS") }).catch((error) => {
       metadataPromise = null;
       throw error;
     });
