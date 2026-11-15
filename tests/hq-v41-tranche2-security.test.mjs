@@ -7,8 +7,8 @@ test("v41 Inspector contains local agent factory, approval queue, rollback and h
  const page=await read("../hq/local-chat.html"), brain=await read("../hq/jarvis-brain-v36.js"), engine=await read("../hq/local-chat-engine.js");
  for(const id of ["jx-agent-form","jx-agent-select","jx-agent-select-chat","jx-upgrade-form","jx-upgrade-proposals","jx-provider-status","jx-provider-alert","jx-xmemo-sync-status"]) assert.ok(page.includes('id="'+id+'"'),id);
  for(const token of ["APPROUVER & ASSIMILER","REJETER","ROLLBACK","iterations","maxIterations:3","jarvis_x_custom_agents","jarvis_x_upgrade_proposals"]) assert.ok(brain.includes(token),token);
- assert.match(brain,/agents\.length>=12/);
- assert.match(brain,/x\\.iterations>=3/);
+ assert.match(brain,/a\.length>=12/);
+ assert.match(brain,/x\.iterations>=3/);
  assert.match(brain,/local-model-only/);
  assert.match(engine,/LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED/);
  assert.doesNotMatch(engine,/providerCascade|invokeProviderCascade|OPENROUTER_API_KEY|GEMINI_API_KEY/);
