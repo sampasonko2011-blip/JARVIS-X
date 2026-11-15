@@ -19,6 +19,9 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);
   assert.match(engine, /MAX_INPUT_CHARS = 4000/);
   assert.match(engine, /stream: true/);
+  assert.match(engine, /buildSystemPrompt\(cognitiveRoute\)/);
+  assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
+  assert.match(engine, /role: "system", content: SYSTEM/);
   assert.match(engine, /return body;/);
   assert.match(engine, /for await \(const chunk of stream\)/);
   assert.match(engine, /No cloud fallback was attempted/);
@@ -155,4 +158,14 @@ test("local model selector defaults to the smallest iPad option and allowlists a
   assert.match(engine, /ALLOWED_MODEL_IDS/);
   assert.match(engine, /CreateMLCEngine\(selectedModel/);
   assert.match(engine, /selectedModel\) && prebuiltAppConfig\.model_list/);
+});
+
+test("v39 local chat injects a compact live JARVIS-X system prompt before every completion", () => {
+  const brain = read("../hq/jarvis-brain-v36.js");
+  const engine = read("../hq/local-chat-engine.js");
+  for (const marker of ["Tu es JARVIS-X", "COCKPIT LIVE", "Mode=", "Agent=", "Route=", "Température=", "Heure locale=", "MÉMOIRE LOCALE"]) assert.ok(brain.includes(marker), marker);
+  assert.match(brain, /buildSystemPrompt/);
+  assert.match(engine, /messages\[0\]\.content = systemPrompt/);
+  assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
+  assert.match(engine, /cognitiveBrain\.record/);
 });
