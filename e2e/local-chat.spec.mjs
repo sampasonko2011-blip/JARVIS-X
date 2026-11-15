@@ -46,7 +46,7 @@ test("local chat defaults to the smallest iPad model and offers larger local mod
   await page.getByRole("button", { name: /INSPECTOR/ }).click();
   const model = page.getByLabel("Local model");
   await expect(model).toHaveValue("SmolLM2-135M-Instruct-q0f16-MLC");
-  await expect(model.locator("option")).toHaveCount(3);
+  await expect(model.locator("option")).toHaveCount(5);
   await expect(page.getByRole("button", { name: "Load selected model" })).toBeEnabled();
   await expect(page.getByText(/Only the selected model downloads/)).toBeVisible();
 });
