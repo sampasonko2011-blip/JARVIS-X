@@ -399,3 +399,33 @@ html body main.shell.local-chat-shell .jx-inspector-drawer > .jx-control-rail {
   min-width: 0 !important;
   max-width: 100% !important;
 }
+
+
+/* v37 iPad Safari: keep the document vertically scrollable while the
+   decorative cosmos remains viewport-fixed behind the interface. */
+html,
+body {
+  height: auto !important;
+  min-height: 100dvh;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+body {
+  min-height: 100dvh;
+  padding-bottom: 120px;
+}
+#jx-chat-cosmos {
+  position: fixed;
+  inset: 0;
+}
+
+/* Keep voice status readable below its toolbar controls on narrow screens. */
+#jx-voice-status {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  line-height: 1.5;
+  margin: 10px 0 14px;
+  overflow-wrap: anywhere;
+}
