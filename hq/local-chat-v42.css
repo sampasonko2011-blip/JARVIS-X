@@ -68,3 +68,5 @@ body{height:100dvh;min-height:100dvh;padding:0!important;box-sizing:border-box}
 .jx42-composer #voice-dictation{grid-column:2}.jx42-composer #send-message{grid-column:3}.jx42-composer #clear-chat{grid-column:4}
 
 .jx42-modal-body #load-model{display:inline-flex!important;visibility:visible!important;opacity:1!important}.jx42-modal-body .local-chat-card>.actions{display:flex!important;visibility:visible!important;opacity:1!important}
+
+.jx42-modal-body>.actions{display:flex!important;visibility:visible!important;opacity:1!important}
