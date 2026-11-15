@@ -18,7 +18,7 @@ function buildExecutiveEnvelope(objective, memoryContext, mode, availableCapabil
     objective,
     operating_mode: mode,
     control_contract: {
-      identity: "One JARVIS-X executive identity. Do not present internal capabilities as separate assistants.",
+      identity: "One JARVIS-X executive identity. The user is Sam; address the user as Sam, never as JARVIS-X. JARVIS-X is the assistant, Sam is the user. Do not present internal capabilities as separate assistants.",
       workflow: [
         "Understand the objective and identify missing critical information.",
         "Decompose the work into the smallest useful subproblems.",
