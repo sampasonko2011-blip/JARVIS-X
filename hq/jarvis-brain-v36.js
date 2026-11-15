@@ -40,7 +40,7 @@
     return String(value || "").replace(/^\s*(?:As an AI(?: language model)?[,.: -]*|En tant qu['’]assistant(?: numérique)?[,.: -]*|J['’]ai été préparé pour aider[,.: -]*)/i, "").trim();
   }
   function explicitMemoryNote(value) {
-    const match = String(value || "").match(/^\s*(?:retiens(?: que)?|note que|rappelle-toi(?: que)?|sauvegarde(?: que)?|mon objectif est)\s*[:,-]?\\s*(.{4,500})$/i);
+    const match = String(value || "").match(/^\s*(?:retiens(?: que)?|note que|rappelle-toi(?: que)?|sauvegarde(?: que)?|mon objectif est)\s*[:,-]?\s*(.{4,500})$/i);
     return match ? match[1].trim() : "";
   }
   function storeLocalMemory(note) {
