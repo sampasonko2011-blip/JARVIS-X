@@ -201,11 +201,12 @@ sendButton.addEventListener("click", async () => {
         }
       }
     }
-    reflectState(sampling.mode, answer);
+    const finalAnswer = answer;
+    reflectState(sampling.mode, finalAnswer);
     output = null; answer = ""; recalledContext = "";
     if (useMemory && !memoryNote) {
       try {
-        const stored = await memoryBridge.remember(text, answer);
+        const stored = await memoryBridge.remember(text, finalAnswer);
         memoryStatus.textContent = stored.status === "stored"
           ? "This turn was saved to your private memory namespace."
           : "Local reply generated; memory save returned " + String(stored.status || "unknown") + ".";
