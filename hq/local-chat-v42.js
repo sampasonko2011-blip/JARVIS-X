@@ -19,7 +19,7 @@ const hud=make("div","jx42-hud-actions");
 const enginePill=button("jx42-pill primary","◈ JARVIS-X · M1 / CLOUD",()=>openModal(engineModal,enginePill));
 const memoryPill=button("jx42-pill","🧠 XMEMO",()=>openModal(memoryModal,memoryPill));
 const upgradePill=button("jx42-pill","🧬 UPGRADES",()=>openModal(upgradeModal,upgradePill));
-const count=make("span","jx42-count","0");count.setAttribute("aria-label","propositions en attente");upgradePill.append(count);hud.append(enginePill,memoryPill,upgradePill);header.append(hud);
+const count=make("span","jx42-count","0");count.setAttribute("aria-label","propositions en attente");upgradePill.append(count);hud.append(memoryPill,upgradePill);header.insertBefore(enginePill,header.children[2]||null);header.append(hud);
 const dock=make("section","jx42-dock");dock.setAttribute("aria-label","Command dock");
 const agentStrip=make("div","jx42-agent-strip");agentStrip.setAttribute("aria-label","Agents disponibles");
 const composer=make("div","jx42-composer");
