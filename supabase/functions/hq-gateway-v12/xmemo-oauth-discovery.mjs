@@ -1,5 +1,5 @@
 const DEFAULT_RESOURCE = "https://xmemo.dev/mcp";
-const DEFAULT_ISSUER_HOSTS = Object.freeze(["xmemo.dev"]);
+const DEFAULT_ISSUER_HOSTS = Object.freeze(["xmemo.dev", "auth.xmemo.dev"]);
 const WELL_KNOWN = "/.well-known/";
 
 function httpsUrl(value, label) {
