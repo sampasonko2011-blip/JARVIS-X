@@ -18,15 +18,15 @@ function requireMetadata(metadata) {
   }
   const allowedHosts = new Set(rawHosts.map((host) => {
     if (typeof host !== "string") throw new Error("oauth_issuer_allowlist_invalid");
-    const normalized = host.trim().toLowerCase().replace(/\\.$/, "");
-    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(normalized) ||
-        /^(?:localhost|.*\\.(?:localhost|local|internal|test|invalid|example))$/.test(normalized) ||
+    const normalized = host.trim().toLowerCase().replace(/\.$/, "");
+    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(normalized) ||
+        /^(?:localhost|.*\.(?:localhost|local|internal|test|invalid|example))$/.test(normalized) ||
         /^[0-9.]+$/.test(normalized)) throw new Error("oauth_issuer_allowlist_invalid");
     return normalized;
   }));
   const allowedEndpoint = (value, label) => {
     const url = requireHttps(value, label);
-    const hostname = url.hostname.toLowerCase().replace(/\\.$/, "");
+    const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
     if (url.port || hostname.includes(":") || /^[0-9.]+$/.test(hostname) || !allowedHosts.has(hostname)) {
       throw new Error(label + "_host_not_allowed");
     }
