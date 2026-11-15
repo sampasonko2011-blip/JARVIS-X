@@ -13,12 +13,16 @@ test("v42 is a true full-viewport workspace with no document scroll", async ({ p
     shell: Math.round(document.querySelector(".local-chat-shell").getBoundingClientRect().height),
     shellBottom: Math.round(document.querySelector(".local-chat-shell").getBoundingClientRect().bottom),
     viewportWidth: document.documentElement.clientWidth,
-    shellWidth: document.querySelector(".local-chat-shell").scrollWidth
+    shellWidth: document.querySelector(".local-chat-shell").scrollWidth,
+    shellDisplay: getComputedStyle(document.querySelector(".local-chat-shell")).display,
+    shellRectWidth: Math.round(document.querySelector(".local-chat-shell").getBoundingClientRect().width)
   }));
   expect(state.document).toBeLessThanOrEqual(state.viewport + 1);
   expect(state.body).toBeLessThanOrEqual(state.viewport + 1);
   expect(state.shellBottom).toBeLessThanOrEqual(state.viewport + 1);
   expect(state.shellWidth).toBeLessThanOrEqual(state.viewportWidth + 1);
+  expect(state.shellDisplay).toBe("flex");
+  expect(state.shellRectWidth).toBeGreaterThanOrEqual(state.viewportWidth - 1);
 });
 
 test("v42 Engine & Model modal exposes all local model choices without loading one", async ({ page }) => {
