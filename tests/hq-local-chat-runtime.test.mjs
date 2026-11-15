@@ -15,6 +15,8 @@ test("local HQ chat pins WebLLM and bundles a self-hosted browser runtime", () =
 test("local chat uses the registered small Qwen model with no cloud inference fallback", () => {
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC/);
+  assert.match(engine, /Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC/);
+  assert.match(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
   assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
   assert.match(engine, /MAX_INPUT_CHARS = 4000/);
@@ -153,6 +155,8 @@ test("local model selector defaults to the smallest iPad option and allowlists a
   assert.match(page, /value="SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
+  assert.match(page, /value="Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
+  assert.match(page, /value="Llama-3\.2-3B-Instruct-q4f16_1-MLC"/);
   assert.match(engine, /DEFAULT_MODEL_ID = "SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(engine, /"SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(engine, /ALLOWED_MODEL_IDS/);
@@ -181,4 +185,13 @@ test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a t
   assert.match(engine, /max_tokens: 384/);
   assert.match(engine, /memoryBridge\.remember/);
   assert.match(engine, /explicitMemoryNote/);
+});
+
+
+test("v41 role lock and XMemo status are present", () => {
+ const brain=read("../hq/jarvis-brain-v36.js"); const engine=read("../hq/local-chat-engine.js"); const page=read("../hq/local-chat.html");
+ assert.match(brain,/L'utilisateur s'appelle Sam/); assert.match(brain,/ne l'appelle jamais JARVIS-X/);
+ assert.match(brain,/bonjour\\|bonsoir\\|salut\\|hello/); assert.match(engine,/L'utilisateur s'appelle Sam/);
+ assert.match(page,/id="jx-xmemo-sync-status"/); assert.match(engine,/CLOUD REQUIRES CONSENT/); assert.match(engine,/XMEMO CLOUD SYNCED/);
+ assert.match(page,/2\\.26 GB GPU memory/); assert.match(page,/1\\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
 });
