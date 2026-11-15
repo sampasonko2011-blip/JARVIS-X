@@ -1,8 +1,23 @@
 import { test, expect } from "@playwright/test";
 
 test("v42 is a true full-viewport workspace with no document scroll", async ({ page }) => {
+  const pageErrors = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.goto("/local-chat.html");
+  const boot = await page.evaluate(() => ({
+    readyState: document.readyState,
+    shell: !!document.querySelector("main.local-chat-shell"),
+    header: !!document.querySelector("main.local-chat-shell > .brand"),
+    stage: !!document.querySelector(".jx-chat-stage"),
+    transcript: !!document.querySelector("#transcript"),
+    message: !!document.querySelector("#message"),
+    send: !!document.querySelector("#send-message"),
+    script: [...document.scripts].some(script => script.src.endsWith("/local-chat-v42.js")),
+    dock: !!document.querySelector(".jx42-dock"),
+    hud: !!document.querySelector(".jx42-hud-actions")
+  }));
+  console.log("v42 boot diagnostics", JSON.stringify({ boot, pageErrors }));
   await expect(page.locator(".jx42-dock")).toBeVisible();
   await expect(page.locator("#message")).toBeVisible();
   await expect(page.locator("#send-message")).toBeVisible();
