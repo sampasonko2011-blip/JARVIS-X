@@ -429,3 +429,7 @@ body {
   margin: 10px 0 14px;
   overflow-wrap: anywhere;
 }
+
+
+/* v41 XMemo sync status badge */
+.jx-xmemo-sync-status { display:inline-flex; max-width:100%; padding:8px 12px; border:1px solid rgba(115,190,255,.35); border-radius:999px; color:#b8dcff; font-size:.72rem; letter-spacing:.04em; overflow-wrap:anywhere; }
