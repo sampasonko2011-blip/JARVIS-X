@@ -219,3 +219,29 @@ test("OAuth discovery rejects OAuth endpoints outside the exact issuer allowlist
   };
   await assert.rejects(() => discoverXMemoOAuth({ fetchImpl }), /oauth_authorization_endpoint_host_not_allowed/);
 });
+
+
+test("OAuth client boundary independently rejects endpoints outside the discovered hostname allowlist", async () => {
+  const { registerXMemoOAuthClient } = await import("../supabase/functions/hq-gateway-v12/xmemo-oauth-client.mjs");
+  const metadata = {
+    resource: "https://xmemo.dev/mcp",
+    issuer: "https://xmemo.dev/",
+    authorizationEndpoint: "https://auth.attacker.example/authorize",
+    tokenEndpoint: "https://xmemo.dev/oauth/token",
+    registrationEndpoint: "https://xmemo.dev/oauth/register",
+    allowedIssuerHosts: ["xmemo.dev"],
+    supportsS256: true,
+    supportsAuthorizationCode: true,
+    requiredScopesAvailable: true,
+  };
+  let calls = 0;
+  await assert.rejects(
+    () => registerXMemoOAuthClient({
+      metadata,
+      redirectUri: "https://sampasonko2011-blip.github.io/JARVIS-X/hq/xmemo-oauth-callback.html",
+      fetchImpl: async () => { calls++; throw new Error("must not contact registration endpoint"); },
+    }),
+    /oauth_authorization_endpoint_host_not_allowed/
+  );
+  assert.equal(calls, 0);
+});
