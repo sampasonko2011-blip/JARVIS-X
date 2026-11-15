@@ -53,7 +53,7 @@ jobs:
           cp -R hq/. _site/hq/
       - name: Assert exactly one Pages artifact producer
         run: |
-          count=$(grep -c 'uses: actions/upload-pages-artifact@' .github/workflows/deploy-hq-pages.yml)
+          count=$(grep -c '^[[:space:]]*uses: actions/upload-pages-artifact@' .github/workflows/deploy-hq-pages.yml)
           test "$count" -eq 1 || { echo "Expected exactly one Pages artifact upload step; found $count"; exit 1; }
       - name: Upload combined site
         uses: actions/upload-pages-artifact@v3
