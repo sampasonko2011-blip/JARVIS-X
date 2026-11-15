@@ -72,7 +72,7 @@ test("rejects issuer mismatch", async () => {
       issuer: "https://attacker.example",
     },
   });
-  await assert.rejects(discoverXMemoOAuth({ fetchImpl }), /oauth_issuer_mismatch/);
+  await assert.rejects(discoverXMemoOAuth({ fetchImpl, allowedIssuerHosts: ["auth.xmemo.dev", "attacker.example"] }), /oauth_issuer_mismatch/);
 });
 
 test("reports missing PKCE S256 or required scopes instead of silently accepting", async () => {
