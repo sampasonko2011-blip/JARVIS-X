@@ -10,6 +10,7 @@ import {
 const metadata = {
   resource: "https://xmemo.dev/mcp",
   issuer: "https://auth.xmemo.dev",
+  allowedIssuerHosts: ["xmemo.dev", "auth.xmemo.dev"],
   registrationEndpoint: "https://auth.xmemo.dev/register",
   authorizationEndpoint: "https://auth.xmemo.dev/authorize",
   tokenEndpoint: "https://auth.xmemo.dev/token",
