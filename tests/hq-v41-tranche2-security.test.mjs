@@ -62,9 +62,9 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
  assert.doesNotMatch(bridge,/service_role|OPENROUTER_API_KEY|GEMINI_API_KEY|GROQ_API_KEY/);
 });
 
-test("v41 service worker caches the Inspector UI and local cognitive router under v41",async()=>{
+test("v41 service worker caches the Inspector UI and local cognitive router under v42",async()=>{
  const sw=await read("../hq/sw.js");
- assert.match(sw,/jarvis-x-hq-shell-v41/);
+ assert.match(sw,/jarvis-x-hq-shell-v42/);
  assert.match(sw,/local-chat\.html/);
  assert.match(sw,/local-chat-engine\.bundle\.js/);
  assert.match(sw,/jarvis-brain-v36\.js/);
