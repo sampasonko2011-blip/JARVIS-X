@@ -12,12 +12,32 @@ function requireHttps(value, label) {
 
 function requireMetadata(metadata) {
   if (!metadata || metadata.resource !== RESOURCE) throw new Error("oauth_resource_not_approved");
-  const issuer = requireHttps(metadata.issuer, "oauth_issuer");
+  const rawHosts = metadata.allowedIssuerHosts;
+  if (!Array.isArray(rawHosts) || rawHosts.length < 1 || rawHosts.length > 20) {
+    throw new Error("oauth_issuer_allowlist_missing");
+  }
+  const allowedHosts = new Set(rawHosts.map((host) => {
+    if (typeof host !== "string") throw new Error("oauth_issuer_allowlist_invalid");
+    const normalized = host.trim().toLowerCase().replace(/\\.$/, "");
+    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(normalized) ||
+        /^(?:localhost|.*\\.(?:localhost|local|internal|test|invalid|example))$/.test(normalized) ||
+        /^[0-9.]+$/.test(normalized)) throw new Error("oauth_issuer_allowlist_invalid");
+    return normalized;
+  }));
+  const allowedEndpoint = (value, label) => {
+    const url = requireHttps(value, label);
+    const hostname = url.hostname.toLowerCase().replace(/\\.$/, "");
+    if (url.port || hostname.includes(":") || /^[0-9.]+$/.test(hostname) || !allowedHosts.has(hostname)) {
+      throw new Error(label + "_host_not_allowed");
+    }
+    return url;
+  };
+  const issuer = allowedEndpoint(metadata.issuer, "oauth_issuer");
   const registrationEndpoint = metadata.registrationEndpoint
-    ? requireHttps(metadata.registrationEndpoint, "oauth_registration_endpoint")
+    ? allowedEndpoint(metadata.registrationEndpoint, "oauth_registration_endpoint")
     : null;
-  const authorizationEndpoint = requireHttps(metadata.authorizationEndpoint, "oauth_authorization_endpoint");
-  const tokenEndpoint = requireHttps(metadata.tokenEndpoint, "oauth_token_endpoint");
+  const authorizationEndpoint = allowedEndpoint(metadata.authorizationEndpoint, "oauth_authorization_endpoint");
+  const tokenEndpoint = allowedEndpoint(metadata.tokenEndpoint, "oauth_token_endpoint");
   if (registrationEndpoint && registrationEndpoint.origin !== issuer.origin) {
     throw new Error("oauth_registration_origin_mismatch");
   }
