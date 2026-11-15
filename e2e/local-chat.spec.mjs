@@ -59,7 +59,7 @@ test("v42 upgrade modal shows approval controls and a live pending counter", asy
 
 test("v42 one-tap Agent dock creates and selects a local custom agent", async ({ page }) => {
   await page.goto("/local-chat.html");
-  await expect(page.locator(".jx42-agent")).toHaveCount(1);
+  await expect(page.locator(".jx42-agent")).toHaveCount(2);
   await page.getByRole("button", { name: /Créer Agent/ }).click();
   const dialog = page.getByRole("dialog", { name: "CREATE CUSTOM AGENT" });
   await expect(dialog).toBeVisible();
