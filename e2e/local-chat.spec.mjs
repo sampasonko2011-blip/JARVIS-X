@@ -156,3 +156,21 @@ test("local chat v37 keeps iPad Safari document scrolling enabled and scrolls In
   const scrollTop = await page.evaluate(() => window.scrollY);
   expect(scrollTop).toBeGreaterThan(0);
 });
+
+test("local chat v38 shows a one-touch return control while Inspector is open", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 600 });
+  await page.goto("/local-chat.html");
+  const drawer = page.locator("#jx-inspector-drawer");
+  const back = page.locator("#jx-return-to-chat");
+  await expect(back).toBeHidden();
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
+  await expect(drawer).toBeVisible();
+  await expect(back).toBeVisible();
+  await expect(back).toHaveText(/RETOUR AU CHAT/);
+  await page.evaluate(() => window.scrollTo({ top: 420, behavior: "instant" }));
+  await back.tap();
+  await expect(drawer).toBeHidden();
+  await expect(back).toBeHidden();
+  await expect(page.getByRole("button", { name: /INSPECTOR/ })).toHaveAttribute("aria-expanded", "false");
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(8);
+});
