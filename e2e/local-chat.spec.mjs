@@ -130,3 +130,29 @@ test("local chat v33 adds opt-in tools only to assistant replies", async ({ page
   await expect(page.getByRole("button", { name: "PIN LOCAL" })).toBeVisible();
   await expect(page.getByRole("button", { name: "SPEAK" })).toBeVisible();
 });
+
+
+test("local chat v37 keeps iPad Safari document scrolling enabled and scrolls Inspector controls into view", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 600 });
+  await page.goto("/local-chat.html");
+  const scrollState = await page.evaluate(() => ({
+    htmlOverflowY: getComputedStyle(document.documentElement).overflowY,
+    bodyOverflowY: getComputedStyle(document.body).overflowY,
+    htmlHeight: getComputedStyle(document.documentElement).height,
+    bodyHeight: getComputedStyle(document.body).height,
+    cosmosPosition: getComputedStyle(document.querySelector("#jx-chat-cosmos")).position,
+    cosmosInset: getComputedStyle(document.querySelector("#jx-chat-cosmos")).inset,
+    documentHeight: document.documentElement.scrollHeight,
+    viewportHeight: document.documentElement.clientHeight,
+  }));
+  expect(scrollState.htmlOverflowY).toBe("auto");
+  expect(scrollState.bodyOverflowY).toBe("auto");
+  expect(scrollState.cosmosPosition).toBe("fixed");
+  expect(scrollState.cosmosInset).toBe("0px");
+  expect(scrollState.documentHeight).toBeGreaterThan(scrollState.viewportHeight);
+  await page.getByRole("button", { name: /INSPECTOR/ }).click();
+  await expect(page.locator("#jx-inspector-drawer")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Load selected model" })).toBeInViewport();
+  const scrollTop = await page.evaluate(() => window.scrollY);
+  expect(scrollTop).toBeGreaterThan(0);
+});

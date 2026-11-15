@@ -16,6 +16,13 @@
     drawer.classList.toggle("is-open", open);
     toggle.classList.toggle("is-active", open);
     toggle.setAttribute("aria-expanded", String(open));
+    if (open) {
+      // On iPad Safari the drawer can open below the visible viewport. Scroll
+      // the document (not an inner panel) so the model controls are reachable.
+      requestAnimationFrame(() => {
+        drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    }
   };
   setOpen(false);
   toggle.addEventListener("click", () => setOpen(drawer.hidden));
