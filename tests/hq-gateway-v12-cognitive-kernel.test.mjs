@@ -19,6 +19,8 @@ test("cognitive kernel uses one executive core and returns one unified answer", 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].mode, "master_control");
   assert.equal(calls[0].input.architecture, "single-executive-core");
+  assert.match(calls[0].input.control_contract.identity, /user is Sam/);
+  assert.match(calls[0].input.control_contract.identity, /never as JARVIS-X/);
   assert.equal(result.providerCalls, 1);
   assert.equal(result.answer, "One unified JARVIS-X answer.");
   assert.equal(result.executionMode, "single-core-cognitive-kernel");
