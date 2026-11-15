@@ -24,28 +24,28 @@ const dock=make("section","jx42-dock");dock.setAttribute("aria-label","Command d
 const agentStrip=make("div","jx42-agent-strip");agentStrip.setAttribute("aria-label","Agents disponibles");
 const composer=make("div","jx42-composer");
 const actions=message.parentElement?.querySelector(".actions");
-composer.append(message);if(actions){composer.append(actions);const voiceStatus=$("voice-dictation-status");if(voiceStatus)composer.append(voiceStatus)}
-const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);shell.append(dock);
+composer.append(message);if(actions)composer.append(actions);const voiceStatus=$("voice-dictation-status");
+const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);if(voiceStatus)dock.append(voiceStatus);shell.append(dock);
 const drawer=$("jx-inspector-drawer");
-const modelRail=shell.querySelector(".jx-model-rail")||drawer?.querySelector(".jx-model-rail");
-const controlRail=shell.querySelector(".jx-control-rail")||drawer?.querySelector(".jx-control-rail");
+const modelRail=document.querySelector(".jx-model-rail")||$("load-model")?.closest("aside");
+const controlRail=document.querySelector(".jx-control-rail");
 if(modelRail)engineModal.body.append(modelRail);
 if(controlRail){const provider=controlRail.querySelector(".jx-status-panel");const focus=controlRail.querySelector(".jx-focus-panel");const memory=controlRail.querySelector(".jx-memory-panel");if(provider)engineModal.body.append(provider);if(focus)engineModal.body.append(focus);if(memory)memoryModal.body.append(memory)}
-const agentPanel=drawer?.querySelector('[aria-labelledby="jx-agent-heading"]');
-const upgradePanel=drawer?.querySelector('[aria-labelledby="jx-upgrade-heading"]');
-const vault=drawer?.querySelector(".jx-vault-list");
+const agentPanel=document.querySelector('[aria-labelledby="jx-agent-heading"]');
+const upgradePanel=document.querySelector('[aria-labelledby="jx-upgrade-heading"]');
+const vault=document.querySelector(".jx-vault-list");const xmemoStatus=$("jx-xmemo-sync-status");
 if(agentPanel){agentModal.body.append(agentPanel);agentPanel.classList.add("jx42-agent-create")}
 if(upgradePanel)upgradeModal.body.append(upgradePanel);
-if(vault)memoryModal.body.append(vault);
+if(xmemoStatus)memoryModal.body.append(xmemoStatus);if(vault)memoryModal.body.append(vault);
 if(drawer){drawer.hidden=true;drawer.classList.remove("is-open")}
 const status=make("p","jx42-statusline","Sélectionne un agent pour les prochains tours.");agentModal.body.prepend(status);
 const agentSelect=$("jx-agent-select-chat")||$("jx-agent-select");
 const refreshAgents=()=>{agentStrip.replaceChildren();const opts=agentSelect?[...agentSelect.options]:[];for(const opt of opts){const b=button("jx42-agent",opt.textContent,()=>{if(agentSelect){agentSelect.value=opt.value;agentSelect.dispatchEvent(new Event("change",{bubbles:true}))}refreshAgents();});b.dataset.agent=opt.value;b.setAttribute("aria-pressed",String(agentSelect?.value===opt.value));agentStrip.append(b)}const create=button("jx42-agent create","+ Créer Agent",()=>openModal(agentModal,create));agentStrip.append(create)};
 refreshAgents();
 const selectObserver=agentSelect?new MutationObserver(refreshAgents):null;if(selectObserver)selectObserver.observe(agentSelect,{childList:true,subtree:true});
-const agentForm=$("jx-agent-form");if(agentForm)agentForm.addEventListener("submit",()=>window.setTimeout(refreshAgents,0));
+const agentForm=$("jx-agent-form");if(agentForm)agentForm.addEventListener("submit",()=>window.setTimeout(()=>{refreshAgents();closeModal(agentModal.back)},0));
 const upgradeBox=$("jx-upgrade-proposals");
-const refreshCount=()=>{const pending=upgradeBox?[...upgradeBox.querySelectorAll(".jx-upgrade-card")].filter(c=>/PENDING/.test(c.textContent)).length:0;count.textContent=String(pending);count.hidden=pending===0;upgradePill.setAttribute("aria-label",pending+" propositions en attente");};
+const refreshCount=()=>{const pending=upgradeBox?[...upgradeBox.querySelectorAll(".jx-upgrade-card")].filter(c=>/PENDING/.test(c.textContent)).length:0;count.textContent=String(pending);count.hidden=pending===0;upgradePill.setAttribute("aria-label","UPGRADES · "+pending+" propositions en attente");};
 if(upgradeBox)new MutationObserver(refreshCount).observe(upgradeBox,{childList:true,subtree:true,characterData:true});
 const upgradeForm=$("jx-upgrade-form");if(upgradeForm)upgradeForm.addEventListener("submit",()=>window.setTimeout(refreshCount,0));refreshCount();
 const statusNode=$("jx-xmemo-sync-status");if(statusNode){const sync=()=>{memoryPill.dataset.state=statusNode.textContent||"local";};new MutationObserver(sync).observe(statusNode,{childList:true,subtree:true,characterData:true});sync()}
