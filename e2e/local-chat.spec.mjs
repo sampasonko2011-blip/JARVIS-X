@@ -28,7 +28,7 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Local model")).toHaveCount(1);
   await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(5);
-  await expect(dialog.getByRole("button", { name: "Load selected model" })).toBeEnabled();
+  await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await expect(page.locator("#message")).toBeDisabled();
 });
