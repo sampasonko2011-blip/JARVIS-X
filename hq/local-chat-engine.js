@@ -119,7 +119,8 @@ loadButton.addEventListener("click", async () => {
 sendButton.addEventListener("click", async () => {
   const text = input.value.trim().slice(0, MAX_INPUT_CHARS);
   if (!engine || !text || busy) return;
-  const cognitiveBrain = window.JARVIS_SOVEREIGN_BRAIN || window.JARVIS_BRAIN_V36;\n  const cognitiveRoute = cognitiveBrain?.analyzeCognitiveRoute(text) ?? cognitiveBrain?.route(text) ?? null;
+  const cognitiveBrain = window.JARVIS_SOVEREIGN_BRAIN || window.JARVIS_BRAIN_V36;
+  const cognitiveRoute = cognitiveBrain?.analyzeCognitiveRoute(text) ?? cognitiveBrain?.route(text) ?? null;
   input.value = "";
   append("user", text);
   messages.push({ role: "user", content: text });
