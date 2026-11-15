@@ -70,3 +70,41 @@ body{height:100dvh;min-height:100dvh;padding:0!important;box-sizing:border-box}
 .jx42-modal-body #load-model{display:inline-flex!important;visibility:visible!important;opacity:1!important}.jx42-modal-body .local-chat-card>.actions{display:flex!important;visibility:visible!important;opacity:1!important}
 
 .jx42-modal-body>.actions{display:flex!important;visibility:visible!important;opacity:1!important}
+
+
+/* v42 final specificity reset: override v34's high-specificity legacy grid and 880px cap. */
+html body main.shell.local-chat-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  grid: none !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+  grid-template-areas: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+html body main.shell.local-chat-shell > .brand {
+  flex: 0 0 auto !important;
+  grid-area: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+html body main.shell.local-chat-shell > .jx-chat-stage {
+  flex: 1 1 auto !important;
+  grid-area: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+html body main.shell.local-chat-shell > .jx42-dock {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
