@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test("v42 is a true full-viewport workspace with no document scroll", async ({ page }) => {
   const pageErrors = [];
+  const consoleErrors = [];
   page.on("pageerror", error => pageErrors.push(error.message));
+  page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.goto("/local-chat.html");
   const boot = await page.evaluate(() => ({
@@ -17,7 +19,7 @@ test("v42 is a true full-viewport workspace with no document scroll", async ({ p
     dock: !!document.querySelector(".jx42-dock"),
     hud: !!document.querySelector(".jx42-hud-actions")
   }));
-  console.log("v42 boot diagnostics", JSON.stringify({ boot, pageErrors }));
+  console.log("v42 boot diagnostics", JSON.stringify({ boot, pageErrors, consoleErrors }));
   await expect(page.locator(".jx42-dock")).toBeVisible();
   await expect(page.locator("#message")).toBeVisible();
   await expect(page.locator("#send-message")).toBeVisible();
