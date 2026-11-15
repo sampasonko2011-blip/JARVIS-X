@@ -167,5 +167,5 @@ test("v39 local chat injects a compact live JARVIS-X system prompt before every 
   assert.match(brain, /buildSystemPrompt/);
   assert.match(engine, /messages\[0\]\.content = systemPrompt/);
   assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
-  assert.match(engine, /JARVIS_BRAIN_V36\.record/);
+  assert.match(engine, /cognitiveBrain\\.record/);
 });
