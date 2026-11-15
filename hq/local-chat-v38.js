@@ -22,8 +22,7 @@
     // The actual composer in this version is #message (there is no
     // #jx-chat-input element). Scroll to that real target without fighting
     // the browser's scroll animation, then return keyboard focus safely.
-    const top = Math.max(0, input.getBoundingClientRect().top + window.scrollY - 24);
-    window.scrollTo({ top, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
     window.setTimeout(() => input.focus({ preventScroll: true }), 250);
   });
 
