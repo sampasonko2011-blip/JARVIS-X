@@ -27,7 +27,7 @@ const actions=message.parentElement?.querySelector(".actions");
 composer.append(message);if(actions)composer.append(actions);const voiceStatus=$("voice-dictation-status");
 const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);if(voiceStatus)dock.append(voiceStatus);shell.append(dock);
 const drawer=$("jx-inspector-drawer");
-const modelRail=document.querySelector(".jx-model-rail")||$("load-model")?.closest("aside");
+const modelRail=$("model-select")?.closest("aside")||document.querySelector(".jx-model-rail");
 const controlRail=document.querySelector(".jx-control-rail");
 if(modelRail)engineModal.body.append(modelRail);const loadButton=$("load-model");const loadActions=loadButton?.closest(".actions");if(loadActions&&!engineModal.body.contains(loadActions))engineModal.body.append(loadActions);
 if(controlRail){const provider=controlRail.querySelector(".jx-status-panel");const focus=controlRail.querySelector(".jx-focus-panel");const memory=controlRail.querySelector(".jx-memory-panel");if(provider)engineModal.body.append(provider);if(focus)engineModal.body.append(focus);if(memory)memoryModal.body.append(memory)}
