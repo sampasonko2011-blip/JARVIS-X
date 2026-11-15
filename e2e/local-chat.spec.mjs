@@ -61,6 +61,12 @@ test("v42 upgrade modal shows approval controls and a live pending counter", asy
   await expect(page.locator(".jx42-count")).toHaveText("1");
   await expect(dialog.getByRole("button", { name: /APPROUVER & ASSIMILER/ })).toBeVisible();
   await expect(dialog.getByRole("button", { name: /REJETER/ })).toBeVisible();
+  await dialog.getByRole("button", { name: /APPROUVER & ASSIMILER/ }).click();
+  await expect(dialog.locator(".jx-upgrade-card")).toContainText("APPROVED");
+  await expect(dialog.getByRole("button", { name: /ROLLBACK/ })).toBeVisible();
+  await expect(page.locator(".jx42-count")).toHaveText("0");
+  await dialog.getByRole("button", { name: /ROLLBACK/ }).click();
+  await expect(dialog.locator(".jx-upgrade-card")).toContainText("ROLLED_BACK");
 });
 
 test("v42 one-tap Agent dock creates and selects a local custom agent", async ({ page }) => {
