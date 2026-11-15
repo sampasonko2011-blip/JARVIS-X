@@ -16,6 +16,7 @@ test("v42 is a true full-viewport workspace with no document scroll", async ({ p
     message: !!document.querySelector("#message"),
     send: !!document.querySelector("#send-message"),
     script: [...document.scripts].some(script => script.src.endsWith("/local-chat-v42.js")),
+    bootStatus: window.__JX42_BOOT || "not-executed",
     dock: !!document.querySelector(".jx42-dock"),
     hud: !!document.querySelector(".jx42-hud-actions")
   }));
