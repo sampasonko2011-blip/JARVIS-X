@@ -118,6 +118,32 @@ test("v42 keeps strict CSP and has no inline style or event-handler attributes",
   await expect(page.locator("#jx-chat-cosmos")).toHaveCount(1);
 });
 
+
+test("v42 preserves quick prompts and voice controls in the bottom dock", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#voice-dictation")).toBeVisible();
+  await expect(page.locator("#send-message")).toBeVisible();
+  await page.getByRole("button", { name: /PLAN-FOOT/ }).click();
+  await expect(page.locator("#message")).toHaveValue("Aide-moi à construire un plan football concret : ");
+});
+
+test("v42 preserves PIN LOCAL and SPEAK tools on assistant replies", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => {
+    const item = document.createElement("div");
+    item.className = "log";
+    const title = document.createElement("strong");
+    title.textContent = "JARVIS-X (local)";
+    const body = document.createElement("small");
+    item.append(title, body);
+    document.querySelector("#transcript").append(item);
+    window.setTimeout(() => { body.textContent = "A streamed test response."; }, 30);
+  });
+  await expect(page.locator("#transcript .jx-msg-actions")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "PIN LOCAL" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "SPEAK" })).toBeVisible();
+});
+
 test("v42 modal closes with Escape and returns focus to its HUD trigger", async ({ page }) => {
   await page.goto("/local-chat.html");
   const trigger = page.getByRole("button", { name: /XMEMO/ });
