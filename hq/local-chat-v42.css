@@ -64,3 +64,5 @@ body{height:100dvh;min-height:100dvh;padding:0!important;box-sizing:border-box}
 @media(prefers-reduced-motion:reduce){.jx42-modal-backdrop,.jx42-modal{scroll-behavior:auto}}
 
 .jx42-count[hidden]{display:none!important}
+
+.jx42-composer #voice-dictation{grid-column:2}.jx42-composer #send-message{grid-column:3}.jx42-composer #clear-chat{grid-column:4}
