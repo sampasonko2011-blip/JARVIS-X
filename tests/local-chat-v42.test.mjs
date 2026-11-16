@@ -34,8 +34,9 @@ test("v42 uses external CSS and creates no inline style or event handlers",async
 
 test("v42 command dock preserves original composer nodes and native model loading",async()=>{
  const js=await read("../hq/local-chat-v42.js"),engine=await read("../hq/local-chat-engine.js");
- assert.match(js,/composer\.append\(message\)/);
- assert.match(js,/composer\.append\(actions\)/);
+ assert.match(js,/composer\.append\(message,\.\.\.actionButtons\)/);
+ assert.match(js,/actions\.remove\(\)/);
+ assert.match(js,/querySelectorAll\("#voice-dictation, #send-message, #clear-chat"\)/);
  assert.match(js,/engineModal\.body\.append\(modelRail\)/);
  assert.match(engine,/CreateMLCEngine\(selectedModel/);
  assert.match(engine,/memoryConsent\?\.checked === true/);
