@@ -153,3 +153,36 @@ test("v42 modal closes with Escape and returns focus to its HUD trigger", async 
   await expect(page.getByRole("dialog", { name: /XMEMO/ })).toBeHidden();
   await expect(trigger).toBeFocused();
 });
+
+
+test("v43 composer is a full-width four-control row on iPad and mobile viewports", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/local-chat.html");
+    const layout = await page.locator(".jx42-composer").evaluate((el) => {
+      const shell = document.querySelector(".local-chat-shell");
+      const message = el.querySelector("#message");
+      const controls = ["#voice-dictation", "#send-message", "#clear-chat"].map((s) => el.querySelector(s));
+      const rect = (node) => node.getBoundingClientRect();
+      return {
+        shellWidth: rect(shell).width,
+        composerWidth: rect(el).width,
+        messageMinHeight: parseFloat(getComputedStyle(message).minHeight),
+        columns: getComputedStyle(el).gridTemplateColumns,
+        controlsVisible: controls.every((node) => !!node && rect(node).width > 0),
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+      };
+    });
+    expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.shellWidth - 40);
+    expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
+    expect(layout.controlsVisible).toBe(true);
+    expect(layout.documentOverflow).toBeLessThanOrEqual(1);
+  }
+});
+
+test("v43 service worker uses a new shell cache namespace", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const response = await page.request.get("/sw.js");
+  expect(response.ok()).toBeTruthy();
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v43");
+});
