@@ -165,7 +165,7 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
       const controls = ["#voice-dictation", "#send-message", "#clear-chat"].map((s) => el.querySelector(s));
       const rect = (node) => node.getBoundingClientRect();
       return {
-        shellWidth: rect(shell).width,
+        dockWidth: document.querySelector(".jx42-dock").clientWidth,
         composerWidth: rect(el).width,
         messageMinHeight: parseFloat(getComputedStyle(message).minHeight),
         columns: getComputedStyle(el).gridTemplateColumns,
@@ -173,7 +173,7 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
         documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
       };
     });
-    expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.shellWidth - 40);
+    expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.dockWidth - 20);
     expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
     expect(layout.controlsVisible).toBe(true);
     expect(layout.documentOverflow).toBeLessThanOrEqual(1);
