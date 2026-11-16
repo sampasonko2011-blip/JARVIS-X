@@ -16,12 +16,11 @@ function resolveAvailableModel(modelList, selectedModel) {
     ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && ALLOWED_MODEL_IDS.has(id))
     : [];
   const has = (id) => available.includes(id);
-  // Prefer the requested 3B Llama build when this WebLLM package actually ships it.
-  if (has("Llama-3.2-3B-Instruct-q4f16_1-MLC")) return "Llama-3.2-3B-Instruct-q4f16_1-MLC";
-  // WebLLM package versions can expose a different quantized ID for Qwen 1.5B.
-  const qwen15 = available.find((id) => id.startsWith("Qwen2.5-1.5B-Instruct-"));
-  if (qwen15) return qwen15;
   if (has(selectedModel)) return selectedModel;
+  // If the selected Llama 3B build is absent, fall back to the package's
+  // available Qwen 1.5B quantization rather than failing with an opaque ID error.
+  const qwen15 = available.find((id) => id.startsWith("Qwen2.5-1.5B-Instruct-"));
+  if (selectedModel.startsWith("Llama-3.2-3B-") && qwen15) return qwen15;
   if (has(DEFAULT_MODEL_ID)) return DEFAULT_MODEL_ID;
   return available[0] || null;
 }
