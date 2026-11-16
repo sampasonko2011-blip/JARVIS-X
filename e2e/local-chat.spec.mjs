@@ -170,7 +170,18 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
         composerWidth: rect(el).width,
         messageMinHeight: parseFloat(getComputedStyle(message).minHeight),
         columns: getComputedStyle(el).gridTemplateColumns,
-        controlsVisible: controls.every((node) => !!node && rect(node).width > 0),
+        controlsVisible: controls.every((node) => {
+          if (!node) return false;
+          const box = rect(node);
+          const style = getComputedStyle(node);
+          return box.width > 0 && box.height > 0 && style.display !== "none" &&
+            style.visibility === "visible" && Number(style.opacity) > 0 &&
+            box.left >= -1 && box.right <= document.documentElement.clientWidth + 1;
+        }),
+        controlRects: controls.map((node) => node ? {
+          width: rect(node).width, height: rect(node).height,
+          left: rect(node).left, right: rect(node).right
+        } : null),
         documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
       };
     });
