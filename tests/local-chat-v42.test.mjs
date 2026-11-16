@@ -7,7 +7,7 @@ test("v42 loads its external Stark Command Studio assets and service-worker cach
  const html=await read("../hq/local-chat.html"),sw=await read("../hq/sw.js");
  assert.match(html,/local-chat-v42\.css/);
  assert.match(html,/local-chat-v42\.js/);
- assert.match(sw,/jarvis-x-hq-shell-v42/);
+ assert.match(sw,/jarvis-x-hq-shell-v43/);
  assert.match(sw,/local-chat-v42\.css/);
  assert.match(sw,/local-chat-v42\.js/);
 });
@@ -34,8 +34,9 @@ test("v42 uses external CSS and creates no inline style or event handlers",async
 
 test("v42 command dock preserves original composer nodes and native model loading",async()=>{
  const js=await read("../hq/local-chat-v42.js"),engine=await read("../hq/local-chat-engine.js");
- assert.match(js,/composer\.append\(message\)/);
- assert.match(js,/composer\.append\(actions\)/);
+ assert.match(js,/composer\.append\(message,\.\.\.actionButtons\)/);
+ assert.match(js,/actions\.remove\(\)/);
+ assert.match(js,/\["voice-dictation","send-message","clear-chat"\]\.map\(id=>\$\(id\)\)/);
  assert.match(js,/engineModal\.body\.append\(modelRail\)/);
  assert.match(engine,/CreateMLCEngine\(selectedModel/);
  assert.match(engine,/memoryConsent\?\.checked === true/);

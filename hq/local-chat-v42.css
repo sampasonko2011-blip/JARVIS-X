@@ -108,3 +108,47 @@ html body main.shell.local-chat-shell > .jx42-dock {
   flex: 0 0 auto !important;
   min-width: 0 !important;
 }
+
+
+/* v43.1 responsive modal and composer corrections for Safari/iPad. */
+html body .jx42-modal {
+  max-height: 85dvh !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+html body .jx42-modal-body {
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+html body main.shell.local-chat-shell .jx42-composer {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-rows: auto auto !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  gap: 6px !important;
+}
+html body main.shell.local-chat-shell .jx42-composer #message {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 46px !important;
+  max-height: 112px !important;
+  box-sizing: border-box !important;
+  resize: none !important;
+}
+html body main.shell.local-chat-shell .jx42-composer #voice-dictation { grid-column: 1 !important; grid-row: 2 !important; }
+html body main.shell.local-chat-shell .jx42-composer #send-message { grid-column: 2 !important; grid-row: 2 !important; }
+html body main.shell.local-chat-shell .jx42-composer #clear-chat { grid-column: 3 !important; grid-row: 2 !important; }
+html body main.shell.local-chat-shell .jx42-composer #voice-dictation,
+html body main.shell.local-chat-shell .jx42-composer #send-message,
+html body main.shell.local-chat-shell .jx42-composer #clear-chat {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  justify-content: center !important;
+}

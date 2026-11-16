@@ -153,3 +153,53 @@ test("v42 modal closes with Escape and returns focus to its HUD trigger", async 
   await expect(page.getByRole("dialog", { name: /XMEMO/ })).toBeHidden();
   await expect(trigger).toBeFocused();
 });
+
+
+test("v43 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/local-chat.html");
+    const layout = await page.locator(".jx42-composer").evaluate((el) => {
+      const shell = document.querySelector(".local-chat-shell");
+      const message = el.querySelector("#message");
+      const dock = document.querySelector(".jx42-dock");
+      const controls = ["#voice-dictation", "#send-message", "#clear-chat"].map((s) => dock.querySelector(s));
+      const rect = (node) => node.getBoundingClientRect();
+      return {
+        dockWidth: document.querySelector(".jx42-dock").clientWidth,
+        composerWidth: rect(el).width,
+        messageMinHeight: parseFloat(getComputedStyle(message).minHeight),
+        columns: getComputedStyle(el).gridTemplateColumns,
+        messageGridColumn: getComputedStyle(message).gridColumn,
+        voiceGridColumn: getComputedStyle(controls[0]).gridColumn,
+        sendGridColumn: getComputedStyle(controls[1]).gridColumn,
+        clearGridColumn: getComputedStyle(controls[2]).gridColumn,
+        controlsVisible: controls.every((node) => {
+          if (!node) return false;
+          const box = rect(node);
+          const style = getComputedStyle(node);
+          return box.width > 0 && box.height > 0 && style.display !== "none" &&
+            style.visibility === "visible" && Number(style.opacity) > 0 &&
+            box.left >= -1 && box.right <= document.documentElement.clientWidth + 1;
+        }),
+        controlRects: controls.map((node) => node ? {
+          width: rect(node).width, height: rect(node).height,
+          left: rect(node).left, right: rect(node).right
+        } : null),
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+      };
+    });
+    expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.dockWidth - 20);
+    expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
+    expect(layout.controlsVisible).toBe(true);
+    expect(layout.messageGridColumn).toBe("1 / -1");
+    expect(layout.documentOverflow).toBeLessThanOrEqual(1);
+  }
+});
+
+test("v43 service worker uses a new shell cache namespace", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const response = await page.request.get("/sw.js");
+  expect(response.ok()).toBeTruthy();
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v43");
+});
