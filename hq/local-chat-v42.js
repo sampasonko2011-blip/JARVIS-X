@@ -25,7 +25,7 @@ const dock=make("section","jx42-dock");dock.setAttribute("aria-label","Command d
 const agentStrip=make("div","jx42-agent-strip");agentStrip.setAttribute("aria-label","Agents disponibles");
 const composer=make("div","jx42-composer");
 const actions=message.parentElement?.querySelector(":scope > .actions");
-const actionButtons=actions?[...actions.querySelectorAll("#voice-dictation, #send-message, #clear-chat")]:[];
+const actionButtons=["voice-dictation","send-message","clear-chat"].map(id=>$(id)).filter(Boolean);
 composer.append(message,...actionButtons);if(actions)actions.remove();const voiceStatus=$("voice-dictation-status");
 const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);if(voiceStatus)dock.append(voiceStatus);shell.append(dock);
 const drawer=$("jx-inspector-drawer");
