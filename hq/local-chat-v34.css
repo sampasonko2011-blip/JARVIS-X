@@ -452,3 +452,21 @@ body {
 .jx-upgrade-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .jx-upgrade-actions button{min-height:38px}
 #jx-agent-select-chat{margin:6px 0 12px}
+
+
+/* v44: focus control must never overlay engine/model dialogs. */
+#jx-local-focus-toggle {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+}
+.jx42-modal-backdrop,
+.jx-modal-backdrop,
+[role="dialog"].jx42-modal {
+  position: fixed !important;
+  z-index: 10000 !important;
+}
+.jx42-modal-backdrop { inset: 0 !important; }
+body:has(.jx42-modal-backdrop:not([hidden])) #jx-local-focus-toggle {
+  visibility: hidden !important;
+}
