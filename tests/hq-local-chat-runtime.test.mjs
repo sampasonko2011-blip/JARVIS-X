@@ -161,7 +161,7 @@ test("local model selector defaults to the smallest iPad option and allowlists a
   assert.match(engine, /"SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(engine, /ALLOWED_MODEL_IDS/);
   assert.match(engine, /CreateMLCEngine\(selectedModel/);
-  assert.match(engine, /selectedModel\) && prebuiltAppConfig\.model_list/);
+  assert.match(engine, /resolveAvailableModel\(prebuiltAppConfig\?\.model_list, requestedModel\)/);
 });
 
 test("v39 local chat injects a compact live JARVIS-X system prompt before every completion", () => {
