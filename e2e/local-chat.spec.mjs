@@ -162,7 +162,8 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
     const layout = await page.locator(".jx42-composer").evaluate((el) => {
       const shell = document.querySelector(".local-chat-shell");
       const message = el.querySelector("#message");
-      const controls = ["#voice-dictation", "#send-message", "#clear-chat"].map((s) => el.querySelector(s));
+      const dock = document.querySelector(".jx42-dock");
+      const controls = ["#voice-dictation", "#send-message", "#clear-chat"].map((s) => dock.querySelector(s));
       const rect = (node) => node.getBoundingClientRect();
       return {
         dockWidth: document.querySelector(".jx42-dock").clientWidth,
