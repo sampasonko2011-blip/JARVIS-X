@@ -155,7 +155,7 @@ test("v42 modal closes with Escape and returns focus to its HUD trigger", async 
 });
 
 
-test("v43 composer is a full-width four-control row on iPad and mobile viewports", async ({ page }) => {
+test("v43 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
   for (const viewport of [{ width: 820, height: 1180 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto("/local-chat.html");
@@ -170,6 +170,10 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
         composerWidth: rect(el).width,
         messageMinHeight: parseFloat(getComputedStyle(message).minHeight),
         columns: getComputedStyle(el).gridTemplateColumns,
+        messageGridColumn: getComputedStyle(message).gridColumn,
+        voiceGridColumn: getComputedStyle(controls[0]).gridColumn,
+        sendGridColumn: getComputedStyle(controls[1]).gridColumn,
+        clearGridColumn: getComputedStyle(controls[2]).gridColumn,
         controlsVisible: controls.every((node) => {
           if (!node) return false;
           const box = rect(node);
@@ -188,6 +192,7 @@ test("v43 composer is a full-width four-control row on iPad and mobile viewports
     expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.dockWidth - 20);
     expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
     expect(layout.controlsVisible).toBe(true);
+    expect(layout.messageGridColumn).toBe("1 / -1");
     expect(layout.documentOverflow).toBeLessThanOrEqual(1);
   }
 });
