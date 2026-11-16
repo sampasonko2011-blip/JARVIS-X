@@ -12,6 +12,7 @@ const modal=(id,title)=>{const back=make("div","jx42-modal-backdrop");back.id=id
 const closeModal=back=>{back.hidden=true;back.setAttribute("aria-hidden","true");document.body.classList.remove("jx42-modal-open");};
 const openModal=(m,trigger)=>{for(const x of [engineModal,memoryModal,upgradeModal,agentModal])closeModal(x.back);m.back.hidden=false;m.back.setAttribute("aria-hidden","false");document.body.classList.add("jx42-modal-open");m.close.focus();m.trigger=trigger||document.activeElement;};
 const engineModal=modal("jx42-engine-modal","ENGINE & MODEL");
+engineModal.panel.id="jx42-engine-dialog";
 const memoryModal=modal("jx42-memory-modal","XMEMO · MEMORY VAULT");
 const upgradeModal=modal("jx42-upgrade-modal","UPGRADE APPROVAL");
 const agentModal=modal("jx42-agent-modal","CREATE CUSTOM AGENT");
@@ -23,14 +24,14 @@ const count=make("span","jx42-count","0");count.setAttribute("aria-label","propo
 const dock=make("section","jx42-dock");dock.setAttribute("aria-label","Command dock");
 const agentStrip=make("div","jx42-agent-strip");agentStrip.setAttribute("aria-label","Agents disponibles");
 const composer=make("div","jx42-composer");
-const actions=message.parentElement?.querySelector(".actions");
+const actions=message.parentElement?.querySelector(":scope > .actions");
 const actionButtons=actions?[...actions.querySelectorAll("#voice-dictation, #send-message, #clear-chat")]:[];
 composer.append(message,...actionButtons);if(actions)actions.remove();const voiceStatus=$("voice-dictation-status");
 const slash=stage.querySelector(".jx-slash-bar");if(slash)dock.append(slash);dock.append(agentStrip,composer);if(voiceStatus)dock.append(voiceStatus);shell.append(dock);
 const drawer=$("jx-inspector-drawer");
 const modelRail=$("model-select")?.closest("aside")||document.querySelector(".jx-model-rail");
 const controlRail=document.querySelector(".jx-control-rail");
-if(modelRail)engineModal.body.append(modelRail);const loadButton=$("load-model");const loadActions=loadButton?.closest(".actions");if(loadActions&&!engineModal.body.contains(loadActions))engineModal.body.append(loadActions);
+if(modelRail)engineModal.body.append(modelRail);const loadButton=$("load-model");const loadActions=loadButton?.closest(".actions");if(loadActions&&!engineModal.body.contains(loadActions))engineModal.body.append(loadActions);if(loadButton&&!engineModal.panel.contains(loadButton))engineModal.body.append(loadButton);
 if(controlRail){const provider=controlRail.querySelector(".jx-status-panel");const focus=controlRail.querySelector(".jx-focus-panel");const memory=controlRail.querySelector(".jx-memory-panel");if(provider)engineModal.body.append(provider);if(focus)engineModal.body.append(focus);if(memory)memoryModal.body.append(memory)}
 const providerGovernancePanel=document.querySelector('[aria-labelledby="jx-provider-heading"]');if(providerGovernancePanel&&!engineModal.body.contains(providerGovernancePanel))engineModal.body.append(providerGovernancePanel);const focusPanel=document.querySelector(".jx-focus-panel");if(focusPanel&&!engineModal.body.contains(focusPanel))engineModal.body.append(focusPanel);const memoryPanel=document.querySelector(".jx-memory-panel");if(memoryPanel&&!memoryModal.body.contains(memoryPanel))memoryModal.body.append(memoryPanel);
 const agentPanel=document.querySelector('[aria-labelledby="jx-agent-heading"]');
