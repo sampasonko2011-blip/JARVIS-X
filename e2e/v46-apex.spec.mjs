@@ -14,7 +14,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   await page.goto("/local-chat.html");
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await page.locator("#jx46-cloud-consent").check();
-  await page.locator("#message").fill("Test cloud-first");
+  await page.locator("#message").fill("Calcule 12 * 17 et explique la vérification.");
   await page.locator("#send-message").click();
   await expect(page.locator("#transcript")).toContainText("Réponse simulée par le gateway.");
   expect(payload.task).toContain("Tu es JARVIS-X");
@@ -22,7 +22,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   expect(payload.mode).toBe("live");
   expect(payload.memory_consent).toBe(false);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
-  await expect(page.locator("#jx46-provider")).toContainText("CLOUD");
+  await expect(page.locator("#jx46-provider")).toContainText("CLOUD");\n  await expect(page.locator("#jx-upgrade-proposals")).toContainText("V46 · Evidence quality guard", { timeout: 5000 });
 });
 
 test("v46 Observatory and Chat navigation are reciprocal", async ({ page }) => {
