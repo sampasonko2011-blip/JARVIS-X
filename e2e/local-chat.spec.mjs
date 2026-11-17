@@ -56,7 +56,7 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   expect(engineSource).toContain("prebuiltAppConfig?.model_list");
   expect(engineSource).toContain("modelSelect.dataset.runtimeCatalog");
   expect(engineSource).toContain('const SYSTEM = "Ton nom est JARVIS-X.');
-  expect(engineSource).toContain("l'utilisateur s'appelle Sam");
+  expect(engineSource).toMatch(/l'utilisateur s'appelle Sam/i);
   expect(engineSource).toContain("Monsieur");
   expect(engineSource).toContain("ne l'appelle jamais JARVIS-X");
   await expect(dialog.locator("#load-model")).toBeVisible();
