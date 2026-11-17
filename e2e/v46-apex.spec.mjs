@@ -28,7 +28,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
 
 test("v46 Observatory and Chat navigation are reciprocal", async ({ page }) => {
   await page.goto("/observatory.html");
-  await page.getByRole("link", { name: "CHAT IA" }).click();
+  await page.getByRole("link", { name: "CHAT IA", exact: true }).click();
   await expect(page).toHaveURL(/local-chat\.html$/);
   await page.getByRole("link", { name: /OBSERVATORY/ }).click();
   await expect(page).toHaveURL(/observatory\.html$/);
