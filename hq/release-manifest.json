@@ -2,21 +2,20 @@
   "schema_version": 1,
   "version": "0.2.1",
   "channel": "stable",
-  "release_notes": "V46 APEX: consent-gated cloud routing, local/offline fallback, browser voice controls, optional server TTS, and heuristic upgrade proposals. Image Studio remains disabled pending age-appropriate safety review.",
+  "release_notes": "V46 APEX: authenticated HQ v12 route with its server release lock respected, local/offline fallback, browser-only voice, image studio disabled pending safety review, and heuristic upgrade proposals.",
   "minimum_shell_version": "0.2.1",
   "capabilities": [
     "cloud-first-chat",
     "local-m1-fallback",
     "voice-input",
     "browser-speech",
-    "optional-server-tts",
     "image-studio-disabled-pending-safety-review",
     "heuristic-meta-critic",
-    "governed-upgrade-approval"
+    "governed-upgrade-approval",
+    "server-tts-disabled-pending-owner-approval"
   ],
   "provider_adapters": [
-    "supabase-hq-gateway",
-    "optional-server-tts"
+    "supabase-hq-gateway-v12"
   ],
   "automatic_provider_installation": false,
   "automatic_permission_grants": false
