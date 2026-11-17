@@ -13,7 +13,7 @@ async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", 
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
-    addAll: cacheAddAllImpl ? cacheAddAllImpl : async function (assets) { lifecycleCalls.push(["addAll", assets]); },
+    addAll: cacheAddAllImpl ? cacheAddAllImpl : async function (assets) { lifecycleCalls.push(["addAll", assets]); },\n    add: async function (asset) { lifecycleCalls.push(["add", asset]); },
     put: cachePutImpl ? cachePutImpl : async function (...args) { cacheCalls.push(["put", ...args]); },
     match: async () => undefined,
   };
@@ -87,10 +87,10 @@ test("service worker precaches the app shell and activates without deleting unre
   listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
-  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./mission-control.html")), "Mission Control must be precached");
-  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./spatial-mode.js")), "shared v28 mode/audio module must be precached");
-  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./spatial-mode.css")), "shared v28 mode styles must be precached");
-  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./local-chat-v34.css")), "Local Chat v37 scroll styles must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./mission-control.html"), "Mission Control must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./spatial-mode.js"), "shared v28 mode/audio module must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./spatial-mode.css"), "shared v28 mode styles must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./local-chat-v34.css"), "Local Chat v37 scroll styles must be precached");
   assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v46/);
   assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./local-chat-engine.js")), "v46 local engine source must be precached");
   const precache = lifecycleCalls.find((call) => call[0] === "addAll")?.[1] ?? [];
