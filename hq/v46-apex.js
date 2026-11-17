@@ -140,7 +140,26 @@
     if (state.live) { startRecognition(); status.textContent = "Écoute active. Le navigateur peut afficher une demande d'autorisation micro."; }
     else { state.recognition?.stop(); status.textContent = "Écoute arrêtée."; }
   });
-  const spoken = new WeakSet();\n  new MutationObserver((records) => {\n    if (!state.audio) return;\n    for (const record of records) for (const node of record.addedNodes) {\n      if (node.nodeType !== 1 || !node.classList.contains("log") || spoken.has(node)) continue;\n      const heading = node.querySelector("strong")?.textContent || "";\n      const text = node.querySelector("small")?.textContent || "";\n      if (/JARVIS-X|assistant/i.test(heading) && text) { spoken.add(node); speak(text); }\n    }\n  }).observe(transcript, { childList: true });\n  document.addEventListener("click", (event) => {
+  const auditTimers = new WeakMap();
+  const observedAnswers = new WeakMap();
+  new MutationObserver((records) => {
+    for (const record of records) {
+      const node = record.target.nodeType === 1 ? record.target.closest(".log") : record.target.parentElement?.closest(".log");
+      if (!node) continue;
+      const heading = node.querySelector("strong")?.textContent || "";
+      if (!/JARVIS-X|assistant/i.test(heading)) continue;
+      clearTimeout(auditTimers.get(node));
+      auditTimers.set(node, setTimeout(() => {
+        const answer = node.querySelector("small")?.textContent || "";
+        if (!answer || answer.startsWith("Connexion au QG cloud")) return;
+        if (state.audio && observedAnswers.get(node) !== answer) { observedAnswers.set(node, answer); speak(answer); }
+        const previous = node.previousElementSibling;
+        const task = previous?.querySelector("small")?.textContent || "";
+        if (task && window.JARVIS_BRAIN_V36?.critiqueTurn) window.JARVIS_BRAIN_V36.critiqueTurn(task, answer);
+      }, 1200));
+    }
+  }).observe(transcript, { childList: true, subtree: true, characterData: true });
+  document.addEventListener("click", (event) => {
     if (event.target.closest("#load-model")) setTimeout(updateControls, 300);
   });
   updateControls();
