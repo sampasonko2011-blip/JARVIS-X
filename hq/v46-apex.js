@@ -177,7 +177,14 @@
   }
   function startRecognition() {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition || !state.live || state.busy) return;
+    if (!Recognition) {
+      state.live = false;
+      liveButton.textContent = "🎙️ LIVE OFF";
+      liveButton.setAttribute("aria-pressed", "false");
+      status.textContent = "La reconnaissance vocale n'est pas prise en charge par ce navigateur.";
+      return;
+    }
+    if (!state.live || state.busy) return;
     if (!state.recognition) {
       state.recognition = new Recognition();
       state.recognition.lang = "fr-FR"; state.recognition.continuous = true; state.recognition.interimResults = false;
