@@ -57,7 +57,7 @@
     const ready = $("runtime-status")?.textContent === "READY";
     const localReady = ready && (state.localMode || !navigator.onLine);
     const cloudReady = navigator.onLine && state.cloudConsent && !state.localMode;
-    input.disabled = state.busy;
+    input.disabled = state.busy || (!localReady && !cloudReady);
     send.disabled = state.busy || (!localReady && !cloudReady);
     if (localReady) setProvider(navigator.onLine ? "LOCAL M1 · READY" : "LOCAL M1 · OFFLINE FALLBACK");
     else if (cloudReady) setProvider("CLOUD · GATEWAY · BUDGET GUARDED");
