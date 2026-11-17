@@ -1,11 +1,25 @@
 {
   "schema_version": 1,
-  "version": "0.2.0",
-  "channel": "stable",
-  "release_notes": "HQ prompt studio, integration request registry, and governed upgrade center.",
-  "minimum_shell_version": "0.2.0",
-  "capabilities": ["prompt-studio", "integration-roadmap", "governed-upgrade-checks"],
-  "provider_adapters": [],
+  "version": "0.2.1",
+  "channel": "preview",
+  "release_notes": "V46 APEX preview: consent-gated cloud routing, browser speech controls, optional budget-guarded image/TTS gateway actions, and heuristic upgrade proposals.",
+  "minimum_shell_version": "0.2.1",
+  "capabilities": [
+    "cloud-first-chat",
+    "local-m1-fallback",
+    "voice-input",
+    "browser-speech",
+    "optional-server-tts",
+    "optional-image-studio",
+    "heuristic-meta-critic",
+    "governed-upgrade-approval"
+  ],
+  "provider_adapters": [
+    "supabase-hq-gateway",
+    "huggingface-flux-dev",
+    "together-flux-schnell",
+    "elevenlabs-tts"
+  ],
   "automatic_provider_installation": false,
   "automatic_permission_grants": false
 }
