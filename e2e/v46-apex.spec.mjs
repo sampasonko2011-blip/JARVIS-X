@@ -35,6 +35,12 @@ test("v46 Observatory and Chat navigation are reciprocal", async ({ page }) => {
 });
 
 test("v46 exposes explicit AUDIO and LIVE controls with opt-in microphone start", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.SpeechRecognition = class {
+      start() { this.started = true; }
+      stop() { this.started = false; }
+    };
+  });
   await page.goto("/local-chat.html");
   const audio = page.getByRole("button", { name: /AUDIO OFF/ });
   const live = page.getByRole("button", { name: /LIVE OFF/ });
