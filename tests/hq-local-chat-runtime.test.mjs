@@ -21,7 +21,7 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   assert.doesNotMatch(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
   assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
-  assert.match(engine, /MAX_INPUT_CHARS = 4000/);
+  assert.doesNotMatch(engine, /MAX_INPUT_CHARS/);
   assert.match(engine, /stream: true/);
   assert.match(engine, /buildSystemPrompt\(cognitiveRoute\)/);
   assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
