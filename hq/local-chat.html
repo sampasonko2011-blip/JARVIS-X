@@ -43,7 +43,6 @@
     <option value="SmolLM2-360M-Instruct-q4f32_1-MLC">SmolLM2 360M · larger · ~580 MB GPU memory</option>
     <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5 0.5B · ~945 MB GPU memory · safest larger option</option>
     <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5 1.5B · ~1.63 GB GPU memory · advanced</option>
-    <option value="Llama-3.2-3B-Instruct-q4f16_1-MLC">Llama 3.2 3B · ~2.26 GB GPU memory · experimental / memory pressure</option>
   </select>
   <p class="footnote" id="model-help">The 135M model is the default first test for iPad Safari. It is a basic compatibility model, not a strong coding assistant. Estimates are not a guarantee of available memory. Only the selected model downloads.</p>
   <div class="actions"><button class="btn primary" id="load-model">Load selected model</button><a class="btn ghost" href="./local-chat-preflight.html">Device check</a></div>
@@ -112,6 +111,7 @@
   <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Load the model to begin. The last 4 messages are kept in page memory and are not synced. Input limit: 4,000 characters.</small></div></div>
   <label for="jx-agent-select-chat">Agent / mode spécialiste</label>
   <select id="jx-agent-select-chat" aria-label="Spécialiste actif"><option value="JARVIS-X CORE">JARVIS-X CORE</option></select>
+  <div class="jx-attachment-row"><button class="btn ghost" id="jx-attachment-button" type="button" aria-label="Joindre un fichier ou une image">📎</button><input id="jx-attachment-input" type="file" accept=".txt,.md,.json,.csv,.js,.html,.py,image/*" hidden><span id="jx-attachment-status" class="footnote" role="status" aria-live="polite"></span></div><img id="jx-attachment-preview" alt="" hidden>
   <label for="message">Message</label>
   <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
   <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button><button class="btn ghost" id="voice-dictation" type="button" aria-pressed="false">START VOICE DICTATION</button></div><p id="voice-dictation-status" class="footnote" role="status" aria-live="polite">Voice dictation availability depends on this browser.</p>

@@ -16,7 +16,9 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC/);
-  assert.match(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
+  assert.match(engine, /MODEL_PRIORITY/);
+  assert.match(engine, /prebuiltAppConfig\?\.model_list/);
+  assert.doesNotMatch(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
   assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
   assert.match(engine, /MAX_INPUT_CHARS = 4000/);
@@ -148,7 +150,7 @@ test("clearing local chat resets session-only cognitive reflection counters", ()
   assert.match(engine, /renderReflection\(\);[\s\S]*?transcript\.replaceChildren\(\)/);
 });
 
-test("local model selector defaults to the smallest iPad option and allowlists all model IDs", () => {
+test("local model selector prefers Qwen and resolves only model IDs in the installed package", () => {
   const page = read("../hq/local-chat.html");
   const engine = read("../hq/local-chat-engine.js");
   assert.match(page, /id="model-select"/);
@@ -156,12 +158,16 @@ test("local model selector defaults to the smallest iPad option and allowlists a
   assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
-  assert.match(page, /value="Llama-3\.2-3B-Instruct-q4f16_1-MLC"/);
-  assert.match(engine, /DEFAULT_MODEL_ID = "SmolLM2-135M-Instruct-q0f16-MLC"/);
-  assert.match(engine, /"SmolLM2-135M-Instruct-q0f16-MLC"/);
+  assert.doesNotMatch(page, /value="Llama-3\.2-3B-Instruct-q4f16_1-MLC"/);
+  assert.match(engine, /DEFAULT_MODEL_ID = "Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
+  assert.match(engine, /"Qwen2\.5-3B-Instruct-q4f16_1-MLC"/);
   assert.match(engine, /ALLOWED_MODEL_IDS/);
   assert.match(engine, /CreateMLCEngine\(selectedModel/);
   assert.match(engine, /resolveAvailableModel\(prebuiltAppConfig\?\.model_list, requestedModel\)/);
+  assert.match(engine, /Qwen2\.5-3B-Instruct-q4f16_1-MLC/);
+  assert.match(engine, /Phi-3\.5-mini-instruct-q4f16_1-MLC/);
+  assert.match(engine, /Qwen2\.5-Coder-1\.5B-Instruct-q4f16_1-MLC/);
+  assert.match(engine, /Gemma-2-2b-it-q4f16_1-MLC/);
 });
 
 test("v39 local chat injects a compact live JARVIS-X system prompt before every completion", () => {
@@ -193,5 +199,5 @@ test("v41 role lock and XMemo status are present", () => {
  assert.match(brain,/L'utilisateur s'appelle Sam/); assert.match(brain,/ne l'appelle jamais JARVIS-X/);
  assert.match(brain,/bonjour|bonsoir|salut|hello/); assert.match(engine,/L'utilisateur s'appelle Sam/);
  assert.match(page,/id="jx-xmemo-sync-status"/); assert.match(engine,/CLOUD REQUIRES CONSENT/); assert.match(engine,/XMEMO CLOUD SYNCED/);
- assert.match(page,/2\.26 GB GPU memory/); assert.match(page,/1\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
+ assert.match(page,/945 MB GPU memory/); assert.match(page,/1\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
 });
