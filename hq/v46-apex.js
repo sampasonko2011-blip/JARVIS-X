@@ -2,14 +2,15 @@
   "use strict";
   const SUPABASE_URL = "https://xfewajxkqntflfntisut.supabase.co";
   const PUBLISHABLE_KEY = "sb_publishable_QBs3Y2uByK2kSWXCPg54CQ_oEYapzLg";
+  const GATEWAY = SUPABASE_URL + "/functions/v1/hq-gateway-v12";
   const $ = (id) => document.getElementById(id);
   const send = $("send-message"), input = $("message"), transcript = $("transcript");
   if (!send || !input || !transcript) return;
 
-  const state = { cloudConsent: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
+  const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
   const panel = document.createElement("section");
   panel.className = "jx46-control";
-  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable Cloud Council for this session <small>Uses the authenticated five-provider gateway. Each request is subject to the server budget guard and may incur provider cost.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Image generation is disabled pending safety review">🎨 IMAGE · DISABLED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
+  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference remains unavailable while the server release lock is closed.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Image generation is disabled pending safety review">🎨 IMAGE · DISABLED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
   const stage = document.querySelector(".jx-chat-stage");
   stage?.insertBefore(panel, $("transcript"));
   const cloudConsent = $("jx46-cloud-consent"), localMode = $("jx46-local-mode");
@@ -19,7 +20,7 @@
 
   function setProvider(label) {
     if (provider) provider.textContent = label;
-    window.JARVIS_BRAIN_V36?.setProviderStatus({provider: label.toLowerCase().includes("cloud") ? "cloud-council" : "local-m1", label});
+    window.JARVIS_BRAIN_V36?.setProviderStatus({provider: label.toLowerCase().includes("cloud") ? "hq-gateway-v12" : "local-m1", label});
   }
   function addMessage(role, content, delivery) {
     const item = document.createElement("div"); item.className = "log";
@@ -56,17 +57,57 @@
   function updateControls() {
     const ready = $("runtime-status")?.textContent === "READY";
     const localReady = ready && (state.localMode || !navigator.onLine);
-    const cloudReady = navigator.onLine && state.cloudConsent && !state.localMode;
+    const cloudSelected = navigator.onLine && state.cloudConsent && !state.localMode;
+    const cloudReady = cloudSelected && state.cloudAvailable;
     input.disabled = state.busy || (!localReady && !cloudReady);
     send.disabled = state.busy || (!localReady && !cloudReady);
     if (localReady) setProvider(navigator.onLine ? "LOCAL M1 · READY" : "LOCAL M1 · OFFLINE FALLBACK");
-    else if (cloudReady) setProvider("CLOUD · GATEWAY · BUDGET GUARDED");
+    else if (cloudSelected && state.cloudChecking) setProvider("CLOUD · HQ V12 · CHECKING");
+    else if (cloudReady) setProvider("CLOUD · HQ V12 · READY");
+    else if (cloudSelected) setProvider("CLOUD · HQ V12 · LIVE LOCKED");
     else if (state.localMode) setProvider("LOCAL M1 · NOT LOADED");
     else setProvider("LOCAL / CLOUD NOT SELECTED");
   }
-  cloudConsent.addEventListener("change", () => { state.cloudConsent = cloudConsent.checked; if (state.cloudConsent) localMode.checked = false; state.localMode = localMode.checked; status.textContent = state.cloudConsent ? "Cloud Council activé pour cette session. Les dépenses restent bloquées si le budget serveur refuse." : "Cloud désactivé."; updateControls(); });
-  localMode.addEventListener("change", () => { state.localMode = localMode.checked; if (state.localMode) { cloudConsent.checked = false; state.cloudConsent = false; } status.textContent = state.localMode ? "Mode local sélectionné. Charge le modèle M1 avant l'envoi." : "Choisis explicitement le mode cloud si tu souhaites l'utiliser."; updateControls(); });
-  window.addEventListener("online", updateControls); window.addEventListener("offline", () => { status.textContent = "Hors ligne : seuls les messages locaux sont disponibles."; updateControls(); });
+  async function checkCloudReadiness() {
+    state.cloudAvailable = false;
+    if (!state.cloudConsent || state.localMode || !navigator.onLine) { state.cloudChecking = false; updateControls(); return; }
+    state.cloudChecking = true; updateControls();
+    status.textContent = "Vérification de l'état du gateway HQ v12…";
+    try {
+      const token = await accessToken();
+      const healthUrl = GATEWAY + "/health?identity=jarvis-x&orchestration_mode=support";
+      const response = await fetch(healthUrl, { method: "GET", cache: "no-store", headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, Accept: "application/json" } });
+      const health = await response.json().catch(() => ({}));
+      if (!response.ok || health.ok !== true || health.auth !== "verified-supabase-session") throw new Error(health.error || "gateway_health_unavailable");
+      state.cloudAvailable = health.chatEnabled === true;
+      if (state.cloudAvailable) status.textContent = "Gateway HQ v12 authentifié et prêt. Chaque requête reste soumise au contrôle serveur.";
+      else {
+        status.textContent = "Le verrou de release HQ v12 bloque l'inférence live (0 appel modèle). Aucune requête de chat ne sera envoyée. Passe en mode local.";
+        setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
+      }
+    } catch (error) {
+      status.textContent = "État du gateway inconnu : " + String(error?.message || error) + ". Aucun envoi cloud ne sera tenté.";
+      state.cloudAvailable = false;
+    } finally { state.cloudChecking = false; updateControls(); }
+  }
+  cloudConsent.addEventListener("change", () => {
+    state.cloudConsent = cloudConsent.checked;
+    state.cloudAvailable = false;
+    if (state.cloudConsent) localMode.checked = false;
+    state.localMode = localMode.checked;
+    status.textContent = state.cloudConsent ? "Consentement cloud pour cette session. Vérification du gateway requise." : "Cloud désactivé.";
+    updateControls();
+    if (state.cloudConsent) checkCloudReadiness();
+  });
+  localMode.addEventListener("change", () => {
+    state.localMode = localMode.checked;
+    if (state.localMode) { cloudConsent.checked = false; state.cloudConsent = false; state.cloudAvailable = false; }
+    status.textContent = state.localMode ? "Mode local sélectionné. Charge le modèle M1 avant l'envoi." : "Active explicitement le cloud pour vérifier le gateway HQ v12.";
+    updateControls();
+    if (state.cloudConsent) checkCloudReadiness();
+  });
+  window.addEventListener("online", () => { updateControls(); if (state.cloudConsent) checkCloudReadiness(); });
+  window.addEventListener("offline", () => { state.cloudAvailable = false; status.textContent = "Hors ligne : seuls les messages locaux sont disponibles."; updateControls(); });
   new MutationObserver(updateControls).observe($("runtime-status"), { childList: true, characterData: true, subtree: true });
 
   async function sendCloud() {
@@ -80,10 +121,10 @@
       const context = buildSystem(text);
       const task = "SYSTEM CONTEXT (trusted application policy):\n" + context + "\n\nCURRENT USER REQUEST:\n" + text +
         (state.history.length ? "\n\nRECENT CONVERSATION (reference only):\n" + JSON.stringify(state.history.slice(-6).map(item => ({ role: item.role, content: String(item.content).slice(0, 400) }))) : "");
-      const response = await fetch(SUPABASE_URL + "/functions/v1/hq-gateway", {
+      const response = await fetch(GATEWAY, {
         method: "POST",
         headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ task, task_type: "local_chat_v46", mode: "live", memory_consent: memoryConsent?.checked === true })
+        body: JSON.stringify({ task, task_type: "local_chat_v46", mode: "live", memory_consent: memoryConsent?.checked === true, executive_identity: "jarvis-x", orchestration_mode: "support" })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.ok !== true || typeof result.output !== "string") {
@@ -93,14 +134,20 @@
       output.textContent = result.output;
       state.history.push({ role: "user", content: text }, { role: "assistant", content: result.output });
       state.history = state.history.slice(-12);
-      const providers = Array.isArray(result.providers_used) ? result.providers_used.map(item => String(item.provider || "").toUpperCase()).filter(Boolean) : [];
-      setProvider("CLOUD · " + (providers.join(" / ") || "COUNCIL") + " · EXECUTED");
-      status.textContent = "Réponse cloud reçue. Appels fournisseur : " + String(result.provider_calls ?? "unknown") + ".";
+      setProvider("CLOUD · JARVIS-X · EXECUTED");
+      status.textContent = "Réponse HQ v12 reçue. Appels modèle : " + String(result.model_calls ?? "unknown") + ". Mémoire : " + String(result.memory?.read_status || "unknown") + ".";
       
     } catch (error) {
-      output.textContent = "Cloud indisponible : " + String(error?.message || error) + ". Aucun résultat inventé. Active le mode local et charge un modèle pour continuer hors ligne.";
-      status.textContent = "Cloud request failed; no fake reply was generated.";
-      setProvider("CLOUD · REQUEST FAILED");
+      const failure = String(error?.message || error);
+      output.textContent = "Cloud indisponible : " + failure + ". Aucun résultat inventé. Active le mode local et charge un modèle pour continuer.";
+      if (failure.includes("live_inference_disabled")) {
+        status.textContent = "Verrou de release HQ v12 actif : 0 appel modèle. L'inférence live n'est pas autorisée par la configuration serveur actuelle.";
+        setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
+        state.cloudAvailable = false;
+      } else {
+        status.textContent = "Cloud request failed; no fake reply was generated.";
+        setProvider("CLOUD · REQUEST FAILED");
+      }
       input.value = text;
     } finally {
       if (memoryConsent) memoryConsent.checked = false;
@@ -117,25 +164,12 @@
     }
   }, true);
 
-  async function speak(text) {
+  function speak(text) {
     if (!state.audio) return;
-    try {
-      const token = await accessToken();
-      const response = await fetch(SUPABASE_URL + "/functions/v1/hq-gateway", {
-        method: "POST",
-        headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "tts", text: String(text).slice(0, 2000) })
-      });
-      const result = await response.json().catch(() => ({}));
-      if (response.ok && result.ok === true && typeof result.audio_base64 === "string") {
-        const binary = atob(result.audio_base64), bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const audio = new Audio(URL.createObjectURL(new Blob([bytes], { type: result.mime_type || "audio/mpeg" })));
-        audio.onended = () => { if (state.live) startRecognition(); };
-        await audio.play(); return;
-      }
-    } catch { /* Browser speech is the no-key fallback. */ }
-    if (!("speechSynthesis" in window)) { status.textContent = "Synthèse vocale indisponible dans ce navigateur."; return; }
+    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance !== "function") {
+      status.textContent = "Synthèse vocale indisponible dans ce navigateur.";
+      return;
+    }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(String(text).slice(0, 5000));
     utterance.lang = "fr-FR"; utterance.rate = 0.96; utterance.pitch = 0.92;
