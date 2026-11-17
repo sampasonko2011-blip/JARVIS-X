@@ -43,7 +43,7 @@ test("v46 exposes explicit AUDIO and LIVE controls with opt-in microphone start"
   });
   await page.goto("/local-chat.html");
   const audio = page.getByRole("button", { name: /AUDIO OFF/ });
-  const live = page.getByRole("button", { name: /LIVE OFF/ });
+  const live = page.locator("#jx46-live");
   await expect(audio).toBeVisible();
   await expect(live).toBeVisible();
   await audio.click();
@@ -81,8 +81,9 @@ test("v46 requests optional server TTS only after AUDIO is explicitly enabled an
   await page.evaluate(() => {
     const item = document.createElement("div"); item.className = "log";
     const title = document.createElement("strong"); title.textContent = "JARVIS-X";
-    const body = document.createElement("small"); body.textContent = "Bonjour depuis JARVIS-X.";
+    const body = document.createElement("small"); body.textContent = "Réponse en préparation.";
     item.append(title, body); document.querySelector("#transcript").append(item);
+    setTimeout(() => { body.textContent = "Bonjour depuis JARVIS-X."; }, 1300);
   });
   await expect.poll(() => ttsRequested).toBe(true);
 });
