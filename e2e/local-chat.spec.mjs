@@ -162,7 +162,7 @@ test("v42 modal closes with Escape and returns focus to its HUD trigger", async 
 });
 
 
-test("v43 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
+test("v45 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
   for (const viewport of [{ width: 820, height: 1180 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto("/local-chat.html");
@@ -204,11 +204,11 @@ test("v43 composer uses a responsive two-row grid on iPad and mobile viewports",
   }
 });
 
-test("v43 service worker uses a new shell cache namespace", async ({ page }) => {
+test("v45 service worker uses a new shell cache namespace", async ({ page }) => {
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v44");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v45");
 });
 
 
@@ -242,4 +242,16 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
     await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(4);
     await expect(dialog.getByLabel("Local model").locator("option[value='Llama-3.2-3B-Instruct-q4f16_1-MLC']")).toHaveCount(0);
   }
+});
+
+
+test("v45 adapter model validation accepts every model shipped by the installed WebLLM package", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const source = await page.evaluate(async () => {
+    const response = await fetch("./local-chat-engine.js");
+    return response.text();
+  });
+  expect(source).toContain("prebuiltAppConfig?.model_list");
+  expect(source).not.toContain("ALLOWED_MODEL_IDS");
+  expect(source).toContain("modelList.map((item) => item?.model_id)");
 });
