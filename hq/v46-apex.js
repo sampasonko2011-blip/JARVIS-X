@@ -106,14 +106,14 @@
   }
   send.addEventListener("click", (event) => {
     const text = input.value.trim();
-    const match = text.match(/^\\/imagine\\s+([\\s\\S]+)/i) || text.match(/^(?:génère une image|genere une image|dessine)\\s+([\\s\\S]+)/i);
+    const match = text.match(/^\/imagine\s+([\s\S]+)/i) || text.match(/^(?:génère une image|genere une image|dessine)\s+([\s\S]+)/i);
     if (match) { event.preventDefault(); event.stopImmediatePropagation(); generateImage(match[1] || match[0]); return; }
     if (navigator.onLine && state.cloudConsent && !state.localMode) {
       event.preventDefault(); event.stopImmediatePropagation(); sendCloud();
     }
   }, true);
   imageButton.addEventListener("click", () => {
-    const text = input.value.trim().replace(/^\\/imagine\\s+/i, "");
+    const text = input.value.trim().replace(/^\/imagine\s+/i, "");
     if (!text) { status.textContent = "Ajoute une description dans le champ de message avant de générer."; input.focus(); return; }
     input.value = ""; generateImage(text);
   });
