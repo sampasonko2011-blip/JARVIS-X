@@ -65,7 +65,7 @@ const detail = $("runtime-detail");
 const progress = $("progress");
 const transcript = $("transcript");
 const input = $("message");
-const attachmentInput = $("jx-attachment-input");
+const attachmentInput = $("jx-file-input");
 const attachmentButton = $("jx-attachment-button");
 const attachmentStatus = $("jx-attachment-status");
 let pendingAttachmentContext = "";
@@ -172,10 +172,10 @@ loadButton.addEventListener("click", async () => {
     setBusy(false);
   }
 });
-attachmentButton?.addEventListener("click", () => attachmentInput?.click());
 attachmentInput?.addEventListener("change", async () => {
-  const file = attachmentInput.files?.[0];
-  if (!file) return;
+  const files = Array.from(attachmentInput.files || []);
+  if (!files.length) return;
+  const file = files[0];
   const textFile = /\.(txt|md|json|csv|js|html|py)$/i.test(file.name);
   if (file.size > 1024 * 1024) {
     if (attachmentStatus) attachmentStatus.textContent = "Fichier refusé : limite de 1 Mo.";
