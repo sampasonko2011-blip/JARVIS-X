@@ -33,6 +33,27 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   await expect(page.locator("#jx-upgrade-proposals")).toContainText("V46 · Evidence quality guard", { timeout: 5000 });
 });
 
+test("v46 respects the HQ v12 live-inference release lock without sending a model request", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
+    access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
+  })));
+  let postRequests = 0;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      ok: true, auth: "verified-supabase-session", chatEnabled: false, liveInferenceEnabled: false
+    }) });
+  });
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12", async route => {
+    postRequests++;
+    await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "live_inference_disabled", model_calls: 0 }) });
+  });
+  await page.goto("/local-chat.html");
+  await page.locator("#jx46-cloud-consent").check();
+  await expect(page.locator("#jx46-provider")).toContainText("LIVE LOCKED");
+  await expect(page.locator("#send-message")).toBeDisabled();
+  expect(postRequests).toBe(0);
+});
+
 test("v46 Observatory and Chat navigation are reciprocal", async ({ page }) => {
   await page.goto("/observatory.html");
   await page.getByRole("link", { name: "CHAT IA", exact: true }).click();
