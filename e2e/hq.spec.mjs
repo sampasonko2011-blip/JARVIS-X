@@ -370,7 +370,7 @@ test("integration registry records proposals without connecting a provider", asy
 
 test("upgrade center checks the stable release manifest without executing or installing code", async ({ page }) => {
   await page.locator('[data-view="upgrades"]').click();
-  await expect(page.locator("#hq-version")).toHaveText("0.2.0");
+  await expect(page.locator("#hq-version")).toHaveText("0.2.1");
   await page.locator("#check-updates").click();
   await expect(page.locator("#upgrade-status")).toHaveText("Up to date");
   await expect(page.locator("#upgrade-message")).toContainText("matches this app version");
