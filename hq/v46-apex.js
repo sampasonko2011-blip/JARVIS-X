@@ -113,7 +113,7 @@
   new MutationObserver(updateControls).observe($("runtime-status"), { childList: true, characterData: true, subtree: true });
 
   async function sendCloud() {
-    const text = input.value.trim().slice(0, 4000);
+    const text = input.value.trim();
     if (!text || state.busy) return;
     state.busy = true; updateControls();
     input.value = ""; addMessage("user", text);
@@ -126,7 +126,7 @@
       const response = await fetch(GATEWAY, {
         method: "POST",
         headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ task, task_type: "local_chat_v46", mode: "live", memory_consent: memoryConsent?.checked === true, executive_identity: "jarvis-x", orchestration_mode: "support" })
+        body: JSON.stringify({ task, task_type: "local_chat_v47", mode: "live", liveConsent: true, memory_consent: memoryConsent?.checked === true, executive_identity: "jarvis-x", orchestration_mode: "support" })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.ok !== true || typeof result.output !== "string") {
