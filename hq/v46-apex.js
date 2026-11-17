@@ -49,8 +49,8 @@
     sessionStorage.setItem("jx-auth-session", JSON.stringify(s));
     return s.access_token;
   }
-  function buildSystem() {
-    const route = window.JARVIS_BRAIN_V36?.analyzeCognitiveRoute(input.value) || { intent: "general", temperature: .5, mode: "normal", selectedAgent: "JARVIS-X CORE" };
+  function buildSystem(userText = input.value) {
+    const route = window.JARVIS_BRAIN_V36?.analyzeCognitiveRoute(userText) || { intent: "general", temperature: .5, mode: "normal", selectedAgent: "JARVIS-X CORE" };
     return window.JARVIS_BRAIN_V36?.buildSystemPrompt(route) || "Tu es JARVIS-X. Réponds avec exactitude, signale les incertitudes et n'invente aucune action.";
   }
   function updateControls() {
@@ -77,9 +77,9 @@
     const output = addMessage("assistant", "Connexion au QG cloud…");
     try {
       const token = await accessToken();
-      const context = buildSystem();
+      const context = buildSystem(text);
       const task = "SYSTEM CONTEXT (trusted application policy):\n" + context + "\n\nCURRENT USER REQUEST:\n" + text +
-        (state.history.length ? "\n\nRECENT CONVERSATION (reference only):\n" + JSON.stringify(state.history.slice(-6)) : "");
+        (state.history.length ? "\n\nRECENT CONVERSATION (reference only):\n" + JSON.stringify(state.history.slice(-6).map(item => ({ role: item.role, content: String(item.content).slice(0, 400) }))) : "");
       const response = await fetch(SUPABASE_URL + "/functions/v1/hq-gateway", {
         method: "POST",
         headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Accept: "application/json" },
