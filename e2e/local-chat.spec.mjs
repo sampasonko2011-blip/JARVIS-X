@@ -221,8 +221,8 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
     const attachBox = await attach.boundingBox();
     expect(attachBox.width).toBeGreaterThan(0);
     expect(attachBox.height).toBeGreaterThan(0);
-    expect(attachBox.left).toBeGreaterThanOrEqual(0);
-    expect(attachBox.right).toBeLessThanOrEqual(viewport.width + 1);
+    expect(attachBox.x).toBeGreaterThanOrEqual(0);
+    expect((attachBox.x + attachBox.width)).toBeLessThanOrEqual(viewport.width + 1);
 
     const fileChooserPromise = page.waitForEvent("filechooser");
     await attach.click();
@@ -237,8 +237,8 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
     const loadBox = await dialog.locator("#load-model").boundingBox();
     expect(loadBox.width).toBeGreaterThan(0);
     expect(loadBox.height).toBeGreaterThan(0);
-    expect(loadBox.left).toBeGreaterThanOrEqual(0);
-    expect(loadBox.right).toBeLessThanOrEqual(viewport.width + 1);
+    expect(loadBox.x).toBeGreaterThanOrEqual(0);
+    expect((loadBox.x + loadBox.width)).toBeLessThanOrEqual(viewport.width + 1);
     await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(4);
     await expect(dialog.getByLabel("Local model").locator("option[value='Llama-3.2-3B-Instruct-q4f16_1-MLC']")).toHaveCount(0);
   }
