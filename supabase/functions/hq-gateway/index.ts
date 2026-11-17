@@ -452,8 +452,8 @@ async function mediaBudget(userId: string) {
 
 async function handleMediaAction(body: Record<string, unknown>, userId: string, origin: string) {
   if (body.action === "image") {
-    if (Deno.env.get("JX_IMAGE_ENABLED") !== "true") {
-      return jsonResponse({ error: "image_generation_disabled" }, 403, origin);
+    if (Deno.env.get("JX_IMAGE_ENABLED") !== "true" || Deno.env.get("JX_IMAGE_SAFETY_MODERATION_ENABLED") !== "true") {
+      return jsonResponse({ error: "image_generation_disabled_or_safety_moderation_unconfigured" }, 403, origin);
     }
     const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1200) : "";
     if (!prompt) return jsonResponse({ error: "image_prompt_required" }, 400, origin);
