@@ -34,7 +34,14 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   const dialog = page.getByRole("dialog", { name: "ENGINE & MODEL" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Local model")).toBeVisible();
-  await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(5);
+  const modelOptions = await dialog.getByLabel("Local model").locator("option").evaluateAll(nodes => nodes.map(node => node.value));
+  expect(modelOptions).toEqual([
+    "SmolLM2-135M-Instruct-q0f16-MLC",
+    "SmolLM2-360M-Instruct-q4f32_1-MLC",
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
+  ]);
+  expect(modelOptions).not.toContain("Llama-3.2-3B-Instruct-q4f16_1-MLC");
   await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(dialog.locator("#jx-provider-status")).toBeVisible();
@@ -201,5 +208,38 @@ test("v43 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v43");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v44");
+});
+
+
+test("v44 attachment control and Engine & Model modal remain reachable on iPad and mobile", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/local-chat.html");
+    const attach = page.getByRole("button", { name: "Joindre un fichier ou une image" });
+    await expect(attach).toBeVisible();
+    const attachBox = await attach.boundingBox();
+    expect(attachBox.width).toBeGreaterThan(0);
+    expect(attachBox.height).toBeGreaterThan(0);
+    expect(attachBox.left).toBeGreaterThanOrEqual(0);
+    expect(attachBox.right).toBeLessThanOrEqual(viewport.width + 1);
+
+    const fileChooserPromise = page.waitForEvent("filechooser");
+    await attach.click();
+    const chooser = await fileChooserPromise;
+    await chooser.setFiles({ name: "offline-note.txt", mimeType: "text/plain", buffer: Buffer.from("Attachment smoke test") });
+    await expect(page.locator("#jx-attachment-status")).toContainText("offline-note.txt");
+
+    await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
+    const dialog = page.getByRole("dialog", { name: "ENGINE & MODEL" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator("#load-model")).toBeVisible();
+    const loadBox = await dialog.locator("#load-model").boundingBox();
+    expect(loadBox.width).toBeGreaterThan(0);
+    expect(loadBox.height).toBeGreaterThan(0);
+    expect(loadBox.left).toBeGreaterThanOrEqual(0);
+    expect(loadBox.right).toBeLessThanOrEqual(viewport.width + 1);
+    await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(4);
+    await expect(dialog.getByLabel("Local model").locator("option[value='Llama-3.2-3B-Instruct-q4f16_1-MLC']")).toHaveCount(0);
+  }
 });
