@@ -17,6 +17,8 @@
   const provider = $("jx46-provider"), status = $("jx46-status");
   const audioButton = $("jx46-audio"), liveButton = $("jx46-live"), imageButton = $("jx46-image");
   const memoryConsent = $("local-memory-consent");
+  // The UI defaults to Local M1. Mirror that default into runtime state before the first control update.
+  state.localMode = localMode.checked;
 
   function setProvider(label) {
     if (provider) provider.textContent = label;
