@@ -5,15 +5,9 @@ import { createLocalMemoryBridge } from "./local-memory-bridge.js";
 
 const MODEL_PRIORITY = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","Gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
 const DEFAULT_MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
-const ALLOWED_MODEL_IDS = new Set([
-  "SmolLM2-135M-Instruct-q0f16-MLC",
-  "SmolLM2-360M-Instruct-q4f32_1-MLC",
-  "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  ...MODEL_PRIORITY
-]);
+
 function resolveAvailableModel(modelList, selectedModel) {
-  const available = Array.isArray(modelList) ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && ALLOWED_MODEL_IDS.has(id)) : [];
+  const available = Array.isArray(modelList) ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && id.length > 0) : [];
   if (available.includes(selectedModel)) return selectedModel;
   return MODEL_PRIORITY.find((id) => available.includes(id)) || available[0] || null;
 }
@@ -21,7 +15,7 @@ function filterModelOptionsToInstalledPackage() {
   const installed = new Set(
     (Array.isArray(prebuiltAppConfig?.model_list) ? prebuiltAppConfig.model_list : [])
       .map((item) => item?.model_id)
-      .filter((id) => typeof id === "string" && ALLOWED_MODEL_IDS.has(id))
+      .filter((id) => typeof id === "string" && id.length > 0)
   );
   if (!modelSelect) return;
   for (const option of [...modelSelect.options]) {
