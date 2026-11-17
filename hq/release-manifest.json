@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "version": "0.2.1",
-  "channel": "preview",
+  "channel": "stable",
   "release_notes": "V46 APEX preview: consent-gated cloud routing, browser speech controls, optional budget-guarded image/TTS gateway actions, and heuristic upgrade proposals.",
   "minimum_shell_version": "0.2.1",
   "capabilities": [
