@@ -5,10 +5,15 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let payload;
-  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway", async route => {
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      ok: true, auth: "verified-supabase-session", chatEnabled: true, liveInferenceEnabled: true
+    }) });
+  });
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12", async route => {
     payload = route.request().postDataJSON();
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
-      ok: true, output: "Réponse simulée par le gateway.", provider: "mock", provider_calls: 0
+      ok: true, output: "Réponse simulée par le gateway.", executive_identity: "JARVIS-X", execution_mode: "live", model_calls: 1, memory: { read_status: "not_consented" }
     }) });
   });
   await page.goto("/local-chat.html");
@@ -19,7 +24,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   await expect(page.locator("#transcript")).toContainText("Réponse simulée par le gateway.");
   expect(payload.task).toContain("Tu es JARVIS-X");
   expect(payload.task).toContain("CURRENT USER REQUEST");
-  expect(payload.mode).toBe("live");
+  expect(payload.mode).toBe("live");\n  expect(payload.executive_identity).toBe("jarvis-x");\n  expect(payload.orchestration_mode).toBe("support");
   expect(payload.memory_consent).toBe(false);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await expect(page.locator("#jx46-provider")).toContainText("CLOUD");
@@ -64,15 +69,19 @@ test("v46 service worker pre-caches the APEX runtime and uses v46 namespace", as
   expect(source).toContain("./v46-apex.css");
 });
 
-test("v46 requests optional server TTS only after AUDIO is explicitly enabled and keeps provider keys server-side", async ({ page }) => {
-  await page.addInitScript(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
-    access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
-  })));
-  let ttsRequested = false;
-  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway", async route => {
-    const body = route.request().postDataJSON();
-    ttsRequested = body.action === "tts" && body.text === "Bonjour depuis JARVIS-X.";
-    await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "server_tts_not_enabled" }) });
+test("v46 AUDIO uses browser speech only and makes no server TTS request", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+    window.speechSynthesis = {
+      cancel() {},
+      speak(utterance) { window.__spokenText = utterance.text; if (utterance.onend) utterance.onend(); },
+      get speaking() { return false; }
+    };
+  });
+  let functionRequests = 0;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/**", async route => {
+    functionRequests++;
+    await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "unexpected_server_tts" }) });
   });
   await page.goto("/local-chat.html");
   const clientSource = await (await page.request.get("/v46-apex.js")).text();
@@ -85,5 +94,6 @@ test("v46 requests optional server TTS only after AUDIO is explicitly enabled an
     item.append(title, body); document.querySelector("#transcript").append(item);
     setTimeout(() => { body.textContent = "Bonjour depuis JARVIS-X."; }, 1300);
   });
-  await expect.poll(() => ttsRequested).toBe(true);
+  await expect.poll(() => page.evaluate(() => window.__spokenText)).toBe("Bonjour depuis JARVIS-X.");
+  expect(functionRequests).toBe(0);
 });
