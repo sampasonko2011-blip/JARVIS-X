@@ -457,7 +457,7 @@ async function handleMediaAction(body: Record<string, unknown>, userId: string, 
     }
     const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1200) : "";
     if (!prompt) return jsonResponse({ error: "image_prompt_required" }, 400, origin);
-    if (/(nude|nudity|porn|explicit sexual|sexualized|self[- ]?harm|suicide|gore|graphic violence|weapon instructions)/i.test(prompt)) {
+    if (/(nude|nudity|porn|erotic|explicit sexual|sexualized|self[- ]?harm|suicide|gore|graphic violence|blood|dismemberment|weapon|firearm|knife|explosive|bomb)/i.test(prompt)) {
       return jsonResponse({ error: "image_prompt_blocked_by_safety_policy" }, 400, origin);
     }
     const hfKey = Deno.env.get("HF_API_KEY");
