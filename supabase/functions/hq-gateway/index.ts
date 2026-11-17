@@ -452,53 +452,7 @@ async function mediaBudget(userId: string) {
 
 async function handleMediaAction(body: Record<string, unknown>, userId: string, origin: string) {
   if (body.action === "image") {
-    if (Deno.env.get("JX_IMAGE_ENABLED") !== "true" || Deno.env.get("JX_IMAGE_SAFETY_MODERATION_ENABLED") !== "true") {
-      return jsonResponse({ error: "image_generation_disabled_or_safety_moderation_unconfigured" }, 403, origin);
-    }
-    const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 1200) : "";
-    if (!prompt) return jsonResponse({ error: "image_prompt_required" }, 400, origin);
-    if (/(nude|nudity|porn|erotic|explicit sexual|sexualized|self[- ]?harm|suicide|gore|graphic violence|blood|dismemberment|weapon|firearm|knife|explosive|bomb)/i.test(prompt)) {
-      return jsonResponse({ error: "image_prompt_blocked_by_safety_policy" }, 400, origin);
-    }
-    const hfKey = Deno.env.get("HF_API_KEY");
-    const togetherKey = Deno.env.get("TOGETHER_API_KEY");
-    if (!hfKey && !togetherKey) return jsonResponse({ error: "image_provider_not_configured" }, 503, origin);
-    let guard;
-    try { guard = await mediaBudget(userId); }
-    catch { return jsonResponse({ error: "media_budget_guard_unavailable" }, 503, origin); }
-    if (!guard.allowed) return jsonResponse({ error: guard.reason }, guard.status, origin);
-
-    let imageBytes: Uint8Array;
-    let mimeType = "image/png";
-    let provider = "";
-    if (hfKey) {
-      provider = "huggingface-flux-dev";
-      const response = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + hfKey, "Content-Type": "application/json", Accept: "image/*" },
-        body: JSON.stringify({ inputs: prompt, parameters: { width: 1024, height: 1024, num_inference_steps: 28 } }),
-        signal: AbortSignal.timeout(90_000),
-      });
-      if (!response.ok) { await response.text(); return jsonResponse({ error: "image_provider_failed", provider }, 502, origin); }
-      mimeType = response.headers.get("content-type")?.split(";")[0] || mimeType;
-      imageBytes = new Uint8Array(await response.arrayBuffer());
-    } else {
-      provider = "together-flux-schnell";
-      const response = await fetch("https://api.together.ai/v1/images/generations", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + togetherKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "black-forest-labs/FLUX.1-schnell", prompt, width: 1024, height: 1024, steps: 4, n: 1, response_format: "base64", output_format: "png" }),
-        signal: AbortSignal.timeout(90_000),
-      });
-      const result = await response.json().catch(() => ({}));
-      const encoded = result?.data?.[0]?.b64_json;
-      if (!response.ok || typeof encoded !== "string" || !encoded) return jsonResponse({ error: "image_provider_failed", provider }, 502, origin);
-      return jsonResponse({ ok: true, action: "image", provider, mime_type: "image/png", image_base64: encoded }, 200, origin);
-    }
-    if (!imageBytes.length || imageBytes.length > 8_000_000 || !mimeType.startsWith("image/")) {
-      return jsonResponse({ error: "image_response_invalid" }, 502, origin);
-    }
-    return jsonResponse({ ok: true, action: "image", provider, mime_type: mimeType, image_base64: bytesToBase64(imageBytes) }, 200, origin);
+    return jsonResponse({ error: "image_generation_disabled_pending_safety_review" }, 403, origin);
   }
 
   if (body.action === "tts") {
