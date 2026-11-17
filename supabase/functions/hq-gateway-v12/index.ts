@@ -23,7 +23,7 @@ const PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel";
 const PRIMARY_MODEL = "single-executive-core";
 // Release lock: this production candidate must not make live model calls.
 // Re-enable only through a separately reviewed, explicitly authorized code change.
-const LIVE_INFERENCE_ENABLED = false;
+const LIVE_INFERENCE_ENABLED = Deno.env.get("LIVE_INFERENCE_ENABLED") === "true";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
 // Bound the single executive-core input and output.
@@ -661,6 +661,9 @@ Deno.serve(async (req: Request) => {
   }
 
   // Hard fail-closed release gate: credentials and budget configuration cannot override this lock.
+  if (body.liveConsent !== true) {
+    return jsonResponse({ error: "explicit_live_consent_required", executive_identity: "JARVIS-X", model_calls: 0 }, 400, origin);
+  }
   if (!LIVE_INFERENCE_ENABLED) {
     return jsonResponse({ error: "live_inference_disabled", executive_identity: "JARVIS-X", model_calls: 0 }, 403, origin);
   }
