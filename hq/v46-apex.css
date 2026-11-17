@@ -1,2 +1,8 @@
 .jx46-control{border:1px solid rgba(100,190,255,.28);border-radius:14px;padding:12px;margin:10px 0;background:rgba(7,18,35,.88);color:#eaf4ff}.jx46-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.78rem;letter-spacing:.08em}.jx46-head span{color:#83d9ff}.jx46-switch{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-size:.9rem}.jx46-switch input{margin-top:4px}.jx46-switch small{display:block;opacity:.72;margin-top:3px;line-height:1.4}.jx46-actions{display:flex;gap:8px;flex-wrap:wrap}.jx46-control p{font-size:.8rem;opacity:.8;margin:10px 0 0}
 .jx46-generated-image{display:block;max-width:min(100%,768px);height:auto;border-radius:12px;margin-top:12px;border:1px solid rgba(100,190,255,.28)}.jx46-control .btn{cursor:pointer}
+/* Keep APEX controls overlaid so the v42 fixed-height workspace remains scroll-free. */
+.jx-chat-stage{position:relative!important}
+.jx46-control{position:absolute;z-index:12;top:8px;right:8px;width:min(330px,calc(100% - 16px));max-height:34%;overflow:auto;margin:0;background:rgba(7,18,35,.96);box-shadow:0 12px 32px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
+.jx46-control .jx46-switch{margin:7px 0;font-size:.78rem}
+.jx46-control .jx46-switch small{font-size:.7rem}
+.jx46-control .jx46-actions .btn{min-height:32px;padding:6px 9px;font-size:.72rem}
