@@ -430,56 +430,6 @@ async function executeMultipass(task: string, memoryContext = "") {
   );
   return { answer: answer.output, providerCalls: 5, providersUsed: [lead, reasoner, critic, adversary, answer].map(({ provider, model }) => ({ provider, model })) };
 }
-
-function bytesToBase64(bytes: Uint8Array) {
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
-
-async function mediaBudget(userId: string) {
-  const minute = await consumeRateLimit(userId, "minute");
-  const day = await consumeRateLimit(userId, "day");
-  const denied = !minute.allowed ? minute : !day.allowed ? day : null;
-  if (denied) return { allowed: false as const, status: 429, reason: "rate_limit_exceeded" };
-  const reservation = await reserveGlobalBudget(userId);
-  if (!reservation.allowed) return { allowed: false as const, status: 429, reason: "global_budget_blocked" };
-  return { allowed: true as const };
-}
-
-async function handleMediaAction(body: Record<string, unknown>, userId: string, origin: string) {
-  if (body.action === "image") {
-    return jsonResponse({ error: "image_generation_disabled_pending_safety_review" }, 403, origin);
-  }
-
-  if (body.action === "tts") {
-    if (Deno.env.get("ELEVENLABS_ENABLED") !== "true") return jsonResponse({ error: "server_tts_not_enabled" }, 503, origin);
-    const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
-    const voiceId = Deno.env.get("ELEVENLABS_VOICE_ID");
-    const text = typeof body.text === "string" ? body.text.trim().slice(0, 2000) : "";
-    if (!apiKey || !voiceId) return jsonResponse({ error: "server_tts_not_configured" }, 503, origin);
-    if (!text) return jsonResponse({ error: "tts_text_required" }, 400, origin);
-    let guard;
-    try { guard = await mediaBudget(userId); }
-    catch { return jsonResponse({ error: "media_budget_guard_unavailable" }, 503, origin); }
-    if (!guard.allowed) return jsonResponse({ error: guard.reason }, guard.status, origin);
-    const response = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + encodeURIComponent(voiceId), {
-      method: "POST",
-      headers: { "xi-api-key": apiKey, "Content-Type": "application/json", Accept: "audio/mpeg" },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings: { stability: 0.45, similarity_boost: 0.75 } }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!response.ok) { await response.text(); return jsonResponse({ error: "server_tts_provider_failed" }, 502, origin); }
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (!bytes.length || bytes.length > 5_000_000) return jsonResponse({ error: "tts_response_invalid" }, 502, origin);
-    return jsonResponse({ ok: true, action: "tts", mime_type: "audio/mpeg", audio_base64: bytesToBase64(bytes) }, 200, origin);
-  }
-  return jsonResponse({ error: "unsupported_media_action" }, 400, origin);
-}
-
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
   const url = new URL(req.url);
@@ -547,10 +497,6 @@ Deno.serve(async (req: Request) => {
   catch (error) {
     return jsonResponse({ error: error instanceof Error && error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json" },
       error instanceof Error && error.message === "request_body_too_large" ? 413 : 400, origin);
-  }
-  if (body.action === "image" || body.action === "tts") {
-    try { return await handleMediaAction(body, user.id, origin); }
-    catch { return jsonResponse({ error: "media_provider_failed" }, 502, origin); }
   }
   if (typeof body.task !== "string" || !body.task.trim() || body.task.length > MAX_TASK_CHARS) {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
