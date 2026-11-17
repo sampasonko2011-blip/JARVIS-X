@@ -57,3 +57,26 @@ test("v46 service worker pre-caches the APEX runtime and uses v46 namespace", as
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
+
+test("v46 requests optional server TTS only after AUDIO is explicitly enabled and keeps provider keys server-side", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
+    access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
+  })));
+  let ttsRequested = false;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway", async route => {
+    const body = route.request().postDataJSON();
+    ttsRequested = body.action === "tts" && body.text === "Bonjour depuis JARVIS-X.";
+    await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "server_tts_not_enabled" }) });
+  });
+  await page.goto("/local-chat.html");
+  const clientSource = await (await page.request.get("/v46-apex.js")).text();
+  expect(clientSource).not.toMatch(/HF_API_KEY|TOGETHER_API_KEY|ELEVENLABS_API_KEY/);
+  await page.locator("#jx46-audio").click();
+  await page.evaluate(() => {
+    const item = document.createElement("div"); item.className = "log";
+    const title = document.createElement("strong"); title.textContent = "JARVIS-X";
+    const body = document.createElement("small"); body.textContent = "Bonjour depuis JARVIS-X.";
+    item.append(title, body); document.querySelector("#transcript").append(item);
+  });
+  await expect.poll(() => ttsRequested).toBe(true);
+});
