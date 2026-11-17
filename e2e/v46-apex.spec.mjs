@@ -24,7 +24,9 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   await expect(page.locator("#transcript")).toContainText("Réponse simulée par le gateway.");
   expect(payload.task).toContain("Tu es JARVIS-X");
   expect(payload.task).toContain("CURRENT USER REQUEST");
-  expect(payload.mode).toBe("live");\n  expect(payload.executive_identity).toBe("jarvis-x");\n  expect(payload.orchestration_mode).toBe("support");
+  expect(payload.mode).toBe("live");
+  expect(payload.executive_identity).toBe("jarvis-x");
+  expect(payload.orchestration_mode).toBe("support");
   expect(payload.memory_consent).toBe(false);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
   await expect(page.locator("#jx46-provider")).toContainText("CLOUD");
