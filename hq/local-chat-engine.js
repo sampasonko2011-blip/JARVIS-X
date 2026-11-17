@@ -175,31 +175,34 @@ loadButton.addEventListener("click", async () => {
 attachmentInput?.addEventListener("change", async () => {
   const files = Array.from(attachmentInput.files || []);
   if (!files.length) return;
-  const file = files[0];
-  const textFile = /\.(txt|md|json|csv|js|html|py)$/i.test(file.name);
-  if (file.size > 1024 * 1024) {
-    if (attachmentStatus) attachmentStatus.textContent = "Fichier refusé : limite de 1 Mo.";
-    attachmentInput.value = "";
-    return;
-  }
+  const textParts = [];
+  let imageDataUrl = "";
   try {
-    if (textFile) {
-      pendingAttachmentContext = "\n\n[PIÈCE JOINTE : " + file.name + "]\n" + (await file.text()).slice(0, 24000) + "\n[FIN PIÈCE JOINTE]";
-      if (attachmentStatus) attachmentStatus.textContent = file.name + " prêt · contenu ajouté au contexte local.";
-    } else if (file.type.startsWith("image/")) {
-      const dataUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ""));
-        reader.onerror = () => reject(new Error("Lecture image impossible."));
-        reader.readAsDataURL(file);
-      });
-      pendingAttachmentContext = "\n[IMAGE JOINTE : " + file.name + "] L'analyse visuelle n'est pas prise en charge par le modèle local actif. Aucun transfert cloud n'est configuré.";
+    for (const file of files) {
+      if (file.size > 1024 * 1024) throw new Error(file.name + " dépasse la limite de 1 Mo.");
+      const textFile = /\\.(txt|md|json|csv|js|html|py)$/i.test(file.name);
+      if (textFile) {
+        textParts.push("[PIÈCE JOINTE : " + file.name + "]\\n" + (await file.text()).slice(0, 24000));
+      } else if (file.type.startsWith("image/") && !imageDataUrl) {
+        imageDataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error("Lecture image impossible."));
+          reader.readAsDataURL(file);
+        });
+      }
+    }
+    pendingAttachmentContext = textParts.join("\\n\\n") + (imageDataUrl
+      ? "\\n[IMAGE JOINTE] L'image est affichée en aperçu. L'analyse visuelle nécessite une capacité cloud explicitement autorisée ; aucune transmission n'a été effectuée."
+      : "");
+    if (imageDataUrl) {
       const preview = $("jx-attachment-preview");
-      if (preview) { preview.src = dataUrl; preview.hidden = false; preview.alt = "Aperçu de " + file.name; }
-      if (attachmentStatus) attachmentStatus.textContent = "Image attachée localement ; analyse indisponible hors ligne et aucun fournisseur cloud connecté.";
-    } else if (attachmentStatus) attachmentStatus.textContent = "Format non pris en charge.";
+      if (preview) { preview.src = imageDataUrl; preview.hidden = false; preview.alt = "Aperçu de " + files.find(file => file.type.startsWith("image/")).name; }
+    }
+    if (attachmentStatus) attachmentStatus.textContent = files.length + " fichier(s) prêt(s) · texte ajouté au contexte local ; aucune image transmise.";
   } catch (error) {
     if (attachmentStatus) attachmentStatus.textContent = "Lecture impossible : " + String(error?.message || error);
+    pendingAttachmentContext = "";
   }
 });
 sendButton.addEventListener("click", async () => {
