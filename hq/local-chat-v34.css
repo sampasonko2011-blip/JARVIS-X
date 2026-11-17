@@ -478,3 +478,9 @@ body:has(.jx42-modal-backdrop:not([hidden])) #jx-local-focus-toggle {
 #jx-local-focus-toggle{position:static!important;inset:auto!important;z-index:auto!important}
 .jx42-modal-backdrop{z-index:10000!important}
 body:has(.jx42-modal-backdrop:not([hidden])) #jx-local-focus-toggle{visibility:hidden!important}
+
+
+/* v47: native iPadOS picker must remain hit-testable over the attachment control. */
+#jx-attachment-button { position: relative; overflow: hidden; }
+#jx-file-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; display: block; }
+#message { max-height: min(42dvh, 420px); }
