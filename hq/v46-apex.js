@@ -93,7 +93,7 @@
       state.history = state.history.slice(-12);
       setProvider("CLOUD · FIVE-PROVIDER COUNCIL · EXECUTED");
       status.textContent = "Réponse cloud reçue. Appels fournisseur : " + String(result.provider_calls ?? "unknown") + ".";
-      if (state.audio) speak(result.output);
+      
     } catch (error) {
       output.textContent = "Cloud indisponible : " + String(error?.message || error) + ". Aucun résultat inventé. Active le mode local et charge un modèle pour continuer hors ligne.";
       status.textContent = "Cloud request failed; no fake reply was generated.";
@@ -127,7 +127,7 @@
       state.recognition.onresult = (event) => {
         let finalText = "";
         for (let i = event.resultIndex; i < event.results.length; i++) if (event.results[i].isFinal) finalText += event.results[i][0].transcript + " ";
-        if (finalText.trim()) { input.value = (input.value + " " + finalText.trim()).trim(); if (state.cloudConsent && !state.localMode) sendCloud(); else status.textContent = "Dictée reçue. Appuie sur Send pour lancer le modèle local."; }
+        if (finalText.trim()) { input.value = (input.value + " " + finalText.trim()).trim(); if (state.cloudConsent && !state.localMode) sendCloud(); else if ($("runtime-status")?.textContent === "READY") send.click(); else status.textContent = "Dictée reçue. Charge le modèle local avant l’envoi."; }
       };
       state.recognition.onerror = () => { status.textContent = "Reconnaissance vocale interrompue par le navigateur."; };
       state.recognition.onend = () => { if (state.live && !state.busy && !window.speechSynthesis?.speaking) setTimeout(startRecognition, 400); };
@@ -140,7 +140,7 @@
     if (state.live) { startRecognition(); status.textContent = "Écoute active. Le navigateur peut afficher une demande d'autorisation micro."; }
     else { state.recognition?.stop(); status.textContent = "Écoute arrêtée."; }
   });
-  document.addEventListener("click", (event) => {
+  const spoken = new WeakSet();\n  new MutationObserver((records) => {\n    if (!state.audio) return;\n    for (const record of records) for (const node of record.addedNodes) {\n      if (node.nodeType !== 1 || !node.classList.contains("log") || spoken.has(node)) continue;\n      const heading = node.querySelector("strong")?.textContent || "";\n      const text = node.querySelector("small")?.textContent || "";\n      if (/JARVIS-X|assistant/i.test(heading) && text) { spoken.add(node); speak(text); }\n    }\n  }).observe(transcript, { childList: true });\n  document.addEventListener("click", (event) => {
     if (event.target.closest("#load-model")) setTimeout(updateControls, 300);
   });
   updateControls();
