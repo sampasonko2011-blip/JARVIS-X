@@ -207,7 +207,9 @@ test("HQ release metadata is valid, pinned to stable, and forbids automatic prov
   assert.equal(release.schema_version, 1);
   assert.match(release.version, /^\d+\.\d+\.\d+$/);
   assert.equal(release.channel, "stable");
-  assert.deepEqual(release.provider_adapters, []);
+  assert.deepEqual(release.provider_adapters, [
+    "supabase-hq-gateway", "huggingface-flux-dev", "together-flux-schnell", "elevenlabs-tts"
+  ]);
   assert.equal(release.automatic_provider_installation, false);
   assert.equal(release.automatic_permission_grants, false);
 });
