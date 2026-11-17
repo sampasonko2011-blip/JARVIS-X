@@ -3,7 +3,7 @@ import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 import { createLocalMemoryBridge } from "./local-memory-bridge.js";
 
-const MODEL_PRIORITY = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","Gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
+const MODEL_PRIORITY = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
 const DEFAULT_MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
 
 function resolveAvailableModel(modelList, selectedModel) {
@@ -28,7 +28,7 @@ function filterModelOptionsToInstalledPackage() {
     "Qwen2.5-3B-Instruct-q4f16_1-MLC": "Qwen2.5 3B · highest memory demand",
     "Phi-3.5-mini-instruct-q4f16_1-MLC": "Phi 3.5 Mini · advanced",
     "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC": "Qwen2.5 Coder 1.5B · code-focused",
-    "Gemma-2-2b-it-q4f16_1-MLC": "Gemma 2 2B · general",
+    "gemma-2-2b-it-q4f16_1-MLC": "Gemma 2 2B · general",
     "Qwen2.5-1.5B-Instruct-q4f16_1-MLC": "Qwen2.5 1.5B · advanced",
     "Qwen2.5-0.5B-Instruct-q4f16_1-MLC": "Qwen2.5 0.5B · lower memory"
   };
