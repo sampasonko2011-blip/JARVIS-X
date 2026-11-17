@@ -1,11 +1,21 @@
 const CACHE = 'jarvis-x-hq-shell-v46';
 const SHELL = ['./index.html', './hq.css', './hq.js', './neural-observatory.css', './neural-observatory.js', './conversation-experience.css', './conversation-experience.js', './arrival-experience.css', './arrival-experience.js', './observatory-premium.css', './kardashev-hud.css', './kardashev-engine.js', './observatory.html', './observatory.css', './observatory.js', './observatory-v29.js', './interstellar-v30.css', './interstellar-v30.js', './interstellar-v31.css', './observatory-v31.js', './observatory-v32.js', './interstellar-v32.css', './spatial-mode.js', './spatial-mode.css', './mission-control.html', './mission-control.js', './forge.js', './manifest.webmanifest' , './icon.svg', './local-chat-preflight.html', './local-chat-preflight.js', './local-chat.html', './local-chat-v33.css', './local-chat-v33.js', './local-chat-v34.css', './local-chat-v34.js', './local-chat-v35.css', './local-chat-v35.js', './local-chat-v38.css', './local-chat-v38.js', './local-chat-v42.css', './local-chat-v42.js', './local-chat-engine.bundle.js', './local-chat-engine.js', './jarvis-brain-v36.js', './v46-apex.js', './v46-apex.css'];
+const REQUIRED_SHELL = ['./index.html', './hq.css', './hq.js'];
+const OPTIONAL_SHELL = SHELL.filter((asset) => !REQUIRED_SHELL.includes(asset));
+
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(async (cache) => {
+      // Core HQ assets are required for a valid shell. Optional modules may be
+      // generated at build time or temporarily absent; one missing module must
+      // not prevent the worker from controlling the online app.
+      await cache.addAll(REQUIRED_SHELL);
+      await Promise.all(OPTIONAL_SHELL.map(async (asset) => {
+        try { await cache.add(asset); } catch { /* Optional asset: fetch on demand when online. */ }
+      }));
+      await self.skipWaiting();
+    })
   );
 });
 
