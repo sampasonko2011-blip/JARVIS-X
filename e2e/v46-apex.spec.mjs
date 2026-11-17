@@ -106,7 +106,7 @@ test("v46 AUDIO uses browser speech only and makes no server TTS request", async
     Object.defineProperty(window, "speechSynthesis", {
       configurable: true, value: {
         cancel() {},
-        speak(utterance) { window.__spokenText = utterance.text; if (utterance.onend) utterance.onend(); },
+        speak(utterance) { window.__spokenText = utterance.text; window.__spokenMeta = { lang: utterance.lang, rate: utterance.rate, pitch: utterance.pitch }; if (utterance.onend) utterance.onend(); },
         get speaking() { return false; }
       }
     });
@@ -128,5 +128,6 @@ test("v46 AUDIO uses browser speech only and makes no server TTS request", async
     setTimeout(() => { body.textContent = "Bonjour depuis JARVIS-X."; }, 1300);
   });
   await expect.poll(() => page.evaluate(() => window.__spokenText)).toBe("Bonjour depuis JARVIS-X.");
+  expect(await page.evaluate(() => window.__spokenMeta)).toEqual({ lang: "fr-FR", rate: 0.96, pitch: 0.92 });
   expect(functionRequests).toBe(0);
 });
