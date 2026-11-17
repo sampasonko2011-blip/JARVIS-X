@@ -94,12 +94,22 @@ test("v46 service worker pre-caches the APEX runtime and uses v46 namespace", as
 
 test("v46 AUDIO uses browser speech only and makes no server TTS request", async ({ page }) => {
   await page.addInitScript(() => {
-    window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
-    window.speechSynthesis = {
-      cancel() {},
-      speak(utterance) { window.__spokenText = utterance.text; if (utterance.onend) utterance.onend(); },
-      get speaking() { return false; }
+    window.SpeechRecognition = class {
+      addEventListener() {}
+      removeEventListener() {}
+      start() {}
+      stop() {}
     };
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      configurable: true, value: class { constructor(text) { this.text = text; } }
+    });
+    Object.defineProperty(window, "speechSynthesis", {
+      configurable: true, value: {
+        cancel() {},
+        speak(utterance) { window.__spokenText = utterance.text; if (utterance.onend) utterance.onend(); },
+        get speaking() { return false; }
+      }
+    });
   });
   let functionRequests = 0;
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/**", async route => {
