@@ -3,31 +3,46 @@ import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 import { createLocalMemoryBridge } from "./local-memory-bridge.js";
 
-const MODEL_PRIORITY = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","Gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
+const MODEL_PRIORITY = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
 const DEFAULT_MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
-const ALLOWED_MODEL_IDS = new Set([
-  "SmolLM2-135M-Instruct-q0f16-MLC",
-  "SmolLM2-360M-Instruct-q4f32_1-MLC",
-  "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  ...MODEL_PRIORITY
-]);
+
 function resolveAvailableModel(modelList, selectedModel) {
-  const available = Array.isArray(modelList) ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && ALLOWED_MODEL_IDS.has(id)) : [];
+  const available = Array.isArray(modelList) ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && id.length > 0) : [];
   if (available.includes(selectedModel)) return selectedModel;
   return MODEL_PRIORITY.find((id) => available.includes(id)) || available[0] || null;
 }
 function filterModelOptionsToInstalledPackage() {
-  const installed = new Set(
-    (Array.isArray(prebuiltAppConfig?.model_list) ? prebuiltAppConfig.model_list : [])
-      .map((item) => item?.model_id)
-      .filter((id) => typeof id === "string" && ALLOWED_MODEL_IDS.has(id))
+  const catalog = Array.isArray(prebuiltAppConfig?.model_list) ? prebuiltAppConfig.model_list : [];
+  const catalogEntries = new Map(
+    catalog
+      .filter((item) => typeof item?.model_id === "string" && item.model_id.length > 0)
+      .map((item) => [item.model_id, item])
   );
+  const catalogIds = [...catalogEntries.keys()];
+  const orderedIds = [
+    ...MODEL_PRIORITY.filter((id) => catalogEntries.has(id)),
+    ...catalogIds.filter((id) => !MODEL_PRIORITY.includes(id))
+  ];
   if (!modelSelect) return;
-  for (const option of [...modelSelect.options]) {
-    if (!installed.has(option.value)) option.remove();
+  const labels = {
+    "Qwen2.5-3B-Instruct-q4f16_1-MLC": "Qwen2.5 3B · highest memory demand",
+    "Phi-3.5-mini-instruct-q4f16_1-MLC": "Phi 3.5 Mini · advanced",
+    "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC": "Qwen2.5 Coder 1.5B · code-focused",
+    "gemma-2-2b-it-q4f16_1-MLC": "Gemma 2 2B · general",
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC": "Qwen2.5 1.5B · advanced",
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC": "Qwen2.5 0.5B · lower memory"
+  };
+  modelSelect.replaceChildren();
+  for (const id of orderedIds) {
+    const item = catalogEntries.get(id);
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = labels[id] || item?.model || id;
+    modelSelect.append(option);
   }
-  const preferred = MODEL_PRIORITY.find((id) => installed.has(id)) || null;
+  // Expose the exact runtime catalog used to build the selector for diagnostics and E2E verification.
+  modelSelect.dataset.runtimeCatalog = JSON.stringify(orderedIds);
+  const preferred = MODEL_PRIORITY.find((id) => catalogEntries.has(id)) || orderedIds[0] || null;
   if (preferred) modelSelect.value = preferred;
   if (loadButton && !preferred) {
     loadButton.disabled = true;

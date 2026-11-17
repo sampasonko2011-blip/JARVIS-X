@@ -34,14 +34,31 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   const dialog = page.getByRole("dialog", { name: "ENGINE & MODEL" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Local model")).toBeVisible();
-  const modelOptions = await dialog.getByLabel("Local model").locator("option").evaluateAll(nodes => nodes.map(node => node.value));
-  expect(modelOptions).toEqual([
-    "SmolLM2-135M-Instruct-q0f16-MLC",
-    "SmolLM2-360M-Instruct-q4f32_1-MLC",
-    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
-  ]);
-  expect(modelOptions).not.toContain("Llama-3.2-3B-Instruct-q4f16_1-MLC");
+  const selector = dialog.getByLabel("Local model");
+  const modelOptions = await selector.locator("option").evaluateAll(nodes => nodes.map(node => node.value));
+  const runtimeCatalog = await selector.evaluate(node => JSON.parse(node.dataset.runtimeCatalog || "[]"));
+  const priorityModels = [
+    "Qwen2.5-3B-Instruct-q4f16_1-MLC",
+    "Phi-3.5-mini-instruct-q4f16_1-MLC",
+    "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+    "gemma-2-2b-it-q4f16_1-MLC",
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+  ];
+  expect(runtimeCatalog.length).toBeGreaterThan(0);
+  expect(modelOptions).toEqual(runtimeCatalog);
+  for (const id of priorityModels) expect(runtimeCatalog).toContain(id);
+  const strongestAvailable = priorityModels.find(id => runtimeCatalog.includes(id));
+  expect(await selector.inputValue()).toBe(strongestAvailable);
+  expect(await selector.inputValue()).not.toBe("Qwen2.5-0.5B-Instruct-q4f16_1-MLC");
+
+  const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
+  expect(engineSource).toContain("prebuiltAppConfig?.model_list");
+  expect(engineSource).toContain("modelSelect.dataset.runtimeCatalog");
+  expect(engineSource).toContain('const SYSTEM = "Ton nom est JARVIS-X.');
+  expect(engineSource).toMatch(/l'utilisateur s'appelle Sam/i);
+  expect(engineSource).toContain("Monsieur");
+  expect(engineSource).toContain("ne l'appelle jamais JARVIS-X");
   await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(dialog.locator("#jx-provider-status")).toBeVisible();
@@ -162,7 +179,7 @@ test("v42 modal closes with Escape and returns focus to its HUD trigger", async 
 });
 
 
-test("v43 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
+test("v45 composer uses a responsive two-row grid on iPad and mobile viewports", async ({ page }) => {
   for (const viewport of [{ width: 820, height: 1180 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto("/local-chat.html");
@@ -204,11 +221,11 @@ test("v43 composer uses a responsive two-row grid on iPad and mobile viewports",
   }
 });
 
-test("v43 service worker uses a new shell cache namespace", async ({ page }) => {
+test("v45 service worker uses a new shell cache namespace", async ({ page }) => {
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v44");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v45");
 });
 
 
@@ -239,7 +256,29 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
     expect(loadBox.height).toBeGreaterThan(0);
     expect(loadBox.x).toBeGreaterThanOrEqual(0);
     expect((loadBox.x + loadBox.width)).toBeLessThanOrEqual(viewport.width + 1);
-    await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(4);
-    await expect(dialog.getByLabel("Local model").locator("option[value='Llama-3.2-3B-Instruct-q4f16_1-MLC']")).toHaveCount(0);
+    const selector = dialog.getByLabel("Local model");
+    const runtimeCatalog = await selector.evaluate(node => JSON.parse(node.dataset.runtimeCatalog || "[]"));
+    await expect(selector.locator("option")).toHaveCount(runtimeCatalog.length);
+    expect(await selector.inputValue()).toBe(runtimeCatalog.find(id => [
+      "Qwen2.5-3B-Instruct-q4f16_1-MLC",
+      "Phi-3.5-mini-instruct-q4f16_1-MLC",
+      "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+      "gemma-2-2b-it-q4f16_1-MLC",
+      "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+      "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+    ].includes(id)));
   }
+});
+
+
+test("v45 adapter model validation accepts every model shipped by the installed WebLLM package", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const source = await page.evaluate(async () => {
+    const response = await fetch("./local-chat-engine.js");
+    return response.text();
+  });
+  expect(source).toContain("prebuiltAppConfig?.model_list");
+  expect(source).not.toContain("ALLOWED_MODEL_IDS");
+  expect(source).toContain("modelSelect.dataset.runtimeCatalog");
+  expect(source).toContain("catalogEntries.has(id)");
 });

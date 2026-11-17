@@ -161,13 +161,16 @@ test("local model selector prefers Qwen and resolves only model IDs in the insta
   assert.doesNotMatch(page, /value="Llama-3\.2-3B-Instruct-q4f16_1-MLC"/);
   assert.match(engine, /DEFAULT_MODEL_ID = "Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
   assert.match(engine, /"Qwen2\.5-3B-Instruct-q4f16_1-MLC"/);
-  assert.match(engine, /ALLOWED_MODEL_IDS/);
+  assert.doesNotMatch(engine, /ALLOWED_MODEL_IDS/);
+  assert.match(engine, /modelList\.map\(\(item\) => item\?\.model_id\)/);
+  assert.match(engine, /prebuiltAppConfig\?\.model_list/);
+  assert.match(engine, /id\.length > 0/);
   assert.match(engine, /CreateMLCEngine\(selectedModel/);
   assert.match(engine, /resolveAvailableModel\(prebuiltAppConfig\?\.model_list, requestedModel\)/);
   assert.match(engine, /Qwen2\.5-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /Phi-3\.5-mini-instruct-q4f16_1-MLC/);
   assert.match(engine, /Qwen2\.5-Coder-1\.5B-Instruct-q4f16_1-MLC/);
-  assert.match(engine, /Gemma-2-2b-it-q4f16_1-MLC/);
+  assert.match(engine, /gemma-2-2b-it-q4f16_1-MLC/);
 });
 
 test("v39 local chat injects a compact live JARVIS-X system prompt before every completion", () => {
@@ -200,4 +203,12 @@ test("v41 role lock and XMemo status are present", () => {
  assert.match(brain,/bonjour|bonsoir|salut|hello/); assert.match(engine,/L'utilisateur s'appelle Sam/);
  assert.match(page,/id="jx-xmemo-sync-status"/); assert.match(engine,/CLOUD REQUIRES CONSENT/); assert.match(engine,/XMEMO CLOUD SYNCED/);
  assert.match(page,/945 MB GPU memory/); assert.match(page,/1\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
+});
+
+
+test("v45 Observatory and Local Chat provide direct reciprocal navigation", () => {
+  const observatory = read("../hq/observatory.html");
+  const chat = read("../hq/local-chat.html");
+  assert.match(observatory, /<a href="\.\/local-chat\.html">CHAT IA<\/a>/);
+  assert.match(chat, /href="\.\/observatory\.html">🔭 OBSERVATORY/);
 });
