@@ -56,7 +56,7 @@
   function updateControls() {
     const ready = $("runtime-status")?.textContent === "READY";
     const cloudReady = navigator.onLine && state.cloudConsent && !state.localMode;
-    input.disabled = state.busy || (!ready && !cloudReady);
+    input.disabled = state.busy;
     send.disabled = state.busy || (!ready && !cloudReady);
     if (state.localMode) setProvider(ready ? "LOCAL M1 · READY" : "LOCAL M1 · NOT LOADED");
     else if (state.cloudConsent && navigator.onLine) setProvider("CLOUD · GATEWAY · BUDGET GUARDED");
