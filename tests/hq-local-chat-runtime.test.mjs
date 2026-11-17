@@ -204,3 +204,11 @@ test("v41 role lock and XMemo status are present", () => {
  assert.match(page,/id="jx-xmemo-sync-status"/); assert.match(engine,/CLOUD REQUIRES CONSENT/); assert.match(engine,/XMEMO CLOUD SYNCED/);
  assert.match(page,/945 MB GPU memory/); assert.match(page,/1\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
 });
+
+
+test("v45 Observatory and Local Chat provide direct reciprocal navigation", () => {
+  const observatory = read("../hq/observatory.html");
+  const chat = read("../hq/local-chat.html");
+  assert.match(observatory, /<a href="\.\/local-chat\.html">CHAT IA<\/a>/);
+  assert.match(chat, /href="\.\/observatory\.html">🔭 OBSERVATORY/);
+});
