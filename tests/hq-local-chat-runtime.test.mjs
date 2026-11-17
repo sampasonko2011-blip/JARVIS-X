@@ -170,7 +170,7 @@ test("local model selector prefers Qwen and resolves only model IDs in the insta
   assert.match(engine, /Qwen2\.5-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /Phi-3\.5-mini-instruct-q4f16_1-MLC/);
   assert.match(engine, /Qwen2\.5-Coder-1\.5B-Instruct-q4f16_1-MLC/);
-  assert.match(engine, /Gemma-2-2b-it-q4f16_1-MLC/);
+  assert.match(engine, /gemma-2-2b-it-q4f16_1-MLC/);
 });
 
 test("v39 local chat injects a compact live JARVIS-X system prompt before every completion", () => {
