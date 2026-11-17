@@ -9,7 +9,7 @@
   const state = { cloudConsent: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
   const panel = document.createElement("section");
   panel.className = "jx46-control";
-  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable Cloud Council for this session <small>Uses the authenticated five-provider gateway. Each request is subject to the server budget guard and may incur provider cost.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost">🎨 IMAGE</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
+  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable Cloud Council for this session <small>Uses the authenticated five-provider gateway. Each request is subject to the server budget guard and may incur provider cost.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Image generation is disabled pending safety review">🎨 IMAGE · DISABLED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
   const stage = document.querySelector(".jx-chat-stage");
   stage?.insertBefore(panel, $("transcript"));
   const cloudConsent = $("jx46-cloud-consent"), localMode = $("jx46-local-mode");
@@ -111,16 +111,11 @@
   send.addEventListener("click", (event) => {
     const text = input.value.trim();
     const match = text.match(/^\/imagine\s+([\s\S]+)/i) || text.match(/^(?:génère une image|genere une image|dessine)\s+([\s\S]+)/i);
-    if (match) { event.preventDefault(); event.stopImmediatePropagation(); generateImage(match[1] || match[0]); return; }
+    if (match) { event.preventDefault(); event.stopImmediatePropagation(); showImageUnavailable(); return; }
     if (navigator.onLine && state.cloudConsent && !state.localMode) {
       event.preventDefault(); event.stopImmediatePropagation(); sendCloud();
     }
   }, true);
-  imageButton.addEventListener("click", () => {
-    const text = input.value.trim().replace(/^\/imagine\s+/i, "");
-    if (!text) { status.textContent = "Ajoute une description dans le champ de message avant de générer."; input.focus(); return; }
-    input.value = ""; generateImage(text);
-  });
 
   async function speak(text) {
     if (!state.audio) return;
@@ -148,35 +143,11 @@
     window.speechSynthesis.speak(utterance);
   }
 
-  async function generateImage(prompt) {
-    const cleanPrompt = String(prompt || "").trim().slice(0, 1200);
-    if (!cleanPrompt || state.busy) return;
-    state.busy = true; updateControls();
-    addMessage("user", "🎨 " + cleanPrompt);
-    const output = addMessage("assistant", "Image Studio : génération demandée…");
-    try {
-      const token = await accessToken();
-      const response = await fetch(SUPABASE_URL + "/functions/v1/hq-gateway", {
-        method: "POST",
-        headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "image", prompt: cleanPrompt })
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.ok !== true || typeof result.image_base64 !== "string") throw new Error(result.error || "image_generation_failed");
-      output.textContent = "IMAGE · " + String(result.provider || "provider") + " · 1024×1024";
-      const image = document.createElement("img");
-      image.className = "jx46-generated-image"; image.alt = "Image générée par JARVIS-X";
-      image.src = "data:" + String(result.mime_type || "image/png") + ";base64," + result.image_base64;
-      const download = document.createElement("a");
-      download.className = "btn ghost"; download.textContent = "Télécharger l’image";
-      download.href = image.src; download.download = "jarvis-x-image.png";
-      output.parentElement.append(image, download);
-      status.textContent = "Image générée et affichée dans la conversation.";
-    } catch (error) {
-      output.textContent = "Image Studio indisponible : " + String(error?.message || error) + ". Aucun fournisseur alternatif non configuré n’a été appelé.";
-      status.textContent = "Image generation unavailable or blocked by server policy.";
-    } finally { state.busy = false; updateControls(); }
+  function showImageUnavailable() {
+    addMessage("assistant", "Image Studio is currently disabled pending an age-appropriate safety review. No external image provider was contacted.");
+    status.textContent = "Image generation disabled; no provider call made.";
   }
+
   function startRecognition() {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
