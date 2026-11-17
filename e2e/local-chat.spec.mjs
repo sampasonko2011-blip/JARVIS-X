@@ -221,11 +221,11 @@ test("v45 composer uses a responsive two-row grid on iPad and mobile viewports",
   }
 });
 
-test("v45 service worker uses a new shell cache namespace", async ({ page }) => {
+test("v47 service worker uses a new shell cache namespace", async ({ page }) => {
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v46");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v47");
 });
 
 
