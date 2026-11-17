@@ -41,7 +41,7 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
     "Qwen2.5-3B-Instruct-q4f16_1-MLC",
     "Phi-3.5-mini-instruct-q4f16_1-MLC",
     "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
-    "Gemma-2-2b-it-q4f16_1-MLC",
+    "gemma-2-2b-it-q4f16_1-MLC",
     "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
     "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
   ];
@@ -263,7 +263,7 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
       "Qwen2.5-3B-Instruct-q4f16_1-MLC",
       "Phi-3.5-mini-instruct-q4f16_1-MLC",
       "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
-      "Gemma-2-2b-it-q4f16_1-MLC",
+      "gemma-2-2b-it-q4f16_1-MLC",
       "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
       "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
     ].includes(id)));
