@@ -34,7 +34,7 @@ test("v41 server provider endpoints are fixed constants and routing remains doub
  assert.match(provider,/new Set\(\[402, 429\]\)/);
  assert.match(provider,/AbortSignal\.timeout/);
  assert.match(provider,/provider\.endpoint/);
- assert.match(gateway,/const LIVE_INFERENCE_ENABLED = false/);
+ assert.match(gateway,/Deno\\.env\\.get\\("LIVE_INFERENCE_ENABLED"\\) === "true"/);
  assert.match(gateway,/JX_ENABLE_PROVIDER_CASCADE === "true"/);
  assert.match(gateway,/authenticatedUser\(/);
  assert.match(gateway,/consume_hq_rate_limit/);
