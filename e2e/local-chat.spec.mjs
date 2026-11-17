@@ -282,3 +282,35 @@ test("v45 adapter model validation accepts every model shipped by the installed 
   expect(source).toContain("modelSelect.dataset.runtimeCatalog");
   expect(source).toContain("catalogEntries.has(id)");
 });
+
+
+test("v47 removes the arbitrary input cap and exposes a native iPad file picker", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const prompt = page.locator("#message");
+  await expect(prompt).toBeVisible();
+  expect(await prompt.getAttribute("maxlength")).toBeNull();
+  const picker = page.locator("#jx-file-input");
+  await expect(picker).toHaveAttribute("multiple", "");
+  await expect(picker).toHaveAttribute("accept", "image/*,.txt,.md,.json,.csv,.js,.html,.py");
+  const pickerStyle = await picker.evaluate(node => {
+    const style = getComputedStyle(node);
+    return { position: style.position, display: style.display, opacity: style.opacity, width: style.width, height: style.height };
+  });
+  expect(pickerStyle.position).toBe("absolute");
+  expect(pickerStyle.display).not.toBe("none");
+  expect(Number(pickerStyle.opacity)).toBe(0);
+  expect(pickerStyle.width).not.toBe("0px");
+  expect(pickerStyle.height).not.toBe("0px");
+  const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
+  expect(engineSource).not.toContain("MAX_INPUT_CHARS");
+  expect(engineSource).toContain('const attachmentInput = $("jx-file-input")');
+  const apexSource = await page.evaluate(async () => (await fetch("./v46-apex.js")).text());
+  expect(apexSource).toContain("liveConsent: true");
+  expect(apexSource).not.toContain("slice(0, 4000)");
+});
+
+test("v47 service worker cache is versioned", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
+  expect(sw).toContain("jarvis-x-hq-shell-v47");
+});
