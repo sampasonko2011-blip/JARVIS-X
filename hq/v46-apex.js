@@ -55,11 +55,13 @@
   }
   function updateControls() {
     const ready = $("runtime-status")?.textContent === "READY";
+    const localReady = ready && (state.localMode || !navigator.onLine);
     const cloudReady = navigator.onLine && state.cloudConsent && !state.localMode;
     input.disabled = state.busy;
-    send.disabled = state.busy || (!ready && !cloudReady);
-    if (state.localMode) setProvider(ready ? "LOCAL M1 · READY" : "LOCAL M1 · NOT LOADED");
-    else if (state.cloudConsent && navigator.onLine) setProvider("CLOUD · GATEWAY · BUDGET GUARDED");
+    send.disabled = state.busy || (!localReady && !cloudReady);
+    if (localReady) setProvider(navigator.onLine ? "LOCAL M1 · READY" : "LOCAL M1 · OFFLINE FALLBACK");
+    else if (cloudReady) setProvider("CLOUD · GATEWAY · BUDGET GUARDED");
+    else if (state.localMode) setProvider("LOCAL M1 · NOT LOADED");
     else setProvider("LOCAL / CLOUD NOT SELECTED");
   }
   cloudConsent.addEventListener("change", () => { state.cloudConsent = cloudConsent.checked; if (state.cloudConsent) localMode.checked = false; state.localMode = localMode.checked; status.textContent = state.cloudConsent ? "Cloud Council activé pour cette session. Les dépenses restent bloquées si le budget serveur refuse." : "Cloud désactivé."; updateControls(); });
