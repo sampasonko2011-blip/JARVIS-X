@@ -22,7 +22,8 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
   expect(payload.mode).toBe("live");
   expect(payload.memory_consent).toBe(false);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
-  await expect(page.locator("#jx46-provider")).toContainText("CLOUD");\n  await expect(page.locator("#jx-upgrade-proposals")).toContainText("V46 · Evidence quality guard", { timeout: 5000 });
+  await expect(page.locator("#jx46-provider")).toContainText("CLOUD");
+  await expect(page.locator("#jx-upgrade-proposals")).toContainText("V46 · Evidence quality guard", { timeout: 5000 });
 });
 
 test("v46 Observatory and Chat navigation are reciprocal", async ({ page }) => {
