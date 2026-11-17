@@ -30,7 +30,7 @@
 <canvas id="jx-chat-cosmos" aria-hidden="true"></canvas>
 <div class="jx-circadian-shield" aria-hidden="true"></div>
 <main class="shell local-chat-shell">
-<header class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>ON-DEVICE LOCAL CHAT</small></div><a class="jx-observatory-link jx-vision-back" href="./observatory.html">← OBSERVATORY</a><span id="jx-mode-status" aria-live="polite">NORMAL · AUTO-SYNC</span></header>
+<header class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>ON-DEVICE LOCAL CHAT</small></div><a class="jx-observatory-link jx-vision-back" href="./observatory.html">🔭 OBSERVATORY</a><span id="jx-mode-status" aria-live="polite">NORMAL · AUTO-SYNC</span></header>
 
 <aside class="card local-chat-card jx-model-rail" aria-label="Model and device controls">
   <div class="eyebrow">ZERO HOSTED INFERENCE</div>
@@ -39,6 +39,10 @@
   <div class="loglist"><div class="log"><strong>Runtime <span class="tag" id="runtime-status">NOT LOADED</span></strong><small id="runtime-detail">Load the local model when you are ready.</small></div></div>
   <label for="model-select">Local model</label>
   <select id="model-select" aria-describedby="model-help">
+    <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Qwen2.5 3B · highest memory demand</option>
+    <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi 3.5 Mini · advanced</option>
+    <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5 Coder 1.5B · code-focused</option>
+    <option value="Gemma-2-2b-it-q4f16_1-MLC">Gemma 2 2B · general</option>
     <option value="SmolLM2-135M-Instruct-q0f16-MLC">SmolLM2 135M · smallest iPad test · lower memory</option>
     <option value="SmolLM2-360M-Instruct-q4f32_1-MLC">SmolLM2 360M · larger · ~580 MB GPU memory</option>
     <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Qwen2.5 0.5B · ~945 MB GPU memory · safest larger option</option>
