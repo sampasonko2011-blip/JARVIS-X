@@ -225,7 +225,7 @@ test("v45 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v45");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v46");
 });
 
 
