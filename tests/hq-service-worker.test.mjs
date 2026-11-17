@@ -7,14 +7,14 @@ import vm from "node:vm";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl, cacheMatchImpl, cacheAddAllImpl } = {}) {
+async function loadWorker({ fetchImpl = async () => ({ ok: true, type: "basic", status: 200, clone: () => ({}) }), cachePutImpl, cacheMatchImpl, cacheAddAllImpl, cacheAddImpl } = {}) {
   const source = await readFile(path.join(root, "hq/sw.js"), "utf8");
   const listeners = new Map();
   const cacheCalls = [];
   const lifecycleCalls = [];
   const cache = {
     addAll: cacheAddAllImpl ? cacheAddAllImpl : async function (assets) { lifecycleCalls.push(["addAll", assets]); },
-    add: async function (asset) { lifecycleCalls.push(["add", asset]); },
+    add: cacheAddImpl ? cacheAddImpl : async function (asset) { lifecycleCalls.push(["add", asset]); },
     put: cachePutImpl ? cachePutImpl : async function (...args) { cacheCalls.push(["put", ...args]); },
     match: async () => undefined,
   };
@@ -82,6 +82,20 @@ test("service worker caches successful same-origin shell assets only", async () 
 });
 
 
+test("service worker still activates when an optional generated asset is missing", async () => {
+  const { listeners, lifecycleCalls } = await loadWorker({
+    cacheAddImpl: async (asset) => {
+      lifecycleCalls.push(["add", asset]);
+      if (asset === "./local-chat-engine.bundle.js") throw new Error("optional generated bundle missing");
+    },
+  });
+  let installPromise;
+  listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
+  await installPromise;
+  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./index.html")));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
+});
+
 test("service worker precaches the app shell and activates without deleting unrelated caches", async () => {
   const { listeners, cacheCalls, lifecycleCalls } = await loadWorker();
   let installPromise;
@@ -93,7 +107,7 @@ test("service worker precaches the app shell and activates without deleting unre
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./spatial-mode.css"), "shared v28 mode styles must be precached");
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./local-chat-v34.css"), "Local Chat v37 scroll styles must be precached");
   assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v46/);
-  assert.ok(lifecycleCalls.some((call) => call[0] === "addAll" && call[1].includes("./local-chat-engine.js")), "v46 local engine source must be precached");
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./local-chat-engine.js"), "v46 local engine source must be precached");
   const precache = lifecycleCalls.find((call) => call[0] === "addAll")?.[1] ?? [];
   assert.equal(new Set(precache).size, precache.length, "precache asset URLs must be unique or Cache.addAll can reject installation");
   assert.ok(lifecycleCalls.some((call) => call[0] === "skipWaiting"));
