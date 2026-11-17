@@ -34,14 +34,31 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   const dialog = page.getByRole("dialog", { name: "ENGINE & MODEL" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("Local model")).toBeVisible();
-  const modelOptions = await dialog.getByLabel("Local model").locator("option").evaluateAll(nodes => nodes.map(node => node.value));
-  expect(modelOptions).toEqual([
-    "SmolLM2-135M-Instruct-q0f16-MLC",
-    "SmolLM2-360M-Instruct-q4f32_1-MLC",
-    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
-  ]);
-  expect(modelOptions).not.toContain("Llama-3.2-3B-Instruct-q4f16_1-MLC");
+  const selector = dialog.getByLabel("Local model");
+  const modelOptions = await selector.locator("option").evaluateAll(nodes => nodes.map(node => node.value));
+  const runtimeCatalog = await selector.evaluate(node => JSON.parse(node.dataset.runtimeCatalog || "[]"));
+  const priorityModels = [
+    "Qwen2.5-3B-Instruct-q4f16_1-MLC",
+    "Phi-3.5-mini-instruct-q4f16_1-MLC",
+    "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+    "Gemma-2-2b-it-q4f16_1-MLC",
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+  ];
+  expect(runtimeCatalog.length).toBeGreaterThan(0);
+  expect(modelOptions).toEqual(runtimeCatalog);
+  for (const id of priorityModels) expect(runtimeCatalog).toContain(id);
+  const strongestAvailable = priorityModels.find(id => runtimeCatalog.includes(id));
+  expect(await selector.inputValue()).toBe(strongestAvailable);
+  expect(await selector.inputValue()).not.toBe("Qwen2.5-0.5B-Instruct-q4f16_1-MLC");
+
+  const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
+  expect(engineSource).toContain("prebuiltAppConfig?.model_list");
+  expect(engineSource).toContain("modelSelect.dataset.runtimeCatalog");
+  expect(engineSource).toContain('const SYSTEM = "Ton nom est JARVIS-X.');
+  expect(engineSource).toContain("l'utilisateur s'appelle Sam");
+  expect(engineSource).toContain("Monsieur");
+  expect(engineSource).toContain("ne l'appelle jamais JARVIS-X");
   await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(dialog.locator("#jx-provider-status")).toBeVisible();
@@ -239,8 +256,17 @@ test("v44 attachment control and Engine & Model modal remain reachable on iPad a
     expect(loadBox.height).toBeGreaterThan(0);
     expect(loadBox.x).toBeGreaterThanOrEqual(0);
     expect((loadBox.x + loadBox.width)).toBeLessThanOrEqual(viewport.width + 1);
-    await expect(dialog.getByLabel("Local model").locator("option")).toHaveCount(4);
-    await expect(dialog.getByLabel("Local model").locator("option[value='Llama-3.2-3B-Instruct-q4f16_1-MLC']")).toHaveCount(0);
+    const selector = dialog.getByLabel("Local model");
+    const runtimeCatalog = await selector.evaluate(node => JSON.parse(node.dataset.runtimeCatalog || "[]"));
+    await expect(selector.locator("option")).toHaveCount(runtimeCatalog.length);
+    expect(await selector.inputValue()).toBe(runtimeCatalog.find(id => [
+      "Qwen2.5-3B-Instruct-q4f16_1-MLC",
+      "Phi-3.5-mini-instruct-q4f16_1-MLC",
+      "Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC",
+      "Gemma-2-2b-it-q4f16_1-MLC",
+      "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+      "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+    ].includes(id)));
   }
 });
 
@@ -253,5 +279,6 @@ test("v45 adapter model validation accepts every model shipped by the installed 
   });
   expect(source).toContain("prebuiltAppConfig?.model_list");
   expect(source).not.toContain("ALLOWED_MODEL_IDS");
-  expect(source).toContain("modelList.map((item) => item?.model_id)");
+  expect(source).toContain("modelSelect.dataset.runtimeCatalog");
+  expect(source).toContain("catalogEntries.has(id)");
 });
