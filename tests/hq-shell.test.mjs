@@ -207,7 +207,9 @@ test("HQ release metadata is valid, pinned to stable, and forbids automatic prov
   assert.equal(release.schema_version, 1);
   assert.match(release.version, /^\d+\.\d+\.\d+$/);
   assert.equal(release.channel, "stable");
-  assert.deepEqual(release.provider_adapters, ["supabase-hq-gateway-v12"]);\n  assert.ok(release.capabilities.includes("image-studio-disabled-pending-safety-review"));\n  assert.ok(release.capabilities.includes("server-tts-disabled-pending-owner-approval"));
+  assert.deepEqual(release.provider_adapters, ["supabase-hq-gateway-v12"]);
+  assert.ok(release.capabilities.includes("image-studio-disabled-pending-safety-review"));
+  assert.ok(release.capabilities.includes("server-tts-disabled-pending-owner-approval"));
   assert.equal(release.automatic_provider_installation, false);
   assert.equal(release.automatic_permission_grants, false);
 });
