@@ -93,7 +93,8 @@
       output.textContent = result.output;
       state.history.push({ role: "user", content: text }, { role: "assistant", content: result.output });
       state.history = state.history.slice(-12);
-      const providers = Array.isArray(result.providers_used) ? result.providers_used.map(item => String(item.provider || "").toUpperCase()).filter(Boolean) : [];\n      setProvider("CLOUD · " + (providers.join(" / ") || "COUNCIL") + " · EXECUTED");
+      const providers = Array.isArray(result.providers_used) ? result.providers_used.map(item => String(item.provider || "").toUpperCase()).filter(Boolean) : [];
+      setProvider("CLOUD · " + (providers.join(" / ") || "COUNCIL") + " · EXECUTED");
       status.textContent = "Réponse cloud reçue. Appels fournisseur : " + String(result.provider_calls ?? "unknown") + ".";
       
     } catch (error) {
@@ -103,7 +104,8 @@
       input.value = text;
     } finally {
       if (memoryConsent) memoryConsent.checked = false;
-      state.busy = false; updateControls(); input.focus();\n      if (state.live && !state.audio) setTimeout(startRecognition, 400);
+      state.busy = false; updateControls(); input.focus();
+      if (state.live && !state.audio) setTimeout(startRecognition, 400);
     }
   }
   send.addEventListener("click", (event) => {
