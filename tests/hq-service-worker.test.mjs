@@ -106,7 +106,7 @@ test("service worker precaches the app shell and activates without deleting unre
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./spatial-mode.js"), "shared v28 mode/audio module must be precached");
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./spatial-mode.css"), "shared v28 mode styles must be precached");
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./local-chat-v34.css"), "Local Chat v37 scroll styles must be precached");
-  assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v49/);
+  assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v50/);
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./local-chat-engine.js"), "v47 local engine source must be precached");
   const precache = lifecycleCalls.find((call) => call[0] === "addAll")?.[1] ?? [];
   assert.equal(new Set(precache).size, precache.length, "precache asset URLs must be unique or Cache.addAll can reject installation");

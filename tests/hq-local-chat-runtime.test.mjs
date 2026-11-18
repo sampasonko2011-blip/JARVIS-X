@@ -176,7 +176,7 @@ test("local model selector prefers Qwen and resolves only model IDs in the insta
   assert.match(engine, /modelList\.map\(\(item\) => item\?\.model_id\)/);
   assert.match(engine, /prebuiltAppConfig\?\.model_list/);
   assert.match(engine, /id\.length > 0/);
-  assert.match(engine, /CreateMLCEngine\(selectedModel/);
+  assert.match(engine, /createLocalEngine\(selectedModel/);\n  assert.match(engine, /appConfig: prebuiltAppConfig/);
   assert.match(engine, /resolveAvailableModel\(prebuiltAppConfig\?\.model_list, requestedModel\)/);
   assert.match(engine, /Qwen2\.5-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /Phi-3\.5-mini-instruct-q4f16_1-MLC/);

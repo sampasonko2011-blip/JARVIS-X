@@ -38,6 +38,6 @@ test("v42 command dock preserves original composer nodes and native model loadin
  assert.match(js,/actions\.remove\(\)/);
  assert.match(js,/\["voice-dictation","send-message","clear-chat"\]\.map\(id=>\$\(id\)\)/);
  assert.match(js,/engineModal\.body\.append\(modelRail\)/);
- assert.match(engine,/CreateMLCEngine\(selectedModel/);
+ assert.match(engine,/createLocalEngine\(selectedModel/); assert.match(engine,/appConfig: prebuiltAppConfig/);
  assert.match(engine,/memoryConsent\?\.checked === true/);
 });
