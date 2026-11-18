@@ -225,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v49");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v50");
 });
 
 
@@ -312,5 +312,68 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v49");
+  expect(sw).toContain("jarvis-x-hq-shell-v50");
+});
+
+ 
+test("v50 passes each requested model ID with the exact installed WebLLM appConfig into initialization", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: { requestAdapter: async () => ({ limits: { maxBufferSize: 4294967296, maxStorageBufferBindingSize: 4294967296 } }) } });
+    window.__JX_TEST_CREATE_MLC_ENGINE__ = async (modelId, options) => {
+      const catalog = options?.appConfig?.model_list || [];
+      window.__jxModelInitProof = { modelId, catalogContainsSelected: catalog.some(entry => entry.model_id === modelId), receivedExplicitAppConfig: Array.isArray(options?.appConfig?.model_list), initializationCallback: typeof options?.initProgressCallback === "function" };
+      options?.initProgressCallback?.({ progress: 0.02, text: "Model download/initialization started" });
+      return {};
+    };
+  });
+  const requestedModels = ["Qwen2.5-3B-Instruct-q4f16_1-MLC", "Phi-3.5-mini-instruct-q4f16_1-MLC", "gemma-2-2b-it-q4f16_1-MLC", "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"];
+  for (const modelId of requestedModels) {
+    await page.goto("/local-chat.html");
+    await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
+    const selector = page.locator("#jx-model-select");
+    await expect(selector.locator('option[value="' + modelId + '"]')).toHaveCount(1);
+    await selector.selectOption(modelId);
+    await page.locator("#load-model").click();
+    await expect(page.locator("#runtime-status")).toHaveText("READY");
+    const proof = await page.evaluate(() => window.__jxModelInitProof);
+    expect(proof.modelId).toBe(modelId);
+    expect(proof.catalogContainsSelected).toBe(true);
+    expect(proof.receivedExplicitAppConfig).toBe(true);
+    expect(proof.initializationCallback).toBe(true);
+    await expect(page.locator("#runtime-detail")).toContainText(modelId);
+    await expect(page.locator("#runtime-detail")).not.toContainText("allowlisted WebLLM package");
+  }
+});
+
+test("v50 inline email login authenticates a mocked session, checks HQ health, and sends cloud chat without loading a local model", async ({ page }) => {
+  let healthChecked = false;
+  let cloudMessageSent = false;
+  await page.route(url => url.href.includes("/auth/v1/token?grant_type=password"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ access_token: "mock-access-token", refresh_token: "mock-refresh-token", expires_in: 3600, token_type: "bearer" }) }));
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
+    healthChecked = true;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
+  });
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12") && !url.href.includes("/health"), route => {
+    cloudMessageSent = true;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, output: "Mocked HQ v12 cloud reply", model_calls: 1, memory: { read_status: "off" } }) });
+  });
+  await page.goto("/local-chat.html");
+  const login = page.locator("#jx46-login");
+  await expect(login).toBeVisible();
+  await page.locator("#jx46-cloud-consent").check();
+  await page.locator("#jx46-email").fill("existing-user@example.com");
+  await page.locator("#jx46-password").fill("mock-password");
+  await page.locator("#jx46-password-signin").click();
+  await expect(login).toBeHidden();
+  await expect(page.locator("#jx46-provider")).toHaveText("CLOUD · HQ V12 · READY");
+  expect(healthChecked).toBe(true);
+  const stored = await page.evaluate(() => ({ local: JSON.parse(localStorage.getItem("jx-auth-session") || "null"), session: JSON.parse(sessionStorage.getItem("jx-auth-session") || "null") }));
+  expect(stored.local.access_token).toBe("mock-access-token");
+  expect(stored.session.access_token).toBe("mock-access-token");
+  await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
+  await page.locator("#message").fill("Test cloud route without a local model");
+  await page.locator("#send-message").click();
+  await expect(page.locator("#transcript")).toContainText("Mocked HQ v12 cloud reply");
+  expect(cloudMessageSent).toBe(true);
+  await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
 });

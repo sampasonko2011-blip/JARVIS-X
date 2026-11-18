@@ -10,7 +10,7 @@
   const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, imageAvailable: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
   const panel = document.createElement("section");
   panel.className = "jx46-control";
-  panel.innerHTML = '<div class="jx46-head"><strong>JARVIS-X APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference requires explicit consent and the server-side budget and kill-switch checks.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Requires authenticated HQ v12 and the server image-generation flag">🎨 IMAGE · LOCKED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
+  panel.innerHTML = '<div class="jx46-head"><strong>JARVIS-X APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><section id="jx46-login" class="jx46-login" aria-label="Email sign in"><strong>EMAIL SIGN-IN · HQ V12</strong><label for="jx46-email">Email address</label><input id="jx46-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"><div class="jx46-login-actions"><button id="jx46-send-otp" type="button" class="btn ghost">SEND MAGIC LINK / CODE</button></div><label for="jx46-otp">Email code</label><input id="jx46-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="Enter email code"><div class="jx46-login-actions"><button id="jx46-verify-otp" type="button" class="btn ghost">VERIFY EMAIL CODE</button></div><label for="jx46-password">Password (optional)</label><input id="jx46-password" type="password" autocomplete="current-password" placeholder="Account password"><div class="jx46-login-actions"><button id="jx46-password-signin" type="button" class="btn primary">SIGN IN WITH PASSWORD</button></div><p id="jx46-login-status" role="status" aria-live="polite">Sign in here; you will stay on this page. A valid session is required before the HQ gateway can unlock.</p></section><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference requires explicit consent and the server-side budget and kill-switch checks.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Requires authenticated HQ v12 and the server image-generation flag">🎨 IMAGE · LOCKED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
   const stage = document.querySelector(".jx-chat-stage");
   stage?.insertBefore(panel, $("transcript"));
   const cloudConsent = $("jx46-cloud-consent"), localMode = $("jx46-local-mode");
@@ -33,23 +33,58 @@
     transcript.append(item); transcript.scrollTop = transcript.scrollHeight;
     return body;
   }
+  const SESSION_KEY = "jx-auth-session";
+  function persistSession(payload) {
+    if (!payload || typeof payload.access_token !== "string" || typeof payload.refresh_token !== "string") throw new Error("Supabase did not return a complete session.");
+    const now = Math.floor(Date.now() / 1000);
+    const saved = { access_token: payload.access_token, refresh_token: payload.refresh_token, expires_at: Number(payload.expires_at) || now + Number(payload.expires_in || 3600) };
+    const serialized = JSON.stringify(saved);
+    sessionStorage.setItem(SESSION_KEY, serialized);
+    localStorage.setItem(SESSION_KEY, serialized);
+    return saved;
+  }
+  function clearStoredSession() {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+    try { localStorage.removeItem(SESSION_KEY); } catch {}
+  }
   function session() {
-    try { return JSON.parse(sessionStorage.getItem("jx-auth-session") || "null"); } catch { return null; }
+    for (const storage of [sessionStorage, localStorage]) {
+      try {
+        const saved = JSON.parse(storage.getItem(SESSION_KEY) || "null");
+        if (saved && typeof saved.access_token === "string" && typeof saved.refresh_token === "string") return persistSession(saved);
+      } catch {}
+    }
+    return null;
+  }
+  function updateLoginVisibility() {
+    const login = $("jx46-login");
+    if (login) login.hidden = Boolean(session());
+  }
+  function consumeMagicLinkSession() {
+    const params = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const access = params.get("access_token"), refresh = params.get("refresh_token");
+    if (!access || !refresh) return false;
+    try {
+      persistSession({ access_token: access, refresh_token: refresh, expires_at: params.get("expires_at") });
+      history.replaceState(null, "", location.pathname + location.search);
+      return true;
+    } catch (error) {
+      const note = $("jx46-login-status");
+      if (note) note.textContent = "Magic-link session could not be saved: " + String(error?.message || error);
+      return false;
+    }
   }
   async function accessToken() {
     let s = session();
-    if (!s || typeof s.access_token !== "string" || !s.refresh_token) throw new Error("Connecte-toi d'abord depuis HQ Chat dans ce même onglet.");
+    if (!s || typeof s.access_token !== "string" || !s.refresh_token) throw new Error("Sign in with email on this page before enabling cloud chat.");
     const now = Math.floor(Date.now() / 1000);
     if (Number(s.expires_at) > now + 60) return s.access_token;
     const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
       method: "POST", headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: s.refresh_token })
     });
-    if (!response.ok) { sessionStorage.removeItem("jx-auth-session"); throw new Error("Session expirée. Reconnecte-toi depuis HQ Chat."); }
-    const next = await response.json();
-    if (!next.access_token || !next.refresh_token) throw new Error("Session de connexion invalide.");
-    s = { access_token: next.access_token, refresh_token: next.refresh_token, expires_at: Number(next.expires_at) || now + Number(next.expires_in || 3600) };
-    sessionStorage.setItem("jx-auth-session", JSON.stringify(s));
+    if (!response.ok) { clearStoredSession(); updateLoginVisibility(); throw new Error("Session expired. Sign in again on this page."); }
+    s = persistSession(await response.json());
     return s.access_token;
   }
   function buildSystem(userText = input.value) {
@@ -74,10 +109,10 @@
     else if (state.localMode) setProvider("LOCAL M1 · NOT LOADED");
     else setProvider("LOCAL / CLOUD NOT SELECTED");
   }
-  async function checkCloudReadiness() {
+  async function checkCloudReadiness(force = false) {
     state.cloudAvailable = false;
     state.imageAvailable = false;
-    if (!state.cloudConsent || state.localMode || !navigator.onLine) { state.cloudChecking = false; updateControls(); return; }
+    if ((!force && (!state.cloudConsent || state.localMode)) || !navigator.onLine) { state.cloudChecking = false; updateControls(); return; }
     state.cloudChecking = true; updateControls();
     status.textContent = "Vérification de l'état du gateway HQ v12…";
     try {
@@ -88,24 +123,88 @@
       if (!response.ok || health.ok !== true || health.auth !== "verified-supabase-session") throw new Error(health.error || "gateway_health_unavailable");
       state.cloudAvailable = health.chatEnabled === true;
       state.imageAvailable = health.imageGenerationEnabled === true;
-      if (state.cloudAvailable) status.textContent = "Gateway HQ v12 authentifié et prêt. Chaque requête reste soumise au contrôle serveur.";
+      if (state.cloudAvailable) status.textContent = state.cloudConsent && !state.localMode ? "Gateway HQ v12 authentifié et prêt. Chaque requête reste soumise au contrôle serveur." : "Session authentifiée et /health vérifié. Active explicitement le consentement cloud pour envoyer des messages.";
       else {
         status.textContent = "Le verrou de release HQ v12 bloque l'inférence live (0 appel modèle). Aucune requête de chat ne sera envoyée. Passe en mode local.";
         setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
       }
     } catch (error) {
-      status.replaceChildren();
-      const detail = document.createElement("span");
-      detail.textContent = "État du gateway inconnu : " + String(error?.message || error) + ". Aucun envoi cloud ne sera tenté. ";
-      const signIn = document.createElement("a");
-      signIn.href = "./index.html#chat";
-      signIn.textContent = "🔐 SE CONNECTER AU HQ";
-      signIn.setAttribute("aria-label", "Se connecter au HQ pour activer le chat cloud");
-      status.append(detail, signIn);
+      updateLoginVisibility();
+      status.textContent = "Gateway HQ v12 indisponible : " + String(error?.message || error) + ". Aucun message cloud ne sera envoyé.";
       state.cloudAvailable = false;
       state.imageAvailable = false;
     } finally { state.cloudChecking = false; updateControls(); }
   }
+  const loginStatus = $("jx46-login-status");
+  async function completeSignIn(payload) {
+    persistSession(payload);
+    updateLoginVisibility();
+    if (loginStatus) loginStatus.textContent = "Session Supabase reçue. Vérification immédiate du gateway HQ v12…";
+    status.textContent = "Connexion réussie. Vérification de /health…";
+    await checkCloudReadiness(true);
+    updateLoginVisibility();
+    if (loginStatus) loginStatus.textContent = "Connecté. Cette page reste ouverte ; le statut HQ v12 est affiché ci-dessous.";
+  }
+  async function sendEmailOtp() {
+    const email = $("jx46-email")?.value.trim() || "";
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { if (loginStatus) loginStatus.textContent = "Enter a valid email address."; return; }
+    const button = $("jx46-send-otp"); button.disabled = true;
+    if (loginStatus) loginStatus.textContent = "Requesting a secure sign-in link or email code…";
+    try {
+      const redirect = location.origin + location.pathname + location.search;
+      const response = await fetch(SUPABASE_URL + "/auth/v1/otp?redirect_to=" + encodeURIComponent(redirect), {
+        method: "POST", headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, create_user: false })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.msg || result.message || "Auth service returned HTTP " + response.status);
+      if (loginStatus) loginStatus.textContent = "Check your email for a magic link or one-time code. Open the link in this same browser, or enter the code below.";
+    } catch (error) {
+      if (loginStatus) loginStatus.textContent = "Email sign-in request failed: " + String(error?.message || error);
+    } finally { button.disabled = false; }
+  }
+  async function verifyEmailOtp() {
+    const email = $("jx46-email")?.value.trim() || "";
+    const token = $("jx46-otp")?.value.trim() || "";
+    if (!email || !token) { if (loginStatus) loginStatus.textContent = "Enter your email and the code from the email."; return; }
+    const button = $("jx46-verify-otp"); button.disabled = true;
+    if (loginStatus) loginStatus.textContent = "Verifying the email code…";
+    try {
+      const response = await fetch(SUPABASE_URL + "/auth/v1/verify", {
+        method: "POST", headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "email", email, token })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.msg || result.message || "Email verification failed with HTTP " + response.status);
+      await completeSignIn(result);
+    } catch (error) {
+      if (loginStatus) loginStatus.textContent = "Email code verification failed: " + String(error?.message || error);
+    } finally { button.disabled = false; }
+  }
+  async function signInWithPassword() {
+    const email = $("jx46-email")?.value.trim() || "";
+    const password = $("jx46-password")?.value || "";
+    if (!email || !password) { if (loginStatus) loginStatus.textContent = "Enter your email and password."; return; }
+    const button = $("jx46-password-signin"); button.disabled = true;
+    if (loginStatus) loginStatus.textContent = "Signing in securely…";
+    try {
+      const response = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+        method: "POST", headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.msg || result.message || "Password sign-in failed with HTTP " + response.status);
+      await completeSignIn(result);
+    } catch (error) {
+      if (loginStatus) loginStatus.textContent = "Password sign-in failed: " + String(error?.message || error);
+    } finally { button.disabled = false; }
+  }
+  $("jx46-send-otp")?.addEventListener("click", sendEmailOtp);
+  $("jx46-verify-otp")?.addEventListener("click", verifyEmailOtp);
+  $("jx46-password-signin")?.addEventListener("click", signInWithPassword);
+  consumeMagicLinkSession();
+  updateLoginVisibility();
+  if (session()) checkCloudReadiness(true);
   cloudConsent.addEventListener("change", () => {
     state.cloudConsent = cloudConsent.checked;
     state.cloudAvailable = false;
