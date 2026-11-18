@@ -59,7 +59,7 @@
     <div class="neural-orb" role="img" aria-label="Animated neural core"></div>
     <div class="neural-core-label">JARVIS-X <b>NEURAL CORE</b></div>
   </div>
-  <div class="integration jx-cognitive-panel"><strong id="cognitive-mode">ADAPTIVE MODE · BALANCED · AWAITING INPUT</strong><p id="cognitive-state">State reflection is session-local. It tracks turns and failures only; it does not read or write Memory OS.</p></div>
+  <div class="integration jx-cognitive-panel"><strong id="cognitive-mode">ADAPTIVE MODE · BALANCED · AWAITING INPUT</strong><p id="cognitive-state">State reflection is session-local. Recent turns are compacted locally to fit the selected model context; it does not read or write Memory OS.</p></div>
   <h2>Conversation</h2>
 
   <div class="jx-chat-toolbar" aria-label="Conversation tools">
@@ -113,12 +113,12 @@
     </section>
     <div class="jx-vault-list" aria-live="polite"></div>
   </section>
-  <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Enable the cloud route with explicit consent or load a local model to begin. The last 4 messages are kept in page memory and are not synced. Input limit: 4,000 characters.</small></div></div>
+  <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Enable the cloud route with explicit consent or load a local model to begin. Recent turns are compacted to fit the selected local model context window. Input field has no fixed character limit.</small></div></div>
   <label for="jx-agent-select-chat">Agent / mode spécialiste</label>
   <select id="jx-agent-select-chat" aria-label="Spécialiste actif"><option value="JARVIS-X CORE">JARVIS-X CORE</option></select>
-  <div class="jx-attachment-row"><button class="btn ghost" id="jx-attachment-button" type="button" aria-label="Joindre un fichier ou une image">📎</button><input id="jx-attachment-input" type="file" accept=".txt,.md,.json,.csv,.js,.html,.py,image/*" hidden><span id="jx-attachment-status" class="footnote" role="status" aria-live="polite"></span></div><img id="jx-attachment-preview" alt="" hidden>
+  <div class="jx-attachment-row"><button class="btn ghost" id="jx-attachment-button" type="button" aria-label="Joindre un fichier ou une image">📎<input id="jx-file-input" type="file" accept="image/*,.txt,.md,.json,.csv,.js,.html,.py" multiple aria-label="Choisir des photos ou fichiers"></button><span id="jx-attachment-status" class="footnote" role="status" aria-live="polite"></span></div><img id="jx-attachment-preview" alt="" hidden>
   <label for="message">Message</label>
-  <textarea id="message" rows="3" maxlength="4000" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
+  <textarea id="message" rows="3" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
   <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button><button class="btn ghost" id="voice-dictation" type="button" aria-pressed="false">START VOICE DICTATION</button></div><p id="voice-dictation-status" class="footnote" role="status" aria-live="polite">Voice dictation availability depends on this browser.</p>
   <p class="footnote">Runtime: WebLLM 0.2.87. The selected model runs locally; smaller models trade response quality for a lower memory requirement. This is a small starter model, not a frontier-model replacement.</p>
 </section>

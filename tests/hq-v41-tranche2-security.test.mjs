@@ -34,7 +34,7 @@ test("v41 server provider endpoints are fixed constants and routing remains doub
  assert.match(provider,/new Set\(\[402, 429\]\)/);
  assert.match(provider,/AbortSignal\.timeout/);
  assert.match(provider,/provider\.endpoint/);
- assert.match(gateway,/const LIVE_INFERENCE_ENABLED = false/);
+ assert.match(gateway,/Deno\.env\.get\("LIVE_INFERENCE_ENABLED"\) === "true"/);
  assert.match(gateway,/JX_ENABLE_PROVIDER_CASCADE === "true"/);
  assert.match(gateway,/authenticatedUser\(/);
  assert.match(gateway,/consume_hq_rate_limit/);
@@ -64,7 +64,7 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
 
 test("v41 service worker caches the Inspector UI and local cognitive router under v42",async()=>{
  const sw=await read("../hq/sw.js");
- assert.match(sw,/jarvis-x-hq-shell-v46/);
+ assert.match(sw,/jarvis-x-hq-shell-v47/);
  assert.match(sw,/local-chat\.html/);
  assert.match(sw,/local-chat-engine\.bundle\.js/);
  assert.match(sw,/jarvis-brain-v36\.js/);
