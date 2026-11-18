@@ -6,3 +6,12 @@
 .jx46-control .jx46-switch{margin:7px 0;font-size:.78rem}
 .jx46-control .jx46-switch small{font-size:.7rem}
 .jx46-control .jx46-actions .btn{min-height:32px;padding:6px 9px;font-size:.72rem}
+
+.jx46-login{display:grid;gap:6px;padding:9px;margin:8px 0;border:1px solid rgba(131,217,255,.28);border-radius:10px;background:rgba(10,28,48,.72)}
+.jx46-login[hidden]{display:none!important}
+.jx46-login>strong{font-size:.72rem;letter-spacing:.08em;color:#83d9ff}
+.jx46-login label{font-size:.72rem;opacity:.9}
+.jx46-login input{box-sizing:border-box;width:100%;min-width:0;padding:8px 9px;border:1px solid rgba(131,217,255,.28);border-radius:7px;background:#091426;color:#eaf4ff;font:inherit;font-size:.78rem}
+.jx46-login-actions{display:flex;gap:7px;flex-wrap:wrap}
+.jx46-login-actions .btn{min-height:30px;padding:6px 9px;font-size:.68rem}
+.jx46-login p{font-size:.7rem;line-height:1.35;overflow-wrap:anywhere}

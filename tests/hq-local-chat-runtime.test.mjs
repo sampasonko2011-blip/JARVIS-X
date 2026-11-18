@@ -16,7 +16,7 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   const engine = read("../hq/local-chat-engine.js");
   assert.match(engine, /Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC/);
-  assert.match(engine, /MODEL_PRIORITY/);
+  assert.match(engine, /MODEL_PREFERENCE_ORDER/);
   assert.match(engine, /prebuiltAppConfig\?\.model_list/);
   assert.doesNotMatch(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
@@ -164,7 +164,7 @@ test("clearing local chat resets session-only cognitive reflection counters", ()
 test("local model selector prefers Qwen and resolves only model IDs in the installed package", () => {
   const page = read("../hq/local-chat.html");
   const engine = read("../hq/local-chat-engine.js");
-  assert.match(page, /id="model-select"/);
+  assert.match(page, /id="jx-model-select"/);
   assert.match(page, /value="SmolLM2-135M-Instruct-q0f16-MLC"/);
   assert.match(page, /value="SmolLM2-360M-Instruct-q4f32_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
