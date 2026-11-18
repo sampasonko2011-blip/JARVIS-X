@@ -131,3 +131,10 @@ test("v46 AUDIO uses browser speech only and makes no server TTS request", async
   expect(await page.evaluate(() => window.__spokenMeta)).toEqual({ lang: "fr-FR", rate: 0.96, pitch: 0.92 });
   expect(functionRequests).toBe(0);
 });
+
+test("v49 identifies the APEX panel as JARVIS-X rather than V46", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect(page.locator(".jx46-head strong")).toHaveText("JARVIS-X APEX ROUTING");
+  const source = await (await page.request.get("/v46-apex.js")).text();
+  expect(source).not.toContain("V46 APEX ROUTING");
+});
