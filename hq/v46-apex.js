@@ -94,7 +94,14 @@
         setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
       }
     } catch (error) {
-      status.textContent = "État du gateway inconnu : " + String(error?.message || error) + ". Aucun envoi cloud ne sera tenté.";
+      status.replaceChildren();
+      const detail = document.createElement("span");
+      detail.textContent = "État du gateway inconnu : " + String(error?.message || error) + ". Aucun envoi cloud ne sera tenté. ";
+      const signIn = document.createElement("a");
+      signIn.href = "./index.html#chat";
+      signIn.textContent = "🔐 SE CONNECTER AU HQ";
+      signIn.setAttribute("aria-label", "Se connecter au HQ pour activer le chat cloud");
+      status.append(detail, signIn);
       state.cloudAvailable = false;
       state.imageAvailable = false;
     } finally { state.cloudChecking = false; updateControls(); }
