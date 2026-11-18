@@ -485,7 +485,16 @@ Deno.serve(async (req: Request) => {
   if (req.method === "GET" && url.pathname.endsWith("/health")) {
     const healthRouteResult = resolveRucheRoute(url.searchParams.get("identity"), url.searchParams.get("orchestration_mode"));
     if (!healthRouteResult.ok) return jsonResponse({ error: healthRouteResult.error, allowed: healthRouteResult.allowed }, 400, origin);
-        const executiveRuntimeConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret)) && Boolean(EXECUTIVE_CONFIG.model);
+        const providerEnvironment = Deno.env.toObject();
+    const configuredCascadeProviders = providerEnvironment.JX_ENABLE_PROVIDER_CASCADE === "true"
+      ? listProviderConfiguration(providerEnvironment)
+      : [];
+    const openAIConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret) && EXECUTIVE_CONFIG.model);
+    const executiveRuntimeConfigured = openAIConfigured || configuredCascadeProviders.length > 0;
+    const configuredInferenceProviders = [
+      ...(openAIConfigured ? ["openai"] : []),
+      ...configuredCascadeProviders.map((provider) => provider.id),
+    ];
     let budgetGuard: Awaited<ReturnType<typeof readGlobalBudgetStatus>>;
     try { budgetGuard = await readGlobalBudgetStatus(); }
     catch {
@@ -498,6 +507,7 @@ Deno.serve(async (req: Request) => {
       executiveIdentity: "JARVIS-X",
       executiveModel: EXECUTIVE_CONFIG.model,
       executiveRuntimeConfigured,
+      configuredInferenceProviders,
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
       chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
