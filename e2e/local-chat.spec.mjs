@@ -377,3 +377,53 @@ test("v50 inline email login authenticates a mocked session, checks HQ health, a
   expect(cloudMessageSent).toBe(true);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
 });
+
+
+test("v50 imports an existing Supabase sb-*-auth-token from localStorage and checks HQ health", async ({ page }) => {
+  let healthChecked = false;
+  await page.addInitScript(() => {
+    localStorage.setItem("sb-projectref-auth-token", JSON.stringify({
+      access_token: "existing-supabase-access-token",
+      refresh_token: "existing-supabase-refresh-token",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: "bearer"
+    }));
+  });
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
+    healthChecked = true;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
+  });
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#jx46-login")).toBeHidden();
+  await expect.poll(() => healthChecked).toBe(true);
+  const mirrored = await page.evaluate(() => ({
+    local: JSON.parse(localStorage.getItem("jx-auth-session") || "null"),
+    session: JSON.parse(sessionStorage.getItem("jx-auth-session") || "null")
+  }));
+  expect(mirrored.local.access_token).toBe("existing-supabase-access-token");
+  expect(mirrored.session.access_token).toBe("existing-supabase-access-token");
+  await page.locator("#jx46-cloud-consent").check();
+  await expect(page.locator("#jx46-provider")).toHaveText("CLOUD · HQ V12 · READY");
+});
+
+test("v50 never substitutes the explicitly selected model when a 1 GB WebGPU cap blocks initialization", async ({ page }) => {
+  const requestedModel = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: {
+      requestAdapter: async () => ({ limits: { maxBufferSize: 1073741824, maxStorageBufferBindingSize: 1073741824 } })
+    } });
+    window.__jxModelInitCalls = [];
+    window.__JX_TEST_CREATE_MLC_ENGINE__ = async (modelId) => {
+      window.__jxModelInitCalls.push(modelId);
+      throw new Error("WebGPU buffer limit is insufficient for the requested model.");
+    };
+  });
+  await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
+  await page.locator("#jx-model-select").selectOption(requestedModel);
+  await page.locator("#load-model").click();
+  await expect(page.locator("#runtime-status")).toHaveText("LOAD FAILED");
+  expect(await page.evaluate(() => window.__jxModelInitCalls)).toEqual([requestedModel]);
+  await expect(page.locator("#runtime-detail")).toContainText("WebGPU buffer limit");
+  await expect(page.locator("#runtime-detail")).not.toContainText("SmolLM2-135M");
+});
