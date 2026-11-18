@@ -82,12 +82,12 @@ test("v46 exposes explicit AUDIO and LIVE controls with opt-in microphone start"
   await expect(page.getByRole("button", { name: /LIVE OFF/ })).toHaveAttribute("aria-pressed", "false");
 });
 
-test("v46 service worker pre-caches the APEX runtime and uses v46 namespace", async ({ page }) => {
+test("v47 service worker pre-caches the APEX runtime and retains v46 modules", async ({ page }) => {
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v46");
+  expect(source).toContain("jarvis-x-hq-shell-v47");
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
