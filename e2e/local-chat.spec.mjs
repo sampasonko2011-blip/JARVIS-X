@@ -225,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v50");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v51");
 });
 
 
@@ -312,7 +312,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v50");
+  expect(sw).toContain("jarvis-x-hq-shell-v51");
 });
 
  
@@ -376,4 +376,53 @@ test("v50 inline email login authenticates a mocked session, checks HQ health, a
   await expect(page.locator("#transcript")).toContainText("Mocked HQ v12 cloud reply");
   expect(cloudMessageSent).toBe(true);
   await expect(page.locator("#runtime-status")).toHaveText("NOT LOADED");
+});
+
+
+test("v50 imports an existing Supabase sb-*-auth-token from localStorage and checks HQ health", async ({ page }) => {
+  let healthChecked = false;
+  await page.addInitScript(() => {
+    localStorage.setItem("sb-projectref-auth-token", JSON.stringify({
+      access_token: "existing-supabase-access-token",
+      refresh_token: "existing-supabase-refresh-token",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: "bearer"
+    }));
+  });
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
+    healthChecked = true;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
+  });
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#jx46-login")).toBeHidden();
+  await expect.poll(() => healthChecked).toBe(true);
+  const mirrored = await page.evaluate(() => ({
+    local: JSON.parse(localStorage.getItem("jx-auth-session") || "null"),
+    session: JSON.parse(sessionStorage.getItem("jx-auth-session") || "null")
+  }));
+  expect(mirrored.local.access_token).toBe("existing-supabase-access-token");
+  expect(mirrored.session.access_token).toBe("existing-supabase-access-token");
+  await page.locator("#jx46-cloud-consent").check();
+  await expect(page.locator("#jx46-provider")).toHaveText("CLOUD · HQ V12 · READY");
+});
+
+test("v51 does not reject Safari's reported 1 GB WebGPU adapter limit before attempting the explicitly selected model", async ({ page }) => {
+  const requestedModel = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: { requestAdapter: async () => ({ limits: { maxBufferSize: 1073741824, maxStorageBufferBindingSize: 1073741824 } }) } });
+    window.__jxModelInitCalls = [];
+    window.__JX_TEST_CREATE_MLC_ENGINE__ = async (modelId, options) => {
+      window.__jxModelInitCalls.push({ modelId, appConfigHasModel: Array.isArray(options?.appConfig?.model_list) && options.appConfig.model_list.some(entry => entry.model_id === modelId) });
+      options?.initProgressCallback?.({ progress: 0.02, text: "Mock model initialization started" });
+      return {};
+    };
+  });
+  await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
+  await page.locator("#jx-model-select").selectOption(requestedModel);
+  await page.locator("#load-model").click();
+  await expect(page.locator("#runtime-status")).toHaveText("READY");
+  expect(await page.evaluate(() => window.__jxModelInitCalls)).toEqual([{ modelId: requestedModel, appConfigHasModel: true }]);
+  await expect(page.locator("#runtime-detail")).toContainText(requestedModel);
+  await expect(page.locator("#runtime-detail")).not.toContainText("SmolLM2-135M");
 });
