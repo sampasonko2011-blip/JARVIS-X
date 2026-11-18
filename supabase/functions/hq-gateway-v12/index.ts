@@ -501,6 +501,7 @@ Deno.serve(async (req: Request) => {
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
       chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
+      imageGenerationEnabled: Deno.env.get("JX_ENABLE_IMAGE_GENERATION") === "true" && Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY")),
       memoryProvider: "xmemo-mcp-oauth-preferred",
       memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
