@@ -20,8 +20,11 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   assert.match(engine, /prebuiltAppConfig\?\.model_list/);
   assert.doesNotMatch(engine, /Llama-3\.2-3B-Instruct-q4f16_1-MLC/);
   assert.match(engine, /CreateMLCEngine/);
-  assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
+  assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);
   assert.doesNotMatch(engine, /MAX_INPUT_CHARS/);
+  assert.match(engine, /MODEL_CONTEXT_CHAR_BUDGET/);
+  assert.match(engine, /function compactLocalHistory/);
+  assert.match(engine, /messages: compactLocalHistory\(messages/);
   assert.match(engine, /stream: true/);
   assert.match(engine, /buildSystemPrompt\(cognitiveRoute\)/);
   assert.match(engine, /temperature: cognitiveRoute \? cognitiveRoute\.temperature : sampling\.temperature/);
@@ -190,7 +193,7 @@ test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a t
   assert.match(brain, /storeLocalMemory/);
   assert.match(brain, /sanitizeResponse/);
   assert.match(brain, /retiens/);
-  assert.match(engine, /MAX_HISTORY_MESSAGES = 4/);
+  assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);
   assert.match(engine, /max_tokens: 384/);
   assert.match(engine, /memoryBridge\.remember/);
   assert.match(engine, /explicitMemoryNote/);
