@@ -55,9 +55,17 @@ test("local chat explains download, local-only session scope, model limits, and 
   const engine = read("../hq/local-chat-engine.js");
   assert.match(page, /first load downloads model files/i);
   assert.match(page, /No cloud inference fallback exists/i);
-  assert.match(page, /kept in page memory and are not synced/i);
+  assert.match(page, /Recent turns are compacted locally/i);
   assert.match(page, /small starter model, not a frontier-model replacement/i);
   assert.match(page, /id="clear-chat"/);
+  const apex = read("../hq/v46-apex.js");
+  const gateway = read("../supabase/functions/hq-gateway-v12/index.ts");
+  assert.match(apex, /GATEWAY \+ "\/image"/);
+  assert.match(apex, /user_confirmed: true/);
+  assert.match(apex, /No fallback externe n'a été utilisé/);
+  assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
+  assert.match(gateway, /JARVIS_X_GEMINI_API_KEY/);
+  assert.match(gateway, /reserveImageBudget\(user\.id\)/);
   assert.match(engine, /clearButton\.addEventListener\("click"/);
   assert.match(engine, /Local conversation cleared/);
   assert.doesNotMatch(engine, /localStorage|sessionStorage|indexedDB/i);
