@@ -21,8 +21,9 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 const PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel";
 const PRIMARY_MODEL = "single-executive-core";
-// Release lock: this production candidate must not make live model calls.
-// Re-enable only through a separately reviewed, explicitly authorized code change.
+// Live inference is fail-closed unless an operator explicitly enables the server-side flag.
+// Every live request still requires an authenticated allowlisted user, per-turn consent,
+// database-backed rate limits, a successful atomic budget reservation, and an inactive kill switch.
 const LIVE_INFERENCE_ENABLED = Deno.env.get("LIVE_INFERENCE_ENABLED") === "true";
 const MAX_BODY_BYTES = 16_384;
 const MAX_TASK_CHARS = 12_000;
