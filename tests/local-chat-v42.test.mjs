@@ -7,7 +7,7 @@ test("v42 loads its external Stark Command Studio assets and service-worker cach
  const html=await read("../hq/local-chat.html"),sw=await read("../hq/sw.js");
  assert.match(html,/local-chat-v42\.css/);
  assert.match(html,/local-chat-v42\.js/);
- assert.match(sw,/jarvis-x-hq-shell-v50/);
+ assert.match(sw,/jarvis-x-hq-shell-v51/);
  assert.match(sw,/local-chat-v42\.css/);
  assert.match(sw,/local-chat-v42\.js/);
 });

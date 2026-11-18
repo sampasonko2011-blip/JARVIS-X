@@ -160,17 +160,8 @@ loadButton.addEventListener("click", async () => {
     if (!adapter) throw new Error("No WebGPU adapter available.");
     const requestedModel = modelSelect?.value || DEFAULT_MODEL_ID;
     const selectedModel = resolveAvailableModel(prebuiltAppConfig?.model_list, requestedModel);
-    if (!selectedModel) throw new Error("Selected model is not present in the installed WebLLM prebuiltAppConfig.model_list.");
-    if (modelSelect && ![...modelSelect.options].some((option) => option.value === selectedModel)) {
-      const option = document.createElement("option");
-      option.value = selectedModel;
-      option.textContent = selectedModel + " · detected in installed WebLLM package";
-      modelSelect.add(option);
-    }
-    if (modelSelect) modelSelect.value = selectedModel;
-    if (selectedModel !== requestedModel) {
-      detail.textContent = "Requested model unavailable in this package. Using detected compatible model: " + selectedModel + ".";
-    }
+    if (!selectedModel) throw new Error("Selected model is not present in the installed WebLLM prebuiltAppConfig.model_list. No substitute will be loaded.");
+    if (selectedModel !== requestedModel) throw new Error("Refusing to substitute the explicitly selected model " + requestedModel + " with " + selectedModel + ".");
     loadStage = "download-and-initialize";
     const limits = adapter.limits || {};
     const gpuSummary = [

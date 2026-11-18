@@ -47,11 +47,37 @@
     try { sessionStorage.removeItem(SESSION_KEY); } catch {}
     try { localStorage.removeItem(SESSION_KEY); } catch {}
   }
+  function normalizeStoredSession(value) {
+    let candidate = value;
+    if (typeof candidate === "string") {
+      try { candidate = JSON.parse(candidate); } catch { return null; }
+    }
+    if (candidate && candidate.currentSession) candidate = candidate.currentSession;
+    if (candidate && candidate.session && candidate.session.access_token) candidate = candidate.session;
+    if (!candidate || typeof candidate.access_token !== "string" || typeof candidate.refresh_token !== "string") return null;
+    return {
+      access_token: candidate.access_token,
+      refresh_token: candidate.refresh_token,
+      expires_at: Number(candidate.expires_at) || Math.floor(Date.now() / 1000) + Number(candidate.expires_in || 3600)
+    };
+  }
   function session() {
     for (const storage of [sessionStorage, localStorage]) {
       try {
-        const saved = JSON.parse(storage.getItem(SESSION_KEY) || "null");
-        if (saved && typeof saved.access_token === "string" && typeof saved.refresh_token === "string") return persistSession(saved);
+        const saved = normalizeStoredSession(storage.getItem(SESSION_KEY));
+        if (saved) return persistSession(saved);
+      } catch {}
+    }
+    // Supabase JS v2 persists its session as sb-<project-ref>-auth-token.
+    // Import only a complete token pair, then mirror it into JARVIS-X storage.
+    for (const storage of [localStorage, sessionStorage]) {
+      try {
+        for (const key of Object.keys(storage)) {
+          if (!/^sb-.+-auth-token$/.test(key)) continue;
+          const saved = normalizeStoredSession(storage.getItem(key));
+          if (!saved) continue;
+          try { return persistSession(saved); } catch {}
+        }
       } catch {}
     }
     return null;
@@ -205,6 +231,19 @@
   consumeMagicLinkSession();
   updateLoginVisibility();
   if (session()) checkCloudReadiness(true);
+  // Detect a Supabase sign-in performed in another tab without requiring a reload.
+  window.addEventListener("storage", (event) => {
+    if (event.key !== null && !/^sb-.+-auth-token$/.test(event.key)) return;
+    const saved = session();
+    updateLoginVisibility();
+    if (saved) checkCloudReadiness(true);
+    else { state.cloudAvailable = false; state.imageAvailable = false; updateControls(); }
+  });
+  window.addEventListener("focus", () => {
+    const saved = session();
+    updateLoginVisibility();
+    if (saved && !state.cloudChecking) checkCloudReadiness(true);
+  });
   cloudConsent.addEventListener("change", () => {
     state.cloudConsent = cloudConsent.checked;
     state.cloudAvailable = false;
