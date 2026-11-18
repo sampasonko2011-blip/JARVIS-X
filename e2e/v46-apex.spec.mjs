@@ -87,7 +87,7 @@ test("v47 service worker pre-caches the APEX runtime and retains v46 modules", a
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v48");
+  expect(source).toContain("jarvis-x-hq-shell-v49");
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
@@ -130,4 +130,11 @@ test("v46 AUDIO uses browser speech only and makes no server TTS request", async
   await expect.poll(() => page.evaluate(() => window.__spokenText)).toBe("Bonjour depuis JARVIS-X.");
   expect(await page.evaluate(() => window.__spokenMeta)).toEqual({ lang: "fr-FR", rate: 0.96, pitch: 0.92 });
   expect(functionRequests).toBe(0);
+});
+
+test("v49 identifies the APEX panel as JARVIS-X rather than V46", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect(page.locator(".jx46-head strong")).toHaveText("JARVIS-X APEX ROUTING");
+  const source = await (await page.request.get("/v46-apex.js")).text();
+  expect(source).not.toContain("V46 APEX ROUTING");
 });
