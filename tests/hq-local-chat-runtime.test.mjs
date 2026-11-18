@@ -62,7 +62,7 @@ test("local chat explains download, local-only session scope, model limits, and 
   const gateway = read("../supabase/functions/hq-gateway-v12/index.ts");
   assert.match(apex, /GATEWAY \+ "\/image"/);
   assert.match(apex, /user_confirmed: true/);
-  assert.match(apex, /No fallback externe n'a été utilisé/);
+  assert.match(apex, /Aucun fallback externe n'a été utilisé/);
   assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
   assert.match(gateway, /JARVIS_X_GEMINI_API_KEY/);
   assert.match(gateway, /reserveImageBudget\(user\.id\)/);
