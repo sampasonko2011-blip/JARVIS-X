@@ -7,10 +7,10 @@
   const send = $("send-message"), input = $("message"), transcript = $("transcript");
   if (!send || !input || !transcript) return;
 
-  const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
+  const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, imageAvailable: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
   const panel = document.createElement("section");
   panel.className = "jx46-control";
-  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference remains unavailable while the server release lock is closed.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Image generation is disabled pending safety review">🎨 IMAGE · DISABLED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
+  panel.innerHTML = '<div class="jx46-head"><strong>V46 APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference remains unavailable while the server release lock is closed.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Requires authenticated HQ v12 and the server image-generation flag">🎨 IMAGE · LOCKED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
   const stage = document.querySelector(".jx-chat-stage");
   stage?.insertBefore(panel, $("transcript"));
   const cloudConsent = $("jx46-cloud-consent"), localMode = $("jx46-local-mode");
@@ -61,6 +61,10 @@
     const localReady = ready && (state.localMode || !navigator.onLine);
     const cloudSelected = navigator.onLine && state.cloudConsent && !state.localMode;
     const cloudReady = cloudSelected && state.cloudAvailable;
+    const imageReady = cloudSelected && state.imageAvailable;
+    imageButton.disabled = !imageReady || state.busy;
+    imageButton.setAttribute("aria-disabled", String(imageButton.disabled));
+    imageButton.textContent = imageReady ? "🎨 IMAGE · ACTIVE" : "🎨 IMAGE · LOCKED";
     input.disabled = state.busy || (!localReady && !cloudReady);
     send.disabled = state.busy || (!localReady && !cloudReady);
     if (localReady) setProvider(navigator.onLine ? "LOCAL M1 · READY" : "LOCAL M1 · OFFLINE FALLBACK");
@@ -72,6 +76,7 @@
   }
   async function checkCloudReadiness() {
     state.cloudAvailable = false;
+    state.imageAvailable = false;
     if (!state.cloudConsent || state.localMode || !navigator.onLine) { state.cloudChecking = false; updateControls(); return; }
     state.cloudChecking = true; updateControls();
     status.textContent = "Vérification de l'état du gateway HQ v12…";
@@ -82,6 +87,7 @@
       const health = await response.json().catch(() => ({}));
       if (!response.ok || health.ok !== true || health.auth !== "verified-supabase-session") throw new Error(health.error || "gateway_health_unavailable");
       state.cloudAvailable = health.chatEnabled === true;
+      state.imageAvailable = health.imageGenerationEnabled === true;
       if (state.cloudAvailable) status.textContent = "Gateway HQ v12 authentifié et prêt. Chaque requête reste soumise au contrôle serveur.";
       else {
         status.textContent = "Le verrou de release HQ v12 bloque l'inférence live (0 appel modèle). Aucune requête de chat ne sera envoyée. Passe en mode local.";
@@ -90,6 +96,7 @@
     } catch (error) {
       status.textContent = "État du gateway inconnu : " + String(error?.message || error) + ". Aucun envoi cloud ne sera tenté.";
       state.cloudAvailable = false;
+      state.imageAvailable = false;
     } finally { state.cloudChecking = false; updateControls(); }
   }
   cloudConsent.addEventListener("change", () => {
@@ -111,6 +118,40 @@
   window.addEventListener("online", () => { updateControls(); if (state.cloudConsent) checkCloudReadiness(); });
   window.addEventListener("offline", () => { state.cloudAvailable = false; status.textContent = "Hors ligne : seuls les messages locaux sont disponibles."; updateControls(); });
   new MutationObserver(updateControls).observe($("runtime-status"), { childList: true, characterData: true, subtree: true });
+
+
+  async function sendImage(promptText) {
+    const prompt = String(promptText || "").trim();
+    if (!prompt || prompt.length > 4000 || state.busy || !state.imageAvailable || !state.cloudConsent || state.localMode) return;
+    const approved = window.confirm("Générer cette image avec Nano Banana / Gemini ? Cette action utilise le budget image séparé du gateway JARVIS-X et sera enregistrée dans son audit.");
+    if (!approved) return;
+    state.busy = true; updateControls();
+    addMessage("user", "/imagine " + prompt);
+    const output = addMessage("assistant", "Image Studio · réservation du budget et génération sécurisée…");
+    try {
+      const token = await accessToken();
+      const response = await fetch(GATEWAY + "/image", {
+        method: "POST",
+        headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ prompt, aspect_ratio: "1:1", output_format: "png", user_confirmed: true, executive_identity: "jarvis-x", orchestration_mode: "support" })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true || typeof result.image?.data_url !== "string" || !result.image.data_url.startsWith("data:image/")) throw new Error(result.error || "image_generation_failed");
+      output.textContent = "Image créée par " + String(result.provider || "Nano Banana") + " · " + String(result.model || "Gemini") + ". Budget réservé : $" + String(result.budget?.reserved_usd ?? "inconnu");
+      const figure = document.createElement("figure");
+      const image = document.createElement("img");
+      image.className = "jx46-generated-image"; image.alt = "Image générée par JARVIS-X"; image.src = result.image.data_url;
+      const download = document.createElement("a");
+      download.className = "btn ghost"; download.textContent = "Télécharger l’image";
+      download.href = result.image.data_url; download.download = "jarvis-x-image.png";
+      figure.append(image, download); output.parentElement?.append(figure);
+      setProvider("CLOUD · NANO BANANA · IMAGE GENERATED");
+      status.textContent = "Image générée via le endpoint authentifié HQ v12. La réservation budgétaire et l'audit ont été appliqués.";
+    } catch (error) {
+      output.textContent = "Image Studio indisponible : " + String(error?.message || error) + ". Aucun fallback externe n'a été utilisé.";
+      status.textContent = "Échec image ; vérifier le flag serveur, le secret Gemini et le budget image.";
+    } finally { state.busy = false; updateControls(); }
+  }
 
   async function sendCloud() {
     const text = input.value.trim();
@@ -160,7 +201,7 @@
   send.addEventListener("click", (event) => {
     const text = input.value.trim();
     const match = text.match(/^\/imagine\s+([\s\S]+)/i) || text.match(/^(?:génère une image|genere une image|dessine)\s+([\s\S]+)/i);
-    if (match) { event.preventDefault(); event.stopImmediatePropagation(); showImageUnavailable(); return; }
+    if (match) { event.preventDefault(); event.stopImmediatePropagation(); sendImage(match[1]); return; }
     if (navigator.onLine && state.cloudConsent && !state.localMode) {
       event.preventDefault(); event.stopImmediatePropagation(); sendCloud();
     }
@@ -177,11 +218,6 @@
     utterance.lang = "fr-FR"; utterance.rate = 0.96; utterance.pitch = 0.92;
     utterance.onend = () => { if (state.live) startRecognition(); };
     window.speechSynthesis.speak(utterance);
-  }
-
-  function showImageUnavailable() {
-    addMessage("assistant", "Image Studio is currently disabled pending an age-appropriate safety review. No external image provider was contacted.");
-    status.textContent = "Image generation disabled; no provider call made.";
   }
 
   function startRecognition() {
@@ -207,6 +243,11 @@
     }
     try { state.recognition.start(); } catch { /* already active */ }
   }
+  imageButton.addEventListener("click", () => {
+    if (!state.imageAvailable || !state.cloudConsent || state.localMode) return;
+    const prompt = window.prompt("Décris l’image à générer (4 000 caractères maximum) :");
+    if (prompt) sendImage(prompt);
+  });
   audioButton.addEventListener("click", () => { state.audio = !state.audio; audioButton.textContent = state.audio ? "🔊 AUDIO ON" : "🔊 AUDIO OFF"; audioButton.setAttribute("aria-pressed", String(state.audio)); if (!state.audio) window.speechSynthesis?.cancel(); });
   liveButton.addEventListener("click", () => {
     state.live = !state.live; liveButton.textContent = state.live ? "🎙️ LIVE ON" : "🎙️ LIVE OFF"; liveButton.setAttribute("aria-pressed", String(state.live));
