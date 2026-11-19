@@ -15,6 +15,42 @@
   stage?.insertBefore(panel, $("transcript"));
   const cloudConsent = $("jx46-cloud-consent"), localMode = $("jx46-local-mode");
   const provider = $("jx46-provider"), status = $("jx46-status");
+  const lang = { ready: "Cloud authentifié et disponible", locked: "Cloud verrouillé", signedOut: "Déconnexion effectuée. Connectez-vous pour changer de compte." };
+  let currentLockReason = "Motif non communiqué par le gateway.";
+  function renderCloudState(health = {}) {
+    const reason = typeof health.lockReason === "string" && health.lockReason.trim()
+      ? health.lockReason.trim()
+      : (health.chatEnabled === false ? "Le gateway indique chatEnabled=false sans fournir lockReason." : "Aucun motif de verrouillage signalé.");
+    currentLockReason = reason;
+    status.textContent = health.chatEnabled === true
+      ? lang.ready + ". L'inférence reste soumise aux contrôles serveur."
+      : lang.locked + ". Motif du verrouillage : " + reason + ". Aucun appel modèle n'a été envoyé.";
+    panel.dataset.cloudLockReason = reason;
+  }
+  function addAccountActions() {
+    if ($("jx46-account-actions")) return;
+    const actions = document.createElement("div");
+    actions.id = "jx46-account-actions";
+    actions.className = "jx46-login-actions";
+    actions.innerHTML = '<button id="jx46-signout" type="button" class="btn ghost">DÉCONNEXION / CHANGER DE COMPTE</button>';
+    panel.append(actions);
+    $("jx46-signout").addEventListener("click", () => {
+      clearStoredSession();
+      state.cloudConsent = false;
+      state.cloudAvailable = false;
+      state.imageAvailable = false;
+      if (cloudConsent) cloudConsent.checked = false;
+      if ($("jx46-email")) $("jx46-email").value = "";
+      if ($("jx46-otp")) $("jx46-otp").value = "";
+      if ($("jx46-password")) $("jx46-password").value = "";
+      updateLoginVisibility();
+      if (loginStatus) loginStatus.textContent = lang.signedOut;
+      setProvider("CLOUD · SIGNED OUT");
+      status.textContent = lang.signedOut;
+      updateControls();
+    });
+  }
+  addAccountActions();
   const audioButton = $("jx46-audio"), liveButton = $("jx46-live"), imageButton = $("jx46-image");
   const memoryConsent = $("local-memory-consent");
   // The UI defaults to Local M1. Mirror that default into runtime state before the first control update.
@@ -167,11 +203,9 @@
       if (!response.ok || health.ok !== true || health.auth !== "verified-supabase-session") throw new Error(health.error || "gateway_health_unavailable");
       state.cloudAvailable = health.chatEnabled === true;
       state.imageAvailable = health.imageGenerationEnabled === true;
-      if (state.cloudAvailable) status.textContent = state.cloudConsent && !state.localMode ? "Gateway HQ v12 authentifié et prêt. Chaque requête reste soumise au contrôle serveur." : "Session authentifiée et /health vérifié. Active explicitement le consentement cloud pour envoyer des messages.";
-      else {
-        status.textContent = "Le verrou de release HQ v12 bloque l'inférence live (0 appel modèle). Aucune requête de chat ne sera envoyée. Passe en mode local.";
-        setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
-      }
+      renderCloudState(health);
+      if (state.cloudAvailable && !(state.cloudConsent && !state.localMode)) status.textContent = "Session authentifiée et /health vérifié. Active explicitement le consentement cloud pour envoyer des messages.";
+      else if (!state.cloudAvailable) setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
     } catch (error) {
       updateLoginVisibility();
       status.textContent = "Gateway HQ v12 indisponible : " + String(error?.message || error) + ". Aucun message cloud ne sera envoyé.";
@@ -358,7 +392,7 @@
         setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
         state.cloudAvailable = false;
       } else {
-        status.textContent = "Cloud request failed; no fake reply was generated.";
+        status.textContent = "Échec de la requête Cloud : " + failure + ". Aucun résultat inventé.";
         setProvider("CLOUD · REQUEST FAILED");
       }
       input.value = text;
