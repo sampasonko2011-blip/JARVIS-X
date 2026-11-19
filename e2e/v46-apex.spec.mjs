@@ -140,3 +140,30 @@ test("v49 identifies the APEX panel as JARVIS-X rather than V46", async ({ page 
   const source = await (await page.request.get("/v46-apex.js")).text();
   expect(source).not.toContain("V46 APEX ROUTING");
 });
+
+
+test("v52 inline login fields remain visible in compact iPad and phone viewports", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/local-chat.html");
+    const login = page.locator("#jx46-login");
+    await expect(login).toBeVisible();
+    await expect(page.locator("#jx46-email")).toBeVisible();
+    await expect(page.locator("#jx46-password")).toBeVisible();
+    const box = await login.boundingBox();
+    expect(box.width).toBeGreaterThan(200);
+    expect(box.height).toBeGreaterThan(250);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+    await expect(page.locator("#jx46-cloud-consent")).not.toBeChecked();
+  }
+});
+
+test("v52 Local Chat registers the versioned service worker when supported", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker?.getRegistrations().then(items => items.some(item => item.active || item.installing || item.waiting)) ?? false)).toBe(true);
+  const cacheSource = await (await page.request.get("/sw.js")).text();
+  expect(cacheSource).toContain("jarvis-x-hq-shell-v52");
+});
