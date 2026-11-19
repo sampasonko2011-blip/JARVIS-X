@@ -501,6 +501,15 @@ Deno.serve(async (req: Request) => {
     catch {
       budgetGuard = { enabled: false, killSwitchEnabled: true, dailyLimitUsd: null, requestReservationConfigured: false };
     }
+    const lockReasons: string[] = [];
+    if (!LIVE_INFERENCE_ENABLED) lockReasons.push("live_inference_disabled");
+    if (!executiveRuntimeConfigured) lockReasons.push("executive_runtime_not_configured");
+    if (budgetGuard.killSwitchEnabled) lockReasons.push("global_kill_switch_enabled");
+    if (!budgetGuard.enabled) {
+      if (!budgetGuard.requestReservationConfigured) lockReasons.push("global_request_reservation_missing");
+      lockReasons.push("global_budget_disabled_or_invalid");
+    }
+    const chatEnabled = lockReasons.length === 0;
     return jsonResponse({
       ok: true,
       service: "jarvis-x-gateway",
@@ -511,7 +520,9 @@ Deno.serve(async (req: Request) => {
       configuredInferenceProviders,
       budgetGuard,
       liveInferenceEnabled: LIVE_INFERENCE_ENABLED,
-      chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard.enabled && !budgetGuard.killSwitchEnabled,
+      chatEnabled,
+      lockReason: chatEnabled ? null : lockReasons.join("; "),
+      lockReasons,
       imageGenerationEnabled: Deno.env.get("JX_ENABLE_IMAGE_GENERATION") === "true" && Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY")),
       memoryProvider: "xmemo-mcp-oauth-preferred",
       memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
