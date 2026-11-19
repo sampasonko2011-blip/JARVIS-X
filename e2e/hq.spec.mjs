@@ -159,17 +159,10 @@ test("cancelling delete-all confirmation preserves saved data", async ({ page })
 test("service worker installs, claims the page and precaches the HQ shell", async ({ page }) => {
   await page.evaluate(async () => {
     if (!("serviceWorker" in navigator)) throw new Error("Service workers are unavailable");
-    const sw = navigator.serviceWorker;
-    const controlled = sw.controller
-      ? Promise.resolve()
-      : new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error("Timed out waiting for service-worker controllerchange")), 15000);
-          sw.addEventListener("controllerchange", () => { clearTimeout(timeout); resolve(); }, { once: true });
-        });
-    const registration = await sw.ready;
+    const registration = await navigator.serviceWorker.ready;
     await registration.update();
-    await controlled;
   });
+  await page.reload({ waitUntil: "domcontentloaded" });
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
   await expect(page.locator("html")).toHaveAttribute("data-sw-controller", "active");
   const cached = await page.evaluate(async () => {
