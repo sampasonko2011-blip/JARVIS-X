@@ -5,6 +5,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let payload;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/auth/v1/user", async route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id" }) }));
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       ok: true, auth: "verified-supabase-session", chatEnabled: true, liveInferenceEnabled: true
@@ -38,6 +39,7 @@ test("v46 respects the HQ v12 live-inference release lock without sending a mode
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let postRequests = 0;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/auth/v1/user", async route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id" }) }));
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       ok: true, auth: "verified-supabase-session", chatEnabled: false, liveInferenceEnabled: false
@@ -87,7 +89,7 @@ test("v47 service worker pre-caches the APEX runtime and retains v46 modules", a
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v51");
+  expect(source).toContain("jarvis-x-hq-shell-v52");
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
