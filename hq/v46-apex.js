@@ -135,7 +135,7 @@
     return window.JARVIS_BRAIN_V36?.buildSystemPrompt(route) || "Tu es JARVIS-X. Réponds avec exactitude, signale les incertitudes et n'invente aucune action.";
   }
   function updateControls() {
-    const ready = /^READY(?:\\s|$)/.test($("runtime-status")?.textContent || "");
+    const ready = /^READY(?:\s|$)/.test($("runtime-status")?.textContent || "");
     const localReady = ready && (state.localMode || !navigator.onLine);
     const cloudSelected = navigator.onLine && state.cloudConsent && !state.localMode;
     const cloudReady = cloudSelected && state.cloudAvailable;
