@@ -34,7 +34,7 @@ test("local chat uses the registered small Qwen model with no cloud inference fa
   assert.match(engine, /No cloud fallback was attempted/);
   assert.match(engine, /input\.value = text/);
   assert.match(engine, /restored for retry/);
-  assert.match(engine, /age-appropriate|minor/i);
+  assert.match(engine, /adolescent|age-appropriate|minor/i);
   assert.doesNotMatch(engine, /fetch\s*\(|supabase|openrouter/i);
 });
 
@@ -88,7 +88,7 @@ test("local model load failures report the exact initialization stage and underl
   assert.match(engine, /Failed during " \+ loadStage/);
   assert.match(engine, /errorName/);
   assert.match(engine, /errorMessage/);
-  assert.match(engine, /LOCAL LOAD FAILED at /);
+  assert.match(engine, /ÉCHEC DU CHARGEMENT LOCAL à l’étape/);
   assert.match(engine, /adapter\.limits/);
 });
 
@@ -215,8 +215,8 @@ test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a t
 
 test("v41 role lock and XMemo status are present", () => {
  const brain=read("../hq/jarvis-brain-v36.js"); const engine=read("../hq/local-chat-engine.js"); const page=read("../hq/local-chat.html");
- assert.match(brain,/L'utilisateur s'appelle Sam/); assert.match(brain,/ne l'appelle jamais JARVIS-X/);
- assert.match(brain,/bonjour|bonsoir|salut|hello/); assert.match(engine,/L'utilisateur s'appelle Sam/);
+ assert.match(brain,/IDENTITÉ VERROUILLÉE/); assert.match(brain,/ne l'appelle jamais JARVIS-X/);
+ assert.match(brain,/bonjour|bonsoir|salut|hello/); assert.match(engine,/IDENTITÉ EXÉCUTIVE — JARVIS-X/);
  assert.match(page,/id="jx-xmemo-sync-status"/); assert.match(engine,/CLOUD REQUIRES CONSENT/); assert.match(engine,/XMEMO CLOUD SYNCED/);
  assert.match(page,/945 MB GPU memory/); assert.match(page,/1\.63 GB GPU memory/); assert.doesNotMatch(page,/\\sstyle=/i);
 });

@@ -140,10 +140,10 @@ test("HQ separates zero-model integration fixtures from budget-gated live infere
   assert.match(gateway, /Deno\.env\.get\("LIVE_INFERENCE_ENABLED"\) === "true"/);
   assert.match(gateway, /error: "live_inference_disabled".*model_calls: 0/);
   assert.match(gateway, /body\.liveConsent !== true/);
-  assert.match(gateway, /chatEnabled: LIVE_INFERENCE_ENABLED &&/);
+  assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /lockReason: chatEnabled \? null : lockReasons\.join/);
 });
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
-  assert.match(serviceWorker, /jarvis-x-hq-shell-v52/);
+  assert.match(serviceWorker, /jarvis-x-hq-shell-v53/);
   assert.match(serviceWorker, /\.\/local-chat-engine\.js/);
   assert.match(serviceWorker, /'\.\/mission-control\.js'/);
   assert.match(serviceWorker, /'\.\/hq\.js'/);
