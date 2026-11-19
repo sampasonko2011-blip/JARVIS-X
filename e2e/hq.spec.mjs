@@ -130,13 +130,16 @@ test("rejects malformed backup data without overwriting existing records", async
   await page.locator("#memory-body").fill("Must survive invalid import");
   await page.locator("#save-memory").click();
   const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
-  page.once("dialog", dialog => dialog.accept());
   await page.locator('[data-view="settings"]').click();
+  const dialogPromise = page.waitForEvent("dialog");
   await page.locator("#import-file").setInputFiles({
     name: "malformed.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({ tasks: "not-an-array", memories: [], audits: [] })),
   });
+  const dialog = await dialogPromise;
+  expect(dialog.type()).toBe("alert");
+  await dialog.accept();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
 });
 
