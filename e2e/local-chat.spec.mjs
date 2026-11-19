@@ -490,3 +490,46 @@ test("v52 active local model identity is explicit and selector locks after load"
   await expect(selector).toBeDisabled();
   expect(await page.evaluate(() => window.__jxLoadedModel)).toBe(requestedModel);
 });
+
+
+test("v53 injects the executive multilingual JARVIS-X identity for every local model", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const source = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
+  expect(source).toContain("IDENTITÉ EXÉCUTIVE — JARVIS-X");
+  expect(source).toContain("Qwen, Gemma ou Phi");
+  expect(source).toContain("français, l'anglais, le wolof");
+  expect(source).toContain("Détecte la langue du dernier message");
+  expect(source).toContain("const SYSTEM = [");
+  expect(source).toContain("messages: compactLocalHistory(messages");
+});
+
+test("v53 shows the exact safe gateway lock reason in French and offers sign-out", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("jx-auth-session", JSON.stringify({
+    access_token: "v53-access", refresh_token: "v53-refresh", expires_at: Math.floor(Date.now() / 1000) + 3600
+  })));
+  await page.route(url => url.href.includes("/auth/v1/user"), route => route.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({ id: "v53-user", email: "user@example.com" })
+  }));
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: false, imageGenerationEnabled: false, lockReason: "live_inference_disabled; global_request_reservation_missing" })
+  }));
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#jx46-login")).toBeHidden();
+  await page.locator("#jx46-cloud-consent").check();
+  await expect(page.locator("#jx46-status")).toContainText("Cloud verrouillé");
+  await expect(page.locator("#jx46-status")).toContainText("live_inference_disabled; global_request_reservation_missing");
+  await expect(page.locator("#jx46-signout")).toBeVisible();
+  await page.locator("#jx46-signout").click();
+  await expect(page.locator("#jx46-login")).toBeVisible();
+  await expect(page.locator("#jx46-status")).toContainText("Déconnexion effectuée");
+  expect(await page.evaluate(() => localStorage.getItem("jx-auth-session"))).toBeNull();
+});
+
+test("v53 service worker uses the v53 shell cache namespace", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const sw = await page.request.get("/sw.js");
+  expect(sw.ok()).toBeTruthy();
+  expect(await sw.text()).toContain("jarvis-x-hq-shell-v53");
+  expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
+});
