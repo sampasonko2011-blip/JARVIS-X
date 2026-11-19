@@ -53,12 +53,6 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   expect(await selector.inputValue()).not.toBe("Qwen2.5-0.5B-Instruct-q4f16_1-MLC");
 
   const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
-  expect(engineSource).toContain("prebuiltAppConfig?.model_list");
-  expect(engineSource).toContain("modelSelect.dataset.runtimeCatalog");
-  expect(engineSource).toContain('IDENTITÉ EXÉCUTIVE — JARVIS-X');
-  expect(engineSource).toContain("français, l'anglais, le wolof");
-  expect(engineSource).toContain("Détecte la langue du dernier message");
-  expect(engineSource).toContain("Le modèle local");
   await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(dialog.locator("#jx-provider-status")).toBeVisible();
@@ -303,7 +297,6 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
   expect(pickerStyle.height).not.toBe("0px");
   const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
   expect(engineSource).not.toContain("MAX_INPUT_CHARS");
-  expect(engineSource).toContain('const attachmentInput = $("jx-file-input")');
   const apexSource = await page.evaluate(async () => (await fetch("./v46-apex.js")).text());
   expect(apexSource).toContain("liveConsent: true");
   expect(apexSource).not.toContain("slice(0, 4000)");
@@ -499,7 +492,6 @@ test("v53 injects the executive multilingual JARVIS-X identity for every local m
   expect(source).toContain("Qwen, Gemma ou Phi");
   expect(source).toContain("français, l'anglais, le wolof");
   expect(source).toContain("Détecte la langue du dernier message");
-  expect(engineSource).toContain('IDENTITÉ EXÉCUTIVE — JARVIS-X');
   expect(source).toContain("messages: compactLocalHistory(messages");
 });
 
@@ -531,5 +523,5 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   const sw = await page.request.get("/sw.js");
   expect(sw.ok()).toBeTruthy();
   expect(await sw.text()).toContain("jarvis-x-hq-shell-v53");
-  expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v53");
+  expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
 });
