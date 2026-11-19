@@ -334,12 +334,13 @@ test("v50 passes each requested model ID with the exact installed WebLLM appConf
     await expect(selector.locator('option[value="' + modelId + '"]')).toHaveCount(1);
     await selector.selectOption(modelId);
     await page.locator("#load-model").click();
-    await expect(page.locator("#runtime-status")).toHaveText("READY");
+    await expect(page.locator("#runtime-status")).toContainText("READY");
     const proof = await page.evaluate(() => window.__jxModelInitProof);
     expect(proof.modelId).toBe(modelId);
     expect(proof.catalogContainsSelected).toBe(true);
     expect(proof.receivedExplicitAppConfig).toBe(true);
     expect(proof.initializationCallback).toBe(true);
+    await expect(page.locator("#runtime-status")).toContainText(modelId);
     await expect(page.locator("#runtime-detail")).toContainText(modelId);
     await expect(page.locator("#runtime-detail")).not.toContainText("allowlisted WebLLM package");
   }
@@ -423,7 +424,7 @@ test("v51 does not reject Safari's reported 1 GB WebGPU adapter limit before att
   await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
   await page.locator("#jx-model-select").selectOption(requestedModel);
   await page.locator("#load-model").click();
-  await expect(page.locator("#runtime-status")).toHaveText("READY");
+  await expect(page.locator("#runtime-status")).toContainText("READY");
   expect(await page.evaluate(() => window.__jxModelInitCalls)).toEqual([{ modelId: requestedModel, appConfigHasModel: true }]);
   await expect(page.locator("#runtime-detail")).toContainText(requestedModel);
   await expect(page.locator("#runtime-detail")).not.toContainText("SmolLM2-135M");
@@ -482,7 +483,8 @@ test("v52 active local model identity is explicit and selector locks after load"
   const selector = page.locator("#jx-model-select");
   await selector.selectOption(requestedModel);
   await page.locator("#load-model").click();
-  await expect(page.locator("#runtime-status")).toHaveText("READY");
+  await expect(page.locator("#runtime-status")).toContainText("READY");
+  await expect(page.locator("#runtime-status")).toContainText(requestedModel);
   await expect(page.locator("#runtime-detail")).toContainText(requestedModel);
   await expect(page.locator("#runtime-status")).toHaveAttribute("data-active-model", requestedModel);
   await expect(selector).toBeDisabled();
