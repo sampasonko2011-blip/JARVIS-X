@@ -182,7 +182,7 @@ loadButton.addEventListener("click", async () => {
       }
     });
     loadStage = "ready";
-    status.textContent = "READY";
+    status.textContent = "READY · " + selectedModel;
     status.dataset.activeModel = selectedModel;
     status.setAttribute("aria-label", "READY · " + selectedModel);
     window.JARVIS_BRAIN_V36?.setProviderStatus({provider:"local-m1",label:"LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED"});
