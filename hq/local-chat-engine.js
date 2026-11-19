@@ -4,7 +4,6 @@ import { selectSampling } from "./cognitive-policy.js";
 import { createLocalMemoryBridge } from "./local-memory-bridge.js";
 
 const MODEL_PREFERENCE_ORDER = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
-const DEFAULT_MODEL_ID = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC";
 
 function resolveAvailableModel(modelList, selectedModel) {
   const available = new Set(Array.isArray(modelList) ? modelList.map((item) => item?.model_id).filter((id) => typeof id === "string" && id.length > 0) : []);
@@ -134,6 +133,7 @@ function setBusy(value) {
   busy = value;
   sendButton.disabled = value || !engine;
   loadButton.disabled = value || !!engine;
+  if (modelSelect) modelSelect.disabled = value || !!engine;
   input.disabled = value || !engine;
   clearButton.disabled = value || !engine;
   if (memoryConsent) memoryConsent.disabled = value;
@@ -153,12 +153,15 @@ loadButton.addEventListener("click", async () => {
   }
   setBusy(true);
   status.textContent = "LOADING";
+  status.removeAttribute("data-active-model");
+  status.setAttribute("aria-label", "LOADING");
   loadStage = "adapter";
   progress.textContent = "Stage 1/3: requesting a WebGPU adapter…";
   try {
     const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
     if (!adapter) throw new Error("No WebGPU adapter available.");
-    const requestedModel = modelSelect?.value || DEFAULT_MODEL_ID;
+    const requestedModel = modelSelect?.value;
+    if (typeof requestedModel !== "string" || !requestedModel) throw new Error("Select a local model before loading.");
     const selectedModel = resolveAvailableModel(prebuiltAppConfig?.model_list, requestedModel);
     if (!selectedModel) throw new Error("Selected model is not present in the installed WebLLM prebuiltAppConfig.model_list. No substitute will be loaded.");
     if (selectedModel !== requestedModel) throw new Error("Refusing to substitute the explicitly selected model " + requestedModel + " with " + selectedModel + ".");
@@ -180,6 +183,8 @@ loadButton.addEventListener("click", async () => {
     });
     loadStage = "ready";
     status.textContent = "READY";
+    status.dataset.activeModel = selectedModel;
+    status.setAttribute("aria-label", "READY · " + selectedModel);
     window.JARVIS_BRAIN_V36?.setProviderStatus({provider:"local-m1",label:"LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED"});
     detail.textContent = "Model " + selectedModel + " loaded in this browser. No hosted inference is configured.";
     progress.textContent = "Local model ready. Messages stay in this page session.";
@@ -188,6 +193,8 @@ loadButton.addEventListener("click", async () => {
   } catch (error) {
     engine = null;
     status.textContent = "LOAD FAILED";
+    status.removeAttribute("data-active-model");
+    status.setAttribute("aria-label", "LOAD FAILED");
     const errorName = error instanceof Error ? error.name : "UnknownError";
     const errorMessage = error instanceof Error ? error.message : String(error);
     const cause = error && typeof error === "object" && "cause" in error && error.cause
