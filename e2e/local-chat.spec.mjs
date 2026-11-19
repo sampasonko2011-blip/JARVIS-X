@@ -55,10 +55,10 @@ test("v42 Engine & Model modal exposes all local model choices without loading o
   const engineSource = await page.evaluate(async () => (await fetch("./local-chat-engine.js")).text());
   expect(engineSource).toContain("prebuiltAppConfig?.model_list");
   expect(engineSource).toContain("modelSelect.dataset.runtimeCatalog");
-  expect(engineSource).toContain('const SYSTEM = "Ton nom est JARVIS-X.');
-  expect(engineSource).toMatch(/l'utilisateur s'appelle Sam/i);
-  expect(engineSource).toContain("Monsieur");
-  expect(engineSource).toContain("ne l'appelle jamais JARVIS-X");
+  expect(engineSource).toContain('IDENTITÉ EXÉCUTIVE — JARVIS-X');
+  expect(engineSource).toContain("français, l'anglais, le wolof");
+  expect(engineSource).toContain("Détecte la langue du dernier message");
+  expect(engineSource).toContain("Le modèle local");
   await expect(dialog.locator("#load-model")).toBeVisible();
   await expect(dialog.locator("#load-model")).toBeEnabled();
   await expect(dialog.locator("#jx-provider-status")).toBeVisible();
@@ -225,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v52");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v53");
 });
 
 
@@ -312,7 +312,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v52");
+  expect(sw).toContain("jarvis-x-hq-shell-v53");
 });
 
  
@@ -499,7 +499,7 @@ test("v53 injects the executive multilingual JARVIS-X identity for every local m
   expect(source).toContain("Qwen, Gemma ou Phi");
   expect(source).toContain("français, l'anglais, le wolof");
   expect(source).toContain("Détecte la langue du dernier message");
-  expect(source).toContain("const SYSTEM = [");
+  expect(engineSource).toContain('IDENTITÉ EXÉCUTIVE — JARVIS-X');
   expect(source).toContain("messages: compactLocalHistory(messages");
 });
 
@@ -531,5 +531,5 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   const sw = await page.request.get("/sw.js");
   expect(sw.ok()).toBeTruthy();
   expect(await sw.text()).toContain("jarvis-x-hq-shell-v53");
-  expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
+  expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v53");
 });
