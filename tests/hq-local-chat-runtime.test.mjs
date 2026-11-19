@@ -170,7 +170,11 @@ test("local model selector prefers Qwen and resolves only model IDs in the insta
   assert.match(page, /value="Qwen2\.5-0\.5B-Instruct-q4f16_1-MLC"/);
   assert.match(page, /value="Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
   assert.doesNotMatch(page, /value="Llama-3\.2-3B-Instruct-q4f16_1-MLC"/);
-  assert.match(engine, /DEFAULT_MODEL_ID = "Qwen2\.5-1\.5B-Instruct-q4f16_1-MLC"/);
+  assert.doesNotMatch(engine, /DEFAULT_MODEL_ID/);
+  assert.match(engine, /const requestedModel = modelSelect\?\.value/);
+  assert.match(engine, /Select a local model before loading/);
+  assert.match(engine, /status\.textContent = "READY · " \+ selectedModel/);
+  assert.match(engine, /modelSelect\.disabled = value \|\| !!engine/);
   assert.match(engine, /"Qwen2\.5-3B-Instruct-q4f16_1-MLC"/);
   assert.doesNotMatch(engine, /ALLOWED_MODEL_IDS/);
   assert.match(engine, /modelList\.map\(\(item\) => item\?\.model_id\)/);

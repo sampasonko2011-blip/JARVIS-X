@@ -7,7 +7,7 @@
   const send = $("send-message"), input = $("message"), transcript = $("transcript");
   if (!send || !input || !transcript) return;
 
-  const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, imageAvailable: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
+  const state = { cloudConsent: false, cloudAvailable: false, cloudChecking: false, imageAvailable: false, sessionVerified: false, localMode: false, audio: false, live: false, recognition: null, history: [], busy: false };
   const panel = document.createElement("section");
   panel.className = "jx46-control";
   panel.innerHTML = '<div class="jx46-head"><strong>JARVIS-X APEX ROUTING</strong><span id="jx46-provider" role="status" aria-live="polite">LOCAL / CLOUD NOT SELECTED</span></div><section id="jx46-login" class="jx46-login" aria-label="Email sign in"><strong>EMAIL SIGN-IN · HQ V12</strong><label for="jx46-email">Email address</label><input id="jx46-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com"><div class="jx46-login-actions"><button id="jx46-send-otp" type="button" class="btn ghost">SEND MAGIC LINK / CODE</button></div><label for="jx46-otp">Email code</label><input id="jx46-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="Enter email code"><div class="jx46-login-actions"><button id="jx46-verify-otp" type="button" class="btn ghost">VERIFY EMAIL CODE</button></div><label for="jx46-password">Password (optional)</label><input id="jx46-password" type="password" autocomplete="current-password" placeholder="Account password"><div class="jx46-login-actions"><button id="jx46-password-signin" type="button" class="btn primary">SIGN IN WITH PASSWORD</button></div><p id="jx46-login-status" role="status" aria-live="polite">Sign in here; you will stay on this page. A valid session is required before the HQ gateway can unlock.</p></section><label class="jx46-switch"><input id="jx46-cloud-consent" type="checkbox"><span>Enable HQ cloud route for this session <small>Checks the authenticated HQ v12 gateway first. Live inference requires explicit consent and the server-side budget and kill-switch checks.</small></span></label><label class="jx46-switch"><input id="jx46-local-mode" type="checkbox" checked><span>Local M1 mode <small>Runs only after a local model is loaded. Offline requests stay local.</small></span></label><div class="jx46-actions"><button id="jx46-audio" type="button" class="btn ghost" aria-pressed="false">🔊 AUDIO OFF</button><button id="jx46-live" type="button" class="btn ghost" aria-pressed="false">🎙️ LIVE OFF</button><button id="jx46-image" type="button" class="btn ghost" disabled aria-disabled="true" title="Requires authenticated HQ v12 and the server image-generation flag">🎨 IMAGE · LOCKED</button></div><p id="jx46-status" role="status" aria-live="polite">Cloud calls are disabled until explicitly enabled above. Local mode remains available.</p>';
@@ -44,6 +44,7 @@
     return saved;
   }
   function clearStoredSession() {
+    state.sessionVerified = false;
     try { sessionStorage.removeItem(SESSION_KEY); } catch {}
     try { localStorage.removeItem(SESSION_KEY); } catch {}
   }
@@ -84,7 +85,23 @@
   }
   function updateLoginVisibility() {
     const login = $("jx46-login");
-    if (login) login.hidden = Boolean(session());
+    if (login) login.hidden = state.sessionVerified === true;
+  }
+  async function verifySupabaseSession(token) {
+    const response = await fetch(SUPABASE_URL + "/auth/v1/user", {
+      method: "GET", cache: "no-store",
+      headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, Accept: "application/json" }
+    });
+    const user = await response.json().catch(() => ({}));
+    if (!response.ok || typeof user.id !== "string" || !user.id) {
+      state.sessionVerified = false;
+      clearStoredSession();
+      updateLoginVisibility();
+      throw new Error("No valid Supabase session exists in this tab. Sign in again here.");
+    }
+    state.sessionVerified = true;
+    updateLoginVisibility();
+    return user;
   }
   function consumeMagicLinkSession() {
     const params = new URLSearchParams(location.hash.replace(/^#/, ""));
@@ -118,7 +135,7 @@
     return window.JARVIS_BRAIN_V36?.buildSystemPrompt(route) || "Tu es JARVIS-X. Réponds avec exactitude, signale les incertitudes et n'invente aucune action.";
   }
   function updateControls() {
-    const ready = $("runtime-status")?.textContent === "READY";
+    const ready = /^READY(?:\s|$)/.test($("runtime-status")?.textContent || "");
     const localReady = ready && (state.localMode || !navigator.onLine);
     const cloudSelected = navigator.onLine && state.cloudConsent && !state.localMode;
     const cloudReady = cloudSelected && state.cloudAvailable;
@@ -143,6 +160,7 @@
     status.textContent = "Vérification de l'état du gateway HQ v12…";
     try {
       const token = await accessToken();
+      await verifySupabaseSession(token);
       const healthUrl = GATEWAY + "/health?identity=jarvis-x&orchestration_mode=support";
       const response = await fetch(healthUrl, { method: "GET", cache: "no-store", headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, Accept: "application/json" } });
       const health = await response.json().catch(() => ({}));
@@ -163,13 +181,18 @@
   }
   const loginStatus = $("jx46-login-status");
   async function completeSignIn(payload) {
+    state.sessionVerified = false;
     persistSession(payload);
     updateLoginVisibility();
-    if (loginStatus) loginStatus.textContent = "Session Supabase reçue. Vérification immédiate du gateway HQ v12…";
-    status.textContent = "Connexion réussie. Vérification de /health…";
+    if (loginStatus) loginStatus.textContent = "Identifiants acceptés. Vérification de la session auprès de Supabase…";
+    status.textContent = "Connexion reçue. Vérification de la session puis du gateway /health…";
     await checkCloudReadiness(true);
     updateLoginVisibility();
-    if (loginStatus) loginStatus.textContent = "Connecté. Cette page reste ouverte ; le statut HQ v12 est affiché ci-dessous.";
+    if (state.sessionVerified) {
+      if (loginStatus) loginStatus.textContent = "Session Supabase vérifiée. Le consentement Cloud reste désactivé jusqu’à votre activation explicite.";
+    } else if (loginStatus) {
+      loginStatus.textContent = "La session n’a pas pu être vérifiée. Le formulaire reste disponible ; réessayez la connexion.";
+    }
   }
   async function sendEmailOtp() {
     const email = $("jx46-email")?.value.trim() || "";
@@ -233,14 +256,16 @@
   if (session()) checkCloudReadiness(true);
   // Detect a Supabase sign-in performed in another tab without requiring a reload.
   window.addEventListener("storage", (event) => {
-    if (event.key !== null && !/^sb-.+-auth-token$/.test(event.key)) return;
+    if (event.key !== null && event.key !== SESSION_KEY && !/^sb-.+-auth-token$/.test(event.key)) return;
     const saved = session();
+    state.sessionVerified = false;
     updateLoginVisibility();
     if (saved) checkCloudReadiness(true);
     else { state.cloudAvailable = false; state.imageAvailable = false; updateControls(); }
   });
   window.addEventListener("focus", () => {
     const saved = session();
+    if (!saved) state.sessionVerified = false;
     updateLoginVisibility();
     if (saved && !state.cloudChecking) checkCloudReadiness(true);
   });

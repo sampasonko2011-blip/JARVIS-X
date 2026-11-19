@@ -5,6 +5,7 @@ test("v46 cloud-first send works without loading a local WebLLM model", async ({
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let payload;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/auth/v1/user", async route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id" }) }));
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       ok: true, auth: "verified-supabase-session", chatEnabled: true, liveInferenceEnabled: true
@@ -38,6 +39,7 @@ test("v46 respects the HQ v12 live-inference release lock without sending a mode
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let postRequests = 0;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/auth/v1/user", async route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id" }) }));
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/health**", async route => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
       ok: true, auth: "verified-supabase-session", chatEnabled: false, liveInferenceEnabled: false
@@ -87,7 +89,7 @@ test("v47 service worker pre-caches the APEX runtime and retains v46 modules", a
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v51");
+  expect(source).toContain("jarvis-x-hq-shell-v52");
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
@@ -137,4 +139,31 @@ test("v49 identifies the APEX panel as JARVIS-X rather than V46", async ({ page 
   await expect(page.locator(".jx46-head strong")).toHaveText("JARVIS-X APEX ROUTING");
   const source = await (await page.request.get("/v46-apex.js")).text();
   expect(source).not.toContain("V46 APEX ROUTING");
+});
+
+
+test("v52 inline login fields remain visible in compact iPad and phone viewports", async ({ page }) => {
+  for (const viewport of [{ width: 820, height: 1180 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/local-chat.html");
+    const login = page.locator("#jx46-login");
+    await expect(login).toBeVisible();
+    await expect(page.locator("#jx46-email")).toBeVisible();
+    await expect(page.locator("#jx46-password")).toBeVisible();
+    const box = await login.boundingBox();
+    expect(box.width).toBeGreaterThan(200);
+    expect(box.height).toBeGreaterThan(250);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+    await expect(page.locator("#jx46-cloud-consent")).not.toBeChecked();
+  }
+});
+
+test("v52 Local Chat registers the versioned service worker when supported", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker?.getRegistrations().then(items => items.some(item => item.active || item.installing || item.waiting)) ?? false)).toBe(true);
+  const cacheSource = await (await page.request.get("/sw.js")).text();
+  expect(cacheSource).toContain("jarvis-x-hq-shell-v52");
 });

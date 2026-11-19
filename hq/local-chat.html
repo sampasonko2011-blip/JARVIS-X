@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="./local-chat-v35.css">
 <link rel="stylesheet" href="./local-chat-v38.css">
 <link rel="stylesheet" href="./local-chat-v42.css">
-<link rel="stylesheet" href="./v46-apex.css">
+<link rel="stylesheet" href="./v46-apex.css?v=52">
 <script src="./spatial-mode.js" defer></script>
 <script src="./interstellar-v30.js" defer></script>
 <script src="./local-chat-v33.js" defer></script>
@@ -25,6 +25,7 @@
 <script src="./local-chat-v35.js" defer></script>
 <script src="./local-chat-v38.js" defer></script>
 <script src="./local-chat-v42.js" defer></script>
+<script src="./local-chat-sw-register.js?v=52" defer></script>
 </head>
 <body>
 <canvas id="jx-interstellar-v30" aria-hidden="true"></canvas>
@@ -116,7 +117,7 @@
   <div id="transcript" class="loglist" aria-live="polite"><div class="log"><small>Enable the cloud route with explicit consent or load a local model to begin. Recent turns are compacted to fit the selected local model context window. Input field has no fixed character limit.</small></div></div>
   <label for="jx-agent-select-chat">Agent / mode spécialiste</label>
   <select id="jx-agent-select-chat" aria-label="Spécialiste actif"><option value="JARVIS-X CORE">JARVIS-X CORE</option></select>
-  <div class="jx-attachment-row"><button class="btn ghost" id="jx-attachment-button" type="button" aria-label="Joindre un fichier ou une image">📎<input id="jx-file-input" type="file" accept="image/*,.txt,.md,.json,.csv,.js,.html,.py" multiple aria-label="Choisir des photos ou fichiers"></button><span id="jx-attachment-status" class="footnote" role="status" aria-live="polite"></span></div><img id="jx-attachment-preview" alt="" hidden>
+  <div class="jx-attachment-row"><button class="btn ghost" id="jx-attachment-button" type="button" aria-label="Joindre un fichier ou une image">📎</button><input id="jx-file-input" type="file" accept="image/*,.txt,.md,.json,.csv,.js,.html,.py" multiple aria-label="Choisir des photos ou fichiers" class="jx-file-input-visually-hidden"><span id="jx-attachment-status" class="footnote" role="status" aria-live="polite"></span></div><img id="jx-attachment-preview" alt="" hidden>
   <label for="message">Message</label>
   <textarea id="message" rows="3" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
   <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button><button class="btn ghost" id="voice-dictation" type="button" aria-pressed="false">START VOICE DICTATION</button></div><p id="voice-dictation-status" class="footnote" role="status" aria-live="polite">Voice dictation availability depends on this browser.</p>
@@ -148,8 +149,8 @@
 </main>
 <button id="jx-return-to-chat" type="button" hidden aria-hidden="true" aria-controls="jx-inspector-drawer">↑ RETOUR AU CHAT</button>
 <script src="./jarvis-brain-v36.js"></script>
-<script src="./local-chat-engine.bundle.js"></script>
-<script src="./v46-apex.js"></script>
+<script src="./local-chat-engine.bundle.js?v=52"></script>
+<script src="./v46-apex.js?v=52"></script>
 <script src="./kardashev-engine.js" defer></script>
 </body>
 </html>
