@@ -225,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v51");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v52");
 });
 
 
@@ -312,7 +312,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v51");
+  expect(sw).toContain("jarvis-x-hq-shell-v52");
 });
 
  
@@ -349,6 +349,7 @@ test("v50 inline email login authenticates a mocked session, checks HQ health, a
   let healthChecked = false;
   let cloudMessageSent = false;
   await page.route(url => url.href.includes("/auth/v1/token?grant_type=password"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ access_token: "mock-access-token", refresh_token: "mock-refresh-token", expires_in: 3600, token_type: "bearer" }) }));
+  await page.route(url => url.href.includes("/auth/v1/user"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id", email: "existing-user@example.com" }) }));
   await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
     healthChecked = true;
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
@@ -389,6 +390,7 @@ test("v50 imports an existing Supabase sb-*-auth-token from localStorage and che
       token_type: "bearer"
     }));
   });
+  await page.route(url => url.href.includes("/auth/v1/user"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "mock-user-id", email: "existing-user@example.com" }) }));
   await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
     healthChecked = true;
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
@@ -425,4 +427,64 @@ test("v51 does not reject Safari's reported 1 GB WebGPU adapter limit before att
   expect(await page.evaluate(() => window.__jxModelInitCalls)).toEqual([{ modelId: requestedModel, appConfigHasModel: true }]);
   await expect(page.locator("#runtime-detail")).toContainText(requestedModel);
   await expect(page.locator("#runtime-detail")).not.toContainText("SmolLM2-135M");
+});
+
+
+test("v52 login remains visible until Supabase validates the current-tab session and cloud consent stays opt-in", async ({ page }) => {
+  let healthChecks = 0;
+  await page.route(url => url.href.includes("/auth/v1/token?grant_type=password"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ access_token: "v52-access", refresh_token: "v52-refresh", expires_in: 3600 }) }));
+  await page.route(url => url.href.includes("/auth/v1/user"), route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "v52-user", email: "existing-user@example.com" }) }));
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => {
+    healthChecks++;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true, imageGenerationEnabled: false }) });
+  });
+  await page.goto("/local-chat.html");
+  const login = page.locator("#jx46-login");
+  await expect(login).toBeVisible();
+  await expect(page.locator("#jx46-email")).toBeVisible();
+  await expect(page.locator("#jx46-password")).toBeVisible();
+  await expect(page.locator("#jx46-cloud-consent")).not.toBeChecked();
+  await page.locator("#jx46-email").fill("existing-user@example.com");
+  await page.locator("#jx46-password").fill("mock-password");
+  await page.locator("#jx46-password-signin").click();
+  await expect(login).toBeHidden();
+  await expect(page.locator("#jx46-cloud-consent")).not.toBeChecked();
+  expect(healthChecks).toBe(1);
+  const stored = await page.evaluate(() => ({ local: JSON.parse(localStorage.getItem("jx-auth-session") || "null"), session: JSON.parse(sessionStorage.getItem("jx-auth-session") || "null") }));
+  expect(stored.local.access_token).toBe("v52-access");
+  expect(stored.session.access_token).toBe("v52-access");
+  await expect(page.locator("#send-message")).toBeDisabled();
+  await page.locator("#jx46-cloud-consent").check();
+  await expect.poll(() => healthChecks).toBe(2);
+  await expect(page.locator("#jx46-provider")).toHaveText("CLOUD · HQ V12 · READY");
+});
+
+test("v52 rejects a stale stored session and keeps inline login visible", async ({ page }) => {
+  let healthChecks = 0;
+  await page.addInitScript(() => localStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "stale-access", refresh_token: "stale-refresh", expires_at: Math.floor(Date.now() / 1000) + 3600 })));
+  await page.route(url => url.href.includes("/auth/v1/user"), route => route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ message: "invalid token" }) }));
+  await page.route(url => url.href.includes("/functions/v1/hq-gateway-v12/health"), route => { healthChecks++; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, auth: "verified-supabase-session", chatEnabled: true }) }); });
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#jx46-login")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("jx-auth-session"))).toBeNull();
+  expect(healthChecks).toBe(0);
+  await expect(page.locator("#jx46-cloud-consent")).not.toBeChecked();
+});
+
+test("v52 active local model identity is explicit and selector locks after load", async ({ page }) => {
+  const requestedModel = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "gpu", { configurable: true, value: { requestAdapter: async () => ({ limits: { maxBufferSize: 1073741824, maxStorageBufferBindingSize: 1073741824 } }) } });
+    window.__JX_TEST_CREATE_MLC_ENGINE__ = async (modelId, options) => { window.__jxLoadedModel = modelId; options?.initProgressCallback?.({ progress: .1, text: "Mock initialization" }); return {}; };
+  });
+  await page.goto("/local-chat.html");
+  await page.getByRole("button", { name: /JARVIS-X.*M1.*CLOUD/ }).click();
+  const selector = page.locator("#jx-model-select");
+  await selector.selectOption(requestedModel);
+  await page.locator("#load-model").click();
+  await expect(page.locator("#runtime-status")).toHaveText("READY");
+  await expect(page.locator("#runtime-detail")).toContainText(requestedModel);
+  await expect(page.locator("#runtime-status")).toHaveAttribute("data-active-model", requestedModel);
+  await expect(selector).toBeDisabled();
+  expect(await page.evaluate(() => window.__jxLoadedModel)).toBe(requestedModel);
 });
