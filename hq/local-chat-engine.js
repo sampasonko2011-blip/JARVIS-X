@@ -206,6 +206,9 @@ loadButton.addEventListener("click", async () => {
     setBusy(false);
   }
 });
+attachmentButton?.addEventListener("click", (event) => {
+  if (event.target === attachmentButton) attachmentInput?.click();
+});
 attachmentInput?.addEventListener("change", async () => {
   const files = Array.from(attachmentInput.files || []);
   if (!files.length) return;
