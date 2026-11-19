@@ -44,6 +44,7 @@
     return saved;
   }
   function clearStoredSession() {
+    state.sessionVerified = false;
     try { sessionStorage.removeItem(SESSION_KEY); } catch {}
     try { localStorage.removeItem(SESSION_KEY); } catch {}
   }
