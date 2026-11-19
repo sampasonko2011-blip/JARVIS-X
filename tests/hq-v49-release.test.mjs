@@ -11,7 +11,7 @@ test("v49 health advertises chat when OpenAI OR an explicitly enabled cascade pr
   assert.match(gateway, /const configuredCascadeProviders = providerEnvironment\.JX_ENABLE_PROVIDER_CASCADE === "true"[\s\S]*?listProviderConfiguration\(providerEnvironment\)/);
   assert.match(gateway, /const openAIConfigured = Boolean\(Deno\.env\.get\(EXECUTIVE_CONFIG\.secret\) && EXECUTIVE_CONFIG\.model\)/);
   assert.match(gateway, /const executiveRuntimeConfigured = openAIConfigured \|\| configuredCascadeProviders\.length > 0/);
-  assert.match(gateway, /chatEnabled: LIVE_INFERENCE_ENABLED && executiveRuntimeConfigured && budgetGuard\.enabled && !budgetGuard\.killSwitchEnabled/);
+  assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /global_request_reservation_missing/);
   assert.match(gateway, /configuredInferenceProviders/);
   assert.match(cascade, /JX_ENABLE_PROVIDER_CASCADE/);
   for (const provider of ["OPENROUTER", "GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
