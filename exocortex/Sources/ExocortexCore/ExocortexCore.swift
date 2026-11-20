@@ -104,7 +104,7 @@ public struct EvidenceLedger: Sendable {
             let supported = matches.contains {
                 $0.polarity == claim.polarity &&
                 $0.value.caseInsensitiveCompare(claim.value) == .orderedSame &&
-                (cited.isEmpty || cited.contains($0.id))
+                (!cited.isEmpty && cited.contains($0.id))
             }
             if !supported {
                 unknown.append(claim.propositionKey)
