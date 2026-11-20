@@ -4,22 +4,27 @@ export type ChangeClass = "internal-code" | "external-integration" | "deployment
 export interface AuditMetric { name: string; baseline: number; candidate: number; direction: "higher" | "lower"; minimumImprovement?: number; }
 export interface AuditCheck { name: string; result: "pass" | "fail" | "unknown"; }
 export interface AuditEvidence { claim: string; status: AuditStatus; source?: string; }
+export interface ExactScopeApproval { scopeId: string; revision: string; approvedBy: string; approvedAt: string; }
 export interface SelfAuditInput {
- objective: string; changeClass: ChangeClass; explicitApproval: boolean; comparableRetest: boolean;
- metrics: AuditMetric[]; checks: AuditCheck[]; evidence: AuditEvidence[];
+ objective: string; changeClass: ChangeClass; explicitApproval: boolean;
+ changeScopeId: string; candidateRevision: string; approval?: ExactScopeApproval;
+ comparableRetest: boolean; metrics: AuditMetric[]; checks: AuditCheck[]; evidence: AuditEvidence[];
  independentChallenge: "pass" | "fail" | "unknown"; regressionTests: "pass" | "fail" | "unknown";
  restartPersistence: "pass" | "fail" | "unknown" | "not-applicable";
  recentFailureSignatures?: string[]; consecutiveComparableRetestFailures?: number;
 }
 export interface SelfAuditResult { decision: AuditDecision; status: AuditStatus; circuitBreaker: boolean; improvementPercent: Record<string, number>; reasons: string[]; nextAction: string; }
-const APPROVAL_REQUIRED = new Set<ChangeClass>(["external-integration","deployment","paid-inference","destructive"]);
+// Consequential changes require an approval record bound to both the exact change scope and candidate revision.
+const APPROVAL_REQUIRED = new Set<ChangeClass>(["internal-code","external-integration","deployment","paid-inference","destructive"]);
 export function runSelfAudit(input: SelfAuditInput): SelfAuditResult {
  const reasons: string[] = [], improvementPercent: Record<string,number> = {};
  const signatures=input.recentFailureSignatures??[];
  const circuitBreaker=new Set(signatures).size<signatures.length||(input.consecutiveComparableRetestFailures??0)>=2;
  if(!input.objective.trim()) reasons.push("Missing objective.");
  if(circuitBreaker) reasons.push("Circuit breaker: repeated failure signature or two consecutive comparable retests failed.");
- if(APPROVAL_REQUIRED.has(input.changeClass)&&!input.explicitApproval) reasons.push("Explicit approval is required for this change class.");
+ const approval=input.approval;
+ const exactApproval=Boolean(input.explicitApproval&&input.changeScopeId.trim()&&input.candidateRevision.trim()&&approval&&approval.scopeId===input.changeScopeId&&approval.revision===input.candidateRevision&&approval.approvedBy.trim()&&Number.isFinite(Date.parse(approval.approvedAt)));
+ if(APPROVAL_REQUIRED.has(input.changeClass)&&!exactApproval) reasons.push("Exact-scope approval bound to the candidate revision is required for this change class.");
  if(!input.comparableRetest) reasons.push("Comparable baseline/retest missing.");
  if(!input.metrics.length) reasons.push("No measurable metrics supplied.");
  const names=new Set<string>(); let improvement=false, regression=false;
