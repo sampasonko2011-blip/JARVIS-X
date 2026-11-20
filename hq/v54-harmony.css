@@ -15,3 +15,6 @@ html,body{max-width:100%;overflow-x:clip;background:radial-gradient(ellipse at 5
 .jx-v54-dock button:focus-visible,.jx-v54-dock a:focus-visible{outline:2px solid var(--jx-amber);outline-offset:2px}
 @media(max-width:1024px){.jx-v54-shell{grid-template-columns:minmax(0,1fr);gap:10px;margin:8px auto;padding:8px 10px 92px}.jx-v54-orb{min-height:250px;width:min(82vw,440px);margin:auto}.jx-v54-panel{width:100%}}
 @media(prefers-reduced-motion:reduce){.jx-v54-shell *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Hide the completed boot overlay without creating inline style attributes. */
+.ignition.boot-dismissed{display:none;pointer-events:none}
