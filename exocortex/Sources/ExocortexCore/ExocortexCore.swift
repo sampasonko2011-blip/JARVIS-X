@@ -22,83 +22,189 @@ public struct ThermalBudget:Equatable,Sendable{public let reasoningCycles:Int;pu
 public enum ThermalGuardian{
  public static func budget(for c:ThermalCondition)->ThermalBudget{switch c{case .nominal:ThermalBudget(reasoningCycles:12,maxConcurrentAgents:2,permitsEvolution:true);case .fair:ThermalBudget(reasoningCycles:6,maxConcurrentAgents:1,permitsEvolution:false);case .serious,.critical,.unknown:ThermalBudget(reasoningCycles:1,maxConcurrentAgents:1,permitsEvolution:false)}}
 }
-public protocol MemoryHTTPTransport:Sendable{func data(for request:URLRequest)async throws->(Data,URLResponse)}
-public struct URLSessionMemoryTransport:@unchecked Sendable:MemoryHTTPTransport{
- private let session:URLSession
- public init(session:URLSession = .shared){self.session=session}
- public func data(for request:URLRequest)async throws->(Data,URLResponse){try await session.data(for:request)}
+public protocol MemoryHTTPTransport: Sendable {
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+}
+public actor URLSessionMemoryTransport: MemoryHTTPTransport {
+    private let session: URLSession
+    public init(session: URLSession = .shared) { self.session = session }
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await session.data(for: request)
+    }
 }
 // 3 XMemo durable memory; old FractalMemory replaced by RAM-only cache
-public struct MemoryRecall:Codable,Sendable,Equatable{public let status:String;public let context:String}
-public struct MemoryReceipt:Codable,Sendable,Equatable{public let status:String;public let receipt:String?}
-public enum EvidenceSource:String,Codable,Sendable{case xmemo,workingSet,tool,runtime}
-public enum EvidencePolarity:String,Codable,Sendable{case affirmed,denied}
-public struct EvidenceRecord:Codable,Sendable,Equatable{
- public let id:UUID;public let propositionKey:String;public let value:String;public let polarity:EvidencePolarity
- public let source:EvidenceSource;public let provenance:String;public let score:Double?;public let observedAt:Date
- public init(id:UUID=UUID(),propositionKey:String,value:String,polarity:EvidencePolarity = .affirmed,source:EvidenceSource,provenance:String,score:Double?=nil,observedAt:Date = .now){
-  self.id=id;self.propositionKey=propositionKey.trimmingCharacters(in:.whitespacesAndNewlines).lowercased();self.value=value;self.polarity=polarity;self.source=source;self.provenance=provenance;self.score=score;self.observedAt=observedAt
- }
+public struct MemoryRecall: Codable, Sendable, Equatable {
+    public let status: String
+    public let context: String
 }
-public struct EvidenceClaim:Codable,Sendable,Equatable{
- public let propositionKey:String;public let value:String;public let polarity:EvidencePolarity;public let supportingEvidenceIDs:[UUID]
- public init(propositionKey:String,value:String,polarity:EvidencePolarity = .affirmed,supportingEvidenceIDs:[UUID]=[]){self.propositionKey=propositionKey.trimmingCharacters(in:.whitespacesAndNewlines).lowercased();self.value=value;self.polarity=polarity;self.supportingEvidenceIDs=supportingEvidenceIDs}
+public struct MemoryReceipt: Codable, Sendable, Equatable {
+    public let status: String
+    public let receipt: String?
 }
-public enum EvidenceDisposition:String,Codable,Sendable{case accepted,rejected}
-public struct EvidenceValidation:Codable,Sendable,Equatable{
- public let disposition:EvidenceDisposition;public let contradictions:[String];public let unknownClaims:[String];public let unsupportedClaims:[String]
- public var mayPersist:Bool{disposition == .accepted && contradictions.isEmpty && unknownClaims.isEmpty && unsupportedClaims.isEmpty}
+public enum EvidenceSource: String, Codable, Sendable { case xmemo, workingSet, tool, runtime }
+public enum EvidencePolarity: String, Codable, Sendable { case affirmed, denied }
+public struct EvidenceRecord: Codable, Sendable, Equatable {
+    public let id: UUID
+    public let propositionKey: String
+    public let value: String
+    public let polarity: EvidencePolarity
+    public let source: EvidenceSource
+    public let provenance: String
+    public let score: Double?
+    public let observedAt: Date
+    public init(id: UUID = UUID(), propositionKey: String, value: String, polarity: EvidencePolarity = .affirmed, source: EvidenceSource, provenance: String, score: Double? = nil, observedAt: Date = .now) {
+        self.id = id
+        self.propositionKey = propositionKey.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.value = value
+        self.polarity = polarity
+        self.source = source
+        self.provenance = provenance
+        self.score = score
+        self.observedAt = observedAt
+    }
 }
-public struct EvidenceLedger:Sendable{
- public init(){}
- public func evaluate(claims:[EvidenceClaim],against records:[EvidenceRecord])->EvidenceValidation{
-  var contradictions:[String]=[],unknown:[String]=[],unsupported:[String]=[]
-  for claim in claims{
-   let matches=records.filter{$0.propositionKey==claim.propositionKey}
-   let conflict=matches.contains{$0.polarity != claim.polarity || $0.value.caseInsensitiveCompare(claim.value) != .orderedSame}
-   if conflict{contradictions.append(claim.propositionKey);continue}
-   let cited=Set(claim.supportingEvidenceIDs)
-   let supported=matches.contains{$0.polarity==claim.polarity && $0.value.caseInsensitiveCompare(claim.value) == .orderedSame && (cited.isEmpty || cited.contains($0.id))}
-   if !supported{unknown.append(claim.propositionKey);if !cited.isEmpty{unsupported.append(claim.propositionKey)}}
-  }
-  let uniqueContradictions=Array(Set(contradictions)).sorted(),uniqueUnknown=Array(Set(unknown)).sorted(),uniqueUnsupported=Array(Set(unsupported)).sorted()
-  return EvidenceValidation(disposition:uniqueContradictions.isEmpty && uniqueUnknown.isEmpty ? .accepted:.rejected,contradictions:uniqueContradictions,unknownClaims:uniqueUnknown,unsupportedClaims:uniqueUnsupported)
- }
+public struct EvidenceClaim: Codable, Sendable, Equatable {
+    public let propositionKey: String
+    public let value: String
+    public let polarity: EvidencePolarity
+    public let supportingEvidenceIDs: [UUID]
+    public init(propositionKey: String, value: String, polarity: EvidencePolarity = .affirmed, supportingEvidenceIDs: [UUID] = []) {
+        self.propositionKey = propositionKey.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        self.value = value
+        self.polarity = polarity
+        self.supportingEvidenceIDs = supportingEvidenceIDs
+    }
 }
-public struct CognitiveTurnContext:Sendable,Equatable{
- public let memoryRecall:MemoryRecall?;public let workingSetEvidence:[EvidenceRecord];public let toolEvidence:[EvidenceRecord]
- public let evidence:[EvidenceRecord];public let claims:[EvidenceClaim]
- public init(memoryRecall:MemoryRecall?=nil,workingSetEvidence:[EvidenceRecord]=[],toolEvidence:[EvidenceRecord]=[],evidence:[EvidenceRecord]=[],claims:[EvidenceClaim]=[]){
-  self.memoryRecall=memoryRecall;self.workingSetEvidence=workingSetEvidence;self.toolEvidence=toolEvidence;self.evidence=evidence;self.claims=claims
- }
- public var allEvidence:[EvidenceRecord]{evidence+workingSetEvidence+toolEvidence}
+public enum EvidenceDisposition: String, Codable, Sendable { case accepted, rejected }
+public struct EvidenceValidation: Codable, Sendable, Equatable {
+    public let disposition: EvidenceDisposition
+    public let contradictions: [String]
+    public let unknownClaims: [String]
+    public let unsupportedClaims: [String]
+    public var mayPersist: Bool {
+        disposition == .accepted && contradictions.isEmpty && unknownClaims.isEmpty && unsupportedClaims.isEmpty
+    }
+}
+public struct EvidenceLedger: Sendable {
+    public init() {}
+    public func evaluate(claims: [EvidenceClaim], against records: [EvidenceRecord]) -> EvidenceValidation {
+        var contradictions: [String] = []
+        var unknown: [String] = []
+        var unsupported: [String] = []
+        for claim in claims {
+            let matches = records.filter { $0.propositionKey == claim.propositionKey }
+            let conflict = matches.contains {
+                $0.polarity != claim.polarity || $0.value.caseInsensitiveCompare(claim.value) != .orderedSame
+            }
+            if conflict {
+                contradictions.append(claim.propositionKey)
+                continue
+            }
+            let cited = Set(claim.supportingEvidenceIDs)
+            let supported = matches.contains {
+                $0.polarity == claim.polarity &&
+                $0.value.caseInsensitiveCompare(claim.value) == .orderedSame &&
+                (cited.isEmpty || cited.contains($0.id))
+            }
+            if !supported {
+                unknown.append(claim.propositionKey)
+                if !cited.isEmpty { unsupported.append(claim.propositionKey) }
+            }
+        }
+        let uniqueContradictions = Array(Set(contradictions)).sorted()
+        let uniqueUnknown = Array(Set(unknown)).sorted()
+        let uniqueUnsupported = Array(Set(unsupported)).sorted()
+        let accepted = uniqueContradictions.isEmpty && uniqueUnknown.isEmpty
+        return EvidenceValidation(
+            disposition: accepted ? .accepted : .rejected,
+            contradictions: uniqueContradictions,
+            unknownClaims: uniqueUnknown,
+            unsupportedClaims: uniqueUnsupported
+        )
+    }
+}
+public struct CognitiveTurnContext: Sendable, Equatable {
+    public let memoryRecall: MemoryRecall?
+    public let memoryEvidence: [EvidenceRecord]
+    public let workingSetEvidence: [EvidenceRecord]
+    public let toolEvidence: [EvidenceRecord]
+    public let evidence: [EvidenceRecord]
+    public let claims: [EvidenceClaim]
+    public init(memoryRecall: MemoryRecall? = nil, memoryEvidence: [EvidenceRecord] = [], workingSetEvidence: [EvidenceRecord] = [], toolEvidence: [EvidenceRecord] = [], evidence: [EvidenceRecord] = [], claims: [EvidenceClaim] = []) {
+        self.memoryRecall = memoryRecall
+        self.memoryEvidence = memoryEvidence
+        self.workingSetEvidence = workingSetEvidence
+        self.toolEvidence = toolEvidence
+        self.evidence = evidence
+        self.claims = claims
+    }
+    /// Raw XMemo text is context, not proof. Only structured, provenance-bearing records enter the ledger.
+    public var allEvidence: [EvidenceRecord] { evidence + memoryEvidence + workingSetEvidence + toolEvidence }
 }
 public protocol DurableMemoryStore:Sendable{
  func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall
  func remember(_ content:String,consent:Bool,userAccessToken:String)async throws->MemoryReceipt
 }
 /// Uses the authenticated HQ gateway. XMemo OAuth credentials remain server-side.
-public actor XMemoMemoryStore:DurableMemoryStore{
- private let gatewayURL:URL;private let anonKey:String;private let session:URLSession
- public init(gatewayURL:URL,anonKey:String,session:URLSession = .shared)throws{guard gatewayURL.scheme=="https",!anonKey.isEmpty else{throw ExocortexError.invalidEndpoint};self.gatewayURL=gatewayURL;self.anonKey=anonKey;self.session=session}
- private struct RR:Encodable{let consent:Bool;let query:String}
- private struct WR:Encodable{let consent:Bool;let content:String}
- private struct RResponse:Decodable{let status:String;let context:String?}
- private struct WResponse:Decodable{let status:String;let receipt:String?}
- public func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall{
-  guard consent else{throw ExocortexError.memoryConsentRequired};guard !query.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,query.count<=12_000 else{throw ExocortexError.invalidPayload}
-  let r:RResponse=try await post(path:"memory/xmemo/recall",body:RR(consent:true,query:query),token:userAccessToken);return MemoryRecall(status:r.status,context:r.context ?? "")
- }
- public func remember(_ content:String,consent:Bool,userAccessToken:String)async throws->MemoryReceipt{
-  guard consent else{throw ExocortexError.memoryConsentRequired};guard !content.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,content.count<=18_000 else{throw ExocortexError.invalidPayload}
-  let r:WResponse=try await post(path:"memory/xmemo/remember",body:WR(consent:true,content:content),token:userAccessToken);return MemoryReceipt(status:r.status,receipt:r.receipt)
- }
- private func post<B:Encodable,R:Decodable>(path:String,body:B,token:String)async throws->R{
-  guard !token.isEmpty,let url=URL(string:path,relativeTo:gatewayURL)?.absoluteURL else{throw ExocortexError.invalidEndpoint}
-  var q=URLRequest(url:url);q.httpMethod="POST";q.setValue(anonKey,forHTTPHeaderField:"apikey");q.setValue("Bearer \(token)",forHTTPHeaderField:"Authorization");q.setValue("application/json",forHTTPHeaderField:"Content-Type");q.httpBody=try JSONEncoder().encode(body)
-  let(data,response)=try await transport.data(for:q);guard let http=response as? HTTPURLResponse else{throw ExocortexError.invalidResponse};guard (200..<300).contains(http.statusCode) else{throw ExocortexError.httpStatus(http.statusCode)}
-  do{return try JSONDecoder().decode(R.self,from:data)}catch{throw ExocortexError.invalidResponse}
- }
+public actor XMemoMemoryStore: DurableMemoryStore {
+    private let gatewayURL: URL
+    private let anonKey: String
+    private let transport: any MemoryHTTPTransport
+    public init(gatewayURL: URL, anonKey: String, session: URLSession = .shared, transport: (any MemoryHTTPTransport)? = nil) throws {
+        guard gatewayURL.scheme == "https", gatewayURL.host != nil, !anonKey.isEmpty else {
+            throw ExocortexError.invalidEndpoint
+        }
+        var normalized = gatewayURL
+        if !normalized.path.hasSuffix("/") { normalized.append(path: "/") }
+        self.gatewayURL = normalized
+        self.anonKey = anonKey
+        self.transport = transport ?? URLSessionMemoryTransport(session: session)
+    }
+    private struct RecallRequest: Encodable { let consent: Bool; let query: String }
+    private struct RememberRequest: Encodable { let consent: Bool; let content: String }
+    private struct RecallResponse: Decodable { let status: String; let context: String? }
+    private struct RememberResponse: Decodable { let status: String; let receipt: String? }
+    public func recall(_ query: String, consent: Bool, userAccessToken: String) async throws -> MemoryRecall {
+        guard consent else { throw ExocortexError.memoryConsentRequired }
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, query.count <= 12_000 else {
+            throw ExocortexError.invalidPayload
+        }
+        let response: RecallResponse = try await post(
+            path: "memory/xmemo/recall",
+            body: RecallRequest(consent: true, query: query),
+            token: userAccessToken
+        )
+        return MemoryRecall(status: response.status, context: response.context ?? "")
+    }
+    public func remember(_ content: String, consent: Bool, userAccessToken: String) async throws -> MemoryReceipt {
+        guard consent else { throw ExocortexError.memoryConsentRequired }
+        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, content.count <= 18_000 else {
+            throw ExocortexError.invalidPayload
+        }
+        let response: RememberResponse = try await post(
+            path: "memory/xmemo/remember",
+            body: RememberRequest(consent: true, content: content),
+            token: userAccessToken
+        )
+        return MemoryReceipt(status: response.status, receipt: response.receipt)
+    }
+    private func post<Body: Encodable, Response: Decodable>(path: String, body: Body, token: String) async throws -> Response {
+        guard !token.isEmpty, let url = URL(string: path, relativeTo: gatewayURL)?.absoluteURL else {
+            throw ExocortexError.invalidEndpoint
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
+        request.httpBody = try JSONEncoder().encode(body)
+        let (data, response) = try await transport.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw ExocortexError.invalidResponse }
+        guard (200..<300).contains(http.statusCode) else { throw ExocortexError.httpStatus(http.statusCode) }
+        do { return try JSONDecoder().decode(Response.self, from: data) }
+        catch { throw ExocortexError.invalidResponse }
+    }
 }
 /// Temporary cache only, never a second durable memory database.
 public actor EphemeralWorkingSet{
