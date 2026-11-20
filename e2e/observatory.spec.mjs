@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/observatory.html");
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator("#skip-boot").click().catch(() => {});
@@ -74,7 +74,7 @@ test("unified HUD modules open from the dock and neither page links to the legac
 test("iPad portrait and landscape layouts stay within viewport", async ({ page }) => {
   for (const viewport of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
     await page.setViewportSize(viewport);
-    await page.goto("/observatory.html");
+    await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
     const width = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
     expect(width.scroll).toBeLessThanOrEqual(width.client);
     await expect(page.locator(".sanctuary")).toBeVisible();
@@ -84,7 +84,7 @@ test("iPad portrait and landscape layouts stay within viewport", async ({ page }
 
 test("v54 exposes honest UNKNOWN telemetry and bounded Monte Carlo simulation", async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1180 });
-  await page.goto("/observatory.html");
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#jx54-local")).toContainText("UNKNOWN");
   await expect(page.locator("#jx54-cloud")).toContainText("UNKNOWN");
   await expect(page.locator("#jx54-agents")).toContainText("UNKNOWN");
@@ -96,14 +96,14 @@ test("v54 exposes honest UNKNOWN telemetry and bounded Monte Carlo simulation", 
 });
 
 test("v54 diagnostics report browser capabilities without claiming hardware readiness", async ({ page }) => {
-  await page.goto("/observatory.html");
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
   await page.locator("#jx54-diagnostics").click();
   await expect(page.locator("#jx54-diagnostic-result")).toContainText("serviceWorker");
   await expect(page.locator("#jx54-diagnostic-result")).toContainText("AVAILABLE_NOT_TESTED");
 });
 
 test("v54 Observatory registers its service worker and caches v54 assets", async ({ page }) => {
-  await page.goto("/observatory.html");
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
   const result = await page.evaluate(async () => {
@@ -115,4 +115,23 @@ test("v54 Observatory registers its service worker and caches v54 assets", async
   expect(result.key).toBe("jarvis-x-hq-shell-v54");
   expect(result.core).toBe(true);
   expect(result.css).toBe(true);
+});
+
+ 
+test("v54 Observatory receives live producer telemetry updates without inventing unavailable subsystems", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    window.JXHarmonyCore.publishSystemState({
+      localEngine: { modelId: "Qwen2.5-3B-Instruct-q4f16_1-MLC", status: "READY", backend: "WebGPU", tokensPerSec: null },
+      cloudGateway: { health: "HEALTHY", chatEnabled: false, lockReason: "BUDGET_DISABLED", latencyMs: 42 },
+      agents: { localCount: null, liveConnected: null },
+      xmemo: { connected: null, consent: null, syncStatus: "UNKNOWN" }
+    }, "local-chat-engine+v46-apex");
+  });
+  await expect(page.locator("#jx54-local")).toContainText("Qwen2.5-3B-Instruct-q4f16_1-MLC");
+  await expect(page.locator("#jx54-local")).toContainText("READY");
+  await expect(page.locator("#jx54-cloud")).toContainText("BUDGET_DISABLED");
+  await expect(page.locator("#jx54-agents")).toContainText("UNKNOWN");
+  await expect(page.locator("#jx54-xmemo")).toContainText("UNKNOWN");
 });
