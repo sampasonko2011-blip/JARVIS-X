@@ -41,7 +41,7 @@ public struct EvidenceClaim:Codable,Sendable,Equatable{
 public enum EvidenceDisposition:String,Codable,Sendable{case accepted,rejected}
 public struct EvidenceValidation:Codable,Sendable,Equatable{
  public let disposition:EvidenceDisposition;public let contradictions:[String];public let unknownClaims:[String];public let unsupportedClaims:[String]
- public var mayPersist:Bool{disposition == .accepted && contradictions.isEmpty}
+ public var mayPersist:Bool{disposition == .accepted && contradictions.isEmpty && unknownClaims.isEmpty && unsupportedClaims.isEmpty}
 }
 public struct EvidenceLedger:Sendable{
  public init(){}
@@ -55,7 +55,7 @@ public struct EvidenceLedger:Sendable{
    let supported=matches.contains{$0.polarity==claim.polarity && $0.value.caseInsensitiveCompare(claim.value)==.orderedSame && (cited.isEmpty || cited.contains($0.id))}
    if !supported{unknown.append(claim.propositionKey);if !cited.isEmpty{unsupported.append(claim.propositionKey)}}
   }
-  return EvidenceValidation(disposition:contradictions.isEmpty ? .accepted:.rejected,contradictions:Array(Set(contradictions)).sorted(),unknownClaims:Array(Set(unknown)).sorted(),unsupportedClaims:Array(Set(unsupported)).sorted())
+  let uniqueContradictions=Array(Set(contradictions)).sorted(),uniqueUnknown=Array(Set(unknown)).sorted(),uniqueUnsupported=Array(Set(unsupported)).sorted()\n  return EvidenceValidation(disposition:uniqueContradictions.isEmpty && uniqueUnknown.isEmpty ? .accepted:.rejected,contradictions:uniqueContradictions,unknownClaims:uniqueUnknown,unsupportedClaims:uniqueUnsupported)
  }
 }
 public struct CognitiveTurnContext:Sendable,Equatable{
