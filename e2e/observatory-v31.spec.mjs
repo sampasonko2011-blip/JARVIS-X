@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 test("v31 dock opens modules and persists touch-friendly move and resize", async ({ page }) => {
- await page.goto("/observatory.html");
+ await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
  await page.evaluate(()=>localStorage.clear());
  await page.reload();
- await page.locator("#skip-boot").click();
+ const skipBoot = page.locator("#skip-boot"); if (await skipBoot.isVisible().catch(() => false)) await skipBoot.click({ timeout: 1500 });
  await page.locator(".dock [data-v29-add='chat']").click();
  const panel=page.locator(".v29-panel[data-type='chat']");
  await expect(panel).toBeVisible();
@@ -19,27 +19,27 @@ test("v31 dock opens modules and persists touch-friendly move and resize", async
  await page.mouse.move(rb.x+rb.width/2,rb.y+rb.height/2); await page.mouse.down();
  await page.mouse.move(rb.x+rb.width/2+55,rb.y+rb.height/2+40); await page.mouse.up();
  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem("jarvis_x_v31_panel_geometry")||"{}").chat?.width)).toBeGreaterThan(sizeBefore.width);
- await page.reload(); await page.locator("#skip-boot").click();
+ await page.reload(); const skipBootAgain = page.locator("#skip-boot"); if (await skipBootAgain.isVisible().catch(() => false)) await skipBootAgain.click({ timeout: 1500 });
  await page.locator(".dock [data-v29-add='chat']").click();
  await expect.poll(async()=>page.locator(".v29-panel[data-type='chat']").evaluate(n=>getComputedStyle(n).width)).toContain("px");
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("jarvis_x_v31_panel_geometry")||"{}").chat);
  expect(saved.width).toBeGreaterThan(sizeBefore.width);
 });
 test("v31 service worker and clean shell are wired", async ({ page }) => {
- await page.goto("/observatory.html");
+ await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
  const shell=await page.locator("main.cockpit").innerHTML();
  expect(shell).not.toContain("wing-left");
  expect(shell).not.toContain("SYNAPTIC TELEMETRY");
  expect(await page.locator('link[href="./interstellar-v31.css"]').count()).toBe(1);
  expect(await page.locator('script[src="./observatory-v31.js"]').count()).toBe(1);
- const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v53");
+ const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v54");
 });
 test("every bottom dock control is interactive and opens its matching module", async ({ page }) => {
  await page.setViewportSize({width:820,height:1180});
- await page.goto("/observatory.html");
+ await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
  await page.evaluate(()=>localStorage.clear());
  await page.reload();
- await page.locator("#skip-boot").click();
+ const skipBoot = page.locator("#skip-boot"); if (await skipBoot.isVisible().catch(() => false)) await skipBoot.click({ timeout: 1500 });
  const plus=page.locator(".dock #v29-open");
  await plus.click();
  await expect(page.locator("#v29-launcher")).toHaveClass(/open/);

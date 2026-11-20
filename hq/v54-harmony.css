@@ -1,0 +1,20 @@
+/* JARVIS-X v54 — alien holographic command HUD */
+:root{--jx-void:#030812;--jx-glass:rgba(8,20,38,.78);--jx-line:rgba(56,189,248,.34);--jx-cyan:#38bdf8;--jx-amber:#f59e0b;--jx-text:#e2f1ff;--jx-muted:#8ab4d8}
+html,body{max-width:100%;overflow-x:clip;background:radial-gradient(ellipse at 50% 42%,#0b2340 0%,var(--jx-void) 72%);color:var(--jx-text)}
+.jx-v54-shell{display:grid;grid-template-columns:minmax(210px,270px) minmax(0,1fr) minmax(260px,330px);gap:14px;width:100%;max-width:1440px;margin:18px auto;padding:12px 14px 88px;box-sizing:border-box}
+.jx-v54-panel{min-width:0;padding:14px;border:1px solid var(--jx-line);border-radius:16px;background:var(--jx-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 0 26px #38bdf81a,inset 0 0 20px #38bdf80d}
+.jx-v54-panel.amber{border-color:#f59e0b66;box-shadow:0 0 24px #f59e0b1c}
+.jx-v54-title{font:600 11px/1.4 ui-monospace,monospace;letter-spacing:.12em;color:var(--jx-cyan)}
+.jx-v54-value{font:500 14px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}
+.jx-v54-orb{position:relative;display:grid;place-items:center;min-height:300px;aspect-ratio:1;border-radius:50%;isolation:isolate}
+.jx-v54-orb:before,.jx-v54-orb:after{content:"";position:absolute;inset:5%;border:1px solid #38bdf87a;border-radius:50%;box-shadow:0 0 32px #38bdf833,inset 0 0 28px #f59e0b1c;pointer-events:none}
+.jx-v54-orb:after{inset:13%;border:2px dashed #f59e0b80;transform:rotate(-18deg)}
+.jx-v54-orb-core{width:42%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e0fbff,#38bdf8 22%,#403c99 58%,#030812 78%);box-shadow:0 0 36px #38bdf8aa,0 0 80px #a855f755}
+.jx-v54-dock{position:fixed;z-index:80;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:7px;max-width:calc(100vw - 20px);overflow-x:auto;padding:8px;border:1px solid var(--jx-line);border-radius:15px;background:#050e1ceF;backdrop-filter:blur(16px);box-sizing:border-box;overscroll-behavior-x:contain}
+.jx-v54-dock button,.jx-v54-dock a{flex:0 0 auto;min-height:40px;padding:8px 11px;border:1px solid #38bdf844;border-radius:9px;background:#0b1b2d;color:var(--jx-text);font:600 10px ui-monospace,monospace;letter-spacing:.06em;text-decoration:none;touch-action:manipulation}
+.jx-v54-dock button:focus-visible,.jx-v54-dock a:focus-visible{outline:2px solid var(--jx-amber);outline-offset:2px}
+@media(max-width:1024px){.jx-v54-shell{grid-template-columns:minmax(0,1fr);gap:10px;margin:8px auto;padding:8px 10px 92px}.jx-v54-orb{min-height:250px;width:min(82vw,440px);margin:auto}.jx-v54-panel{width:100%}}
+@media(prefers-reduced-motion:reduce){.jx-v54-shell *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Hide the completed boot overlay without creating inline style attributes. */
+.ignition.boot-dismissed{display:none;pointer-events:none}

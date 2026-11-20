@@ -64,7 +64,7 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
 
 test("v41 service worker caches the Inspector UI and local cognitive router under v42",async()=>{
  const sw=await read("../hq/sw.js");
- assert.match(sw,/jarvis-x-hq-shell-v53/);
+ assert.match(sw,/jarvis-x-hq-shell-v54/);
  assert.match(sw,/local-chat\.html/);
  assert.match(sw,/local-chat-engine\.bundle\.js/);
  assert.match(sw,/jarvis-brain-v36\.js/);

@@ -2,10 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.clock.install();
-  await page.goto("/observatory.html");
+  await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.locator("#skip-boot").click().catch(() => {});
+  const skipBoot = page.locator("#skip-boot"); if (await skipBoot.isVisible().catch(() => false)) await skipBoot.click({ timeout: 1500 });
 });
 
 test("v32 installs two persistent HUD panels without duplicate resize handles or inline style attributes", async ({ page }) => {
@@ -35,7 +35,7 @@ test("iPad portrait and landscape keep v32 panels and dock inside the viewport",
   for (const viewport of [{ width: 820, height: 1180 }, { width: 1180, height: 820 }]) {
     await page.setViewportSize(viewport);
     await page.reload();
-    await page.locator("#skip-boot").click().catch(() => {});
+    const skipBoot = page.locator("#skip-boot"); if (await skipBoot.isVisible().catch(() => false)) await skipBoot.click({ timeout: 1500 });
     const dimensions = await page.evaluate(() => ({
       client: document.documentElement.clientWidth,
       scroll: document.documentElement.scrollWidth,

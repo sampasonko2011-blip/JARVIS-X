@@ -66,3 +66,8 @@ body.mode-focus #jx-interstellar-v30{filter:saturate(1.3) brightness(1.1)}
 .jx-memory-panel input[type="range"]{width:100%;max-width:100%;min-width:0}
 @media(max-width:900px) and (min-width:761px){.jx-control-rail{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}.jx-control-rail>.integration{min-width:0}.jx-control-rail>.jx-memory-panel{grid-column:1/-1}}
 @media(max-width:760px){.jx-control-rail{display:flex;flex-direction:column;min-width:0}.jx-control-rail>.integration{width:100%;min-width:0}}
+
+/* v54 boot overlay: skip is always an accessible, hit-testable control while active. */
+#jx-cinema-boot.jx-v32-cinema{z-index:9999!important;pointer-events:auto!important}
+#jx-cinema-boot #skip-boot{position:relative!important;z-index:10000!important;display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;pointer-events:auto!important;touch-action:manipulation}
+#jx-cinema-boot.done{display:none!important;visibility:hidden!important;pointer-events:none!important}

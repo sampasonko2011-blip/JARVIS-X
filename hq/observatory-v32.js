@@ -3,7 +3,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const safeRead=(key,fallback)=>{try{const value=localStorage.getItem(key);return value===null?fallback:JSON.parse(value)}catch{return fallback}};
 const safeWrite=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}};
 const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
-const host=$('#v29-panels'),dock=$('.dock'),boot=$('#ignition');
+const host=$('#v29-panels'),dock=$('.dock'),boot=$('#jx-cinema-boot');
 if(!host||!dock)return;
 document.documentElement.dataset.jxVersion='32';
 /* Full-screen, skippable three-act cinema. Existing v31 entry points remain intact. */
@@ -13,7 +13,7 @@ if(boot){
  collapse.className='jx-v32-collapse';burst.className='jx-v32-supernova';lock.className='jx-v32-lock';
  [collapse,burst,lock].forEach(n=>{n.setAttribute('aria-hidden','true');boot.prepend(n)});
  let skipped=false;
- const skip=()=>{if(skipped)return;skipped=true;boot.classList.add('done');boot.classList.remove('jx-v32-act-1','jx-v32-act-2','jx-v32-act-3')};
+ const skip=()=>{if(skipped)return;skipped=true;try{sessionStorage.setItem('jx_boot_seen','1');sessionStorage.setItem('jx_v54_boot_seen','1')}catch{}boot.classList.add('done');boot.classList.remove('jx-v32-act-1','jx-v32-act-2','jx-v32-act-3');boot.classList.add('boot-dismissed')};
  boot.addEventListener('pointerdown',e=>{if(e.target.closest('#skip-boot'))return;skip()},{passive:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')skip()});
  $('#skip-boot')?.addEventListener('click',skip);

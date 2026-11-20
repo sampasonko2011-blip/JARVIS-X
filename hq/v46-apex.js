@@ -17,6 +17,14 @@
   const provider = $("jx46-provider"), status = $("jx46-status");
   const lang = { ready: "Cloud authentifié et disponible", locked: "Cloud verrouillé", signedOut: "Déconnexion effectuée. Connectez-vous pour changer de compte." };
   let currentLockReason = "Motif non communiqué par le gateway.";
+  function publishApexTelemetry(cloudGateway, source = "v46-apex") {
+    window.JXHarmonyCore?.publishSystemState({
+      cloudGateway: cloudGateway || { health: "UNKNOWN", chatEnabled: null, lockReason: "UNKNOWN", latencyMs: null },
+      agents: { localCount: null, liveConnected: null },
+      xmemo: { connected: null, consent: null, syncStatus: "UNKNOWN" }
+    }, source);
+  }
+  publishApexTelemetry();
   function renderCloudState(health = {}) {
     const reason = typeof health.lockReason === "string" && health.lockReason.trim()
       ? health.lockReason.trim()
@@ -194,12 +202,20 @@
     if ((!force && (!state.cloudConsent || state.localMode)) || !navigator.onLine) { state.cloudChecking = false; updateControls(); return; }
     state.cloudChecking = true; updateControls();
     status.textContent = "Vérification de l'état du gateway HQ v12…";
+    const healthStartedAt = performance.now();
     try {
       const token = await accessToken();
       await verifySupabaseSession(token);
       const healthUrl = GATEWAY + "/health?identity=jarvis-x&orchestration_mode=support";
       const response = await fetch(healthUrl, { method: "GET", cache: "no-store", headers: { apikey: PUBLISHABLE_KEY, Authorization: "Bearer " + token, Accept: "application/json" } });
       const health = await response.json().catch(() => ({}));
+      const healthLatencyMs = Math.round(performance.now() - healthStartedAt);
+      publishApexTelemetry({
+        health: response.ok && health.ok === true ? "HEALTHY" : "UNAVAILABLE",
+        chatEnabled: typeof health.chatEnabled === "boolean" ? health.chatEnabled : null,
+        lockReason: typeof health.lockReason === "string" && health.lockReason.trim() ? health.lockReason.trim() : (health.chatEnabled === false ? "LOCK_REASON_NOT_PROVIDED" : "UNKNOWN"),
+        latencyMs: healthLatencyMs
+      });
       if (!response.ok || health.ok !== true || health.auth !== "verified-supabase-session") throw new Error(health.error || "gateway_health_unavailable");
       state.cloudAvailable = health.chatEnabled === true;
       state.imageAvailable = health.imageGenerationEnabled === true;
@@ -207,6 +223,12 @@
       if (state.cloudAvailable && !(state.cloudConsent && !state.localMode)) status.textContent = "Session authentifiée et /health vérifié. Active explicitement le consentement cloud pour envoyer des messages.";
       else if (!state.cloudAvailable) setProvider("CLOUD · LIVE LOCKED · 0 MODEL CALLS");
     } catch (error) {
+      publishApexTelemetry({
+        health: navigator.onLine ? "ERROR" : "OFFLINE",
+        chatEnabled: false,
+        lockReason: String(error?.message || error),
+        latencyMs: null
+      });
       updateLoginVisibility();
       status.textContent = "Gateway HQ v12 indisponible : " + String(error?.message || error) + ". Aucun message cloud ne sera envoyé.";
       state.cloudAvailable = false;
