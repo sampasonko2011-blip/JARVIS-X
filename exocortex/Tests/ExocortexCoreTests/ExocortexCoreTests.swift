@@ -1,20 +1,117 @@
 import XCTest
 @testable import ExocortexCore
-final class ExocortexCoreTests:XCTestCase{
- func testBusCapacity()async throws{let b=try NeuralBus(dimension:1,capacity:1);try await b.publish(VectorMessage(source:"a",values:[1]));try await b.publish(VectorMessage(source:"b",values:[2]));let x=await b.latest();XCTAssertEqual(x.count,1);XCTAssertEqual(x[0].source,"b")}
- func testBusDimensionAndFiniteValidation()async throws{let b=try NeuralBus(dimension:2);do{try await b.publish(VectorMessage(source:"x",values:[1]));XCTFail()}catch{XCTAssertEqual(error as? ExocortexError,.dimensionMismatch)};do{try await b.publish(VectorMessage(source:"x",values:[.nan,0]));XCTFail()}catch{XCTAssertEqual(error as? ExocortexError,.invalidVector)}}
- func testThermalBudgets() {XCTAssertGreaterThan(ThermalGuardian.budget(for:.nominal).reasoningCycles,ThermalGuardian.budget(for:.critical).reasoningCycles)}
- func testXMemoConsentAndValidation()async throws{let m=try XMemoMemoryStore(gatewayURL:URL(string:"https://example.test/functions/v1/hq-gateway-v12/")!,anonKey:"anon");do{_ = try await m.recall("x",consent:false,userAccessToken:"t");XCTFail()}catch{XCTAssertEqual(error as? ExocortexError,.memoryConsentRequired)};do{_ = try await m.recall(" ",consent:true,userAccessToken:"t");XCTFail()}catch{XCTAssertEqual(error as? ExocortexError,.invalidPayload)}}
- func testWorkingSetRecallExpiryAndClear()async throws{let m=EphemeralWorkingSet(ttl:1);_ = try await m.store([1,0],now:Date(timeIntervalSince1970:0));let found=try await m.nearest(to:[1,0],now:Date(timeIntervalSince1970:0));XCTAssertEqual(found,[1,0]);XCTAssertEqual(awaitCount(m,at:Date(timeIntervalSince1970:2)),0)}
- private func awaitCount(_ m:EphemeralWorkingSet,at date:Date)->Int{0}
- func testSaboteurRequiresCalibratedConfidence(){let s=SaboteurAgent();XCTAssertFalse(s.validate(output:[0],confidence:nil));XCTAssertFalse(s.validate(output:[0],confidence:0.69));XCTAssertTrue(s.validate(output:[0],confidence:0.7));XCTAssertFalse(s.validate(output:[.nan],confidence:0.99))}
- func testPayloadBounds(){XCTAssertTrue(AntiUltronShield.accepts(payload:Data([1]),maximumBytes:1));XCTAssertFalse(AntiUltronShield.accepts(payload:Data([1,2]),maximumBytes:1))}
- func testEvolutionHeldOutScore(){let c=EvolutionArena().champion(from:[CandidateScore(candidateID:"a",heldOutScore:0.8),CandidateScore(candidateID:"b",heldOutScore:0.9)],minimumScore:0.85);XCTAssertEqual(c?.candidateID,"b");XCTAssertNil(EvolutionArena().champion(from:[CandidateScore(candidateID:"x",heldOutScore:.nan)],minimumScore:0))}
- func testToolAllowlistAndSize()throws{let r=ToolRegistry(allowedNames:["summarize"],maximumPayloadBytes:1);XCTAssertNoThrow(try r.validate(ToolRequest(name:"summarize",payload:Data([1]))));XCTAssertThrowsError(try r.validate(ToolRequest(name:"shell",payload:Data())));XCTAssertThrowsError(try r.validate(ToolRequest(name:"summarize",payload:Data([1,2]))))}
- func testSensorConsent()async throws{struct R:LocalTextRecognizer{func recognizeText(from imageData:Data)async throws->String{"ok"}};let reader=ScreenVisionReader(recognizer:R());do{_ = try await reader.extractText(from:Data([1]),consent:SensorConsent());XCTFail()}catch{XCTAssertEqual(error as? ExocortexError,.memoryConsentRequired)}}
- func testPeerTrust(){let p=SwarmPeerPolicy(trustedPeerIDs:["p"]);XCTAssertTrue(p.accepts(peerID:"p",encryptedTransport:true));XCTAssertFalse(p.accepts(peerID:"p",encryptedTransport:false));XCTAssertFalse(p.accepts(peerID:"other",encryptedTransport:true))}
- func testWhisperRequiresOptIn(){let p=MetabolicWhisperPolicy();XCTAssertFalse(p.shouldWhisper(confidence:0.99,userEnabled:false));XCTAssertTrue(p.shouldWhisper(confidence:0.99,userEnabled:true))}
- func testHypervector()throws{let o=HyperdimensionalOracle(bitCount:128),v:[UInt64]=[0,1];XCTAssertEqual(try o.similarity(v,v),1);XCTAssertThrowsError(try o.bind([1],[1]))}
- func testMaximin()throws{let r=try GameTheoryStrategist().maximin([[3,1],[2,2]]);XCTAssertEqual(r.row,1);XCTAssertEqual(r.guaranteedGain,2)}
- func testVoiceFeatures()throws{let f=try VoiceBiometricMonitor.analyze([1,-1,1,-1]);XCTAssertEqual(f.rms,1,accuracy:0.0001);XCTAssertEqual(f.peak,1,accuracy:0.0001);XCTAssertGreaterThan(f.zeroCrossingRate,0)}
+
+final class ExocortexCoreTests: XCTestCase {
+    func testBusCapacityAndValidation() async throws {
+        let bus = try NeuralBus(dimension: 1, capacity: 1)
+        try await bus.publish(VectorMessage(source: "a", values: [1]))
+        try await bus.publish(VectorMessage(source: "b", values: [2]))
+        let latest = await bus.latest()
+        XCTAssertEqual(latest.count, 1)
+        XCTAssertEqual(latest[0].source, "b")
+        do {
+            try await bus.publish(VectorMessage(source: "x", values: [.nan]))
+            XCTFail("Expected non-finite vector rejection")
+        } catch { XCTAssertEqual(error as? ExocortexError, .invalidVector) }
+    }
+
+    func testThermalBudgets() {
+        XCTAssertGreaterThan(ThermalGuardian.budget(for: .nominal).reasoningCycles, ThermalGuardian.budget(for: .critical).reasoningCycles)
+    }
+
+    func testXMemoConsentAndValidation() async throws {
+        let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/functions/v1/hq-gateway-v12/")!, anonKey: "anon")
+        do {
+            _ = try await memory.recall("query", consent: false, userAccessToken: "token")
+            XCTFail("Expected explicit consent")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
+        do {
+            _ = try await memory.recall(" ", consent: true, userAccessToken: "token")
+            XCTFail("Expected blank query rejection")
+        } catch { XCTAssertEqual(error as? ExocortexError, .invalidPayload) }
+    }
+
+    func testWorkingSetRecallExpiryAndClear() async throws {
+        let memory = EphemeralWorkingSet(ttl: 1)
+        _ = try await memory.store([1, 0], now: Date(timeIntervalSince1970: 0))
+        let found = try await memory.nearest(to: [1, 0], now: Date(timeIntervalSince1970: 0))
+        XCTAssertEqual(found, [1, 0])
+        let expired = await memory.count(now: Date(timeIntervalSince1970: 2))
+        XCTAssertEqual(expired, 0)
+        _ = try await memory.store([0, 1])
+        await memory.clear()
+        let cleared = await memory.count()
+        XCTAssertEqual(cleared, 0)
+    }
+
+    func testSaboteurRequiresCalibratedConfidence() {
+        let saboteur = SaboteurAgent()
+        XCTAssertFalse(saboteur.validate(output: [0], confidence: nil))
+        XCTAssertFalse(saboteur.validate(output: [0], confidence: 0.69))
+        XCTAssertTrue(saboteur.validate(output: [0], confidence: 0.70))
+        XCTAssertFalse(saboteur.validate(output: [.nan], confidence: 0.99))
+    }
+
+    func testPayloadBounds() {
+        XCTAssertTrue(AntiUltronShield.accepts(payload: Data([1]), maximumBytes: 1))
+        XCTAssertFalse(AntiUltronShield.accepts(payload: Data([1, 2]), maximumBytes: 1))
+    }
+
+    func testEvolutionUsesHeldOutScoreAndRejectsNaN() {
+        let arena = EvolutionArena()
+        let winner = arena.champion(from: [CandidateScore(candidateID: "a", heldOutScore: 0.8), CandidateScore(candidateID: "b", heldOutScore: 0.9)], minimumScore: 0.85)
+        XCTAssertEqual(winner?.candidateID, "b")
+        XCTAssertNil(arena.champion(from: [CandidateScore(candidateID: "bad", heldOutScore: .nan)], minimumScore: 0))
+    }
+
+    func testToolAllowlistAndPayloadSize() throws {
+        let registry = ToolRegistry(allowedNames: ["summarize"], maximumPayloadBytes: 1)
+        XCTAssertNoThrow(try registry.validate(ToolRequest(name: "summarize", payload: Data([1]))))
+        XCTAssertThrowsError(try registry.validate(ToolRequest(name: "shell", payload: Data())))
+        XCTAssertThrowsError(try registry.validate(ToolRequest(name: "summarize", payload: Data([1, 2]))))
+    }
+
+    func testSensorConsent() async throws {
+        struct Recognizer: LocalTextRecognizer {
+            func recognizeText(from imageData: Data) async throws -> String { "ok" }
+        }
+        let reader = ScreenVisionReader(recognizer: Recognizer())
+        do {
+            _ = try await reader.extractText(from: Data([1]), consent: SensorConsent())
+            XCTFail("Expected consent gate")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
+    }
+
+    func testPeerTrustRequiresEncryption() {
+        let policy = SwarmPeerPolicy(trustedPeerIDs: ["peer"])
+        XCTAssertTrue(policy.accepts(peerID: "peer", encryptedTransport: true))
+        XCTAssertFalse(policy.accepts(peerID: "peer", encryptedTransport: false))
+        XCTAssertFalse(policy.accepts(peerID: "unknown", encryptedTransport: true))
+    }
+
+    func testWhisperRequiresOptIn() {
+        let policy = MetabolicWhisperPolicy()
+        XCTAssertFalse(policy.shouldWhisper(confidence: 0.99, userEnabled: false))
+        XCTAssertTrue(policy.shouldWhisper(confidence: 0.99, userEnabled: true))
+    }
+
+    func testHypervectorOperations() throws {
+        let oracle = HyperdimensionalOracle(bitCount: 128)
+        let vector: [UInt64] = [0, 1]
+        XCTAssertEqual(try oracle.similarity(vector, vector), 1)
+        XCTAssertThrowsError(try oracle.bind([1], [1]))
+    }
+
+    func testMaximin() throws {
+        let result = try GameTheoryStrategist().maximin([[3, 1], [2, 2]])
+        XCTAssertEqual(result.row, 1)
+        XCTAssertEqual(result.guaranteedGain, 2)
+    }
+
+    func testVoiceFeaturesAreAcousticOnly() throws {
+        let features = try VoiceBiometricMonitor.analyze([1, -1, 1, -1])
+        XCTAssertEqual(features.rms, 1, accuracy: 0.0001)
+        XCTAssertEqual(features.peak, 1, accuracy: 0.0001)
+        XCTAssertGreaterThan(features.zeroCrossingRate, 0)
+    }
 }
