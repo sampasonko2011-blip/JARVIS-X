@@ -16,11 +16,69 @@ public actor NeuralBus {
  public func latest(limit:Int=16)->[VectorMessage]{Array(messages.suffix(max(0,min(limit,capacity))))}
  public func clear(){messages.removeAll(keepingCapacity:false)}
 }
-// 2 ThermalGuardian
-public enum ThermalCondition:Sendable{case nominal,fair,serious,critical,unknown}
-public struct ThermalBudget:Equatable,Sendable{public let reasoningCycles:Int;public let maxConcurrentAgents:Int;public let permitsEvolution:Bool}
-public enum ThermalGuardian{
- public static func budget(for c:ThermalCondition)->ThermalBudget{switch c{case .nominal:ThermalBudget(reasoningCycles:12,maxConcurrentAgents:2,permitsEvolution:true);case .fair:ThermalBudget(reasoningCycles:6,maxConcurrentAgents:1,permitsEvolution:false);case .serious,.critical,.unknown:ThermalBudget(reasoningCycles:1,maxConcurrentAgents:1,permitsEvolution:false)}}
+// 2 ThermalGuardian — real device signals behind injectable testable providers
+public enum ThermalCondition: Sendable, Equatable { case nominal, fair, serious, critical, unknown }
+public struct ThermalBudget: Equatable, Sendable {
+    public let reasoningCycles: Int
+    public let maxConcurrentAgents: Int
+    public let permitsEvolution: Bool
+    public let maximumContextTokens: Int
+    public init(reasoningCycles: Int, maxConcurrentAgents: Int, permitsEvolution: Bool, maximumContextTokens: Int = 4096) {
+        self.reasoningCycles = max(1, reasoningCycles)
+        self.maxConcurrentAgents = max(1, maxConcurrentAgents)
+        self.permitsEvolution = permitsEvolution
+        self.maximumContextTokens = max(128, maximumContextTokens)
+    }
+}
+public struct RuntimeSafetySnapshot: Sendable, Equatable {
+    public let availableMemoryBytes: Int64
+    public let thermalCondition: ThermalCondition
+    public init(availableMemoryBytes: Int64, thermalCondition: ThermalCondition) {
+        self.availableMemoryBytes = max(0, availableMemoryBytes)
+        self.thermalCondition = thermalCondition
+    }
+}
+public protocol RuntimeSafetyMonitoring: Sendable {
+    func snapshot() -> RuntimeSafetySnapshot
+}
+public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
+    public init() {}
+    public func snapshot() -> RuntimeSafetySnapshot {
+        let memory: Int64
+        #if canImport(Darwin)
+        memory = Int64(os_proc_available_memory())
+        #else
+        memory = -1 // UNKNOWN on non-Apple hosts; never interpreted as unlimited memory.
+        #endif
+        let thermal: ThermalCondition
+        switch ProcessInfo.processInfo.thermalState {
+        case .nominal: thermal = .nominal
+        case .fair: thermal = .fair
+        case .serious: thermal = .serious
+        case .critical: thermal = .critical
+        @unknown default: thermal = .unknown
+        }
+        return RuntimeSafetySnapshot(availableMemoryBytes: memory, thermalCondition: thermal)
+    }
+}
+public enum ThermalGuardian {
+    public static func budget(for condition: ThermalCondition) -> ThermalBudget {
+        switch condition {
+        case .nominal: return ThermalBudget(reasoningCycles: 12, maxConcurrentAgents: 2, permitsEvolution: true, maximumContextTokens: 4096)
+        case .fair: return ThermalBudget(reasoningCycles: 6, maxConcurrentAgents: 1, permitsEvolution: false, maximumContextTokens: 2048)
+        case .serious: return ThermalBudget(reasoningCycles: 2, maxConcurrentAgents: 1, permitsEvolution: false, maximumContextTokens: 512)
+        case .critical, .unknown: return ThermalBudget(reasoningCycles: 1, maxConcurrentAgents: 1, permitsEvolution: false, maximumContextTokens: 128)
+        }
+    }
+    public static func allowsInference(_ snapshot: RuntimeSafetySnapshot, minimumMemoryBytes: Int64) -> Bool {
+        guard snapshot.thermalCondition != .critical, snapshot.thermalCondition != .unknown else { return false }
+        guard snapshot.availableMemoryBytes >= 0 else { return false }
+        return snapshot.availableMemoryBytes >= minimumMemoryBytes
+    }
+    public static func shouldEmergencyUnload(_ snapshot: RuntimeSafetySnapshot, criticalMemoryBytes: Int64) -> Bool {
+        snapshot.thermalCondition == .critical ||
+        (snapshot.availableMemoryBytes >= 0 && snapshot.availableMemoryBytes < criticalMemoryBytes)
+    }
 }
 public protocol MemoryHTTPTransport: Sendable {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
@@ -520,6 +578,100 @@ public enum VoiceBiometricMonitor{
  public static func analyze(_ s:[Float])throws->VoiceSignalFeatures{guard !s.isEmpty,s.allSatisfy(\.isFinite) else{throw ExocortexError.invalidVector};let rms=(s.reduce(0.0){$0+Double($1*$1)}/Double(s.count)).squareRoot();let peak=s.reduce(0.0){max($0,abs(Double($1)))};var crossings=0;if s.count>1{for i in 1..<s.count{let a=s[i-1],b=s[i];if(a<0 && b>=0)||(a>=0 && b<0){crossings+=1}}};return VoiceSignalFeatures(rms:rms,peak:peak,zeroCrossingRate:s.count>1 ? Double(crossings)/Double(s.count-1):0)}
 }
 // Pillars 1–2: model runtime contract and safe mapped adapter; no model bundled
-public struct LocalModelDescriptor:Sendable,Equatable{public let identifier:String;public let quantization:String;public let maximumResidentBytes:Int;public init(identifier:String,quantization:String,maximumResidentBytes:Int){self.identifier=identifier;self.quantization=quantization;self.maximumResidentBytes=max(0,maximumResidentBytes)}}
-public protocol LocalModelRuntime:Sendable{func load(_ descriptor:LocalModelDescriptor)async throws;func infer(prompt:String,cycleBudget:Int)async throws->String}
+public struct LocalModelDescriptor: Sendable, Equatable {
+    public let identifier: String
+    public let quantization: String
+    public let maximumResidentBytes: Int
+    public init(identifier: String, quantization: String, maximumResidentBytes: Int) {
+        self.identifier = identifier
+        self.quantization = quantization
+        self.maximumResidentBytes = max(0, maximumResidentBytes)
+    }
+}
+public protocol LocalModelRuntime: Sendable {
+    func load(_ descriptor: LocalModelDescriptor) async throws
+    func infer(prompt: String, cycleBudget: Int) async throws -> String
+}
+/// Stable native bridge contract for a llama.cpp C-interop target supplied by the host app.
+public protocol LlamaCppBackend: Sendable {
+    func loadModel(at url: URL, contextTokens: Int) async throws
+    func generate(prompt: String, maximumTokens: Int, shouldAbort: @escaping @Sendable () -> Bool) async throws -> String
+    func unloadModel() async
+}
+public struct LlamaCppModelLocator: Sendable {
+    public let modelURL: URL?
+    public init(modelURL: URL?) { self.modelURL = modelURL }
+}
+public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
+    private let locator: LlamaCppModelLocator
+    private let backend: any LlamaCppBackend
+    private let safety: any RuntimeSafetyMonitoring
+    private let minimumLoadMemoryBytes: Int64
+    private let criticalMemoryBytes: Int64
+    private var loaded = false
+    private var descriptor: LocalModelDescriptor?
+    public init(
+        locator: LlamaCppModelLocator,
+        backend: any LlamaCppBackend,
+        safety: any RuntimeSafetyMonitoring = SystemRuntimeSafetyMonitor(),
+        minimumLoadMemoryBytes: Int64 = 1_500_000_000,
+        criticalMemoryBytes: Int64 = 512_000_000
+    ) {
+        self.locator = locator
+        self.backend = backend
+        self.safety = safety
+        self.minimumLoadMemoryBytes = max(1, minimumLoadMemoryBytes)
+        self.criticalMemoryBytes = max(1, criticalMemoryBytes)
+    }
+    public func load(_ descriptor: LocalModelDescriptor) async throws {
+        guard let modelURL = locator.modelURL, modelURL.isFileURL,
+              FileManager.default.fileExists(atPath: modelURL.path) else {
+            throw ExocortexError.runtimeUnavailable
+        }
+        let state = safety.snapshot()
+        guard ThermalGuardian.allowsInference(state, minimumMemoryBytes: max(minimumLoadMemoryBytes, Int64(descriptor.maximumResidentBytes) + criticalMemoryBytes)) else {
+            if ThermalGuardian.shouldEmergencyUnload(state, criticalMemoryBytes: criticalMemoryBytes) { await emergencyUnload() }
+            throw state.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+        }
+        try await backend.loadModel(at: modelURL, contextTokens: ThermalGuardian.budget(for: state.thermalCondition).maximumContextTokens)
+        self.descriptor = descriptor
+        loaded = true
+    }
+    public func infer(prompt: String, cycleBudget: Int) async throws -> String {
+        guard loaded, descriptor != nil else { throw ExocortexError.modelNotLoaded }
+        let before = safety.snapshot()
+        if ThermalGuardian.shouldEmergencyUnload(before, criticalMemoryBytes: criticalMemoryBytes) {
+            await emergencyUnload()
+            throw before.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+        }
+        guard ThermalGuardian.allowsInference(before, minimumMemoryBytes: criticalMemoryBytes) else {
+            throw ExocortexError.memoryPressure
+        }
+        let budget = ThermalGuardian.budget(for: before.thermalCondition)
+        let tokenLimit = min(budget.maximumContextTokens, max(128, cycleBudget * 128))
+        let generated = try await backend.generate(prompt: prompt, maximumTokens: tokenLimit) { [safety, criticalMemoryBytes] in
+            let current = safety.snapshot()
+            return ThermalGuardian.shouldEmergencyUnload(current, criticalMemoryBytes: criticalMemoryBytes) ||
+                current.thermalCondition == .serious || current.thermalCondition == .unknown
+        }
+        let after = safety.snapshot()
+        if ThermalGuardian.shouldEmergencyUnload(after, criticalMemoryBytes: criticalMemoryBytes) {
+            await emergencyUnload()
+            throw after.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+        }
+        return generated
+    }
+    public func emergencyUnload() async {
+        await backend.unloadModel()
+        loaded = false
+        descriptor = nil
+    }
+}
+/// CI-safe fallback: no model is fabricated and inference fails closed when the native bridge/model is absent.
+public struct UnavailableLlamaCppBackend: LlamaCppBackend {
+    public init() {}
+    public func loadModel(at url: URL, contextTokens: Int) async throws { throw ExocortexError.runtimeUnavailable }
+    public func generate(prompt: String, maximumTokens: Int, shouldAbort: @escaping @Sendable () -> Bool) async throws -> String { throw ExocortexError.runtimeUnavailable }
+    public func unloadModel() async {}
+}
 public struct MappedLoRAAdapter:Sendable{public let data:Data;public init(contentsOf url:URL,maximumBytes:Int)throws{let d=try Data(contentsOf:url,options:.mappedIfSafe);guard d.count<=max(0,maximumBytes) else{throw ExocortexError.invalidPayload};data=d}}
