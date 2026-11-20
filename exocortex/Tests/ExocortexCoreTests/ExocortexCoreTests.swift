@@ -194,6 +194,22 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(json["query"] as? String, "What chip?")
     }
 
+
+    func testXMemoRememberBuildsAuthenticatedContractRequest() async throws {
+        let transport = StubMemoryTransport(responseBody: Data(#"{"status":"stored","receipt":"receipt-123"}"#.utf8))
+        let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/functions/v1/hq-gateway-v12/")!, anonKey: "publishable", transport: transport)
+        let result = try await memory.remember("approved note", consent: true, userAccessToken: "user-session")
+        XCTAssertEqual(result.status, "stored")
+        XCTAssertEqual(result.receipt, "receipt-123")
+        let request = await transport.request()
+        XCTAssertEqual(request?.url?.absoluteString, "https://example.test/functions/v1/hq-gateway-v12/memory/xmemo/remember")
+        XCTAssertEqual(request?.value(forHTTPHeaderField: "Authorization"), "Bearer user-session")
+        let body = try XCTUnwrap(request?.httpBody)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["consent"] as? Bool, true)
+        XCTAssertEqual(json["content"] as? String, "approved note")
+    }
+
     func testXMemoRejectsRememberWithoutConsentBeforeTransport() async throws {
         let transport = StubMemoryTransport(responseBody: Data(#"{"status":"stored"}"#.utf8))
         let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/gateway/")!, anonKey: "publishable", transport: transport)
