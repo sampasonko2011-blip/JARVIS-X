@@ -22,6 +22,12 @@ public struct ThermalBudget:Equatable,Sendable{public let reasoningCycles:Int;pu
 public enum ThermalGuardian{
  public static func budget(for c:ThermalCondition)->ThermalBudget{switch c{case .nominal:ThermalBudget(reasoningCycles:12,maxConcurrentAgents:2,permitsEvolution:true);case .fair:ThermalBudget(reasoningCycles:6,maxConcurrentAgents:1,permitsEvolution:false);case .serious,.critical,.unknown:ThermalBudget(reasoningCycles:1,maxConcurrentAgents:1,permitsEvolution:false)}}
 }
+public protocol MemoryHTTPTransport:Sendable{func data(for request:URLRequest)async throws->(Data,URLResponse)}
+public struct URLSessionMemoryTransport:@unchecked Sendable:MemoryHTTPTransport{
+ private let session:URLSession
+ public init(session:URLSession = .shared){self.session=session}
+ public func data(for request:URLRequest)async throws->(Data,URLResponse){try await session.data(for:request)}
+}
 // 3 XMemo durable memory; old FractalMemory replaced by RAM-only cache
 public struct MemoryRecall:Codable,Sendable,Equatable{public let status:String;public let context:String}
 public struct MemoryReceipt:Codable,Sendable,Equatable{public let status:String;public let receipt:String?}
@@ -89,7 +95,7 @@ public actor XMemoMemoryStore:DurableMemoryStore{
  private func post<B:Encodable,R:Decodable>(path:String,body:B,token:String)async throws->R{
   guard !token.isEmpty,let url=URL(string:path,relativeTo:gatewayURL)?.absoluteURL else{throw ExocortexError.invalidEndpoint}
   var q=URLRequest(url:url);q.httpMethod="POST";q.setValue(anonKey,forHTTPHeaderField:"apikey");q.setValue("Bearer \(token)",forHTTPHeaderField:"Authorization");q.setValue("application/json",forHTTPHeaderField:"Content-Type");q.httpBody=try JSONEncoder().encode(body)
-  let(data,response)=try await session.data(for:q);guard let http=response as? HTTPURLResponse else{throw ExocortexError.invalidResponse};guard (200..<300).contains(http.statusCode) else{throw ExocortexError.httpStatus(http.statusCode)}
+  let(data,response)=try await transport.data(for:q);guard let http=response as? HTTPURLResponse else{throw ExocortexError.invalidResponse};guard (200..<300).contains(http.statusCode) else{throw ExocortexError.httpStatus(http.statusCode)}
   do{return try JSONDecoder().decode(R.self,from:data)}catch{throw ExocortexError.invalidResponse}
  }
 }
