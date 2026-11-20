@@ -219,7 +219,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v53");
+  expect(await response.text()).toContain("jarvis-x-hq-shell-v54");
 });
 
 
@@ -305,7 +305,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v53");
+  expect(sw).toContain("jarvis-x-hq-shell-v54");
 });
 
  
@@ -522,6 +522,6 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   await page.goto("/local-chat.html");
   const sw = await page.request.get("/sw.js");
   expect(sw.ok()).toBeTruthy();
-  expect(await sw.text()).toContain("jarvis-x-hq-shell-v53");
+  expect(await sw.text()).toContain("jarvis-x-hq-shell-v54");
   expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
 });
