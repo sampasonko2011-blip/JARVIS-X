@@ -39,4 +39,4 @@ NeuralBus; ThermalGuardian; XMemo memory/ephemeral cache; cognitive agents/Sabot
 
 ## Verification boundary
 
-The original 14-test suite passed before this follow-up. This follow-up adds deterministic evidence-ledger, contradiction, consent-gate, XMemo request-contract, HTTP-failure and offline-transport tests. These additions are awaiting a fresh CI run; do not treat them as passing until GitHub Actions reports success. Portable Swift verification does not validate physical iPad M1 memory, thermal behavior, or local-model performance.
+The original 14-test suite passed before this follow-up. The test target now contains 21 XCTest cases: the original 14 plus 7 deterministic regressions covering evidence-ledger support/contradictions/UNKNOWN, authenticated XMemo request construction and JSON payloads, HTTP/offline failures, separate write consent, and prevention of persistence after contradiction. The expanded suite is awaiting fresh CI; do not treat the 21 tests as passing until GitHub Actions reports success. Portable Swift verification does not validate physical iPad M1 memory, thermal behavior, or local-model performance.
