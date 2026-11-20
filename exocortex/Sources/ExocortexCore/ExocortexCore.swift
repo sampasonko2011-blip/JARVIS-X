@@ -220,19 +220,96 @@ public actor EphemeralWorkingSet{
 }
 // 4 Cognitive agents, Saboteur and bounded security
 public protocol CognitiveAgent:Sendable{var name:String{get};func process(_ input:[Float])async throws->[Float]}
-public struct SaboteurAgent:Sendable{
- public let minimumConfidence:Float;public init(minimumConfidence:Float=0.70){self.minimumConfidence=min(1,max(0,minimumConfidence))}
- public func validate(output:[Float],confidence:Float?)->Bool{guard !output.isEmpty,output.allSatisfy(\.isFinite),let c=confidence,c.isFinite else{return false};return c>=minimumConfidence && c<=1}
+public struct SaboteurAgent: Sendable {
+    public let minimumConfidence: Float
+    public init(minimumConfidence: Float = 0.70) { self.minimumConfidence = min(1, max(0, minimumConfidence)) }
+    public func validateStructure(output: [Float], confidence: Float?, expectedDimension: Int? = nil) -> Bool {
+        guard !output.isEmpty, output.allSatisfy(\.isFinite), let confidence, confidence.isFinite,
+              confidence >= minimumConfidence, confidence <= 1 else { return false }
+        return expectedDimension.map { $0 > 0 && output.count == $0 } ?? true
+    }
+    public func validateFacts(context: CognitiveTurnContext, claims: [EvidenceClaim]) -> EvidenceValidation {
+        EvidenceLedger().evaluate(claims: claims, against: context.allEvidence)
+    }
+    public func validate(output: [Float], confidence: Float?) -> Bool {
+        validateStructure(output: output, confidence: confidence)
+    }
 }
-public enum AntiUltronShield{public static func accepts(payload:Data,maximumBytes:Int=65_536)->Bool{payload.count<=max(0,maximumBytes)}}
-// 5 Orchestrator uses an injected actual reasoning runtime
-public struct ReasoningResult:Sendable,Equatable{public let output:[Float];public let confidence:Float?;public init(output:[Float],confidence:Float?){self.output=output;self.confidence=confidence}}
-public protocol ReasoningEngine:Sendable{func reason(input:[Float],cycleBudget:Int)async throws->ReasoningResult}
-public struct OrchestrationDecision:Sendable,Equatable{public let approved:Bool;public let confidence:Float?;public let output:[Float];public let reason:String}
-public struct ExocortexOrchestrator:Sendable{
- private let engine:any ReasoningEngine;private let saboteur:SaboteurAgent
- public init(engine:any ReasoningEngine,saboteur:SaboteurAgent=SaboteurAgent()){self.engine=engine;self.saboteur=saboteur}
- public func think(seed:[Float],budget:ThermalBudget)async throws->OrchestrationDecision{guard !seed.isEmpty,seed.allSatisfy(\.isFinite) else{throw ExocortexError.invalidVector};let r=try await engine.reason(input:seed,cycleBudget:budget.reasoningCycles);let ok=saboteur.validate(output:r.output,confidence:r.confidence);return OrchestrationDecision(approved:ok,confidence:r.confidence,output:ok ? r.output:[],reason:ok ? "validated_by_configured_policy":"confidence_or_output_not_validated")}
+public enum AntiUltronShield { public static func accepts(payload: Data, maximumBytes: Int = 65_536) -> Bool { payload.count <= max(0, maximumBytes) } }
+// 5 Orchestrator uses an injected contextual reasoning runtime
+public struct ReasoningResult: Sendable, Equatable {
+    public let output: [Float]
+    public let confidence: Float?
+    public let claims: [EvidenceClaim]
+    public init(output: [Float], confidence: Float?, claims: [EvidenceClaim] = []) {
+        self.output = output
+        self.confidence = confidence
+        self.claims = claims
+    }
+}
+public protocol ReasoningEngine: Sendable {
+    func reason(input: [Float], cycleBudget: Int) async throws -> ReasoningResult
+}
+public protocol ContextualReasoningEngine: ReasoningEngine {
+    func reason(context: CognitiveTurnContext, cycleBudget: Int) async throws -> ReasoningResult
+}
+public struct OrchestrationDecision: Sendable, Equatable {
+    public let approved: Bool
+    public let confidence: Float?
+    public let output: [Float]
+    public let reason: String
+    public let evidenceValidation: EvidenceValidation
+}
+public struct ExocortexOrchestrator: Sendable {
+    private let engine: any ReasoningEngine
+    private let saboteur: SaboteurAgent
+    private let memoryStore: (any DurableMemoryStore)?
+    public init(engine: any ReasoningEngine, saboteur: SaboteurAgent = SaboteurAgent(), memoryStore: (any DurableMemoryStore)? = nil) {
+        self.engine = engine
+        self.saboteur = saboteur
+        self.memoryStore = memoryStore
+    }
+    public func think(seed: [Float], budget: ThermalBudget) async throws -> OrchestrationDecision {
+        guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
+        let result = try await engine.reason(input: seed, cycleBudget: budget.reasoningCycles)
+        return decide(result, context: CognitiveTurnContext())
+    }
+    public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget) async throws -> OrchestrationDecision {
+        guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
+        guard let contextualEngine = engine as? any ContextualReasoningEngine else {
+            throw ExocortexError.contextualEngineRequired
+        }
+        let result = try await contextualEngine.reason(context: context, cycleBudget: budget.reasoningCycles)
+        return decide(result, context: context)
+    }
+    private func decide(_ result: ReasoningResult, context: CognitiveTurnContext) -> OrchestrationDecision {
+        let structural = saboteur.validateStructure(output: result.output, confidence: result.confidence)
+        let factual = saboteur.validateFacts(context: context, claims: context.claims + result.claims)
+        let approved = structural && factual.mayPersist
+        let reason: String
+        if !structural { reason = "structural_validation_failed" }
+        else if !factual.contradictions.isEmpty { reason = "factual_contradiction_detected" }
+        else if !factual.mayPersist { reason = "evidence_unknown_or_unsupported" }
+        else { reason = "structural_and_evidence_checks_passed" }
+        return OrchestrationDecision(
+            approved: approved,
+            confidence: result.confidence,
+            output: approved ? result.output : [],
+            reason: reason,
+            evidenceValidation: factual
+        )
+    }
+    public func recallContext(_ query: String, consent: Bool, userAccessToken: String) async throws -> CognitiveTurnContext {
+        guard let memoryStore else { throw ExocortexError.invalidEndpoint }
+        let recall = try await memoryStore.recall(query, consent: consent, userAccessToken: userAccessToken)
+        return CognitiveTurnContext(memoryRecall: recall)
+    }
+    public func rememberValidated(_ content: String, decision: OrchestrationDecision, consent: Bool, userAccessToken: String) async throws -> MemoryReceipt {
+        guard decision.approved, decision.evidenceValidation.mayPersist else { throw ExocortexError.validationRejected }
+        guard consent else { throw ExocortexError.memoryConsentRequired }
+        guard let memoryStore else { throw ExocortexError.invalidEndpoint }
+        return try await memoryStore.remember(content, consent: true, userAccessToken: userAccessToken)
+    }
 }
 // 6 Evolution and background scheduling contract
 public struct CandidateScore:Sendable,Equatable{public let candidateID:String;public let heldOutScore:Double;public init(candidateID:String,heldOutScore:Double){self.candidateID=candidateID;self.heldOutScore=heldOutScore}}
