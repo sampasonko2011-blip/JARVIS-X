@@ -1,4 +1,7 @@
 import XCTest
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import ExocortexCore
 
 
@@ -20,7 +23,8 @@ private actor StubMemoryTransport: MemoryHTTPTransport {
     }
     func request() -> URLRequest? { storedRequest }
 }
-\n
+
+
 private struct FixedContextualEngine: ContextualReasoningEngine {
     let result: ReasoningResult
     func reason(input: [Float], cycleBudget: Int) async throws -> ReasoningResult { result }
@@ -39,7 +43,8 @@ private actor MemoryWriteSpy: DurableMemoryStore {
     }
     func writeCount() -> Int { writes }
 }
-\nfinal class ExocortexCoreTests: XCTestCase {
+
+final class ExocortexCoreTests: XCTestCase {
     func testBusCapacityAndValidation() async throws {
         let bus = try NeuralBus(dimension: 1, capacity: 1)
         try await bus.publish(VectorMessage(source: "a", values: [1]))
@@ -144,6 +149,108 @@ private actor MemoryWriteSpy: DurableMemoryStore {
         let result = try GameTheoryStrategist().maximin([[3, 1], [2, 2]])
         XCTAssertEqual(result.row, 1)
         XCTAssertEqual(result.guaranteedGain, 2)
+    }
+
+
+    func testEvidenceLedgerRejectsContradictionsAndMarksUnknown() {
+        let fact = EvidenceRecord(propositionKey: "device.chip", value: "M1", source: .xmemo, provenance: "xmemo://memory/42", score: 0.98)
+        let context = CognitiveTurnContext(memoryRecall: MemoryRecall(status: "recalled", context: "Chip: M1"), memoryEvidence: [fact])
+        let contradiction = SaboteurAgent().validateFacts(context: context, claims: [
+            EvidenceClaim(propositionKey: "device.chip", value: "M2")
+        ])
+        XCTAssertEqual(contradiction.disposition, .rejected)
+        XCTAssertEqual(contradiction.contradictions, ["device.chip"])
+        XCTAssertFalse(contradiction.mayPersist)
+        let unknown = SaboteurAgent().validateFacts(context: context, claims: [
+            EvidenceClaim(propositionKey: "device.ram", value: "16 GB")
+        ])
+        XCTAssertEqual(unknown.unknownClaims, ["device.ram"])
+        XCTAssertFalse(unknown.mayPersist)
+    }
+
+    func testEvidenceLedgerAcceptsOnlySupportedClaim() {
+        let fact = EvidenceRecord(propositionKey: "device.chip", value: "M1", source: .xmemo, provenance: "xmemo://memory/42", score: 0.98)
+        let context = CognitiveTurnContext(memoryEvidence: [fact])
+        let claim = EvidenceClaim(propositionKey: "device.chip", value: "M1", supportingEvidenceIDs: [fact.id])
+        let result = SaboteurAgent().validateFacts(context: context, claims: [claim])
+        XCTAssertEqual(result.disposition, .accepted)
+        XCTAssertTrue(result.mayPersist)
+    }
+
+    func testXMemoRecallBuildsAuthenticatedContractRequest() async throws {
+        let transport = StubMemoryTransport(responseBody: Data(#"{"status":"recalled","context":"Chip: M1"}"#.utf8))
+        let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/functions/v1/hq-gateway-v12")!, anonKey: "publishable", transport: transport)
+        let result = try await memory.recall("What chip?", consent: true, userAccessToken: "user-session")
+        XCTAssertEqual(result.status, "recalled")
+        XCTAssertEqual(result.context, "Chip: M1")
+        let request = await transport.request()
+        XCTAssertEqual(request?.httpMethod, "POST")
+        XCTAssertEqual(request?.url?.absoluteString, "https://example.test/functions/v1/hq-gateway-v12/memory/xmemo/recall")
+        XCTAssertEqual(request?.value(forHTTPHeaderField: "apikey"), "publishable")
+        XCTAssertEqual(request?.value(forHTTPHeaderField: "Authorization"), "Bearer user-session")
+        let body = try XCTUnwrap(request?.httpBody)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["consent"] as? Bool, true)
+        XCTAssertEqual(json["query"] as? String, "What chip?")
+    }
+
+    func testXMemoRejectsRememberWithoutConsentBeforeTransport() async throws {
+        let transport = StubMemoryTransport(responseBody: Data(#"{"status":"stored"}"#.utf8))
+        let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/gateway/")!, anonKey: "publishable", transport: transport)
+        do {
+            _ = try await memory.remember("private note", consent: false, userAccessToken: "session")
+            XCTFail("Expected consent gate")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
+        let capturedRequest = await transport.request()
+        XCTAssertNil(capturedRequest)
+    }
+
+    func testXMemoMapsHTTPFailureAndOfflineTransport() async throws {
+        let failedHTTP = StubMemoryTransport(statusCode: 503, responseBody: Data())
+        let memory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/gateway/")!, anonKey: "publishable", transport: failedHTTP)
+        do {
+            _ = try await memory.recall("query", consent: true, userAccessToken: "session")
+            XCTFail("Expected HTTP error")
+        } catch { XCTAssertEqual(error as? ExocortexError, .httpStatus(503)) }
+        let offline = StubMemoryTransport(responseBody: Data(), shouldFail: true)
+        let offlineMemory = try XMemoMemoryStore(gatewayURL: URL(string: "https://example.test/gateway/")!, anonKey: "publishable", transport: offline)
+        do {
+            _ = try await offlineMemory.recall("query", consent: true, userAccessToken: "session")
+            XCTFail("Expected offline transport error")
+        } catch { XCTAssertTrue(error is URLError) }
+    }
+
+    func testOrchestratorBlocksContradictionAndNeverPersistsIt() async throws {
+        let memory = MemoryWriteSpy()
+        let fact = EvidenceRecord(propositionKey: "device.chip", value: "M1", source: .xmemo, provenance: "xmemo://memory/42")
+        let context = CognitiveTurnContext(memoryEvidence: [fact])
+        let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99, claims: [
+            EvidenceClaim(propositionKey: "device.chip", value: "M2")
+        ]))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(seed: [0], context: context, budget: ThermalGuardian.budget(for: .nominal))
+        XCTAssertFalse(decision.approved)
+        XCTAssertEqual(decision.reason, "factual_contradiction_detected")
+        do {
+            _ = try await orchestrator.rememberValidated("turn", decision: decision, consent: true, userAccessToken: "session")
+            XCTFail("Contradictory result must not be persisted")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
+    }
+
+    func testOrchestratorRequiresSeparateMemoryConsentAfterValidation() async throws {
+        let memory = MemoryWriteSpy()
+        let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(seed: [0], context: CognitiveTurnContext(), budget: ThermalGuardian.budget(for: .nominal))
+        XCTAssertTrue(decision.approved)
+        do {
+            _ = try await orchestrator.rememberValidated("turn", decision: decision, consent: false, userAccessToken: "session")
+            XCTFail("Separate persistence consent must be required")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
     }
 
     func testVoiceFeaturesAreAcousticOnly() throws {
