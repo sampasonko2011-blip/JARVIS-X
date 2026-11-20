@@ -13,7 +13,7 @@ if(boot){
  collapse.className='jx-v32-collapse';burst.className='jx-v32-supernova';lock.className='jx-v32-lock';
  [collapse,burst,lock].forEach(n=>{n.setAttribute('aria-hidden','true');boot.prepend(n)});
  let skipped=false;
- const skip=()=>{if(skipped)return;skipped=true;try{sessionStorage.setItem('jx_boot_seen','1');sessionStorage.setItem('jx_v54_boot_seen','1')}catch{}boot.classList.add('done');boot.classList.remove('jx-v32-act-1','jx-v32-act-2','jx-v32-act-3');boot.style.pointerEvents='none';boot.style.display='none'};
+ const skip=()=>{if(skipped)return;skipped=true;try{sessionStorage.setItem('jx_boot_seen','1');sessionStorage.setItem('jx_v54_boot_seen','1')}catch{}boot.classList.add('done');boot.classList.remove('jx-v32-act-1','jx-v32-act-2','jx-v32-act-3');boot.classList.add('boot-dismissed')};
  boot.addEventListener('pointerdown',e=>{if(e.target.closest('#skip-boot'))return;skip()},{passive:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')skip()});
  $('#skip-boot')?.addEventListener('click',skip);
