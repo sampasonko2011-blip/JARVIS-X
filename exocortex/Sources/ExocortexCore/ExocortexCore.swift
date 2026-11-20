@@ -61,7 +61,8 @@ public struct EvidenceLedger:Sendable{
    let supported=matches.contains{$0.polarity==claim.polarity && $0.value.caseInsensitiveCompare(claim.value) == .orderedSame && (cited.isEmpty || cited.contains($0.id))}
    if !supported{unknown.append(claim.propositionKey);if !cited.isEmpty{unsupported.append(claim.propositionKey)}}
   }
-  let uniqueContradictions=Array(Set(contradictions)).sorted(),uniqueUnknown=Array(Set(unknown)).sorted(),uniqueUnsupported=Array(Set(unsupported)).sorted()\n  return EvidenceValidation(disposition:uniqueContradictions.isEmpty && uniqueUnknown.isEmpty ? .accepted:.rejected,contradictions:uniqueContradictions,unknownClaims:uniqueUnknown,unsupportedClaims:uniqueUnsupported)
+  let uniqueContradictions=Array(Set(contradictions)).sorted(),uniqueUnknown=Array(Set(unknown)).sorted(),uniqueUnsupported=Array(Set(unsupported)).sorted()
+  return EvidenceValidation(disposition:uniqueContradictions.isEmpty && uniqueUnknown.isEmpty ? .accepted:.rejected,contradictions:uniqueContradictions,unknownClaims:uniqueUnknown,unsupportedClaims:uniqueUnsupported)
  }
 }
 public struct CognitiveTurnContext:Sendable,Equatable{
