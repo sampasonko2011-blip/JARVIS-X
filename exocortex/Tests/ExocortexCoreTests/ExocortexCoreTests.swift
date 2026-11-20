@@ -30,6 +30,19 @@ private struct FixedContextualEngine: ContextualReasoningEngine {
     func reason(input: [Float], cycleBudget: Int) async throws -> ReasoningResult { result }
     func reason(context: CognitiveTurnContext, cycleBudget: Int) async throws -> ReasoningResult { result }
 }
+
+private actor ContextCaptureEngine: ContextualReasoningEngine {
+    let result: ReasoningResult
+    private var captured: CognitiveTurnContext?
+    init(result: ReasoningResult) { self.result = result }
+    func reason(input: [Float], cycleBudget: Int) async throws -> ReasoningResult { result }
+    func reason(context: CognitiveTurnContext, cycleBudget: Int) async throws -> ReasoningResult {
+        captured = context
+        return result
+    }
+    func capturedContext() -> CognitiveTurnContext? { captured }
+}
+
 private actor MemoryWriteSpy: DurableMemoryStore {
     private(set) var writes = 0
     func recall(_ query: String, consent: Bool, userAccessToken: String) async throws -> MemoryRecall {
@@ -234,6 +247,83 @@ final class ExocortexCoreTests: XCTestCase {
             _ = try await offlineMemory.recall("query", consent: true, userAccessToken: "session")
             XCTFail("Expected offline transport error")
         } catch { XCTAssertTrue(error is URLError) }
+    }
+
+
+    func testOrchestratorCollectsXMemoWorkingSetAndExecutedToolEvidenceAndRequiresWriteConsent() async throws {
+        let memory = MemoryWriteSpy()
+        let workingSet = EphemeralWorkingSet(ttl: 172_800)
+        let workingFact = EvidenceRecord(
+            propositionKey: "session.goal",
+            value: "learn swift",
+            source: .workingSet,
+            provenance: "working-set://entry/goal"
+        )
+        try await workingSet.storeEvidence(workingFact)
+
+        let toolRegistry = ToolRegistry(allowedNames: ["calendar.lookup"])
+        let toolRequest = ToolRequest(name: "calendar.lookup", payload: Data("today".utf8))
+        let toolFact = try await toolRegistry.recordExecutedResult(
+            toolRequest,
+            result: ToolExecutionResult(
+                propositionKey: "calendar.today",
+                value: "free",
+                provenance: "tool://calendar.lookup/result/1"
+            )
+        )
+        XCTAssertEqual(toolFact.source, .tool)
+
+        let xmemoFact = EvidenceRecord(
+            propositionKey: "profile.preference",
+            value: "concise",
+            source: .xmemo,
+            provenance: "xmemo://memory/42",
+            score: 0.97
+        )
+        let recall = MemoryRecall(status: "recalled", context: "User prefers concise explanations")
+        let context = CognitiveTurnContext(memoryRecall: recall, memoryEvidence: [xmemoFact])
+        let engine = ContextCaptureEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            claims: [EvidenceClaim(
+                propositionKey: "session.goal",
+                value: "learn swift",
+                supportingEvidenceIDs: [workingFact.id]
+            )]
+        ))
+        let orchestrator = ExocortexOrchestrator(
+            engine: engine,
+            memoryStore: memory,
+            workingSet: workingSet,
+            toolRegistry: toolRegistry
+        )
+
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: context,
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(decision.approved)
+        let captured = await engine.capturedContext()
+        let evidence = try XCTUnwrap(captured).allEvidence
+        XCTAssertTrue(evidence.contains { $0.source == .xmemo && $0.provenance == "xmemo://memory/42" })
+        XCTAssertTrue(evidence.contains { $0.source == .workingSet && $0.id == workingFact.id })
+        XCTAssertTrue(evidence.contains { $0.source == .tool && $0.id == toolFact.id })
+        XCTAssertTrue(evidence.contains { $0.propositionKey == "xmemo.recall.context" })
+
+        do {
+            _ = try await orchestrator.rememberValidated(
+                "approved turn",
+                decision: decision,
+                consent: false,
+                userAccessToken: "user-session"
+            )
+            XCTFail("XMemo persistence must require separate explicit consent")
+        } catch {
+            XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired)
+        }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
     }
 
     func testOrchestratorBlocksContradictionAndNeverPersistsIt() async throws {
