@@ -269,6 +269,76 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(writes, 0)
     }
 
+
+    func testAutomaticEvidenceCollectionBlocksXMemoWriteWithoutSeparateConsent() async throws {
+        let memory = MemoryWriteSpy()
+        let workingSet = EphemeralWorkingSet()
+        let workingFact = EvidenceRecord(
+            propositionKey: "device.ram",
+            value: "8 GB",
+            source: .workingSet,
+            provenance: "working-set://entry/ram",
+            observedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        try await workingSet.storeEvidence(workingFact)
+        let journal = EphemeralToolEvidenceJournal()
+        let registry = ToolRegistry(allowedNames: ["inspect"], journal: journal)
+        let request = ToolRequest(name: "inspect", payload: Data("{}".utf8))
+        let toolFact = try await registry.recordExecutedResult(
+            request,
+            result: ToolExecutionResult(
+                propositionKey: "device.os",
+                value: "iPadOS",
+                provenance: "tool://inspect/run-7",
+                completedAt: Date(timeIntervalSince1970: 1_700_000_001)
+            )
+        )
+        XCTAssertEqual(toolFact.source, .tool)
+        let xmemoFact = EvidenceRecord(
+            propositionKey: "device.chip",
+            value: "M1",
+            source: .xmemo,
+            provenance: "xmemo://memory/42",
+            observedAt: Date(timeIntervalSince1970: 1_700_000_002)
+        )
+        let context = CognitiveTurnContext(
+            memoryRecall: MemoryRecall(status: "recalled", context: "Chip M1"),
+            memoryEvidence: [xmemoFact]
+        )
+        let engine = FixedContextualEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            claims: [
+                EvidenceClaim(propositionKey: "device.ram", value: "8 GB", supportingEvidenceIDs: [workingFact.id]),
+                EvidenceClaim(propositionKey: "device.os", value: "iPadOS", supportingEvidenceIDs: [toolFact.id]),
+                EvidenceClaim(propositionKey: "device.chip", value: "M1", supportingEvidenceIDs: [xmemoFact.id])
+            ]
+        ))
+        let orchestrator = ExocortexOrchestrator(
+            engine: engine,
+            memoryStore: memory,
+            workingSet: workingSet,
+            toolRegistry: registry
+        )
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: context,
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(decision.approved)
+        do {
+            _ = try await orchestrator.rememberValidated(
+                "validated turn",
+                decision: decision,
+                consent: false,
+                userAccessToken: "session"
+            )
+            XCTFail("XMemo write must require separate explicit consent")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
+    }
+
     func testVoiceFeaturesAreAcousticOnly() throws {
         let features = try VoiceBiometricMonitor.analyze([1, -1, 1, -1])
         XCTAssertEqual(features.rms, 1, accuracy: 0.0001)
