@@ -1,7 +1,26 @@
 import XCTest
 @testable import ExocortexCore
 
-final class ExocortexCoreTests: XCTestCase {
+
+private actor StubMemoryTransport: MemoryHTTPTransport {
+    private let statusCode: Int
+    private let responseBody: Data
+    private let shouldFail: Bool
+    private var storedRequest: URLRequest?
+    init(statusCode: Int = 200, responseBody: Data, shouldFail: Bool = false) {
+        self.statusCode = statusCode
+        self.responseBody = responseBody
+        self.shouldFail = shouldFail
+    }
+    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        storedRequest = request
+        if shouldFail { throw URLError(.notConnectedToInternet) }
+        let response = HTTPURLResponse(url: request.url!, statusCode: statusCode, httpVersion: nil, headerFields: nil)!
+        return (responseBody, response)
+    }
+    func request() -> URLRequest? { storedRequest }
+}
+\nfinal class ExocortexCoreTests: XCTestCase {
     func testBusCapacityAndValidation() async throws {
         let bus = try NeuralBus(dimension: 1, capacity: 1)
         try await bus.publish(VectorMessage(source: "a", values: [1]))
