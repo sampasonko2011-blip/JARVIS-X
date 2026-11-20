@@ -1,0 +1,25 @@
+name: Exocortex Swift Core
+on:
+  pull_request:
+    paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
+  push:
+    branches: [main]
+    paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
+permissions:
+  contents: read
+jobs:
+  swift-core:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: exocortex
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: swift --version && xcodebuild -version
+      - name: Unit tests
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Release build
+        run: swift build -c release -Xswiftc -warnings-as-errors
+      - name: iOS Simulator build
+        run: xcodebuild -scheme ExocortexCore -destination 'generic/platform=iOS Simulator' build
