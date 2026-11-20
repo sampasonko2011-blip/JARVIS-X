@@ -3,7 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload }
+public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected }
 public struct VectorMessage: Codable, Equatable, Sendable {
  public let id:UUID; public let source:String; public let values:[Float]; public let createdAt:Date
  public init(id:UUID=UUID(),source:String,values:[Float],createdAt:Date = .now){self.id=id;self.source=source;self.values=values;self.createdAt=createdAt}
@@ -25,6 +25,47 @@ public enum ThermalGuardian{
 // 3 XMemo durable memory; old FractalMemory replaced by RAM-only cache
 public struct MemoryRecall:Codable,Sendable,Equatable{public let status:String;public let context:String}
 public struct MemoryReceipt:Codable,Sendable,Equatable{public let status:String;public let receipt:String?}
+public enum EvidenceSource:String,Codable,Sendable{case xmemo,workingSet,tool,runtime}
+public enum EvidencePolarity:String,Codable,Sendable{case affirmed,denied}
+public struct EvidenceRecord:Codable,Sendable,Equatable{
+ public let id:UUID;public let propositionKey:String;public let value:String;public let polarity:EvidencePolarity
+ public let source:EvidenceSource;public let provenance:String;public let score:Double?;public let observedAt:Date
+ public init(id:UUID=UUID(),propositionKey:String,value:String,polarity:EvidencePolarity = .affirmed,source:EvidenceSource,provenance:String,score:Double?=nil,observedAt:Date = .now){
+  self.id=id;self.propositionKey=propositionKey.trimmingCharacters(in:.whitespacesAndNewlines).lowercased();self.value=value;self.polarity=polarity;self.source=source;self.provenance=provenance;self.score=score;self.observedAt=observedAt
+ }
+}
+public struct EvidenceClaim:Codable,Sendable,Equatable{
+ public let propositionKey:String;public let value:String;public let polarity:EvidencePolarity;public let supportingEvidenceIDs:[UUID]
+ public init(propositionKey:String,value:String,polarity:EvidencePolarity = .affirmed,supportingEvidenceIDs:[UUID]=[]){self.propositionKey=propositionKey.trimmingCharacters(in:.whitespacesAndNewlines).lowercased();self.value=value;self.polarity=polarity;self.supportingEvidenceIDs=supportingEvidenceIDs}
+}
+public enum EvidenceDisposition:String,Codable,Sendable{case accepted,rejected}
+public struct EvidenceValidation:Codable,Sendable,Equatable{
+ public let disposition:EvidenceDisposition;public let contradictions:[String];public let unknownClaims:[String];public let unsupportedClaims:[String]
+ public var mayPersist:Bool{disposition == .accepted && contradictions.isEmpty}
+}
+public struct EvidenceLedger:Sendable{
+ public init(){}
+ public func evaluate(claims:[EvidenceClaim],against records:[EvidenceRecord])->EvidenceValidation{
+  var contradictions:[String]=[],unknown:[String]=[],unsupported:[String]=[]
+  for claim in claims{
+   let matches=records.filter{$0.propositionKey==claim.propositionKey}
+   let conflict=matches.contains{$0.polarity != claim.polarity || $0.value.caseInsensitiveCompare(claim.value) != .orderedSame}
+   if conflict{contradictions.append(claim.propositionKey);continue}
+   let cited=Set(claim.supportingEvidenceIDs)
+   let supported=matches.contains{$0.polarity==claim.polarity && $0.value.caseInsensitiveCompare(claim.value)==.orderedSame && (cited.isEmpty || cited.contains($0.id))}
+   if !supported{unknown.append(claim.propositionKey);if !cited.isEmpty{unsupported.append(claim.propositionKey)}}
+  }
+  return EvidenceValidation(disposition:contradictions.isEmpty ? .accepted:.rejected,contradictions:Array(Set(contradictions)).sorted(),unknownClaims:Array(Set(unknown)).sorted(),unsupportedClaims:Array(Set(unsupported)).sorted())
+ }
+}
+public struct CognitiveTurnContext:Sendable,Equatable{
+ public let memoryRecall:MemoryRecall?;public let workingSetEvidence:[EvidenceRecord];public let toolEvidence:[EvidenceRecord]
+ public let evidence:[EvidenceRecord];public let claims:[EvidenceClaim]
+ public init(memoryRecall:MemoryRecall?=nil,workingSetEvidence:[EvidenceRecord]=[],toolEvidence:[EvidenceRecord]=[],evidence:[EvidenceRecord]=[],claims:[EvidenceClaim]=[]){
+  self.memoryRecall=memoryRecall;self.workingSetEvidence=workingSetEvidence;self.toolEvidence=toolEvidence;self.evidence=evidence;self.claims=claims
+ }
+ public var allEvidence:[EvidenceRecord]{evidence+workingSetEvidence+toolEvidence}
+}
 public protocol DurableMemoryStore:Sendable{
  func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall
  func remember(_ content:String,consent:Bool,userAccessToken:String)async throws->MemoryReceipt
