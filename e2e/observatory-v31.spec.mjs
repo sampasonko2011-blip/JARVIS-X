@@ -19,7 +19,7 @@ test("v31 dock opens modules and persists touch-friendly move and resize", async
  await page.mouse.move(rb.x+rb.width/2,rb.y+rb.height/2); await page.mouse.down();
  await page.mouse.move(rb.x+rb.width/2+55,rb.y+rb.height/2+40); await page.mouse.up();
  await expect.poll(async()=>page.evaluate(()=>JSON.parse(localStorage.getItem("jarvis_x_v31_panel_geometry")||"{}").chat?.width)).toBeGreaterThan(sizeBefore.width);
- await page.reload(); const skipBoot = page.locator("#skip-boot"); if (await skipBoot.isVisible().catch(() => false)) await skipBoot.click({ timeout: 1500 });
+ await page.reload(); const skipBootAgain = page.locator("#skip-boot"); if (await skipBootAgain.isVisible().catch(() => false)) await skipBootAgain.click({ timeout: 1500 });
  await page.locator(".dock [data-v29-add='chat']").click();
  await expect.poll(async()=>page.locator(".v29-panel[data-type='chat']").evaluate(n=>getComputedStyle(n).width)).toContain("px");
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("jarvis_x_v31_panel_geometry")||"{}").chat);
