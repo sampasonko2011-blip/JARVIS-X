@@ -1,4 +1,5 @@
 import "./jarvis-brain-v36.js";
+import "./v54-harmony-core.js";
 import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 import { createLocalMemoryBridge } from "./local-memory-bridge.js";
@@ -110,6 +111,12 @@ let engine = null;
 let messages = [{ role: "system", content: SYSTEM }];
 let busy = false;
 let loadStage = "idle";
+function publishLocalTelemetry(statusValue, modelId = modelSelect?.value || "UNKNOWN", tokensPerSec = null) {
+  window.JXHarmonyCore?.publishSystemState({
+    localEngine: { modelId: modelId || "UNKNOWN", status: statusValue, backend: "WebGPU", tokensPerSec }
+  }, "local-chat-engine");
+}
+publishLocalTelemetry("IDLE", "UNKNOWN");
 let reflection = { turns: 0, failures: 0, lastMode: "balanced" };
 filterModelOptionsToInstalledPackage();
 
@@ -162,6 +169,7 @@ loadButton.addEventListener("click", async () => {
   }
   setBusy(true);
   status.textContent = "LOADING";
+  publishLocalTelemetry("LOADING", modelSelect?.value || "UNKNOWN");
   status.removeAttribute("data-active-model");
   status.setAttribute("aria-label", "LOADING");
   loadStage = "adapter";
@@ -192,6 +200,7 @@ loadButton.addEventListener("click", async () => {
     });
     loadStage = "ready";
     status.textContent = "READY · " + selectedModel;
+    publishLocalTelemetry("READY", selectedModel);
     status.dataset.activeModel = selectedModel;
     status.setAttribute("aria-label", "READY · " + selectedModel);
     window.JARVIS_BRAIN_V36?.setProviderStatus({provider:"local-m1",label:"LOCAL M1 · ACTIVE · NO CLOUD PROVIDER ATTEMPTED"});
@@ -202,6 +211,7 @@ loadButton.addEventListener("click", async () => {
   } catch (error) {
     engine = null;
     status.textContent = "LOAD FAILED";
+    publishLocalTelemetry("FAILED", modelSelect?.value || "UNKNOWN");
     status.removeAttribute("data-active-model");
     status.setAttribute("aria-label", "LOAD FAILED");
     const errorName = error instanceof Error ? error.name : "UnknownError";
@@ -326,6 +336,7 @@ sendButton.addEventListener("click", async () => {
     if (!answer) answer = "Je suis JARVIS-X. Peux-tu reformuler ta demande ?";
     output.textContent = answer;
     messages.push({ role: "assistant", content: answer });
+    publishLocalTelemetry("READY", modelSelect?.value || "UNKNOWN");
     messages[0].content = SYSTEM;
     messages = compactLocalHistory(messages, modelSelect?.value);
 
@@ -373,6 +384,7 @@ sendButton.addEventListener("click", async () => {
     input.value = text;
     pendingAttachmentContext = attachment;
     reflectState("failed", reason, true);
+    publishLocalTelemetry("FAILED", modelSelect?.value || "UNKNOWN");
     progress.textContent = "Generation failed. Your message is ready to retry: " + reason;
   } finally {
     setBusy(false);
