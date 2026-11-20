@@ -1511,6 +1511,26 @@
           "note": "Code-generation retest was rejected by the Gemini connector with HTTP 429 RESOURCE_EXHAUSTED before a model response was returned. This is not a model failure and does not count as a test."
         }
       }
+    },
+    {
+      "id": "qwen35-08b-local-evaluation",
+      "kind": "open-weight-model-candidate",
+      "roles": [
+        "multilingual",
+        "multimodal-analysis",
+        "lightweight-structured-tasks"
+      ],
+      "access": "Official Qwen/Qwen3.5-0.8B model card observed on 2026-11-07; 0.8B parameters and Apache-2.0. Public listing shows 1.77 GB safetensors artifact. Exact iPad-compatible runtime, quantized checkpoint, device fit and model invocation are not verified.",
+      "zero_cost_runtime": "Potentially no per-request fee with local inference; hardware, storage, memory and energy costs remain. No working zero-cost route is currently verified.",
+      "status": "OBSERVED",
+      "note": "Evaluation-only small-model candidate. Public model-card and Apache-2.0 licence are OBSERVED; JARVIS-X task quality and deployment fit are UNPROVEN. Do not assign to active role layers or promote without exact runtime/checkpoint identity, device-fit tests, fixed blind benchmark and held-out retest.",
+      "source_url": "https://huggingface.co/Qwen/Qwen3.5-0.8B",
+      "source_checked_at": "2026-11-07",
+      "license": "Apache-2.0",
+      "checkpoint": "Qwen/Qwen3.5-0.8B",
+      "artifact_size": "1.77 GB",
+      "benchmark_status": "UNPROVEN",
+      "execution_status": "NOT_INSTALLED_NOT_CONNECTED_NOT_INVOKED"
     }
   ],
   "evaluation_plan": {
