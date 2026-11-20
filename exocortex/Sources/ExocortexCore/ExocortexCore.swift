@@ -140,6 +140,16 @@ public struct CognitiveTurnContext: Sendable, Equatable {
     }
     /// Raw XMemo text is context, not proof. Only structured, provenance-bearing records enter the ledger.
     public var allEvidence: [EvidenceRecord] { evidence + memoryEvidence + workingSetEvidence + toolEvidence }
+    public func addingEvidence(memory: [EvidenceRecord] = [], workingSet: [EvidenceRecord] = [], tools: [EvidenceRecord] = []) -> CognitiveTurnContext {
+        CognitiveTurnContext(
+            memoryRecall: memoryRecall,
+            memoryEvidence: memoryEvidence + memory,
+            workingSetEvidence: workingSetEvidence + workingSet,
+            toolEvidence: toolEvidence + tools,
+            evidence: evidence,
+            claims: claims
+        )
+    }
 }
 public protocol DurableMemoryStore:Sendable{
  func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall
@@ -210,16 +220,68 @@ public actor XMemoMemoryStore: DurableMemoryStore {
     }
 }
 /// Temporary cache only, never a second durable memory database.
-public actor EphemeralWorkingSet{
- private struct Entry:Sendable{let vector:[Float];let expiry:Date}
- private var entries:[UUID:Entry]=[:];private let ttl:TimeInterval;private let capacity:Int
- public init(ttl:TimeInterval=172_800,capacity:Int=128){self.ttl=max(1,ttl);self.capacity=max(1,capacity)}
- public func store(_ v:[Float],now:Date = .now)throws->UUID{guard !v.isEmpty,v.allSatisfy(\.isFinite) else{throw ExocortexError.invalidVector};purge(now);if entries.count>=capacity,let key=entries.min(by:{$0.value.expiry<$1.value.expiry})?.key{entries.removeValue(forKey:key)};let id=UUID();entries[id]=Entry(vector:v,expiry:now.addingTimeInterval(ttl));return id}
- public func nearest(to q:[Float],now:Date = .now)throws->[Float]?{guard !q.isEmpty,q.allSatisfy(\.isFinite) else{throw ExocortexError.invalidVector};purge(now);return entries.values.filter{$0.vector.count==q.count}.max{cosine($0.vector,q)<cosine($1.vector,q)}?.vector}
- public func count(now:Date = .now)->Int{purge(now);return entries.count}
- public func clear(){entries.removeAll(keepingCapacity:false)}
- private func purge(_ now:Date){entries=entries.filter{$0.value.expiry>now}}
- private func cosine(_ a:[Float],_ b:[Float])->Float{let d=zip(a,b).reduce(Float.zero){$0+$1.0*$1.1};let aa=a.reduce(Float.zero){$0+$1*$1};let bb=b.reduce(Float.zero){$0+$1*$1};guard aa>0,bb>0 else{return 0};return d/(aa.squareRoot()*bb.squareRoot())}
+public actor EphemeralWorkingSet {
+    private struct Entry: Sendable { let vector: [Float]; let expiry: Date }
+    private var entries: [UUID: Entry] = [:]
+    private var evidenceEntries: [UUID: EvidenceRecord] = [:]
+    private let ttl: TimeInterval
+    private let capacity: Int
+    public init(ttl: TimeInterval = 172_800, capacity: Int = 128) {
+        self.ttl = max(1, ttl)
+        self.capacity = max(1, capacity)
+    }
+    public func store(_ vector: [Float], now: Date = .now) throws -> UUID {
+        guard !vector.isEmpty, vector.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
+        purge(now)
+        if entries.count >= capacity, let key = entries.min(by: { $0.value.expiry < $1.value.expiry })?.key {
+            entries.removeValue(forKey: key)
+        }
+        let id = UUID()
+        entries[id] = Entry(vector: vector, expiry: now.addingTimeInterval(ttl))
+        return id
+    }
+    public func nearest(to query: [Float], now: Date = .now) throws -> [Float]? {
+        guard !query.isEmpty, query.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
+        purge(now)
+        return entries.values.filter { $0.vector.count == query.count }
+            .max { cosine($0.vector, query) < cosine($1.vector, query) }?.vector
+    }
+    /// Adds a provenance-bearing fact to the same bounded, expiring RAM-only working set.
+    public func storeEvidence(_ record: EvidenceRecord, now: Date = .now) throws {
+        guard record.source == .workingSet,
+              !record.propositionKey.isEmpty,
+              !record.value.isEmpty,
+              !record.provenance.isEmpty else { throw ExocortexError.invalidPayload }
+        purge(now)
+        if evidenceEntries.count >= capacity,
+           let key = evidenceEntries.min(by: { $0.value.observedAt < $1.value.observedAt })?.key {
+            evidenceEntries.removeValue(forKey: key)
+        }
+        evidenceEntries[record.id] = record
+    }
+    public func evidenceSnapshot(now: Date = .now) -> [EvidenceRecord] {
+        purge(now)
+        return evidenceEntries.values.sorted { $0.observedAt < $1.observedAt }
+    }
+    public func count(now: Date = .now) -> Int {
+        purge(now)
+        return entries.count + evidenceEntries.count
+    }
+    public func clear() {
+        entries.removeAll(keepingCapacity: false)
+        evidenceEntries.removeAll(keepingCapacity: false)
+    }
+    private func purge(_ now: Date) {
+        entries = entries.filter { $0.value.expiry > now }
+        evidenceEntries = evidenceEntries.filter { $0.value.observedAt.addingTimeInterval(ttl) > now }
+    }
+    private func cosine(_ a: [Float], _ b: [Float]) -> Float {
+        let dot = zip(a, b).reduce(Float.zero) { $0 + $1.0 * $1.1 }
+        let aa = a.reduce(Float.zero) { $0 + $1 * $1 }
+        let bb = b.reduce(Float.zero) { $0 + $1 * $1 }
+        guard aa > 0, bb > 0 else { return 0 }
+        return dot / (aa.squareRoot() * bb.squareRoot())
+    }
 }
 // 4 Cognitive agents, Saboteur and bounded security
 public protocol CognitiveAgent:Sendable{var name:String{get};func process(_ input:[Float])async throws->[Float]}
@@ -267,23 +329,51 @@ public struct ExocortexOrchestrator: Sendable {
     private let engine: any ReasoningEngine
     private let saboteur: SaboteurAgent
     private let memoryStore: (any DurableMemoryStore)?
-    public init(engine: any ReasoningEngine, saboteur: SaboteurAgent = SaboteurAgent(), memoryStore: (any DurableMemoryStore)? = nil) {
+    private let workingSet: EphemeralWorkingSet?
+    private let toolRegistry: ToolRegistry?
+    public init(
+        engine: any ReasoningEngine,
+        saboteur: SaboteurAgent = SaboteurAgent(),
+        memoryStore: (any DurableMemoryStore)? = nil,
+        workingSet: EphemeralWorkingSet? = nil,
+        toolRegistry: ToolRegistry? = nil
+    ) {
         self.engine = engine
         self.saboteur = saboteur
         self.memoryStore = memoryStore
+        self.workingSet = workingSet
+        self.toolRegistry = toolRegistry
     }
     public func think(seed: [Float], budget: ThermalBudget) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
+        let context = await collectEvidence(into: CognitiveTurnContext())
         let result = try await engine.reason(input: seed, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: CognitiveTurnContext())
+        return decide(result, context: context)
     }
     public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
         guard let contextualEngine = engine as? any ContextualReasoningEngine else {
             throw ExocortexError.contextualEngineRequired
         }
-        let result = try await contextualEngine.reason(context: context, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: context)
+        let enriched = await collectEvidence(into: context)
+        let result = try await contextualEngine.reason(context: enriched, cycleBudget: budget.reasoningCycles)
+        return decide(result, context: enriched)
+    }
+    private func collectEvidence(into context: CognitiveTurnContext) async -> CognitiveTurnContext {
+        var memoryRecords: [EvidenceRecord] = []
+        if let recall = context.memoryRecall, !recall.context.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // This proves only that XMemo returned this exact text; it does not semantically certify claims inside it.
+            memoryRecords.append(EvidenceRecord(
+                propositionKey: "xmemo.recall.context",
+                value: recall.context,
+                source: .xmemo,
+                provenance: "POST /memory/xmemo/recall",
+                score: nil
+            ))
+        }
+        let workingRecords = await workingSet?.evidenceSnapshot() ?? []
+        let toolRecords = await toolRegistry?.evidenceSnapshot() ?? []
+        return context.addingEvidence(memory: memoryRecords, workingSet: workingRecords, tools: toolRecords)
     }
     private func decide(_ result: ReasoningResult, context: CognitiveTurnContext) -> OrchestrationDecision {
         let structural = saboteur.validateStructure(output: result.output, confidence: result.confidence)
@@ -320,13 +410,78 @@ public struct EvolutionArena:Sendable{public init(){};public func champion(from 
 }
 public protocol BackgroundEvolutionScheduling:Sendable{func submitRequiresExternalPower()async throws}
 // 7 Allowlisted tools; arbitrary JavaScript is not considered sandboxed
-public struct ToolRequest:Sendable,Equatable{public let name:String;public let payload:Data;public init(name:String,payload:Data){self.name=name;self.payload=payload}}
-public struct ToolRegistry:Sendable{
- private let names:Set<String>;private let maxBytes:Int
- public init(allowedNames:Set<String>,maximumPayloadBytes:Int=65_536){names=allowedNames;maxBytes=max(0,maximumPayloadBytes)}
- public func validate(_ r:ToolRequest)throws{guard names.contains(r.name) else{throw ExocortexError.toolNotAllowed};guard AntiUltronShield.accepts(payload:r.payload,maximumBytes:maxBytes) else{throw ExocortexError.invalidPayload}}
+public struct ToolRequest: Sendable, Equatable {
+    public let name: String
+    public let payload: Data
+    public init(name: String, payload: Data) { self.name = name; self.payload = payload }
 }
-public struct EphemeralToolCompiler:Sendable{private let registry:ToolRegistry;public init(registry:ToolRegistry){self.registry=registry};public func compile(_ r:ToolRequest)throws->ToolRequest{try registry.validate(r);return r}}
+public struct ToolExecutionResult: Sendable, Equatable {
+    public let propositionKey: String
+    public let value: String
+    public let provenance: String
+    public let completedAt: Date
+    public init(propositionKey: String, value: String, provenance: String, completedAt: Date = .now) {
+        self.propositionKey = propositionKey
+        self.value = value
+        self.provenance = provenance
+        self.completedAt = completedAt
+    }
+}
+public protocol ToolEvidenceJournal: Sendable {
+    func append(_ record: EvidenceRecord) async throws
+    func snapshot() async -> [EvidenceRecord]
+}
+public actor EphemeralToolEvidenceJournal: ToolEvidenceJournal {
+    private var records: [EvidenceRecord] = []
+    private let capacity: Int
+    public init(capacity: Int = 128) { self.capacity = max(1, capacity) }
+    public func append(_ record: EvidenceRecord) {
+        records.append(record)
+        if records.count > capacity { records.removeFirst(records.count - capacity) }
+    }
+    public func snapshot() -> [EvidenceRecord] { records }
+}
+public struct ToolRegistry: Sendable {
+    private let names: Set<String>
+    private let maxBytes: Int
+    private let journal: any ToolEvidenceJournal
+    public init(allowedNames: Set<String>, maximumPayloadBytes: Int = 65_536, journal: (any ToolEvidenceJournal)? = nil) {
+        names = allowedNames
+        maxBytes = max(0, maximumPayloadBytes)
+        self.journal = journal ?? EphemeralToolEvidenceJournal()
+    }
+    public func validate(_ request: ToolRequest) throws {
+        guard names.contains(request.name) else { throw ExocortexError.toolNotAllowed }
+        guard AntiUltronShield.accepts(payload: request.payload, maximumBytes: maxBytes) else {
+            throw ExocortexError.invalidPayload
+        }
+    }
+    /// Call only after the allowlisted tool has actually executed and returned this result.
+    @discardableResult
+    public func recordExecutedResult(_ request: ToolRequest, result: ToolExecutionResult) async throws -> EvidenceRecord {
+        try validate(request)
+        guard !result.propositionKey.isEmpty, !result.value.isEmpty, !result.provenance.isEmpty,
+              result.value.utf8.count <= maxBytes else { throw ExocortexError.invalidPayload }
+        let record = EvidenceRecord(
+            propositionKey: result.propositionKey,
+            value: result.value,
+            source: .tool,
+            provenance: result.provenance,
+            observedAt: result.completedAt
+        )
+        try await journal.append(record)
+        return record
+    }
+    public func evidenceSnapshot() async -> [EvidenceRecord] { await journal.snapshot() }
+}
+public struct EphemeralToolCompiler: Sendable {
+    private let registry: ToolRegistry
+    public init(registry: ToolRegistry) { self.registry = registry }
+    public func compile(_ request: ToolRequest) throws -> ToolRequest {
+        try registry.validate(request)
+        return request
+    }
+}
 // 8 Consent-gated sensor and trusted encrypted peer policies
 public struct SensorConsent:Sendable,Equatable{public let vision:Bool;public let pencil:Bool;public let spatial:Bool;public init(vision:Bool=false,pencil:Bool=false,spatial:Bool=false){self.vision=vision;self.pencil=pencil;self.spatial=spatial}}
 public protocol LocalTextRecognizer:Sendable{func recognizeText(from imageData:Data)async throws->String}
