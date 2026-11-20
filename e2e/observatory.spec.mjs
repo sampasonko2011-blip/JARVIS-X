@@ -80,3 +80,39 @@ test("iPad portrait and landscape layouts stay within viewport", async ({ page }
     await expect(page.locator(".sanctuary")).toBeVisible();
   }
 });
+
+
+test("v54 exposes honest UNKNOWN telemetry and bounded Monte Carlo simulation", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.goto("/observatory.html");
+  await expect(page.locator("#jx54-local")).toContainText("UNKNOWN");
+  await expect(page.locator("#jx54-cloud")).toContainText("UNKNOWN");
+  await expect(page.locator("#jx54-agents")).toContainText("UNKNOWN");
+  await expect(page.locator("#jx54-xmemo")).toContainText("UNKNOWN");
+  await page.locator("#jx54-simulate").click();
+  await expect(page.locator("#jx54-sim-result")).toContainText("SIMULATION_ONLY_NOT_LIVE_SYSTEM_PROBABILITY");
+  const dimensions = await page.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
+});
+
+test("v54 diagnostics report browser capabilities without claiming hardware readiness", async ({ page }) => {
+  await page.goto("/observatory.html");
+  await page.locator("#jx54-diagnostics").click();
+  await expect(page.locator("#jx54-diagnostic-result")).toContainText("serviceWorker");
+  await expect(page.locator("#jx54-diagnostic-result")).toContainText("AVAILABLE_NOT_TESTED");
+});
+
+test("v54 Observatory registers its service worker and caches v54 assets", async ({ page }) => {
+  await page.goto("/observatory.html");
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  const result = await page.evaluate(async () => {
+    const keys = await caches.keys();
+    const key = keys.find(value => value === "jarvis-x-hq-shell-v54");
+    const cache = key ? await caches.open(key) : null;
+    return { key, core: Boolean(await cache?.match(new URL("./v54-harmony-core.js", location.href).href)), css: Boolean(await cache?.match(new URL("./v54-harmony.css", location.href).href)) };
+  });
+  expect(result.key).toBe("jarvis-x-hq-shell-v54");
+  expect(result.core).toBe(true);
+  expect(result.css).toBe(true);
+});
