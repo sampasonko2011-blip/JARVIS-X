@@ -368,7 +368,7 @@ final class ExocortexCoreTests: XCTestCase {
             value: "8 GB",
             source: .workingSet,
             provenance: "working-set://entry/ram",
-            observedAt: Date(timeIntervalSince1970: 1_700_000_000)
+            observedAt: .now
         )
         try await workingSet.storeEvidence(workingFact)
         let journal = EphemeralToolEvidenceJournal()
@@ -380,7 +380,7 @@ final class ExocortexCoreTests: XCTestCase {
                 propositionKey: "device.os",
                 value: "iPadOS",
                 provenance: "tool://inspect/run-7",
-                completedAt: Date(timeIntervalSince1970: 1_700_000_001)
+                completedAt: .now
             )
         )
         XCTAssertEqual(toolFact.source, .tool)
@@ -389,7 +389,7 @@ final class ExocortexCoreTests: XCTestCase {
             value: "M1",
             source: .xmemo,
             provenance: "xmemo://memory/42",
-            observedAt: Date(timeIntervalSince1970: 1_700_000_002)
+            observedAt: .now
         )
         let context = CognitiveTurnContext(
             memoryRecall: MemoryRecall(status: "recalled", context: "Chip M1"),
