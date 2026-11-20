@@ -1,0 +1,67 @@
+# JARVIS-X Agent Capability Runtime v1
+
+## Added
+- Declarative agent registry: role, evidence status, activation, independence group, tool allowlist and data scope.
+- Runtime validates the registry and dispatches only to host-injected handlers after explicit authorization.
+- In-memory execution audit records authorization denials, execution outcomes and verifier failures. Tests cover duplicate identities, unknown tools, unassigned independence, disabled agents, authorization denial, successful dispatch, failed verification, caller cancellation, pre-aborted signals, and composite-bridge authorization bypass attempts.
+- Composite-agent bridge now defaults to deny and requires a host-injected task authorization verifier before calling an adapter; it validates the mapped role and objective size, forwards the abort signal, and labels returned output OBSERVED. This bridge-level gate complements, but does not replace, the lower-level agent runtime's exact-scope approval and independent verification.
+- Runtime has bounded concurrency (1–8), bounded end-to-end deadlines (100–120000 ms), caller cancellation propagation and cooperative handler abort signals. The deadline covers authorization, handler execution and independent verification. A timed-out handler retains its concurrency lease until it actually settles; a handler that ignores cancellation can therefore hold a slot, which is fail-closed rather than silently allowing concurrency overcommit.
+- Audit retention is bounded (default 500, configurable 10–10000); task objectives are capped at 8000 characters. The public validation snapshot cannot mutate the runtime's internal policy.
+- The default verifier denies validation. Only an independently injected verifier returning literal `true` can produce VALIDATED; a handler's own `{ verified: true }` claim is ignored.
+
+
+- Composite-agent bridge supports an explicit governed mode: pass the shared `createAgentRuntime(...)` instance as `{ runtime }`. In this mode each invocation requires `task.tool` and delegates to `runtime.run`; the compatibility adapter is not called. The runtime owns its configured handler, authorization, immutable task snapshot, timeout, cancellation, concurrency lease and independent verifier. Runtime evidence is propagated to the Provider response. The legacy bridge-only authorization path remains for compatibility and is not equivalent to governed execution.
+- Regression tests exercise the governed bridge path without any legacy adapter configured, require independent verifier evidence, and reject missing tool selection before runtime invocation.
+
+
+- Added `hq/governed-agent-host.mjs` as the explicit HQ composition boundary. `createGovernedAgentHost(...)` constructs one shared governed runtime and passes it into the composite bridge; callers cannot accidentally use the compatibility adapter path. It exposes provider bindings, readiness, unavailable entries and the runtime audit. It does not enable proposed agents or supply credentials, handlers, authenticated authorization, durable audit or network access.
+- Added `tests/governed-agent-host.test.mjs` covering shared-runtime execution through the HQ provider, independent verifier evidence, deny-by-default authorization, and required host configuration.
+- This is an injectable HQ host composition module, not evidence that a deployed HQ web/server entrypoint currently imports it. Production caller wiring and persistent authorization/audit adapters remain separate integration gates.
+
+## Truth and safety boundaries
+- Registry entries begin DISABLED and PROPOSED. They are candidates, not discovered connected agents.
+- A second prompt or wrapper around the same model is not independent. Independence requires separate, evidenced operators/providers/execution paths.
+- No shell, filesystem, ambient network, credential, database, merge or deployment handler is built in. A trusted host must inject narrowly scoped handlers.
+- Runtime defaults to deny authorization. No handler executes without positive authorization.
+- Handler output is OBSERVED, not necessarily correct. Failed verification remains UNPROVEN.
+- In-memory audit is neither durable nor tamper-resistant.
+- Registry presence, installed tools and available external apps do not mean connected, authenticated or invoked.
+
+## Production integration gate
+Bind authenticated identity, approval receipts, replay protection, durable audit, timeout/cancellation, per-tool policy, tenant isolation and rate/cost controls before enabling agents. This PR does not change production configuration or activate agents.
+
+## Runtime hardening — 2026-11-06
+
+- Concurrency leases remain held after timeout/cancellation until every in-flight authorization, handler and verifier promise settles. Non-cooperative host work therefore blocks new work instead of silently exceeding the configured concurrency cap.
+- The runtime snapshots and freezes the task before authorization, execution and verification. The same immutable task view is used throughout to prevent time-of-check/time-of-use mutation.
+- Host handler mappings are captured at runtime construction so later caller mutation cannot replace an approved executor.
+- Regression tests cover a non-cooperative handler timeout, non-cooperative authorization timeout, task mutation during authorization and handler-map mutation.
+- These are source-level controls. They do not make a malicious host adapter safe, terminate non-cooperative work, or provide durable audit. A hung host promise intentionally retains its slot indefinitely; operational recovery requires host-level process isolation/restart and monitoring.
+
+
+## HQ host composition and portable memory
+
+- `hq/governed-agent-host.mjs` is the single composition factory for the declared specialist registry, shared governed runtime and composite provider bindings. The host supplies its own narrow handlers, authenticated authorization callback and independent verifier; defaults deny execution. The factory is covered by `tests/governed-agent-host.test.mjs`.
+- This establishes a tested host composition boundary. It does not by itself prove that a deployed HQ application entrypoint imports and instantiates the factory, nor that production authorization, handlers or audit are connected.
+- Memory continuity is based on explicit portable export/import, not mandatory cross-device synchronization. `MemoryOS.exportBundle()` creates a versioned, SHA-256-checksummed bundle of memory records and resumable project checkpoints; it rejects secret-like content. `importBundle()` validates the checksum and record/checkpoint schema before one atomic backing-store update. Unsupported stores fail closed rather than partially restoring.
+- Portable export is a user-controlled transfer artifact. It is not automatic synchronization, a cloud backup, or proof that a separate device has imported it. Validate the actual exported file and protect it as private project data; never include credentials or secrets.
+
+
+## Existing gateway integration boundary (verified 2026-11-06)
+
+The deployed gateway composition entrypoint in `server/index.mjs` currently:
+1. Loads the private model registry from `JX_MODEL_REGISTRY_PATH`.
+2. Loads provider attestations and creates `createSinglePrimaryRuntime()`.
+3. Passes that runtime to `createGatewayHandler()` with Supabase request authentication, origin allowlisting and request limits.
+
+This is a model/provider-selection runtime, not the specialist-agent registry/runtime. The new `createGovernedAgentHost()` factory is intentionally not wired into `server/index.mjs` yet: the gateway has no configured specialist-agent registry, narrow host handler map, authenticated task-authorization callback or independent agent-output verifier. Creating an empty or permissive adapter here would produce misleading readiness or unsafe execution.
+
+Integration gate before enabling specialist execution:
+- Define a separate private agent registry and explicit enablement policy; all proposed profiles remain disabled by default.
+- Implement only narrowly scoped gateway-owned handlers, each with explicit input/output schemas and data-access scope.
+- Bind task authorization to the authenticated Supabase principal and an explicit per-task approval grant; never trust client-supplied agent IDs, scopes or approval flags.
+- Persist append-only audit/replay state in an approved durable store and independently verify outputs before returning them.
+- Add gateway-level tests for unauthorized requests, tenant isolation, replay, timeouts, provider/handler failure, output verification and audit-store outage.
+- Keep the existing single-primary chat path unchanged until this separate agent path passes isolated tests and is explicitly approved for deployment.
+
+Status: architecture boundary OBSERVED from `server/index.mjs`; production specialist-agent execution remains DISABLED / UNPROVEN. The host composition factory and its unit tests do not imply a live agent integration.

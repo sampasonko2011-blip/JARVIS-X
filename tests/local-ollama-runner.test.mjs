@@ -71,3 +71,61 @@ test("runner rejects blank and oversized prompts before starting a process", () 
   assert.throws(() => runLocalOllama({ model: "qwen2.5:3b", prompt: "x".repeat(12001), spawn }), /character limit/);
   assert.equal(calls, 0);
 });
+
+import { createLocalVegitoRuntime } from "../hq/local-vegito-runtime.mjs";
+
+function localRegistryFixture() {
+  return { agents: [{
+    id: "local-engineer", kind: "local-specialist", roles: ["engineering"],
+    activation: "ENABLED", status: "VALIDATED", independenceGroup: "local-engineering",
+    allowedTools: ["local_model_inference"], dataAccessScope: "task-fixture-only"
+  }] };
+}
+
+test("local Vegito adapter uses installed local Ollama and one independently verified synthesis", async () => {
+  const calls = [];
+  const spawn = (command, args, options) => {
+    calls.push({ command, args, options });
+    if (args[0] === "list") return { status: 0, stdout: "NAME ID SIZE MODIFIED\nqwen2.5:3b abc 2GB now\n", stderr: "" };
+    return { status: 0, stdout: "one executive answer", stderr: "" };
+  };
+  const runtime = createLocalVegitoRuntime({
+    model: "qwen2.5:3b", registry: localRegistryFixture(), spawn,
+    authorize: async () => true,
+    verify: async result => typeof result?.output?.text === "string",
+    verifySynthesis: async answer => answer === "one executive answer"
+  });
+  const result = await runtime.run({
+    objective: "Inspect a harmless fixture",
+    stages: [{ id: "engineering", agentId: "local-engineer", role: "engineering", tool: "local_model_inference" }]
+  });
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(result.specialistRuns, 1);
+  assert.equal(result.executive.synthesisCount, 1);
+  assert.equal(calls.filter(call => call.args[0] === "run").length, 2);
+  assert.equal(calls.every(call => call.options.env.OLLAMA_NO_CLOUD === "1"), true);
+  assert.equal(calls.every(call => call.options.env.OPENAI_API_KEY === undefined), true);
+});
+
+test("local Vegito adapter refuses to download a missing model", async () => {
+  const calls = [];
+  const runtime = createLocalVegitoRuntime({
+    model: "qwen2.5:3b", registry: localRegistryFixture(),
+    spawn: (command, args) => {
+      calls.push(args);
+      return { status: 0, stdout: "NAME ID SIZE MODIFIED\nother:1b abc 1GB now\n", stderr: "" };
+    },
+    authorize: async () => true, verify: async () => true, verifySynthesis: async () => true
+  });
+  const result = await runtime.run({
+    objective: "Do not download models",
+    stages: [{ id: "engineering", agentId: "local-engineer", role: "engineering", tool: "local_model_inference" }]
+  });
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], ["list"]);
+});
+
+test("local Vegito adapter requires independent host authorization and verifiers", () => {
+  assert.throws(() => createLocalVegitoRuntime({ model: "qwen2.5:3b" }), /authorization and independent/);
+});
