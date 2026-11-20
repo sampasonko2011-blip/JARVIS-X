@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
   push:
-    branches: [main]
+    branches: [main, 'feat/**', 'feature/**']
     paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
 permissions:
   contents: read
