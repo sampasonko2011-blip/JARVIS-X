@@ -20,6 +20,25 @@ private actor StubMemoryTransport: MemoryHTTPTransport {
     }
     func request() -> URLRequest? { storedRequest }
 }
+\n
+private struct FixedContextualEngine: ContextualReasoningEngine {
+    let result: ReasoningResult
+    func reason(input: [Float], cycleBudget: Int) async throws -> ReasoningResult { result }
+    func reason(context: CognitiveTurnContext, cycleBudget: Int) async throws -> ReasoningResult { result }
+}
+private actor MemoryWriteSpy: DurableMemoryStore {
+    private(set) var writes = 0
+    func recall(_ query: String, consent: Bool, userAccessToken: String) async throws -> MemoryRecall {
+        guard consent else { throw ExocortexError.memoryConsentRequired }
+        return MemoryRecall(status: "empty", context: "")
+    }
+    func remember(_ content: String, consent: Bool, userAccessToken: String) async throws -> MemoryReceipt {
+        guard consent else { throw ExocortexError.memoryConsentRequired }
+        writes += 1
+        return MemoryReceipt(status: "stored", receipt: "test")
+    }
+    func writeCount() -> Int { writes }
+}
 \nfinal class ExocortexCoreTests: XCTestCase {
     func testBusCapacityAndValidation() async throws {
         let bus = try NeuralBus(dimension: 1, capacity: 1)
