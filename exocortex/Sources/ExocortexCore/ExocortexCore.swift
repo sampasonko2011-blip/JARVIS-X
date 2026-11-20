@@ -154,8 +154,11 @@ public actor XMemoMemoryStore: DurableMemoryStore {
         guard gatewayURL.scheme == "https", gatewayURL.host != nil, !anonKey.isEmpty else {
             throw ExocortexError.invalidEndpoint
         }
-        var normalized = gatewayURL
-        if !normalized.path.hasSuffix("/") { normalized.append(path: "/") }
+        guard var components = URLComponents(url: gatewayURL, resolvingAgainstBaseURL: false) else {
+            throw ExocortexError.invalidEndpoint
+        }
+        components.path = components.path.replacingOccurrences(of: "/+$", with: "", options: .regularExpression) + "/"
+        guard let normalized = components.url else { throw ExocortexError.invalidEndpoint }
         self.gatewayURL = normalized
         self.anonKey = anonKey
         self.transport = transport ?? URLSessionMemoryTransport(session: session)
