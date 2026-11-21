@@ -1,4 +1,7 @@
 import Foundation
+#if os(macOS)
+import Darwin
+#endif
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -47,8 +50,24 @@ public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
         let memory: Int64
         #if os(iOS) || os(tvOS) || os(watchOS)
         memory = Int64(os_proc_available_memory())
+        #elseif os(macOS)
+        // os_proc_available_memory() is explicitly unavailable on macOS.
+        // Use the task's remaining memory limit when the kernel reports one;
+        // if no finite limit is exposed, preserve UNKNOWN and fail closed.
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(
+            MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size
+        )
+        let result = withUnsafeMutablePointer(to: &info) { pointer in
+            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+            }
+        }
+        let remaining = info.limit_bytes_remaining
+        memory = result == KERN_SUCCESS && remaining > 0 && remaining <= UInt64(Int64.max)
+            ? Int64(remaining) : -1
         #else
-        memory = -1 // UNKNOWN on macOS/non-mobile hosts; never interpreted as unlimited memory.
+        memory = -1 // UNKNOWN on unsupported hosts; never interpreted as unlimited memory.
         #endif
         let thermal: ThermalCondition
         switch ProcessInfo.processInfo.thermalState {
