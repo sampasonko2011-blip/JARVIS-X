@@ -13,7 +13,7 @@ public protocol TensorBackingStore: Sendable {
 public struct TensorSlotLease: Hashable, Sendable {
     public let slot: Int
     fileprivate let id: UUID
-    fileprivate init(slot: Int) { self.slot = slot; self.id = UUID() }
+    init(slot: Int) { self.slot = slot; self.id = UUID() }
 }
 public final class CPUTensorStore: TensorBackingStore, @unchecked Sendable {
     public let capacity: Int; public let dimension: Int
