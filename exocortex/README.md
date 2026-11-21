@@ -1,6 +1,6 @@
 # EXOCORTEX Swift Core — iPad Air 5 / M1
 
-First executable refactor of the EXOCORTEX master prompt. The purpose of all 16 pillars and 13 modules is retained, but unsafe or fictional implementations are replaced with bounded contracts.
+First executable refactor of the EXOCORTEX master prompt. The purpose of all 16 pillars and 13 modules is retained, but unsafe or fictional implementations are replaced with bounded contracts. The Swift package now exposes two products: portable `ExocortexCore` and optional `ExocortexLlamaNative`.
 
 ## Canonical durable memory: XMemo
 
@@ -23,6 +23,15 @@ Evidence records carry a proposition key, value, source, provenance, and observa
 The Saboteur performs separate structural and evidence checks. Contradictions and unsupported/UNKNOWN claims block approval. Supported claims must cite the IDs of matching evidence records. `rememberValidated` requires an approved decision and separate explicit write consent. No write is performed merely because recall consent was granted.
 
 The orchestrator collects evidence from its injected working set and tool registry automatically. It does not execute external tools itself; it snapshots only tool results recorded after actual execution. Vector-only working-set entries remain vectors and are not fabricated into factual propositions.
+
+## Split runtime products
+
+- `ExocortexCore` has no target-level dependency on llama.swift. It contains the portable contracts, evidence ledger, memory boundary, thermal/memory policy, and deterministic core tests.
+- `ExocortexLlamaNative` depends on the exact `llama.swift` version `3.0.0` and implements `LlamaCppBackend` with the upstream llama.cpp C API. It loads a readable GGUF file, validates the GGUF magic, requires a Q4 descriptor, creates/frees the model and context, and generates incrementally one token at a time.
+- The native product is intended for physical iOS/iPadOS devices and macOS. The upstream 3.0.0 XCFramework has macOS and physical iOS device slices only; it does not contain an iOS Simulator slice. Therefore the Simulator build intentionally targets only `ExocortexCore`.
+- The native backend checks the injected runtime safety monitor between generated tokens through the abort callback. Critical/serious thermal state, unknown thermal state, or critical memory pressure causes inference to stop and the runtime adapter to unload the context and model.
+
+The native lifecycle tests are deterministic and do not bundle a large model: they cover backend construction, absent-GGUF fail-closed behavior, and idempotent unload without claiming successful real-model inference. A real Q4 model load, token generation quality/performance, and physical iPad thermal/memory behavior remain unverified until run with a user-supplied GGUF on hardware.
 
 ## 16 pillars mapped
 
