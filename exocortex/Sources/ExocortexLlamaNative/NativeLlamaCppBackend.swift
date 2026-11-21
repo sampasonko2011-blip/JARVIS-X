@@ -14,7 +14,7 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
     public var isLoaded: Bool { model != nil && context != nil }
 
     public func loadModel(at url: URL, contextTokens: Int) async throws {
-        guard !isLoaded else { await unloadModel() }
+        if isLoaded { await unloadModel() }
         guard url.isFileURL,
               url.pathExtension.lowercased() == "gguf",
               FileManager.default.isReadableFile(atPath: url.path) else {
