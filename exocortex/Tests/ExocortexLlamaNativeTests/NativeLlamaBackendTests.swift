@@ -5,9 +5,11 @@ import ExocortexCore
 final class NativeLlamaBackendTests: XCTestCase {
     func testBackendInitializesInUnloadedState() async {
         let backend = NativeLlamaCppBackend()
-        XCTAssertFalse(await backend.isLoaded)
+        let initiallyLoaded = await backend.isLoaded
+        XCTAssertFalse(initiallyLoaded)
         await backend.unloadModel()
-        XCTAssertFalse(await backend.isLoaded)
+        let loadedAfterUnload = await backend.isLoaded
+        XCTAssertFalse(loadedAfterUnload)
     }
 
     func testMissingGGUFFailsClosed() async {
@@ -21,13 +23,15 @@ final class NativeLlamaBackendTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? ExocortexError, .modelNotLoaded)
         }
-        XCTAssertFalse(await backend.isLoaded)
+        let loaded = await backend.isLoaded
+        XCTAssertFalse(loaded)
     }
 
     func testUnloadIsIdempotentWhenNoModelWasLoaded() async {
         let backend = NativeLlamaCppBackend()
         await backend.unloadModel()
         await backend.unloadModel()
-        XCTAssertFalse(await backend.isLoaded)
+        let loaded = await backend.isLoaded
+        XCTAssertFalse(loaded)
     }
 }
