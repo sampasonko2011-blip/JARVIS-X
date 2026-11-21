@@ -6,7 +6,7 @@ import Darwin
 import FoundationNetworking
 #endif
 
-public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected, runtimeUnavailable, thermalLimit, memoryPressure, modelNotLoaded }
+public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected, runtimeUnavailable, thermalLimit, memoryPressure, modelNotLoaded, invalidLease }
 public struct VectorMessage: Codable, Equatable, Sendable {
  public let id:UUID; public let source:String; public let values:[Float]; public let createdAt:Date
  public init(id:UUID=UUID(),source:String,values:[Float],createdAt:Date = .now){self.id=id;self.source=source;self.values=values;self.createdAt=createdAt}
@@ -14,10 +14,33 @@ public struct VectorMessage: Codable, Equatable, Sendable {
 // 1 NeuralBus
 public actor NeuralBus {
  private let dimension:Int;private let capacity:Int;private var messages:[VectorMessage]=[]
- public init(dimension:Int=512,capacity:Int=64)throws{guard dimension>0,capacity>0 else{throw ExocortexError.invalidDimension};self.dimension=dimension;self.capacity=capacity}
+ private let tensorStore:any TensorBackingStore
+ private var activeLeases:Set<TensorSlotLease>=[]
+ public init(dimension:Int=512,capacity:Int=64,preferMetal:Bool=true)throws{
+  guard dimension>0,capacity>0 else{throw ExocortexError.invalidDimension}
+  self.dimension=dimension;self.capacity=capacity
+  self.tensorStore=try TensorStoreFactory.make(capacity:capacity,dimension:dimension,preferMetal:preferMetal)
+ }
  public func publish(_ message:VectorMessage)throws{guard message.values.count==dimension else{throw ExocortexError.dimensionMismatch};guard message.values.allSatisfy(\.isFinite) else{throw ExocortexError.invalidVector};messages.append(message);if messages.count>capacity{messages.removeFirst(messages.count-capacity)}}
  public func latest(limit:Int=16)->[VectorMessage]{Array(messages.suffix(max(0,min(limit,capacity))))}
- public func clear(){messages.removeAll(keepingCapacity:false)}
+ public func leaseSlot() throws -> TensorSlotLease {
+  guard let slot=(0..<capacity).first(where:{ candidate in !activeLeases.contains(where:{$0.slot == candidate}) }) else { throw ExocortexError.invalidPayload }
+  let lease=TensorSlotLease(slot:slot);activeLeases.insert(lease);return lease
+ }
+ public func write(_ values:[Float],using lease:TensorSlotLease)throws {
+  guard activeLeases.contains(lease) else { throw ExocortexError.invalidLease }
+  guard values.count==dimension else { throw ExocortexError.dimensionMismatch }
+  try tensorStore.write(values,slot:lease.slot)
+ }
+ public func read(using lease:TensorSlotLease)throws->[Float] {
+  guard activeLeases.contains(lease) else { throw ExocortexError.invalidLease }
+  return try tensorStore.read(slot:lease.slot)
+ }
+ public func release(_ lease:TensorSlotLease)throws {
+  guard activeLeases.remove(lease) != nil else { throw ExocortexError.invalidLease }
+  try tensorStore.clear(slot:lease.slot)
+ }
+ public func clear(){messages.removeAll(keepingCapacity:false);for lease in activeLeases {try? tensorStore.clear(slot:lease.slot)};activeLeases.removeAll()}
 }
 // 2 ThermalGuardian — real device signals behind injectable testable providers
 public enum ThermalCondition: Sendable, Equatable { case nominal, fair, serious, critical, unknown }
