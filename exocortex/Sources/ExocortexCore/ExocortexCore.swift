@@ -3,7 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected }
+public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected, runtimeUnavailable, thermalLimit, memoryPressure, modelNotLoaded }
 public struct VectorMessage: Codable, Equatable, Sendable {
  public let id:UUID; public let source:String; public let values:[Float]; public let createdAt:Date
  public init(id:UUID=UUID(),source:String,values:[Float],createdAt:Date = .now){self.id=id;self.source=source;self.values=values;self.createdAt=createdAt}
@@ -34,7 +34,7 @@ public struct RuntimeSafetySnapshot: Sendable, Equatable {
     public let availableMemoryBytes: Int64
     public let thermalCondition: ThermalCondition
     public init(availableMemoryBytes: Int64, thermalCondition: ThermalCondition) {
-        self.availableMemoryBytes = max(0, availableMemoryBytes)
+        self.availableMemoryBytes = availableMemoryBytes < 0 ? -1 : availableMemoryBytes
         self.thermalCondition = thermalCondition
     }
 }
@@ -45,10 +45,10 @@ public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
     public init() {}
     public func snapshot() -> RuntimeSafetySnapshot {
         let memory: Int64
-        #if canImport(Darwin)
+        #if os(iOS) || os(tvOS) || os(watchOS)
         memory = Int64(os_proc_available_memory())
         #else
-        memory = -1 // UNKNOWN on non-Apple hosts; never interpreted as unlimited memory.
+        memory = -1 // UNKNOWN on macOS/non-mobile hosts; never interpreted as unlimited memory.
         #endif
         let thermal: ThermalCondition
         switch ProcessInfo.processInfo.thermalState {
