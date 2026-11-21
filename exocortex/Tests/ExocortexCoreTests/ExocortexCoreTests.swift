@@ -43,6 +43,17 @@ private actor ContextCaptureEngine: ContextualReasoningEngine {
     func capturedContext() -> CognitiveTurnContext? { captured }
 }
 
+
+private struct StubLocalRuntime: LocalModelRuntime {
+    let response: String?
+    let failure: ExocortexError?
+    func load(_ descriptor: LocalModelDescriptor) async throws {}
+    func infer(prompt: String, cycleBudget: Int) async throws -> String {
+        if let failure { throw failure }
+        return response ?? ""
+    }
+}
+
 private actor MemoryWriteSpy: DurableMemoryStore {
     private(set) var writes = 0
     func recall(_ query: String, consent: Bool, userAccessToken: String) async throws -> MemoryRecall {
@@ -427,6 +438,29 @@ final class ExocortexCoreTests: XCTestCase {
         } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
         let writes = await memory.writeCount()
         XCTAssertEqual(writes, 0)
+    }
+
+
+    func testLocalRuntimeOutputAndFailureAreRecordedBeforeSaboteurAudit() async throws {
+        let successEngine = ContextCaptureEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+        let successRuntime = StubLocalRuntime(response: "Generated draft; verify independently.", failure: nil)
+        let successOrchestrator = ExocortexOrchestrator(engine: successEngine, localRuntime: successRuntime)
+        let successDecision = try await successOrchestrator.think(seed: [0], context: CognitiveTurnContext(), budget: ThermalGuardian.budget(for: .nominal))
+        let successContext = await successEngine.capturedContext()
+        XCTAssertTrue(successDecision.approved)
+        XCTAssertEqual(successContext?.runtimeObservations.last?.status, "completed")
+        XCTAssertEqual(successContext?.runtimeObservations.last?.output, "Generated draft; verify independently.")
+        XCTAssertEqual(successContext?.runtimeObservations.last?.provenance, "localRuntime")
+        XCTAssertTrue(successContext?.allEvidence.isEmpty ?? false)
+
+        let failureEngine = ContextCaptureEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+        let failureRuntime = StubLocalRuntime(response: nil, failure: .memoryPressure)
+        let failureOrchestrator = ExocortexOrchestrator(engine: failureEngine, localRuntime: failureRuntime)
+        _ = try await failureOrchestrator.think(seed: [0], context: CognitiveTurnContext(), budget: ThermalGuardian.budget(for: .nominal))
+        let failureContext = await failureEngine.capturedContext()
+        XCTAssertEqual(failureContext?.runtimeObservations.last?.status, "memoryPressure")
+        XCTAssertEqual(failureContext?.runtimeObservations.last?.error, "memoryPressure")
+        XCTAssertTrue(failureContext?.allEvidence.isEmpty ?? false)
     }
 
     func testRuntimeSafetyUnknownMemoryFailsClosed() {
