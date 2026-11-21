@@ -476,10 +476,22 @@ public struct ExocortexOrchestrator: Sendable {
     }
     private func decide(_ result: ReasoningResult, context: CognitiveTurnContext) -> OrchestrationDecision {
         let structural = saboteur.validateStructure(output: result.output, confidence: result.confidence)
-        let factual = saboteur.validateFacts(context: context, claims: context.claims + result.claims)
-        let approved = structural && factual.mayPersist
+        let runtimeFailures = context.runtimeObservations.filter { $0.status != "completed" }
+        let factual: EvidenceValidation
+        if !runtimeFailures.isEmpty {
+            factual = EvidenceValidation(
+                disposition: .rejected,
+                contradictions: [],
+                unknownClaims: runtimeFailures.map { "localRuntime.status." + $0.status },
+                unsupportedClaims: runtimeFailures.map { "localRuntime.status." + $0.status }
+            )
+        } else {
+            factual = saboteur.validateFacts(context: context, claims: context.claims + result.claims)
+        }
+        let approved = structural && runtimeFailures.isEmpty && factual.mayPersist
         let reason: String
         if !structural { reason = "structural_validation_failed" }
+        else if !runtimeFailures.isEmpty { reason = "local_runtime_failed" }
         else if !factual.contradictions.isEmpty { reason = "factual_contradiction_detected" }
         else if !factual.mayPersist { reason = "evidence_unknown_or_unsupported" }
         else { reason = "structural_and_evidence_checks_passed" }
