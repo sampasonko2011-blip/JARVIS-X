@@ -668,4 +668,41 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(features.peak, 1, accuracy: 0.0001)
         XCTAssertGreaterThan(features.zeroCrossingRate, 0)
     }
+
+    func testTensorBusTwelveConcurrentLeasesRemainIsolated() async throws {
+        let bus = try NeuralBus(dimension: 512, capacity: 64, preferMetal: false)
+        try await withThrowingTaskGroup(of: (Int, [Float]).self) { group in
+            for task in 0..<12 {
+                group.addTask {
+                    let lease = try await bus.leaseSlot()
+                    let values = Array(repeating: Float(task + 1), count: 512)
+                    try await bus.write(values, using: lease)
+                    let result = try await bus.read(using: lease)
+                    try await bus.release(lease)
+                    return (task, result)
+                }
+            }
+            for try await (task, values) in group {
+                XCTAssertEqual(values, Array(repeating: Float(task + 1), count: 512))
+            }
+        }
+    }
+    func testTensorBusRejectsAccessAfterLeaseRelease() async throws {
+        let bus = try NeuralBus(dimension: 512, capacity: 2, preferMetal: false)
+        let lease = try await bus.leaseSlot()
+        try await bus.write(Array(repeating: 7, count: 512), using: lease)
+        try await bus.release(lease)
+        do { _ = try await bus.read(using: lease); XCTFail("Released lease must reject reads") }
+        catch { XCTAssertEqual(error as? ExocortexError, .invalidLease) }
+        do { try await bus.write(Array(repeating: 8, count: 512), using: lease); XCTFail("Released lease must reject writes") }
+        catch { XCTAssertEqual(error as? ExocortexError, .invalidLease) }
+    }
+    func testTensorStoreBoundsAndSlotIsolation() throws {
+        let store = try CPUTensorStore(capacity: 2, dimension: 4)
+        try store.write([1,2,3,4],slot:0);try store.write([5,6,7,8],slot:1)
+        XCTAssertEqual(try store.read(slot:0),[1,2,3,4])
+        XCTAssertEqual(try store.read(slot:1),[5,6,7,8])
+        XCTAssertThrowsError(try store.read(slot:2))
+    }
+
 }
