@@ -486,7 +486,8 @@ final class ExocortexCoreTests: XCTestCase {
             _ = try await unsupportedOrchestrator.rememberValidated("unverified", decision: unsupported, consent: true, userAccessToken: "session")
             XCTFail("Unproven runtime output must not be persisted")
         } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
-        XCTAssertEqual(await unsupportedMemory.writeCount(), 0)
+        let unsupportedWrites = await unsupportedMemory.writeCount()
+        XCTAssertEqual(unsupportedWrites, 0)
 
         let fact = EvidenceRecord(propositionKey: "device.chip", value: "M1", source: .xmemo, provenance: "xmemo://device/chip")
         let supportedEngine = FixedContextualEngine(result: ReasoningResult(
@@ -530,7 +531,8 @@ final class ExocortexCoreTests: XCTestCase {
                 _ = try await orchestrator.rememberValidated("runtime failure", decision: decision, consent: true, userAccessToken: "session")
                 XCTFail("Runtime failure must block persistence: \\(expectedStatus)")
             } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
-            XCTAssertEqual(await memory.writeCount(), 0)
+            let writes = await memory.writeCount()
+            XCTAssertEqual(writes, 0)
         }
     }
 
