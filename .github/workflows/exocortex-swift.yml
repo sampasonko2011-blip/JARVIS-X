@@ -21,6 +21,8 @@ jobs:
         run: swift test --filter ExocortexCoreTests -Xswiftc -warnings-as-errors
       - name: Portable core release build
         run: swift build --target ExocortexCore -c release -Xswiftc -warnings-as-errors
+      - name: Device probe portable module build
+        run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
       - name: iOS Simulator build — portable core only
         run: xcodebuild -scheme ExocortexCore -destination 'generic/platform=iOS Simulator' build
   swift-native-llama:
