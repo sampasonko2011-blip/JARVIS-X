@@ -692,9 +692,20 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
     }
     public func load(_ descriptor: LocalModelDescriptor) async throws {
         guard let modelURL = locator.modelURL, modelURL.isFileURL,
-              FileManager.default.fileExists(atPath: modelURL.path) else {
+              modelURL.pathExtension.lowercased() == "gguf",
+              FileManager.default.isReadableFile(atPath: modelURL.path) else {
             throw ExocortexError.modelNotLoaded
         }
+        guard descriptor.quantization.uppercased().contains("Q4") else {
+            throw ExocortexError.invalidPayload
+        }
+        let file: FileHandle
+        do { file = try FileHandle(forReadingFrom: modelURL) }
+        catch { throw ExocortexError.modelNotLoaded }
+        let header = try file.read(upToCount: 4) ?? Data()
+        try? file.close()
+        guard header == Data("GGUF".utf8) else { throw ExocortexError.modelNotLoaded }
+
         let state = safety.snapshot()
         guard ThermalGuardian.allowsInference(state, minimumMemoryBytes: max(minimumLoadMemoryBytes, Int64(descriptor.maximumResidentBytes) + criticalMemoryBytes)) else {
             if ThermalGuardian.shouldEmergencyUnload(state, criticalMemoryBytes: criticalMemoryBytes) { await emergencyUnload() }
@@ -712,19 +723,34 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
             throw before.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
         }
         guard ThermalGuardian.allowsInference(before, minimumMemoryBytes: criticalMemoryBytes) else {
+            await emergencyUnload()
             throw ExocortexError.memoryPressure
         }
         let budget = ThermalGuardian.budget(for: before.thermalCondition)
         let tokenLimit = min(budget.maximumContextTokens, max(128, cycleBudget * 128))
-        let generated = try await backend.generate(prompt: prompt, maximumTokens: tokenLimit) { [safety, criticalMemoryBytes] in
+        let generated: String
+        do {
+            generated = try await backend.generate(prompt: prompt, maximumTokens: tokenLimit) { [safety, criticalMemoryBytes] in
+                let current = safety.snapshot()
+                return ThermalGuardian.shouldEmergencyUnload(current, criticalMemoryBytes: criticalMemoryBytes) ||
+                    current.thermalCondition == .serious || current.thermalCondition == .unknown
+            }
+        } catch {
             let current = safety.snapshot()
-            return ThermalGuardian.shouldEmergencyUnload(current, criticalMemoryBytes: criticalMemoryBytes) ||
-                current.thermalCondition == .serious || current.thermalCondition == .unknown
+            if ThermalGuardian.shouldEmergencyUnload(current, criticalMemoryBytes: criticalMemoryBytes) ||
+                current.thermalCondition == .serious || current.thermalCondition == .unknown {
+                await emergencyUnload()
+                throw current.thermalCondition == .critical || current.thermalCondition == .serious || current.thermalCondition == .unknown
+                    ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+            }
+            throw error
         }
         let after = safety.snapshot()
-        if ThermalGuardian.shouldEmergencyUnload(after, criticalMemoryBytes: criticalMemoryBytes) {
+        if ThermalGuardian.shouldEmergencyUnload(after, criticalMemoryBytes: criticalMemoryBytes) ||
+            after.thermalCondition == .serious || after.thermalCondition == .unknown {
             await emergencyUnload()
-            throw after.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+            throw after.thermalCondition == .critical || after.thermalCondition == .serious || after.thermalCondition == .unknown
+                ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
         }
         return generated
     }
