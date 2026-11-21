@@ -433,7 +433,7 @@ final class ExocortexCoreTests: XCTestCase {
         let unknown = RuntimeSafetySnapshot(availableMemoryBytes: -1, thermalCondition: .nominal)
         XCTAssertEqual(unknown.availableMemoryBytes, -1)
         XCTAssertFalse(ThermalGuardian.allowsInference(unknown, minimumMemoryBytes: 1))
-        XCTAssertTrue(ThermalGuardian.shouldEmergencyUnload(unknown, criticalMemoryBytes: 512_000_000))
+        XCTAssertFalse(ThermalGuardian.shouldEmergencyUnload(unknown, criticalMemoryBytes: 512_000_000))
     }
 
     func testRuntimeSafetyThermalAndMemoryFallbacks() {
