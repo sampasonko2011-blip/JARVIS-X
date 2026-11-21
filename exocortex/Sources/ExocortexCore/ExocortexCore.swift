@@ -76,7 +76,7 @@ public enum ThermalGuardian {
         return snapshot.availableMemoryBytes >= minimumMemoryBytes
     }
     public static func shouldEmergencyUnload(_ snapshot: RuntimeSafetySnapshot, criticalMemoryBytes: Int64) -> Bool {
-        snapshot.thermalCondition == .critical ||
+        snapshot.thermalCondition == .critical || snapshot.thermalCondition == .unknown ||
         (snapshot.availableMemoryBytes >= 0 && snapshot.availableMemoryBytes < criticalMemoryBytes)
     }
 }
