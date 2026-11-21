@@ -693,7 +693,7 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
     public func load(_ descriptor: LocalModelDescriptor) async throws {
         guard let modelURL = locator.modelURL, modelURL.isFileURL,
               FileManager.default.fileExists(atPath: modelURL.path) else {
-            throw ExocortexError.runtimeUnavailable
+            throw ExocortexError.modelNotLoaded
         }
         let state = safety.snapshot()
         guard ThermalGuardian.allowsInference(state, minimumMemoryBytes: max(minimumLoadMemoryBytes, Int64(descriptor.maximumResidentBytes) + criticalMemoryBytes)) else {
