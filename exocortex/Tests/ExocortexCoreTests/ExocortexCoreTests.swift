@@ -463,6 +463,77 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertTrue(failureContext?.allEvidence.isEmpty ?? false)
     }
 
+
+    func testLocalRuntimeOutputRequiresConcordantEvidenceForApproval() async throws {
+        let generated = "The device uses an M1 chip."
+        let unsupportedEngine = FixedContextualEngine(result: ReasoningResult(
+            output: [1], confidence: 0.99,
+            claims: [EvidenceClaim(propositionKey: "device.chip", value: "M1")]
+        ))
+        let unsupportedMemory = MemoryWriteSpy()
+        let unsupportedOrchestrator = ExocortexOrchestrator(
+            engine: unsupportedEngine,
+            memoryStore: unsupportedMemory,
+            localRuntime: StubLocalRuntime(response: generated, failure: nil)
+        )
+        let unsupported = try await unsupportedOrchestrator.think(
+            seed: [0], context: CognitiveTurnContext(),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertFalse(unsupported.approved)
+        XCTAssertEqual(unsupported.reason, "evidence_unknown_or_unsupported")
+        do {
+            _ = try await unsupportedOrchestrator.rememberValidated("unverified", decision: unsupported, consent: true, userAccessToken: "session")
+            XCTFail("Unproven runtime output must not be persisted")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        XCTAssertEqual(await unsupportedMemory.writeCount(), 0)
+
+        let fact = EvidenceRecord(propositionKey: "device.chip", value: "M1", source: .xmemo, provenance: "xmemo://device/chip")
+        let supportedEngine = FixedContextualEngine(result: ReasoningResult(
+            output: [1], confidence: 0.99,
+            claims: [EvidenceClaim(propositionKey: "device.chip", value: "M1", supportingEvidenceIDs: [fact.id])]
+        ))
+        let supportedOrchestrator = ExocortexOrchestrator(
+            engine: supportedEngine,
+            localRuntime: StubLocalRuntime(response: generated, failure: nil)
+        )
+        let supported = try await supportedOrchestrator.think(
+            seed: [0], context: CognitiveTurnContext(memoryEvidence: [fact]),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(supported.approved)
+        XCTAssertEqual(supported.reason, "structural_and_evidence_checks_passed")
+    }
+
+    func testLocalRuntimeErrorsAlwaysBlockXMemoPersistence() async throws {
+        let cases: [(ExocortexError, String)] = [
+            (.thermalLimit, "thermalLimit"),
+            (.memoryPressure, "memoryPressure"),
+            (.runtimeUnavailable, "runtimeUnavailable"),
+            (.modelNotLoaded, "modelNotLoaded")
+        ]
+        for (failure, expectedStatus) in cases {
+            let memory = MemoryWriteSpy()
+            let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+            let orchestrator = ExocortexOrchestrator(
+                engine: engine,
+                memoryStore: memory,
+                localRuntime: StubLocalRuntime(response: nil, failure: failure)
+            )
+            let decision = try await orchestrator.think(
+                seed: [0], context: CognitiveTurnContext(),
+                budget: ThermalGuardian.budget(for: .nominal)
+            )
+            XCTAssertFalse(decision.approved)
+            XCTAssertEqual(decision.reason, "local_runtime_failed")
+            do {
+                _ = try await orchestrator.rememberValidated("runtime failure", decision: decision, consent: true, userAccessToken: "session")
+                XCTFail("Runtime failure must block persistence: \\(expectedStatus)")
+            } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+            XCTAssertEqual(await memory.writeCount(), 0)
+        }
+    }
+
     func testRuntimeSafetyUnknownMemoryFailsClosed() {
         let unknown = RuntimeSafetySnapshot(availableMemoryBytes: -1, thermalCondition: .nominal)
         XCTAssertEqual(unknown.availableMemoryBytes, -1)
