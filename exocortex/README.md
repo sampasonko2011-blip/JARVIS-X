@@ -59,3 +59,16 @@ NeuralBus; ThermalGuardian; XMemo memory/ephemeral cache; cognitive agents/Sabot
 ## Verification boundary
 
 The original 14-test suite passed before this follow-up. The test target now contains 24 XCTest cases: the original 14 plus 10 deterministic regressions covering evidence-ledger support/contradictions/UNKNOWN, authenticated XMemo recall/remember request construction and JSON payloads, HTTP/offline failures, separate write consent, prevention of persistence after contradiction, and automatic collection of TTL working-set plus executed-tool evidence into cognitive turns. The expanded suite is awaiting fresh CI; do not treat the 21 tests as passing until GitHub Actions reports success. Portable Swift verification does not validate physical iPad M1 memory, thermal behavior, or local-model performance.
+
+
+## Étape 5 — diagnostic physique iPad Air 5 (Swift Playgrounds)
+
+`ExocortexDeviceProbe` est un petit module de diagnostic appelable depuis une app Swift Playgrounds. Il mesure la présence Metal, tente une allocation MTLBuffer partagé de 128 Ko, relève l'état thermique et la mémoire disponible iOS, mesure une opération vDSP et exécute une validation déterministe `CognitiveTurnContext → SaboteurAgent`. Ce diagnostic est bref : il ne réalise pas de test de charge prolongé et ne garantit pas les performances en usage réel.
+
+### Procédure en 3 étapes
+
+1. Dans Swift Playgrounds sur l'iPad, crée un nouveau projet **App** et ajoute le package local `exocortex` comme dépendance Swift Package en sélectionnant le produit `ExocortexDeviceProbe` (le package doit être transféré dans Fichiers sur l'iPad).
+2. Dans le fichier de la vue principale, importe `ExocortexDeviceProbe` et appelle `await ExocortexDeviceProbe.run()` depuis une tâche asynchrone déclenchée par un bouton. Affiche les champs `report.measurements` dans la vue.
+3. Exécute l'app sur l'iPad Air 5 physique, puis copie ici toutes les mesures, statuts et latences. Ne fusionne pas la PR avant l'analyse de ces résultats.
+
+Le module ne demande aucune permission ni aucun accès réseau. Les valeurs de mémoire et de température sont des instantanés système, susceptibles de varier. `vDSP` mesure ici un produit scalaire de 512 éléments, pas une recherche vectorielle sur une base de production.
