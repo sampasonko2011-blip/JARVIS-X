@@ -429,6 +429,29 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(writes, 0)
     }
 
+    func testRuntimeSafetyUnknownMemoryFailsClosed() {
+        let unknown = RuntimeSafetySnapshot(availableMemoryBytes: -1, thermalCondition: .nominal)
+        XCTAssertEqual(unknown.availableMemoryBytes, -1)
+        XCTAssertFalse(ThermalGuardian.allowsInference(unknown, minimumMemoryBytes: 1))
+        XCTAssertFalse(ThermalGuardian.shouldEmergencyUnload(unknown, criticalMemoryBytes: 512_000_000))
+    }
+
+    func testRuntimeSafetyThermalAndMemoryFallbacks() {
+        let fair = RuntimeSafetySnapshot(availableMemoryBytes: 2_000_000_000, thermalCondition: .fair)
+        let serious = RuntimeSafetySnapshot(availableMemoryBytes: 2_000_000_000, thermalCondition: .serious)
+        let lowMemory = RuntimeSafetySnapshot(availableMemoryBytes: 100_000_000, thermalCondition: .nominal)
+        let critical = RuntimeSafetySnapshot(availableMemoryBytes: 2_000_000_000, thermalCondition: .critical)
+
+        XCTAssertEqual(ThermalGuardian.budget(for: .fair).maximumContextTokens, 2048)
+        XCTAssertEqual(ThermalGuardian.budget(for: .serious).maximumContextTokens, 512)
+        XCTAssertFalse(ThermalGuardian.allowsInference(critical, minimumMemoryBytes: 1))
+        XCTAssertFalse(ThermalGuardian.allowsInference(lowMemory, minimumMemoryBytes: 512_000_000))
+        XCTAssertTrue(ThermalGuardian.shouldEmergencyUnload(lowMemory, criticalMemoryBytes: 512_000_000))
+        XCTAssertTrue(ThermalGuardian.shouldEmergencyUnload(critical, criticalMemoryBytes: 512_000_000))
+        XCTAssertTrue(ThermalGuardian.allowsInference(fair, minimumMemoryBytes: 512_000_000))
+        XCTAssertTrue(ThermalGuardian.allowsInference(serious, minimumMemoryBytes: 512_000_000))
+    }
+
     func testVoiceFeaturesAreAcousticOnly() throws {
         let features = try VoiceBiometricMonitor.analyze([1, -1, 1, -1])
         XCTAssertEqual(features.rms, 1, accuracy: 0.0001)
