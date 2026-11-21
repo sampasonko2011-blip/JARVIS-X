@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Exocortex",
-    platforms: [.iOS(.v16), .macOS(.v13)],
+    platforms: [.iOS(.v16_4), .macOS(.v13_3)],
     products: [
         .library(name: "ExocortexCore", targets: ["ExocortexCore"]),
         .library(name: "ExocortexLlamaNative", targets: ["ExocortexLlamaNative"])
