@@ -211,8 +211,7 @@ public struct CognitiveTurnContext: Sendable, Equatable {
             runtimeObservations: runtimeObservations
         )
     }
-}
-    /// Runtime output is recorded as an execution observation, never silently promoted to factual evidence.
+    /// Runtime output is an execution observation, never automatically factual evidence.
     public func addingRuntimeObservation(_ observation: LocalRuntimeObservation) -> CognitiveTurnContext {
         CognitiveTurnContext(
             memoryRecall: memoryRecall,
@@ -224,6 +223,7 @@ public struct CognitiveTurnContext: Sendable, Equatable {
             runtimeObservations: runtimeObservations + [observation]
         )
     }
+}
 
 public protocol DurableMemoryStore:Sendable{
  func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall
@@ -405,22 +405,26 @@ public struct ExocortexOrchestrator: Sendable {
     private let memoryStore: (any DurableMemoryStore)?
     private let workingSet: EphemeralWorkingSet?
     private let toolRegistry: ToolRegistry?
+    private let localRuntime: (any LocalModelRuntime)?
     public init(
         engine: any ReasoningEngine,
         saboteur: SaboteurAgent = SaboteurAgent(),
         memoryStore: (any DurableMemoryStore)? = nil,
         workingSet: EphemeralWorkingSet? = nil,
-        toolRegistry: ToolRegistry? = nil
+        toolRegistry: ToolRegistry? = nil,
+        localRuntime: (any LocalModelRuntime)? = nil
     ) {
         self.engine = engine
         self.saboteur = saboteur
         self.memoryStore = memoryStore
         self.workingSet = workingSet
         self.toolRegistry = toolRegistry
+        self.localRuntime = localRuntime
     }
     public func think(seed: [Float], budget: ThermalBudget) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
-        let context = await collectEvidence(into: CognitiveTurnContext())
+        var context = await collectEvidence(into: CognitiveTurnContext())
+        context = await collectRuntimeObservation(seed: seed, budget: budget, into: context)
         let result = try await engine.reason(input: seed, cycleBudget: budget.reasoningCycles)
         return decide(result, context: context)
     }
@@ -429,7 +433,8 @@ public struct ExocortexOrchestrator: Sendable {
         guard let contextualEngine = engine as? any ContextualReasoningEngine else {
             throw ExocortexError.contextualEngineRequired
         }
-        let enriched = await collectEvidence(into: context)
+        var enriched = await collectEvidence(into: context)
+        enriched = await collectRuntimeObservation(seed: seed, budget: budget, into: enriched)
         let result = try await contextualEngine.reason(context: enriched, cycleBudget: budget.reasoningCycles)
         return decide(result, context: enriched)
     }
