@@ -68,6 +68,26 @@ private actor MemoryWriteSpy: DurableMemoryStore {
     func writeCount() -> Int { writes }
 }
 
+
+private struct FixedRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
+    let state: RuntimeSafetySnapshot
+    func snapshot() -> RuntimeSafetySnapshot { state }
+}
+
+private actor LlamaBackendSpy: LlamaCppBackend {
+    private var loadCount = 0
+    private var unloadCount = 0
+    private var generateCount = 0
+    func loadModel(at url: URL, contextTokens: Int) async throws { loadCount += 1 }
+    func generate(prompt: String, maximumTokens: Int, shouldAbort: @escaping @Sendable () -> Bool) async throws -> String {
+        generateCount += 1
+        if shouldAbort() { throw ExocortexError.thermalLimit }
+        return "local response"
+    }
+    func unloadModel() async { unloadCount += 1 }
+    func counts() -> (Int, Int, Int) { (loadCount, unloadCount, generateCount) }
+}
+
 final class ExocortexCoreTests: XCTestCase {
     func testBusCapacityAndValidation() async throws {
         let bus = try NeuralBus(dimension: 1, capacity: 1)
@@ -534,6 +554,89 @@ final class ExocortexCoreTests: XCTestCase {
             let writes = await memory.writeCount()
             XCTAssertEqual(writes, 0)
         }
+    }
+
+
+    func testLlamaRuntimeMissingModelFailsClosed() async throws {
+        let backend = LlamaBackendSpy()
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
+        let runtime = LlamaCppRuntimeAdapter(
+            locator: LlamaCppModelLocator(modelURL: missing), backend: backend,
+            safety: FixedRuntimeSafetyMonitor(state: RuntimeSafetySnapshot(availableMemoryBytes: 4_000_000_000, thermalCondition: .nominal))
+        )
+        do {
+            try await runtime.load(LocalModelDescriptor(identifier: "test", quantization: "Q4", maximumResidentBytes: 100))
+            XCTFail("Missing GGUF must not load")
+        } catch { XCTAssertEqual(error as? ExocortexError, .modelNotLoaded) }
+        do {
+            _ = try await runtime.infer(prompt: "hello", cycleBudget: 1)
+            XCTFail("Inference must fail when no model is loaded")
+        } catch { XCTAssertEqual(error as? ExocortexError, .modelNotLoaded) }
+        let counts = await backend.counts()
+        XCTAssertEqual(counts.0, 0)
+        XCTAssertEqual(counts.2, 0)
+    }
+
+    func testLlamaRuntimeMemoryCeilingTriggersUnload() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
+        try Data([0x47, 0x47, 0x55, 0x46]).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let backend = LlamaBackendSpy()
+        let runtime = LlamaCppRuntimeAdapter(
+            locator: LlamaCppModelLocator(modelURL: url), backend: backend,
+            safety: FixedRuntimeSafetyMonitor(state: RuntimeSafetySnapshot(availableMemoryBytes: 400, thermalCondition: .nominal)),
+            minimumLoadMemoryBytes: 1_000, criticalMemoryBytes: 500
+        )
+        do {
+            try await runtime.load(LocalModelDescriptor(identifier: "test", quantization: "Q4", maximumResidentBytes: 100))
+            XCTFail("Memory ceiling must block loading")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryPressure) }
+        let counts = await backend.counts()
+        XCTAssertEqual(counts.0, 0)
+        XCTAssertEqual(counts.1, 1)
+    }
+
+    func testLlamaRuntimeThermalLimitTriggersUnload() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
+        try Data([0x47, 0x47, 0x55, 0x46]).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let backend = LlamaBackendSpy()
+        let runtime = LlamaCppRuntimeAdapter(
+            locator: LlamaCppModelLocator(modelURL: url), backend: backend,
+            safety: FixedRuntimeSafetyMonitor(state: RuntimeSafetySnapshot(availableMemoryBytes: 4_000, thermalCondition: .critical)),
+            minimumLoadMemoryBytes: 1_000, criticalMemoryBytes: 500
+        )
+        do {
+            try await runtime.load(LocalModelDescriptor(identifier: "test", quantization: "Q4", maximumResidentBytes: 100))
+            XCTFail("Critical thermal state must block loading")
+        } catch { XCTAssertEqual(error as? ExocortexError, .thermalLimit) }
+        let counts = await backend.counts()
+        XCTAssertEqual(counts.0, 0)
+        XCTAssertEqual(counts.1, 1)
+    }
+
+    func testLlamaRuntimeExplicitUnloadClearsInternalState() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
+        try Data([0x47, 0x47, 0x55, 0x46]).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let backend = LlamaBackendSpy()
+        let runtime = LlamaCppRuntimeAdapter(
+            locator: LlamaCppModelLocator(modelURL: url), backend: backend,
+            safety: FixedRuntimeSafetyMonitor(state: RuntimeSafetySnapshot(availableMemoryBytes: 4_000_000_000, thermalCondition: .nominal)),
+            minimumLoadMemoryBytes: 1_000, criticalMemoryBytes: 500
+        )
+        try await runtime.load(LocalModelDescriptor(identifier: "test", quantization: "Q4", maximumResidentBytes: 100))
+        let response = try await runtime.infer(prompt: "hello", cycleBudget: 1)
+        XCTAssertEqual(response, "local response")
+        await runtime.emergencyUnload()
+        do {
+            _ = try await runtime.infer(prompt: "again", cycleBudget: 1)
+            XCTFail("Unloaded runtime must reject inference")
+        } catch { XCTAssertEqual(error as? ExocortexError, .modelNotLoaded) }
+        let counts = await backend.counts()
+        XCTAssertEqual(counts.0, 1)
+        XCTAssertEqual(counts.1, 1)
+        XCTAssertEqual(counts.2, 1)
     }
 
     func testRuntimeSafetyUnknownMemoryFailsClosed() {
