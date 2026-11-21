@@ -188,13 +188,15 @@ public struct CognitiveTurnContext: Sendable, Equatable {
     public let toolEvidence: [EvidenceRecord]
     public let evidence: [EvidenceRecord]
     public let claims: [EvidenceClaim]
-    public init(memoryRecall: MemoryRecall? = nil, memoryEvidence: [EvidenceRecord] = [], workingSetEvidence: [EvidenceRecord] = [], toolEvidence: [EvidenceRecord] = [], evidence: [EvidenceRecord] = [], claims: [EvidenceClaim] = []) {
+    public let runtimeObservations: [LocalRuntimeObservation]
+    public init(memoryRecall: MemoryRecall? = nil, memoryEvidence: [EvidenceRecord] = [], workingSetEvidence: [EvidenceRecord] = [], toolEvidence: [EvidenceRecord] = [], evidence: [EvidenceRecord] = [], claims: [EvidenceClaim] = [], runtimeObservations: [LocalRuntimeObservation] = []) {
         self.memoryRecall = memoryRecall
         self.memoryEvidence = memoryEvidence
         self.workingSetEvidence = workingSetEvidence
         self.toolEvidence = toolEvidence
         self.evidence = evidence
         self.claims = claims
+        self.runtimeObservations = runtimeObservations
     }
     /// Raw XMemo text is context, not proof. Only structured, provenance-bearing records enter the ledger.
     public var allEvidence: [EvidenceRecord] { evidence + memoryEvidence + workingSetEvidence + toolEvidence }
@@ -205,10 +207,24 @@ public struct CognitiveTurnContext: Sendable, Equatable {
             workingSetEvidence: workingSetEvidence + workingSet,
             toolEvidence: toolEvidence + tools,
             evidence: evidence,
-            claims: claims
+            claims: claims,
+            runtimeObservations: runtimeObservations
         )
     }
 }
+    /// Runtime output is recorded as an execution observation, never silently promoted to factual evidence.
+    public func addingRuntimeObservation(_ observation: LocalRuntimeObservation) -> CognitiveTurnContext {
+        CognitiveTurnContext(
+            memoryRecall: memoryRecall,
+            memoryEvidence: memoryEvidence,
+            workingSetEvidence: workingSetEvidence,
+            toolEvidence: toolEvidence,
+            evidence: evidence,
+            claims: claims,
+            runtimeObservations: runtimeObservations + [observation]
+        )
+    }
+
 public protocol DurableMemoryStore:Sendable{
  func recall(_ query:String,consent:Bool,userAccessToken:String)async throws->MemoryRecall
  func remember(_ content:String,consent:Bool,userAccessToken:String)async throws->MemoryReceipt
@@ -417,6 +433,26 @@ public struct ExocortexOrchestrator: Sendable {
         let result = try await contextualEngine.reason(context: enriched, cycleBudget: budget.reasoningCycles)
         return decide(result, context: enriched)
     }
+    private func collectRuntimeObservation(seed: [Float], budget: ThermalBudget, into context: CognitiveTurnContext) async -> CognitiveTurnContext {
+        guard let localRuntime else { return context }
+        let prompt = "Input vector: " + seed.map { String($0) }.joined(separator: ",")
+        do {
+            let output = try await localRuntime.infer(prompt: prompt, cycleBudget: budget.reasoningCycles)
+            return context.addingRuntimeObservation(LocalRuntimeObservation(status: "completed", output: output))
+        } catch let error as ExocortexError {
+            let status: String
+            switch error {
+            case .runtimeUnavailable: status = "runtimeUnavailable"
+            case .thermalLimit: status = "thermalLimit"
+            case .memoryPressure: status = "memoryPressure"
+            case .modelNotLoaded: status = "modelNotLoaded"
+            default: status = "runtimeError"
+            }
+            return context.addingRuntimeObservation(LocalRuntimeObservation(status: status, error: status))
+        } catch {
+            return context.addingRuntimeObservation(LocalRuntimeObservation(status: "runtimeError", error: String(describing: error)))
+        }
+    }
     private func collectEvidence(into context: CognitiveTurnContext) async -> CognitiveTurnContext {
         var memoryRecords: [EvidenceRecord] = []
         if let recall = context.memoryRecall, !recall.context.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -586,6 +622,20 @@ public struct LocalModelDescriptor: Sendable, Equatable {
         self.identifier = identifier
         self.quantization = quantization
         self.maximumResidentBytes = max(0, maximumResidentBytes)
+    }
+}
+public struct LocalRuntimeObservation: Sendable, Equatable {
+    public let status: String
+    public let output: String?
+    public let error: String?
+    public let provenance: String
+    public let observedAt: Date
+    public init(status: String, output: String? = nil, error: String? = nil, provenance: String = "localRuntime", observedAt: Date = .now) {
+        self.status = status
+        self.output = output
+        self.error = error
+        self.provenance = provenance
+        self.observedAt = observedAt
     }
 }
 public protocol LocalModelRuntime: Sendable {
