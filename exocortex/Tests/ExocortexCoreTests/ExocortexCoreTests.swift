@@ -529,7 +529,7 @@ final class ExocortexCoreTests: XCTestCase {
             XCTAssertEqual(decision.reason, "local_runtime_failed")
             do {
                 _ = try await orchestrator.rememberValidated("runtime failure", decision: decision, consent: true, userAccessToken: "session")
-                XCTFail("Runtime failure must block persistence: \\(expectedStatus)")
+                XCTFail("Runtime failure must block persistence: \(expectedStatus)")
             } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
             let writes = await memory.writeCount()
             XCTAssertEqual(writes, 0)
