@@ -124,7 +124,16 @@ public enum ExocortexDeviceProbe {
             repetitions: Int = 2,
             minimumAvailableMemoryBytes: Int64 = 2_684_354_560
         ) async -> ExocortexLlamaComparisonReport {
-            var cpuReport: NativeLlamaBenchmarkReport?
+            // Hold a security-scoped file grant for the complete CPU → GPU sequence.
+        // Sandboxed URLs may return false; those remain usable if already inside the app container.
+        let didStartSecurityScope = modelURL.startAccessingSecurityScopedResource()
+        defer {
+            if didStartSecurityScope {
+                modelURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        var cpuReport: NativeLlamaBenchmarkReport?
             var gpuReport: NativeLlamaBenchmarkReport?
             var cpuError: String?
             var gpuError: String?
