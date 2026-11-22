@@ -18,7 +18,7 @@ public struct NativeLlamaModelMetadata: Sendable, Equatable {
     public let layerCount: Int32
     public let fileTypeCode: Int32
     public let loadMilliseconds: Double
-    public var quantization: String { fileTypeCode == 15 ? "Q4_K_M" : "llama_ftype_code_\\(fileTypeCode)" }
+    public var quantization: String { fileTypeCode == 15 ? "Q4_K_M" : "llama_ftype_code_\(fileTypeCode)" }
     public var isQ4KM: Bool { fileTypeCode == 15 }
 }
 public struct NativeLlamaGenerationMetrics: Sendable, Equatable {
@@ -26,8 +26,10 @@ public struct NativeLlamaGenerationMetrics: Sendable, Equatable {
     public let generatedTokenCount: Int
     public let prefillMilliseconds: Double
     public let decodeMilliseconds: Double
+    public let generationMilliseconds: Double
     public var prefillTokensPerSecond: Double { prefillMilliseconds > 0 ? Double(promptTokenCount) * 1_000 / prefillMilliseconds : 0 }
-    public var decodeTokensPerSecond: Double { decodeMilliseconds > 0 ? Double(generatedTokenCount) * 1_000 / decodeMilliseconds : 0 }
+    public var decodeTokensPerSecond: Double { decodeMilliseconds > 0 ? Double(max(0, generatedTokenCount - 1)) * 1_000 / decodeMilliseconds : 0 }
+    public var generationTokensPerSecond: Double { generationMilliseconds > 0 ? Double(generatedTokenCount) * 1_000 / generationMilliseconds : 0 }
 }
 public struct NativeLlamaBenchmarkReport: Sendable, Equatable {
     public let model: NativeLlamaModelMetadata
@@ -138,6 +140,10 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
         guard !shouldAbort() else { throw ExocortexError.thermalLimit }
         llama_memory_clear(llama_get_memory(context), true)
         let vocab = llama_model_get_vocab(model)
+        guard let sampler = llama_sampler_init_greedy() else {
+            throw ExocortexError.runtimeUnavailable
+        }
+        defer { llama_sampler_free(sampler) }
         let utf8Count = Int32(prompt.utf8.count)
         var tokens = [llama_token](repeating: 0, count: Int(utf8Count) + 2)
         var tokenCount: Int32 = 0
@@ -179,22 +185,11 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
         var generatedBytes: [UInt8] = []
         var currentPosition = batch.n_tokens
         var generatedTokenCount = 0
-        let decodeStart = ProcessInfo.processInfo.systemUptime
+        let generationStart = ProcessInfo.processInfo.systemUptime
+        var decodeMilliseconds = 0.0
         for generationIndex in 0..<maximumTokens {
             if shouldAbort() { throw ExocortexError.thermalLimit }
-            guard let logits = llama_get_logits_ith(context, batch.n_tokens - 1) else {
-                throw ExocortexError.runtimeUnavailable
-            }
-            let vocabularySize = Int(llama_vocab_n_tokens(vocab))
-            guard vocabularySize > 0 else { throw ExocortexError.runtimeUnavailable }
-            var bestToken: llama_token = 0
-            var bestLogit = logits[0]
-            if vocabularySize > 1 {
-                for index in 1..<vocabularySize where logits[index] > bestLogit {
-                    bestLogit = logits[index]
-                    bestToken = llama_token(index)
-                }
-            }
+            let bestToken = llama_sampler_sample(sampler, context, -1)
             if llama_vocab_is_eog(vocab, bestToken) { break }
 
             var piece = [CChar](repeating: 0, count: 64)
@@ -223,17 +218,20 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
                 }
                 batch.logits[0] = 1
                 currentPosition += 1
+                let decodeStart = ProcessInfo.processInfo.systemUptime
                 guard llama_decode(context, batch) == 0 else {
                     throw ExocortexError.runtimeUnavailable
                 }
+                decodeMilliseconds += max(0, (ProcessInfo.processInfo.systemUptime - decodeStart) * 1_000)
             }
         }
-        let decodeMilliseconds = max(0, (ProcessInfo.processInfo.systemUptime - decodeStart) * 1_000)
+        let generationMilliseconds = max(0.000_001, (ProcessInfo.processInfo.systemUptime - generationStart) * 1_000)
         lastGenerationMetrics = NativeLlamaGenerationMetrics(
             promptTokenCount: promptTokens.count,
             generatedTokenCount: generatedTokenCount,
             prefillMilliseconds: prefillMilliseconds,
-            decodeMilliseconds: decodeMilliseconds
+            decodeMilliseconds: decodeMilliseconds,
+            generationMilliseconds: generationMilliseconds
         )
         return String(decoding: generatedBytes, as: UTF8.self)
     }
