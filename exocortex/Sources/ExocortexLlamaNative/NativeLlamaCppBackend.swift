@@ -36,6 +36,8 @@ public struct NativeLlamaBenchmarkReport: Sendable, Equatable {
     public let beforeLoad: NativeLlamaMemorySnapshot
     public let afterLoad: NativeLlamaMemorySnapshot
     public let afterRuns: NativeLlamaMemorySnapshot
+    public let sampledPeakPhysicalFootprintBytes: UInt64?
+    public let minimumAvailableBytesDuringRuns: Int64
     public let runs: [NativeLlamaGenerationMetrics]
 }
 
@@ -263,6 +265,22 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
             throw ExocortexError.invalidPayload
         }
         let afterLoad = Self.memorySnapshot()
+        let memoryMonitor = Task.detached(priority: .utility) { () -> (UInt64?, Int64) in
+            var peakFootprint: UInt64?
+            var minimumAvailable = Int64.max
+            while !Task.isCancelled {
+                let snapshot = Self.memorySnapshot()
+                if let footprint = snapshot.physicalFootprintBytes {
+                    peakFootprint = max(peakFootprint ?? 0, footprint)
+                }
+                if snapshot.availableBytes >= 0 {
+                    minimumAvailable = min(minimumAvailable, snapshot.availableBytes)
+                }
+                do { try await Task.sleep(nanoseconds: 20_000_000) }
+                catch { break }
+            }
+            return (peakFootprint, minimumAvailable == Int64.max ? -1 : minimumAvailable)
+        }
         do {
             var runs: [NativeLlamaGenerationMetrics] = []
             for _ in 0..<repetitions {
@@ -277,16 +295,23 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
                 }
                 runs.append(metrics)
             }
+            let afterRuns = Self.memorySnapshot()
+            memoryMonitor.cancel()
+            let sampledPeaks = await memoryMonitor.value
             let report = NativeLlamaBenchmarkReport(
                 model: metadata,
                 beforeLoad: before,
                 afterLoad: afterLoad,
-                afterRuns: Self.memorySnapshot(),
+                afterRuns: afterRuns,
+                sampledPeakPhysicalFootprintBytes: sampledPeaks.0,
+                minimumAvailableBytesDuringRuns: sampledPeaks.1,
                 runs: runs
             )
             await unloadModel()
             return report
         } catch {
+            memoryMonitor.cancel()
+            _ = await memoryMonitor.value
             await unloadModel()
             throw error
         }
