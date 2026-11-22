@@ -17,6 +17,7 @@ public struct NativeLlamaModelMetadata: Sendable, Equatable {
     public let parameterCount: UInt64
     public let layerCount: Int32
     public let fileTypeCode: Int32
+    public let gpuLayersRequested: Int32
     public let loadMilliseconds: Double
     public var quantization: String { fileTypeCode == 15 ? "Q4_K_M" : "llama_ftype_code_\(fileTypeCode)" }
     public var isQ4KM: Bool { fileTypeCode == 15 }
@@ -118,6 +119,7 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
             parameterCount: llama_model_n_params(loadedModel),
             layerCount: llama_model_n_layer(loadedModel),
             fileTypeCode: Int32(llama_model_ftype(loadedModel).rawValue),
+            gpuLayersRequested: gpuLayers,
             loadMilliseconds: max(0, (ProcessInfo.processInfo.systemUptime - start) * 1_000)
         )
         let after = Self.memorySnapshot()
