@@ -34,4 +34,25 @@ final class NativeLlamaBackendTests: XCTestCase {
         let loaded = await backend.isLoaded
         XCTAssertFalse(loaded)
     }
+
+    func testBenchmarkRejectsMissingGGUFFailClosed() async {
+        let backend = NativeLlamaCppBackend()
+        let missing = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("gguf")
+        do {
+            _ = try await backend.benchmark(
+                at: missing,
+                prompt: "A short deterministic benchmark prompt.",
+                maximumTokens: 8,
+                repetitions: 1
+            )
+            XCTFail("A missing model must fail before benchmark execution")
+        } catch {
+            XCTAssertEqual(error as? ExocortexError, .modelNotLoaded)
+        }
+        let loaded = await backend.isLoaded
+        XCTAssertFalse(loaded)
+    }
+
 }
