@@ -33,26 +33,26 @@ public struct ExocortexLlamaComparisonReport: Sendable {
 
     public var rendered: String {
         func section(_ label: String, _ report: NativeLlamaBenchmarkReport?, _ error: String?) -> String {
-            guard let report else { return "\\(label): NOT RUN / FAILED — \\(error ?? "unknown error")" }
+            guard let report else { return "\(label): NOT RUN / FAILED — \(error ?? "unknown error")" }
             let runs = report.runs.enumerated().map { index, run in
-                "  run \\(index + 1): prefill=\\(String(format: "%.2f", run.prefillTokensPerSecond)) tok/s, decode=\\(String(format: "%.2f", run.decodeTokensPerSecond)) tok/s, total=\\(String(format: "%.2f", run.generationTokensPerSecond)) tok/s"
-            }.joined(separator: "\\n")
+                "  run \(index + 1): prefill=\(String(format: "%.2f", run.prefillTokensPerSecond)) tok/s, decode=\(String(format: "%.2f", run.decodeTokensPerSecond)) tok/s, total=\(String(format: "%.2f", run.generationTokensPerSecond)) tok/s"
+            }.joined(separator: "\n")
             let peak = report.sampledPeakPhysicalFootprintBytes.map { String($0) + " bytes" } ?? "unavailable"
-            let available = report.minimumAvailableBytesDuringRuns >= 0 ? "\\(report.minimumAvailableBytesDuringRuns) bytes" : "unknown"
+            let available = report.minimumAvailableBytesDuringRuns >= 0 ? "\(report.minimumAvailableBytesDuringRuns) bytes" : "unknown"
             return """
-            \\(label): PASS
-              quantization=\\(report.model.quantization), file=\\(report.model.fileBytes) bytes, tensor=\\(report.model.tensorBytes) bytes
-              gpuLayersRequested=\\(report.model.gpuLayersRequested), load=\\(String(format: "%.2f", report.model.loadMilliseconds)) ms
-              sampledPeakPhysFootprint=\\(peak), minimumAvailableDuringRuns=\\(available)
-              thermal(before/after-load/after-runs)=\\(report.beforeLoad.thermalState)/\\(report.afterLoad.thermalState)/\\(report.afterRuns.thermalState)
-            \\(runs)
+            \(label): PASS
+              quantization=\(report.model.quantization), file=\(report.model.fileBytes) bytes, tensor=\(report.model.tensorBytes) bytes
+              gpuLayersRequested=\(report.model.gpuLayersRequested), load=\(String(format: "%.2f", report.model.loadMilliseconds)) ms
+              sampledPeakPhysFootprint=\(peak), minimumAvailableDuringRuns=\(available)
+              thermal(before/after-load/after-runs)=\(report.beforeLoad.thermalState)/\(report.afterLoad.thermalState)/\(report.afterRuns.thermalState)
+            \(runs)
             """
         }
         return """
         EXOCORTEX Q4_K_M CPU → GPU comparison
-        model=\\(modelURL.lastPathComponent)
-        \\(section("CPU (gpuLayers=0)", cpu, cpuError))
-        \\(section("GPU request (gpuLayers=-1)", gpu, gpuError))
+        model=\(modelURL.lastPathComponent)
+        \(section("CPU (gpuLayers=0)", cpu, cpuError))
+        \(section("GPU request (gpuLayers=-1)", gpu, gpuError))
         NOTE: gpuLayers=-1 is an offload request, not proof that GPU kernels were used. Confirm native llama.cpp backend logs/device telemetry. phys_footprint peak is sampled every 20 ms and may miss brief spikes.
         """
     }
@@ -116,7 +116,7 @@ public enum ExocortexDeviceProbe {
     }
 
     
-        static func runLlamaBenchmark(
+    public static func runLlamaBenchmark(
             modelURL: URL,
             prompt: String = "Explain in one short paragraph why evidence provenance matters.",
             contextTokens: Int = 512,
