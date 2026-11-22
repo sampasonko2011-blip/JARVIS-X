@@ -1,5 +1,6 @@
 import Foundation
 import ExocortexCore
+import ExocortexLlamaNative
 #if canImport(Metal)
 import Metal
 #endif
@@ -79,6 +80,92 @@ public enum ExocortexDeviceProbe {
         results.append(.init(name: "CognitiveTurnContext → SaboteurAgent", value: "structure=\(structureOK), evidence=\(facts.disposition.rawValue)", durationMilliseconds: duration, status: passed ? "passed" : "failed"))
         return ExocortexProbeReport(generatedAt: .now, measurements: results)
     }
+
+public struct ExocortexLlamaComparisonReport: Sendable {
+    public let modelURL: URL
+    public let cpu: NativeLlamaBenchmarkReport?
+    public let gpu: NativeLlamaBenchmarkReport?
+    public let cpuError: String?
+    public let gpuError: String?
+
+    public var rendered: String {
+        func section(_ label: String, _ report: NativeLlamaBenchmarkReport?, _ error: String?) -> String {
+            guard let report else { return "\\(label): NOT RUN / FAILED — \\(error ?? "unknown error")" }
+            let runs = report.runs.enumerated().map { index, run in
+                "  run \\(index + 1): prefill=\\(String(format: "%.2f", run.prefillTokensPerSecond)) tok/s, decode=\\(String(format: "%.2f", run.decodeTokensPerSecond)) tok/s, total=\\(String(format: "%.2f", run.generationTokensPerSecond)) tok/s"
+            }.joined(separator: "\\n")
+            let peak = report.sampledPeakPhysicalFootprintBytes.map { String($0) + " bytes" } ?? "unavailable"
+            let available = report.minimumAvailableBytesDuringRuns >= 0 ? "\\(report.minimumAvailableBytesDuringRuns) bytes" : "unknown"
+            return """
+            \\(label): PASS
+              quantization=\\(report.model.quantization), file=\\(report.model.fileBytes) bytes, tensor=\\(report.model.tensorBytes) bytes
+              gpuLayersRequested=\\(report.model.gpuLayersRequested), load=\\(String(format: "%.2f", report.model.loadMilliseconds)) ms
+              sampledPeakPhysFootprint=\\(peak), minimumAvailableDuringRuns=\\(available)
+              thermal(before/after-load/after-runs)=\\(report.beforeLoad.thermalState)/\\(report.afterLoad.thermalState)/\\(report.afterRuns.thermalState)
+            \\(runs)
+            """
+        }
+        return """
+        EXOCORTEX Q4_K_M CPU → GPU comparison
+        model=\\(modelURL.lastPathComponent)
+        \\(section("CPU (gpuLayers=0)", cpu, cpuError))
+        \\(section("GPU request (gpuLayers=-1)", gpu, gpuError))
+        NOTE: gpuLayers=-1 is an offload request, not proof that GPU kernels were used. Confirm native llama.cpp backend logs/device telemetry. phys_footprint peak is sampled every 20 ms and may miss brief spikes.
+        """
+    }
+}
+
+/// One-call, sequential CPU then GPU benchmark for a local Q4_K_M GGUF.
+/// Each pass owns a fresh backend/context; generate() clears KV memory before every run.
+/// This performs real model loading/inference and should only be run on a physical device.
+public extension ExocortexDeviceProbe {
+    static func runLlamaBenchmark(
+        modelURL: URL,
+        prompt: String = "Explain in one short paragraph why evidence provenance matters.",
+        contextTokens: Int = 512,
+        maximumTokens: Int = 128,
+        repetitions: Int = 2,
+        minimumAvailableMemoryBytes: Int64 = 2_684_354_560
+    ) async -> ExocortexLlamaComparisonReport {
+        var cpuReport: NativeLlamaBenchmarkReport?
+        var gpuReport: NativeLlamaBenchmarkReport?
+        var cpuError: String?
+        var gpuError: String?
+
+        do {
+            let backend = NativeLlamaCppBackend()
+            cpuReport = try await backend.benchmark(
+                at: modelURL, contextTokens: contextTokens, prompt: prompt,
+                maximumTokens: maximumTokens, repetitions: repetitions,
+                gpuLayers: 0, minimumAvailableMemoryBytes: minimumAvailableMemoryBytes,
+                requireQ4KM: true
+            )
+        } catch {
+            cpuError = String(describing: error)
+        }
+
+        // CPU pass unloads its model before returning. The second pass independently
+        // re-checks available memory and thermal state before requesting GPU offload.
+        do {
+            let backend = NativeLlamaCppBackend()
+            gpuReport = try await backend.benchmark(
+                at: modelURL, contextTokens: contextTokens, prompt: prompt,
+                maximumTokens: maximumTokens, repetitions: repetitions,
+                gpuLayers: -1, minimumAvailableMemoryBytes: minimumAvailableMemoryBytes,
+                requireQ4KM: true
+            )
+        } catch {
+            gpuError = String(describing: error)
+        }
+
+        let report = ExocortexLlamaComparisonReport(
+            modelURL: modelURL, cpu: cpuReport, gpu: gpuReport,
+            cpuError: cpuError, gpuError: gpuError
+        )
+        print(report.rendered)
+        return report
+    }
+}
 
     private static func milliseconds(since start: UInt64) -> Double {
         Double(DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
