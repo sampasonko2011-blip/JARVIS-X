@@ -4,7 +4,7 @@ on:
     paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
   push:
     branches: [main, 'feat/**', 'feature/**']
-    paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
+    paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
 permissions:
   contents: read
 jobs:
