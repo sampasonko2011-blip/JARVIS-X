@@ -14,7 +14,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "ExocortexCore"),
-        .target(name: "ExocortexDeviceProbe", dependencies: ["ExocortexCore"]),
+        .target(name: "ExocortexDeviceProbe", dependencies: ["ExocortexCore", "ExocortexLlamaNative"]),
         .target(
             name: "ExocortexLlamaNative",
             dependencies: [
