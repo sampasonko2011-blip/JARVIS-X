@@ -1,7 +1,7 @@
 name: Exocortex Swift Core and Native Llama
 on:
   pull_request:
-    paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
+    paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
   push:
     branches: [main, 'feat/**', 'feature/**']
     paths: ['exocortex/**', '.github/workflows/exocortex-swift.yml']
@@ -17,6 +17,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: swift --version && xcodebuild -version
+      - name: Root Swift package manifest — iPad import entry point
+        working-directory: .
+        run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
       - name: Portable core tests
         run: swift test --filter ExocortexCoreTests -Xswiftc -warnings-as-errors
       - name: Portable core release build
