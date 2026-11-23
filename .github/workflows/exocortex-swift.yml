@@ -8,15 +8,20 @@ on:
 permissions:
   contents: read
 jobs:
-  swift-core:
+  swift-core-and-ios-simulator:
     runs-on: macos-15
     defaults:
       run:
         working-directory: exocortex
     steps:
       - uses: actions/checkout@v4
-      - name: Toolchain
-        run: swift --version && xcodebuild -version
+      - name: Toolchain and runner identity
+        run: |
+          swift --version
+          xcodebuild -version
+          echo "runner_arch=$(uname -m)"
+          test "$(uname -m)" = "arm64"
+          system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
       - name: Root Swift package manifest — iPad import entry point
         working-directory: .
         run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
@@ -28,15 +33,20 @@ jobs:
         run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
       - name: iOS Simulator build — portable core only
         run: xcodebuild -scheme ExocortexCore -destination 'generic/platform=iOS Simulator' build
-  swift-native-llama:
+  swift-native-llama-arm64:
     runs-on: macos-15
     defaults:
       run:
         working-directory: exocortex
     steps:
       - uses: actions/checkout@v4
-      - name: Toolchain
-        run: swift --version && xcodebuild -version
+      - name: Toolchain and runner identity
+        run: |
+          swift --version
+          xcodebuild -version
+          echo "runner_arch=$(uname -m)"
+          test "$(uname -m)" = "arm64"
+          system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
       - name: Resolve pinned llama.swift 3.0.0
         run: swift package resolve
       - name: Native llama product build
