@@ -6,7 +6,7 @@ import Darwin
 import FoundationNetworking
 #endif
 
-public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected, runtimeUnavailable, thermalLimit, memoryPressure, modelNotLoaded, invalidLease }
+public enum ExocortexError: Error, Equatable, Sendable { case invalidDimension, dimensionMismatch, invalidVector, memoryConsentRequired, invalidEndpoint, invalidResponse, httpStatus(Int), toolNotAllowed, invalidPayload, contextualEngineRequired, validationRejected, runtimeUnavailable, thermalLimit, memoryUnavailable, memoryPressure, modelNotLoaded, invalidLease }
 public struct VectorMessage: Codable, Equatable, Sendable {
  public let id:UUID; public let source:String; public let values:[Float]; public let createdAt:Date
  public init(id:UUID=UUID(),source:String,values:[Float],createdAt:Date = .now){self.id=id;self.source=source;self.values=values;self.createdAt=createdAt}
@@ -74,21 +74,27 @@ public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
         #if os(iOS) || os(tvOS) || os(watchOS)
         memory = Int64(os_proc_available_memory())
         #elseif os(macOS)
-        // os_proc_available_memory() is explicitly unavailable on macOS.
-        // Use the task's remaining memory limit when the kernel reports one;
-        // if no finite limit is exposed, preserve UNKNOWN and fail closed.
-        var info = task_vm_info_data_t()
+        // macOS does not expose the iOS per-process memory budget API.
+        // Estimate immediately available/reclaimable host memory from free + inactive pages.
+        var statistics = vm_statistics64_data_t()
         var count = mach_msg_type_number_t(
-            MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size
+            MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size
         )
-        let result = withUnsafeMutablePointer(to: &info) { pointer in
+        let host = mach_host_self()
+        let result = withUnsafeMutablePointer(to: &statistics) { pointer in
             pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+                host_statistics64(host, HOST_VM_INFO64, $0, &count)
             }
         }
-        let remaining = info.limit_bytes_remaining
-        memory = result == KERN_SUCCESS && remaining > 0 && remaining <= UInt64(Int64.max)
-            ? Int64(remaining) : -1
+        mach_port_deallocate(mach_task_self_, host)
+        let freePages = Int64(statistics.free_count)
+        let inactivePages = Int64(statistics.inactive_count)
+        let (pageCount, pageCountOverflow) = freePages.addingReportingOverflow(inactivePages)
+        let (availableBytes, byteCountOverflow) = UInt64(max(0, pageCount))
+            .multipliedReportingOverflow(by: UInt64(vm_kernel_page_size))
+        memory = result == KERN_SUCCESS && !pageCountOverflow && !byteCountOverflow &&
+            availableBytes <= UInt64(Int64.max)
+            ? Int64(availableBytes) : -1
         #else
         memory = -1 // UNKNOWN on unsupported hosts; never interpreted as unlimited memory.
         #endif
