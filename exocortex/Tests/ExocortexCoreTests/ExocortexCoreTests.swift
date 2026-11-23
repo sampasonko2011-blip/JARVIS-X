@@ -578,6 +578,24 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(counts.2, 0)
     }
 
+    func testLlamaRuntimeUnavailableMemoryHasDistinctFailure() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
+        try Data([0x47, 0x47, 0x55, 0x46]).write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let backend = LlamaBackendSpy()
+        let runtime = LlamaCppRuntimeAdapter(
+            locator: LlamaCppModelLocator(modelURL: url), backend: backend,
+            safety: FixedRuntimeSafetyMonitor(state: RuntimeSafetySnapshot(availableMemoryBytes: -1, thermalCondition: .nominal))
+        )
+        do {
+            try await runtime.load(LocalModelDescriptor(identifier: "test", quantization: "Q4", maximumResidentBytes: 100))
+            XCTFail("Unknown memory must block loading")
+        } catch { XCTAssertEqual(error as? ExocortexError, .memoryUnavailable) }
+        let counts = await backend.counts()
+        XCTAssertEqual(counts.0, 0)
+        XCTAssertEqual(counts.1, 1)
+    }
+
     func testLlamaRuntimeMemoryCeilingTriggersUnload() async throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".gguf")
         try Data([0x47, 0x47, 0x55, 0x46]).write(to: url)
