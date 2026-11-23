@@ -28,3 +28,14 @@ See `docs/architecture.md` and `docs/self-audit.md`.
 See [docs/benchmarking.md](docs/benchmarking.md) for reproducible runtime benchmark instructions, CI artifact details, and the distinction between deterministic fixture checks and real model-quality evaluation.
 
 See [docs/live-provider-adapters.md](docs/live-provider-adapters.md) for credential-gated hosted adapters and the optional local Ollama route. Ollama uses an explicitly registered, locally installed model and defaults to `http://127.0.0.1:11434`; it does not require an API key. Adapter availability is not the same as a validated model; hosted calls require authorized credentials, current model IDs, and separate quality evaluation. Local inference avoids per-request hosted fees but requires suitable hardware, disk, memory, and electricity. OpenRouter remains excluded by policy.
+
+
+## EXOCORTEX Swift runtime
+
+The Swift implementation is a separate package surface under `exocortex/`, with a root `Package.swift` entry point. It currently exposes three products:
+
+- `ExocortexCore`: portable reasoning/evidence core.
+- `ExocortexLlamaNative`: native llama.cpp adapter backed by the pinned `llama.swift` dependency.
+- `ExocortexDeviceProbe`: bounded device capability and local GGUF benchmark entry points.
+
+See [EXOCORTEX validation matrix](docs/exocortex-validation.md) for the exact distinction between CI compilation/tests, real-model inference, and physical-device verification. A green CI run is not evidence of inference or GPU offload. The physical iPad Air 5 M1 benchmark remains unverified until a report is produced by that device.
