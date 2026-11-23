@@ -529,6 +529,7 @@ final class ExocortexCoreTests: XCTestCase {
     func testLocalRuntimeErrorsAlwaysBlockXMemoPersistence() async throws {
         let cases: [(ExocortexError, String)] = [
             (.thermalLimit, "thermalLimit"),
+            (.memoryUnavailable, "memoryUnavailable"),
             (.memoryPressure, "memoryPressure"),
             (.runtimeUnavailable, "runtimeUnavailable"),
             (.modelNotLoaded, "modelNotLoaded")
