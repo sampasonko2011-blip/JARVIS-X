@@ -32,7 +32,7 @@ jobs:
         run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
       - name: iOS Simulator build — portable core only
         run: xcodebuild -scheme ExocortexCore -destination 'generic/platform=iOS Simulator' build
-  swift-native-llama-arm64:
+  swift-native-llama-macos:
     runs-on: macos-15
     defaults:
       run:
