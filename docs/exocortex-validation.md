@@ -50,6 +50,15 @@ A real-model smoke test is implemented in `.github/workflows/exocortex-gguf-smok
 
 A successful smoke test would validate the native pipeline on that specific hosted runner. It would still not validate the iPad Air 5 M1.
 
+## Memory-safety telemetry and failure classification
+
+- iOS-family targets continue to use `os_proc_available_memory()` for the process-available budget.
+- macOS uses `host_statistics64(HOST_VM_INFO64)` and estimates free/reclaimable memory as `(free_count + inactive_count) * vm_kernel_page_size`. Overflow, API failure, or an invalid result remains UNKNOWN; it is never treated as unlimited memory.
+- `ExocortexError.memoryUnavailable` distinguishes an unknown/unavailable measurement from a measured value below the configured threshold (`memoryPressure`). Both block model loading; an unavailable reading also requests emergency unload during inference.
+- This macOS estimate is host-level free + inactive memory, not an iOS-style per-process memory budget. It is appropriate for a hosted macOS smoke-test preflight, but it must not be described as equivalent to the iPadOS process limit.
+
+The first manual run (`45269936888`) verified the pinned GGUF size and SHA-256, built the native package, and ran on an arm64 virtualized Apple M1 macOS runner. It stopped at the memory preflight before llama.cpp model loading or generation. Therefore no tokens/sec or successful inference were produced. The new telemetry path and error distinction are intended to address that preflight failure; they remain unvalidated until a subsequent run succeeds.
+
 ## iPad GGUF benchmark safeguards
 
 The current DeviceProbe benchmark is bounded (default two repetitions, 512 context tokens, 128 generated tokens per pass) and checks memory/thermal headroom before and after model load. It runs CPU-only first and then requests GPU offload. The 20 ms physical-footprint sampling is approximate and can miss short spikes.
