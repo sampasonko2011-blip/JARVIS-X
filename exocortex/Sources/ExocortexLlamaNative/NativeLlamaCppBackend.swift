@@ -85,11 +85,14 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
         guard fileBytes > 0 else { throw ExocortexError.modelNotLoaded }
 
         let before = Self.memorySnapshot()
-        guard before.thermalState == .nominal || before.thermalState == .fair,
-              before.availableBytes >= minimumAvailableMemoryBytes else {
-            throw before.thermalState == .serious || before.thermalState == .critical ||
-                before.thermalState == .unknown
-                ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+        guard before.thermalState == .nominal || before.thermalState == .fair else {
+            throw ExocortexError.thermalLimit
+        }
+        guard before.availableBytes >= 0 else {
+            throw ExocortexError.memoryUnavailable
+        }
+        guard before.availableBytes >= minimumAvailableMemoryBytes else {
+            throw ExocortexError.memoryPressure
         }
 
         let start = ProcessInfo.processInfo.systemUptime
@@ -123,12 +126,17 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
             loadMilliseconds: max(0, (ProcessInfo.processInfo.systemUptime - start) * 1_000)
         )
         let after = Self.memorySnapshot()
-        guard after.thermalState == .nominal || after.thermalState == .fair,
-              after.availableBytes >= minimumAvailableMemoryBytes else {
+        guard after.thermalState == .nominal || after.thermalState == .fair else {
             await unloadModel()
-            throw after.thermalState == .serious || after.thermalState == .critical ||
-                after.thermalState == .unknown
-                ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+            throw ExocortexError.thermalLimit
+        }
+        guard after.availableBytes >= 0 else {
+            await unloadModel()
+            throw ExocortexError.memoryUnavailable
+        }
+        guard after.availableBytes >= minimumAvailableMemoryBytes else {
+            await unloadModel()
+            throw ExocortexError.memoryPressure
         }
     }
 
@@ -289,8 +297,8 @@ public actor NativeLlamaCppBackend: LlamaCppBackend {
                 _ = try await generate(prompt: prompt, maximumTokens: maximumTokens) {
                     let state = Self.memorySnapshot()
                     return state.thermalState == .serious || state.thermalState == .critical ||
-                        state.thermalState == .unknown ||
-                        (state.availableBytes >= 0 && state.availableBytes < minimumAvailableMemoryBytes)
+                        state.thermalState == .unknown || state.availableBytes < 0 ||
+                        state.availableBytes < minimumAvailableMemoryBytes
                 }
                 guard let metrics = lastGenerationMetrics else {
                     throw ExocortexError.runtimeUnavailable
