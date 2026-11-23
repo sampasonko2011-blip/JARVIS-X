@@ -1,7 +1,7 @@
 name: Exocortex Swift Core and Native Llama
 on:
   pull_request:
-    paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
+    paths: ['Package.swift', 'README.md', 'docs/exocortex-validation.md', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
   push:
     branches: [main, 'feat/**', 'feature/**']
     paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
