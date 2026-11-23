@@ -125,7 +125,7 @@ public enum ThermalGuardian {
     }
     public static func shouldEmergencyUnload(_ snapshot: RuntimeSafetySnapshot, criticalMemoryBytes: Int64) -> Bool {
         snapshot.thermalCondition == .critical || snapshot.thermalCondition == .unknown ||
-        (snapshot.availableMemoryBytes >= 0 && snapshot.availableMemoryBytes < criticalMemoryBytes)
+        snapshot.availableMemoryBytes < 0 || snapshot.availableMemoryBytes < criticalMemoryBytes
     }
 }
 public protocol MemoryHTTPTransport: Sendable {
@@ -755,9 +755,15 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
         guard header == Data("GGUF".utf8) else { throw ExocortexError.modelNotLoaded }
 
         let state = safety.snapshot()
+        guard state.thermalCondition == .nominal || state.thermalCondition == .fair else {
+            throw ExocortexError.thermalLimit
+        }
+        guard state.availableMemoryBytes >= 0 else {
+            throw ExocortexError.memoryUnavailable
+        }
         guard ThermalGuardian.allowsInference(state, minimumMemoryBytes: max(minimumLoadMemoryBytes, Int64(descriptor.maximumResidentBytes) + criticalMemoryBytes)) else {
             if ThermalGuardian.shouldEmergencyUnload(state, criticalMemoryBytes: criticalMemoryBytes) { await emergencyUnload() }
-            throw state.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+            throw ExocortexError.memoryPressure
         }
         try await backend.loadModel(at: modelURL, contextTokens: ThermalGuardian.budget(for: state.thermalCondition).maximumContextTokens)
         self.descriptor = descriptor
@@ -768,7 +774,9 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
         let before = safety.snapshot()
         if ThermalGuardian.shouldEmergencyUnload(before, criticalMemoryBytes: criticalMemoryBytes) {
             await emergencyUnload()
-            throw before.thermalCondition == .critical ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+            throw before.thermalCondition == .critical || before.thermalCondition == .unknown
+                ? ExocortexError.thermalLimit
+                : (before.availableMemoryBytes < 0 ? ExocortexError.memoryUnavailable : ExocortexError.memoryPressure)
         }
         guard ThermalGuardian.allowsInference(before, minimumMemoryBytes: criticalMemoryBytes) else {
             await emergencyUnload()
@@ -789,7 +797,8 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
                 current.thermalCondition == .serious || current.thermalCondition == .unknown {
                 await emergencyUnload()
                 throw current.thermalCondition == .critical || current.thermalCondition == .serious || current.thermalCondition == .unknown
-                    ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+                    ? ExocortexError.thermalLimit
+                    : (current.availableMemoryBytes < 0 ? ExocortexError.memoryUnavailable : ExocortexError.memoryPressure)
             }
             throw error
         }
@@ -798,7 +807,8 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
             after.thermalCondition == .serious || after.thermalCondition == .unknown {
             await emergencyUnload()
             throw after.thermalCondition == .critical || after.thermalCondition == .serious || after.thermalCondition == .unknown
-                ? ExocortexError.thermalLimit : ExocortexError.memoryPressure
+                ? ExocortexError.thermalLimit
+                : (after.availableMemoryBytes < 0 ? ExocortexError.memoryUnavailable : ExocortexError.memoryPressure)
         }
         return generated
     }
