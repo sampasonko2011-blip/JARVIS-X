@@ -1,0 +1,71 @@
+name: EXOCORTEX Manual CPU GGUF Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_model_download:
+        description: "Download the pinned public GGUF (~398 MB) and run one bounded CPU inference"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-gguf-smoke:
+    if: ${{ inputs.confirm_model_download }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: exocortex
+    env:
+      MODEL_URL: https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/21ef23001f314d0895bd8439b08157c2d4cd9bb7/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf
+      MODEL_SHA256: 6eb923e7d26e9cea28811e1a8e852009b21242fb157b26149d3b188f3a8c8653
+      MODEL_SIZE_BYTES: "397808192"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Runner identity (diagnostic only)
+        run: |
+          set -euo pipefail
+          echo "runner_arch=$(uname -m)"
+          sw_vers
+          system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
+
+      - name: Download pinned GGUF and verify integrity before Swift
+        run: |
+          set -euo pipefail
+          MODEL_PATH="$RUNNER_TEMP/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf"
+          curl --fail --location --retry 3 --silent --show-error \
+            "$MODEL_URL" --output "$MODEL_PATH"
+          echo "$MODEL_SHA256  $MODEL_PATH" | shasum -a 256 --check
+          ACTUAL_SIZE="$(stat -f%z "$MODEL_PATH")"
+          test "$ACTUAL_SIZE" = "$MODEL_SIZE_BYTES"
+          echo "Model artifact checksum and size verified before Swift invocation."
+          {
+            echo "## Manual CPU GGUF smoke test"
+            echo "- Model: Qwen2.5-0.5B-Instruct Q4_K_M"
+            echo "- Pinned revision: 21ef23001f314d0895bd8439b08157c2d4cd9bb7"
+            echo "- SHA-256: `$MODEL_SHA256` (verified)"
+            echo "- File size: $ACTUAL_SIZE bytes (verified)"
+            echo "- Runner architecture: `$(uname -m)`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "EXOCORTEX_GGUF_PATH=$MODEL_PATH" >> "$GITHUB_ENV"
+
+      - name: Swift and Xcode versions
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Resolve exact llama.swift dependency
+        run: swift package resolve
+
+      - name: Run one bounded CPU-only inference (8-token cap)
+        env:
+          EXOCORTEX_GGUF_SMOKE: "1"
+        run: |
+          set -euo pipefail
+          swift test --filter NativeLlamaBackendTests 2>&1 | tee "$RUNNER_TEMP/exocortex-gguf-smoke.log"
+          grep '^GGUF_SMOKE_RESULT ' "$RUNNER_TEMP/exocortex-gguf-smoke.log" >> "$GITHUB_STEP_SUMMARY"
