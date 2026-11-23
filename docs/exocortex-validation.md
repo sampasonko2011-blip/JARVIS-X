@@ -17,7 +17,7 @@
 | Portable core iOS Simulator build | Successful `xcodebuild` for generic iOS Simulator | Same baseline qualification |
 | Native llama adapter compiles | Successful native target build on hosted macOS | Same baseline qualification |
 | Native lifecycle/fail-closed tests | Successful `swift test --filter NativeLlamaBackendTests` | Same baseline qualification; tests do not load a real model |
-| Hosted runner CPU architecture | Captured `uname -m` from the actual job | Newly added diagnostic; do not assume `macos-15` means Apple Silicon |
+| Hosted runner CPU architecture | Captured `uname -m` from the actual job | Diagnostic only; architecture is reported, not enforced |
 | Real GGUF load and generation | Test run with a pinned model artifact, checksum verification, and successful load/generate/unload report | UNPROVEN |
 | Metal execution | Device/runtime telemetry proving Metal backend use and layer offload | UNPROVEN |
 | Physical iPad Air 5 M1 performance and thermals | Report captured on that exact iPad | UNPROVEN |
@@ -25,7 +25,7 @@
 
 ## CI workflow scope
 
-`.github/workflows/exocortex-swift.yml` runs on `macos-15`. The workflow reports Swift/Xcode versions and `uname -m`. The runner label alone does not prove its CPU architecture; use the captured job output.
+`.github/workflows/exocortex-swift.yml` runs on `macos-15`. The workflow reports Swift/Xcode versions and `uname -m`; it does not enforce a specific CPU architecture. The runner label alone does not prove its CPU architecture, so use the captured job output.
 
 The workflow currently checks:
 1. Root package manifest and DeviceProbe target build.
@@ -39,7 +39,7 @@ These checks establish compilation and deterministic test behavior only. They do
 
 ## Real-model smoke test: design requirements
 
-A real-model CI smoke test is a separate, opt-in capability and is not part of ordinary pull-request CI yet. Before adding it:
+A real-model smoke test is implemented in `.github/workflows/exocortex-gguf-smoke.yml` as a manual-only `workflow_dispatch` workflow. It requires the operator to set `confirm_model_download=true`; it is not part of ordinary pull-request CI. The candidate is `bartowski/Qwen2.5-0.5B-Instruct-GGUF`, file `Qwen2.5-0.5B-Instruct-Q4_K_M.gguf`, pinned to revision `21ef23001f314d0895bd8439b08157c2d4cd9bb7`, expected size `397808192` bytes, SHA-256 `6eb923e7d26e9cea28811e1a8e852009b21242fb157b26149d3b188f3a8c8653`. The workflow verifies both size and SHA-256 before invoking Swift. Its opt-in XCTest requests CPU-only execution (`gpuLayers = 0`), context 128, one repetition, and at most 8 generated tokens; it logs load/generation timings and sampled `phys_footprint`, then asserts that the model is unloaded. This validates only the hosted runner's CPU path, not iPad or Metal. **Dispatch limitation:** GitHub requires a `workflow_dispatch` workflow file to exist on the repository's default branch before it can be manually dispatched. This PR remains draft/unmerged, so the workflow is prepared in this branch but is not yet dispatchable without a separately authorized promotion to the default branch. Before changing the pinned artifact:
 - Select a small, legally redistributable GGUF artifact from a stable, pinned revision.
 - Pin and verify its SHA-256 before invoking llama.cpp.
 - Keep model download and inference behind an explicit manual opt-in; never download a model on every PR run.
@@ -59,6 +59,6 @@ Do not run on a hot device or when iPadOS reports memory pressure. The benchmark
 ## Current decision
 
 - Continue portable/native source work through GitHub and CI.
-- Keep PR #136 open, draft, and unmerged.
-- Treat all real-model, Metal, Playgrounds-import, and physical-iPad claims as UNPROVEN until their specific evidence exists.
+- Keep PR #136 open, draft, and unmerged. The manual smoke workflow cannot be dispatched until it is separately present on the default branch.
+- Treat real-model inference as UNPROVEN until the manual workflow succeeds on its exact run; Metal, Playgrounds-import, and physical-iPad claims remain UNPROVEN until their specific evidence exists.
 - No paid services, hosted model calls, or external inference are required by the current CI workflow.
