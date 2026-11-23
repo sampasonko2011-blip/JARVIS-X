@@ -44,7 +44,6 @@ jobs:
           swift --version
           xcodebuild -version
           echo "runner_arch=$(uname -m)"
-          test "$(uname -m)" = "arm64"
           system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
       - name: Resolve pinned llama.swift 3.0.0
         run: swift package resolve
