@@ -18,6 +18,10 @@ The live database records the XMemo OAuth storage migration and has the OAuth tr
 
 The live global paid-inference budget configuration was observed as disabled, with the kill-switch flag false and no positive per-request reservation configured. The v12 code fails closed when the budget is disabled or cannot be verified. Do not enable paid inference as part of source-only work.
 
+## Live executive inference
+
+The v12 Edge Function is ACTIVE in Supabase, but that does not mean live model inference is enabled. The observed global budget guard is disabled and no positive per-request reservation is configured, so the paid inference route remains fail-closed. No live model call was performed during the audit.
+
 ## Current source architecture
 
 - One executive identity owns task understanding, planning, capability selection, challenge, synthesis, and the final answer.
