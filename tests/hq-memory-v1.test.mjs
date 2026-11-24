@@ -93,6 +93,6 @@ test("production adapter uses the service-role rate-limit RPC contract", async (
   assert.match(source, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(client, /p_user_id: userId/);
   assert.match(client, /p_limit_key: key/);
-  assert.match(client, /Authorization: "Bearer " \\+ serviceRoleKey/);
-  assert.doesNotMatch(client, /Authorization: "Bearer " \\+ token/);
-});;
+  assert.ok(client.includes('Authorization: "Bearer " + serviceRoleKey'));
+  assert.ok(!client.includes('Authorization: "Bearer " + token'));
+});
