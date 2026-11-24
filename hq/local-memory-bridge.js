@@ -51,7 +51,7 @@ export function createLocalMemoryBridge({
   async function request(route, payload, consent) {
     if (consent !== true) throw new Error("explicit_memory_consent_required");
     const token = await accessToken();
-    const response = await fetchImpl(supabaseUrl + "/functions/v1/hq-memory-v1/" + route, {
+    const response = await fetchImpl(supabaseUrl + "/functions/v1/hq-gateway-v12/memory/xmemo/" + route, {
       method: "POST",
       headers: {
         apikey: publishableKey,
@@ -59,9 +59,10 @@ export function createLocalMemoryBridge({
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ ...payload, memory_consent: consent }),
+      body: JSON.stringify({ ...payload, consent }),
     });
     const result = await response.json().catch(() => ({}));
+    if (response.status === 409 && result.status === "not_connected") return result;
     if (!response.ok) {
       const code = typeof result.error === "string" ? result.error : "memory_request_failed";
       throw new Error(code);
@@ -84,9 +85,7 @@ export function createLocalMemoryBridge({
       }
       if (consent !== true) throw new Error("explicit_memory_consent_required");
       return request("remember", {
-        task: task.trim(),
-        answer: answer.trim(),
-        task_type: "local_chat",
+        content: "Task: " + task.trim() + "\nAnswer: " + answer.trim(),
       }, consent);
     },
   });
