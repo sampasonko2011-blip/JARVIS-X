@@ -40,6 +40,15 @@ test("missing or false consent is rejected before session access or network acce
   assert.equal(calls, 0);
 });
 
+test("v12 OAuth bridge treats an unconnected XMemo account as a safe unavailable result", async () => {
+  const bridge = createLocalMemoryBridge({
+    storage: storage(freshSession()),
+    supabaseUrl: "https://example.supabase.co",
+    fetchImpl: async () => new Response(JSON.stringify({ ok: true, status: "not_connected" }), { status: 409 }),
+  });
+  assert.deepEqual(await bridge.recall("query", { consent: true }), { ok: true, status: "not_connected" });
+});
+
 test("recall and remember send explicit consent and the current session", async () => {
   const store = storage(freshSession());
   const calls = [];
@@ -55,14 +64,14 @@ test("recall and remember send explicit consent and the current session", async 
   await bridge.recall("previous decisions", { consent: true });
   await bridge.remember("task", "answer", { consent: true });
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /hq-memory-v1\/recall$/);
-  assert.match(calls[1].url, /hq-memory-v1\/remember$/);
+  assert.match(calls[0].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
+  assert.match(calls[1].url, /hq-gateway-v12\/memory\/xmemo\/remember$/);
   for (const call of calls) {
     assert.equal(call.options.headers.Authorization, "Bearer session-access");
     assert.equal(call.options.headers.apikey, "public-test-key");
-    assert.equal(JSON.parse(call.options.body).memory_consent, true);
+    assert.equal(JSON.parse(call.options.body).consent, true);
   }
-  assert.equal(JSON.parse(calls[1].options.body).task_type, "local_chat");
+  assert.equal(typeof JSON.parse(calls[1].options.body).content, "string");
 });
 
 test("expired HQ session refreshes without putting tokens in the URL", async () => {
@@ -89,7 +98,7 @@ test("expired HQ session refreshes without putting tokens in the URL", async () 
   });
   await bridge.recall("test", { consent: true });
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /auth\/v1\/token/);
+  assert.match(calls[0].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
   assert.equal(calls[1].options.headers.Authorization, "Bearer new-access");
   assert.equal(store.read().refresh_token, "new-refresh");
   assert.equal(calls.some(call => call.url.includes("new-access")), false);
