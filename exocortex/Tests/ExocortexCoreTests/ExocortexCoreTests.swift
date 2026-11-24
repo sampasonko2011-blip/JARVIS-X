@@ -413,6 +413,7 @@ final class ExocortexCoreTests: XCTestCase {
             budget: ThermalGuardian.budget(for: .nominal)
         )
         XCTAssertTrue(decision.approved)
+        XCTAssertTrue(decision.memoryCandidateValidation?.mayPersist == true)
         XCTAssertNotNil(decision.memoryProof)
         do {
             _ = try await orchestrator.rememberValidated(
@@ -457,6 +458,7 @@ final class ExocortexCoreTests: XCTestCase {
             budget: ThermalGuardian.budget(for: .nominal)
         )
         XCTAssertFalse(decision.approved)
+        XCTAssertFalse(decision.memoryCandidateValidation?.mayPersist == true)
         XCTAssertNil(decision.memoryProof)
         do {
             _ = try await orchestrator.rememberValidated(
@@ -466,6 +468,36 @@ final class ExocortexCoreTests: XCTestCase {
                 userAccessToken: "session"
             )
             XCTFail("Unsupported claims must never be persisted")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
+    }
+
+    func testXMemoCandidateWithoutStructuredClaimsCannotBeSealed() async throws {
+        let memory = MemoryWriteSpy()
+        let unstructuredText = "A free-form note with no evidence mapping."
+        let engine = FixedContextualEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            memoryCandidate: unstructuredText
+        ))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: CognitiveTurnContext(),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(decision.approved)
+        XCTAssertFalse(decision.memoryCandidateValidation?.mayPersist == true)
+        XCTAssertNil(decision.memoryProof)
+        do {
+            _ = try await orchestrator.rememberValidated(
+                unstructuredText,
+                decision: decision,
+                consent: true,
+                userAccessToken: "session"
+            )
+            XCTFail("Free-form text without structured evidence claims must not be persisted")
         } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
         let writes = await memory.writeCount()
         XCTAssertEqual(writes, 0)
