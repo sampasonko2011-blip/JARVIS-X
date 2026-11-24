@@ -25,10 +25,10 @@ The repository currently contains five SQL migration files:
 | Repository file/version | Live history comparison |
 |---|---|
 | 20261024185449_hq_execution_ledger_server_only_writes.sql | Exact version and name match |
-| 20261025225000_hq_global_budget_guard.sql | Live history has same name at a different version (20261027220313) |
-| 20261026100000_hq_rate_limit_server_only_rpc.sql | Live history has a differently named migration (20261110112609) that restricts the RPC |
+| 20261027220313_hq_global_budget_guard.sql | Exact version and name match after source-path reconciliation |
+| 20261110112609_restrict_hq_rate_limit_rpc_to_service_role.sql | Exact version and name match after source-path reconciliation; source includes the live role guard |
 | 20261102120000_hq_image_budget_guard.sql | No matching live version/name observed |
-| 20261109190000_hq_xmemo_oauth_storage.sql | Live history has same name at a different version (20261110113744) |
+| 20261110113744_hq_xmemo_oauth_storage.sql | Exact version and name match after source-path reconciliation |
 
 The four live versions without an exact repository version/name pair are not assumed missing from the database. The four repository files without an exact pair are not assumed unapplied. Migration history is metadata, not a schema diff.
 
@@ -38,7 +38,7 @@ Read-only inspection of `information_schema.columns` and `pg_get_functiondef` ad
 
 - The three `hq_global_budget_*` tables exist live with the columns declared by the repository migration. The live `reserve_hq_global_budget(uuid,uuid)` function has the expected reservation contract and is `SECURITY INVOKER`, matching the repository migration's intended model.
 - Both `hq_xmemo_oauth_*` tables exist live with the expected columns. The live `consume_hq_xmemo_oauth_transaction(text,uuid,timestamptz)` function has the expected atomic DELETE/RETURNING behavior, empty search path, and service-role-only execution grant.
-- The live `consume_hq_rate_limit(uuid,text)` function has the expected 10/minute and 100/day windows and the service-role-only grant. Its live body additionally checks `auth.role() = 'service_role'`. That defense-in-depth check is not present in the repository's `20261026100000_hq_rate_limit_server_only_rpc.sql`; the later live migration name `restrict_hq_rate_limit_rpc_to_service_role` plausibly accounts for the difference, but its SQL body is not in the repository and has not been retrieved from the migration ledger. Preserve the live check; do not remove it.
+- The live `consume_hq_rate_limit(uuid,text)` function has the expected 10/minute and 100/day windows and the service-role-only grant. Its live body checks `auth.role() = 'service_role'`. The branch now contains the canonical migration path `20261110112609_restrict_hq_rate_limit_rpc_to_service_role.sql` with that same defense-in-depth check. The live migration's original SQL text was not available from the metadata listing, so equality is based on the observed live function definition and reviewed source, not a byte-for-byte migration artifact comparison. Preserve the live check; do not remove it.
 - The `hq_image_budget_*` tables and `reserve_hq_image_budget` function were not present in the live schema query. The repository migration `20261102120000_hq_image_budget_guard.sql` is therefore **not observed as applied**. This is consistent with image generation remaining disabled; do not deploy or enable it as part of this branch.
 - The live migration ledger includes the XMemo OAuth migration under a later timestamp than the repository file. The live schema and RPC are present, but the original migration SQL stored in Supabase's migration ledger was not available through the metadata listing. The timestamp mismatch remains a history-reconciliation item, not a reason to reapply the migration.
 
