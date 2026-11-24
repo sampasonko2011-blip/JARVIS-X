@@ -53,8 +53,8 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
  assert.match(bridge,/Authorization: "Bearer " \+ token/);
  assert.match(bridge,/memory_consent: consent/);
  assert.match(bridge,/explicit_memory_consent_required/);
- assert.match(engine,/memoryBridge\\.recall\\(text, \\{ consent: useMemory \\}\\)/);
- assert.match(engine,/memoryBridge\\.remember\\(text, finalAnswer, \\{ consent: useMemory \\}\\)/);
+ assert.ok(engine.includes("memoryBridge.recall(text, { consent: useMemory })"));
+ assert.ok(engine.includes("memoryBridge.remember(text, finalAnswer, { consent: useMemory })"));
  assert.match(memory,/authenticate/);
  assert.match(memory,/consumeRateLimit/);
  assert.match(handler,/body\.memory_consent !== true/);
