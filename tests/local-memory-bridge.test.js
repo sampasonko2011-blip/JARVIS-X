@@ -141,3 +141,11 @@ test("local chat exposes per-turn opt-in without a checked default and trusts on
   assert.match(engine, /recalled\.context_is_untrusted === true/);
   assert.match(engine, /messages\[0\]\.content = SYSTEM/);
 });
+
+test("local chat's memory bridge targets the v12 OAuth memory routes", async () => {
+  const source = await (await import("node:fs/promises")).readFile(new URL("../hq/local-memory-bridge.js", import.meta.url), "utf8");
+  assert.match(source, /functions\\/v1\\/hq-gateway-v12/);
+  assert.match(source, /memory\\/xmemo\\/recall/);
+  assert.match(source, /memory\\/xmemo\\/remember/);
+  assert.doesNotMatch(source, /hq-memory-v1/);
+});
