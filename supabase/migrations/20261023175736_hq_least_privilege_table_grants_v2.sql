@@ -1,0 +1,1 @@
+REVOKE ALL PRIVILEGES ON TABLE public.hq_memory_items FROM anon, authenticated, PUBLIC; REVOKE ALL PRIVILEGES ON TABLE public.hq_execution_runs FROM anon, authenticated, PUBLIC; GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.hq_memory_items TO authenticated; GRANT SELECT, INSERT, UPDATE ON TABLE public.hq_execution_runs TO authenticated;
