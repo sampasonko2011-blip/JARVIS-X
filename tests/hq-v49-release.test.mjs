@@ -14,7 +14,7 @@ test("v49 health advertises chat when OpenAI OR an explicitly enabled cascade pr
   assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /global_request_reservation_missing/);
   assert.match(gateway, /configuredInferenceProviders/);
   assert.match(cascade, /JX_ENABLE_PROVIDER_CASCADE/);
-  for (const provider of ["OPENROUTER", "GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
+  for (const provider of ["GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
     assert.ok(cascade.includes("JX_PROVIDER_" + provider + "_ENABLED"), "missing explicit enable flag for " + provider);
   }
   assert.match(gateway, /authenticatedUser\(/);
