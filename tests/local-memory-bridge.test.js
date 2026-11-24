@@ -23,7 +23,20 @@ test("local memory bridge refuses to call the gateway without an HQ session", as
     storage: storage(),
     fetchImpl: async () => { calls += 1; throw new Error("must not fetch"); },
   });
-  await assert.rejects(bridge.recall("continuity"), /Sign in from HQ Chat/);
+  await assert.rejects(bridge.recall("continuity", { consent: true }), /Sign in from HQ Chat/);
+  assert.equal(calls, 0);
+});
+
+test("missing or false consent is rejected before session access or network access", () => {
+  let calls = 0;
+  const bridge = createLocalMemoryBridge({
+    storage: storage(),
+    fetchImpl: async () => { calls += 1; throw new Error("must not fetch"); },
+  });
+  assert.throws(() => bridge.recall("query"), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.recall("query", { consent: false }), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.remember("task", "answer"), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.remember("task", "answer", { consent: false }), /explicit_memory_consent_required/);
   assert.equal(calls, 0);
 });
 
@@ -39,8 +52,8 @@ test("recall and remember send explicit consent and the current session", async 
       return new Response(JSON.stringify({ ok: true, status: "stored", context: "prior note" }), { status: 200 });
     },
   });
-  await bridge.recall("previous decisions");
-  await bridge.remember("task", "answer");
+  await bridge.recall("previous decisions", { consent: true });
+  await bridge.remember("task", "answer", { consent: true });
   assert.equal(calls.length, 2);
   assert.match(calls[0].url, /hq-memory-v1\/recall$/);
   assert.match(calls[1].url, /hq-memory-v1\/remember$/);
@@ -74,7 +87,7 @@ test("expired HQ session refreshes without putting tokens in the URL", async () 
       return new Response(JSON.stringify({ ok: true, status: "recalled", context: "" }), { status: 200 });
     },
   });
-  await bridge.recall("test");
+  await bridge.recall("test", { consent: true });
   assert.equal(calls.length, 2);
   assert.match(calls[0].url, /auth\/v1\/token/);
   assert.equal(calls[1].options.headers.Authorization, "Bearer new-access");
@@ -92,7 +105,7 @@ test("failed refresh clears the stale session and stops memory access", async ()
     storage: store,
     fetchImpl: async () => new Response("{}", { status: 401 }),
   });
-  await assert.rejects(bridge.recall("test"), /sign-in expired/i);
+  await assert.rejects(bridge.recall("test", { consent: true }), /sign-in expired/i);
   assert.equal(store.read(), null);
 });
 
