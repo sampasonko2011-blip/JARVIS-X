@@ -3,7 +3,24 @@
  'use strict';
  const pill=document.querySelector('#jx-neural-pill');
  const dock=document.querySelector('#jx-control-dock');
- if(!pill||!dock)return;
+ if(!pill)return;
+ if(!dock && document.body.classList.contains('jx-spatial-observatory')){
+  const mode=document.querySelector('#mode-status'),audio=document.querySelector('#audio-status');
+  const modeTarget=pill.querySelector('[data-signal="mode"]'),audioTarget=pill.querySelector('[data-signal="audio"]');
+  const syncObservatory=()=>{
+   if(modeTarget)modeTarget.textContent=mode?.textContent?.replace(' DISPLAY · VISUAL PROFILE ACTIVE','')||'UNKNOWN';
+   if(audioTarget)audioTarget.textContent=audio?.textContent?.includes('off')?'OFF':audio?.textContent?.includes('disabled')?'OFF':audio?.textContent?.includes('enabled')?'ON':'UNKNOWN';
+  };
+  syncObservatory();
+  if(typeof MutationObserver!=='undefined'){
+   const observer=new MutationObserver(syncObservatory);
+   if(mode)observer.observe(mode,{childList:true,characterData:true,subtree:true});
+   if(audio)observer.observe(audio,{childList:true,characterData:true,subtree:true});
+   window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});
+  }
+  return;
+ }
+ if(!dock)return;
  const sources=[
   ['network','#net-status'],
   ['records','#data-count'],
