@@ -101,14 +101,14 @@ test("memory readiness distinguishes OAuth from legacy fallback", () => {
     encryptionSecretConfigured: true,
     legacyApiKeyConfigured: false,
   }), {
-    oauthConfigurationReady: true, legacyFallbackConfigured: false, memoryConfigured: true, mode: "oauth-configured",
+    memoryOAuthConfigured: true, memoryLegacyFallbackConfigured: false, memoryConfigured: true, memoryConfigurationMode: "oauth-configured",
   });
   assert.deepEqual(resolveMemoryReadiness({
     legacyApiKeyConfigured: true,
   }), {
-    oauthConfigurationReady: false, legacyFallbackConfigured: true, memoryConfigured: true, mode: "legacy-fallback-configured",
+    memoryOAuthConfigured: false, memoryLegacyFallbackConfigured: true, memoryConfigured: true, memoryConfigurationMode: "legacy-fallback-configured",
   });
   assert.deepEqual(resolveMemoryReadiness(), {
-    oauthConfigurationReady: false, legacyFallbackConfigured: false, memoryConfigured: false, mode: "unavailable",
+    memoryOAuthConfigured: false, memoryLegacyFallbackConfigured: false, memoryConfigured: false, memoryConfigurationMode: "unavailable",
   });
 });
