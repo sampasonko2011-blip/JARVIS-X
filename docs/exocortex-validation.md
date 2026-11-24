@@ -13,7 +13,7 @@
 | Capability | Evidence required | Current status |
 |---|---|---|
 | Root package resolves/builds on hosted macOS | Successful `swift build` in CI on the exact commit | CI baseline was green at `b2543a865ffb96351519a3e4e3098f560dd2ff7c`; subsequent workflow/documentation commits require fresh CI |
-| Portable core tests | Successful `swift test --filter ExocortexCoreTests` | Same baseline qualification |
+| Portable core tests | Successful `swift test --filter ExocortexCoreTests` | FAILED on rerun `45355431744`: 2 existing runtime-unload assertions failed; details below |
 | Portable core iOS Simulator build | Successful `xcodebuild` for generic iOS Simulator | Same baseline qualification |
 | Native llama adapter compiles | Successful native target build on hosted macOS | Same baseline qualification |
 | Native lifecycle/fail-closed tests | Successful `swift test --filter NativeLlamaBackendTests` | Same baseline qualification; tests do not load a real model |
