@@ -97,8 +97,8 @@ test("Responses function tools and tool outputs are translated for chat-completi
   const result = await invokeProviderCascade({
     input: [
       { role: "user", content: "use tool" },
-      { type: "function_call", call_id: "call-1", name: "lookup", arguments: "{\\"q\\":\\"x\\"}" },
-      { type: "function_call_output", call_id: "call-1", output: "{\\"status\\":\\"succeeded\\"}" },
+      { type: "function_call", call_id: "call-1", name: "lookup", arguments: JSON.stringify({ q: "x" }) },
+      { type: "function_call_output", call_id: "call-1", output: JSON.stringify({ status: "succeeded" }) },
     ],
     tools: [{ type: "function", name: "lookup", description: "Lookup", parameters: { type: "object", properties: {} } }],
     env: allEnv,
@@ -107,7 +107,7 @@ test("Responses function tools and tool outputs are translated for chat-completi
       return ok("gemini-model", {
         role: "assistant",
         content: null,
-        tool_calls: [{ id: "call-2", type: "function", function: { name: "lookup", arguments: "{\\"q\\":\\"y\\"}" } }],
+        tool_calls: [{ id: "call-2", type: "function", function: { name: "lookup", arguments: JSON.stringify({ q: "y" }) } }],
       });
     },
   });
