@@ -127,10 +127,10 @@ test("provider errors never return credential values", async () => {
   await assert.rejects(() => invokeProviderCascade({
     input: "hello",
     env: allEnv,
-    fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ error: "test-openrouter" }) }),
+    fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ error: "test-gemini" }) }),
   }), (error) => {
     assert.match(error.message, /provider_http_401_gemini/);
-    assert.doesNotMatch(error.message, /test-gemini/);
+    assert.doesNotMatch(error.message, /test-gemini|test-openrouter/);
     return true;
   });
 });
