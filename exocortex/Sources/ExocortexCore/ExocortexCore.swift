@@ -520,6 +520,7 @@ public struct OrchestrationDecision: Sendable, Equatable {
     public let output: [Float]
     public let reason: String
     public let evidenceValidation: EvidenceValidation
+    public let memoryCandidateValidation: EvidenceValidation?
     public let memoryProof: MemoryValidationProof?
 }
 public struct ExocortexOrchestrator: Sendable {
@@ -627,6 +628,7 @@ public struct ExocortexOrchestrator: Sendable {
             output: approved ? result.output : [],
             reason: reason,
             evidenceValidation: factual,
+            memoryCandidateValidation: candidateValidation,
             memoryProof: approved && candidateValidation?.mayPersist == true
                 ? result.memoryCandidate.map { MemoryValidationProof(content: $0) }
                 : nil
@@ -638,7 +640,10 @@ public struct ExocortexOrchestrator: Sendable {
         return CognitiveTurnContext(memoryRecall: recall)
     }
     public func rememberValidated(_ content: String, decision: OrchestrationDecision, consent: Bool, userAccessToken: String) async throws -> MemoryReceipt {
-        guard decision.approved, decision.evidenceValidation.mayPersist else { throw ExocortexError.validationRejected }
+        guard decision.approved, decision.evidenceValidation.mayPersist,
+              decision.memoryCandidateValidation?.mayPersist == true else {
+            throw ExocortexError.validationRejected
+        }
         guard consent else { throw ExocortexError.memoryConsentRequired }
         guard decision.memoryProof?.matches(content) == true else { throw ExocortexError.validationRejected }
         guard let memoryStore else { throw ExocortexError.invalidEndpoint }
