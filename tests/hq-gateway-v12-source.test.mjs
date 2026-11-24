@@ -187,3 +187,12 @@ test("Nano Banana image route is separate, authenticated, confirmed, and zero-bu
   assert.match(hqClient, /No automatic retry was made/);
   assert.doesNotMatch(hqClient, /GOOGLE_API_KEY|JARVIS_X_GEMINI_API_KEY/);
 });
+
+test("the active HQ frontend targets v12 and does not call the legacy gateway", async () => {
+  const frontend = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+  const legacy = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
+  assert.match(frontend, /functions\\/v1\\/hq-gateway-v12/);
+  assert.doesNotMatch(frontend, /functions\\/v1\\/hq-gateway(?:["'\\/]|$)/);
+  assert.match(legacy, /JX_ALLOWED_EMAILS/);
+  assert.doesNotMatch(legacy, /reserveGlobalBudget|reserve_hq_global_budget/);
+});
