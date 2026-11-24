@@ -94,6 +94,7 @@ test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the h
 
 test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
   assert.ok(gateway.includes("const oauthMemoryReady = Boolean("));
+  assert.ok(gateway.includes("new TextEncoder().encode(oauthEncryptionSecret.trim()).byteLength >= 32"));
   assert.ok(gateway.includes('const legacyMemoryReady = Boolean(Deno.env.get("XMEMO_API_KEY"))'));
   assert.ok(gateway.includes("oauthMemoryReady,\n      legacyMemoryReady,"));
   assert.ok(gateway.includes("memoryConfigured: oauthMemoryReady || legacyMemoryReady"));
