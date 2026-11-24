@@ -5,9 +5,11 @@
 - Supabase reports Edge Function `hq-gateway` as ACTIVE, deployed version 45.
 - Its deployed source directly invokes the OpenAI Chat Completions API in a three-pass flow.
 - The inspected source contains authentication, email allowlisting, and rate-limit checks, but no global budget reservation or global kill-switch check.
-- Its deployed rate-limit adapter still uses the legacy caller-JWT RPC shape. The active database exposes only the service-role-only `consume_hq_rate_limit(uuid,text)` contract, and the old gateway supplies neither `p_user_id` nor the service-role credential. Therefore the inspected v45 source is expected to fail closed with a rate-limit service error before reaching its model calls, assuming the current database function set remains unchanged.
+- Its deployed rate-limit adapter still uses the legacy caller-JWT RPC shape. The active database exposes only the service-role-only `consume_hq_rate_limit(uuid,text)` contract, and the old gateway supplies neither `p_user_id` nor the service-role credential. Therefore the inspected v45 deployment is expected to fail closed with a rate-limit service error before reaching its model calls, assuming the current database function set remains unchanged.
 - The current `hq-gateway-v12` route has the global budget guard and is the intended executive gateway.
-- GitHub code search did not return repository references to `/functions/v1/hq-gateway`. Search-index absence is not proof that no external client, cached page, scheduled job, or third-party caller exists.
+- The repository's current `supabase/functions/hq-gateway/index.ts` source also contains a global budget reservation implementation. However, the separately inspected deployed v45 bundle does **not** contain `reserveGlobalBudget` or `reserve_hq_global_budget`. This is a source/deployment drift, not evidence that the live v45 deployment has the source protections.
+- The current first-party HQ client `hq/hq.js` targets `/functions/v1/hq-gateway-v12`; no legacy `/functions/v1/hq-gateway/` route was found in that client. This does not exclude external, cached, or older client callers.
+- GitHub code search did not return repository references to `/functions/v1/hq-gateway`, and the current `hq/hq.js` points to v12. Search-index absence is not proof that no external client, cached page, scheduled job, or third-party caller exists.
 
 ## Decision
 
