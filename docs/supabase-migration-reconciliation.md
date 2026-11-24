@@ -6,7 +6,7 @@ Audit date: 2026-11-24. This document records repository and live Supabase metad
 
 Live Supabase project: `xfewajxkqntflfntisut`.
 
-The active database reports these nine migration versions:
+The active database reports these nine migration versions. Four have canonical source files in this branch; five are historical live migrations whose SQL is not present in this checkout:
 
 | Live version | Name |
 |---|---|
@@ -20,7 +20,7 @@ The active database reports these nine migration versions:
 | 20261110112609 | restrict_hq_rate_limit_rpc_to_service_role |
 | 20261110113744 | hq_xmemo_oauth_storage |
 
-The repository currently contains five SQL migration files:
+The repository currently contains five SQL migration files. Four now match a live version/name exactly after the source paths were aligned to the observed Supabase ledger; the image-budget migration is not observed live:
 
 | Repository file/version | Live history comparison |
 |---|---|
@@ -30,7 +30,7 @@ The repository currently contains five SQL migration files:
 | 20261102120000_hq_image_budget_guard.sql | No matching live version/name observed |
 | 20261110113744_hq_xmemo_oauth_storage.sql | Exact version and name match after source-path reconciliation |
 
-The four live versions without an exact repository version/name pair are not assumed missing from the database. The four repository files without an exact pair are not assumed unapplied. Migration history is metadata, not a schema diff.
+The five live versions without repository files are earlier baseline migrations whose SQL is not present in this checkout. The image-budget migration is present in Git but its tables/function are not observed live. Migration history is metadata, not a complete schema diff.
 
 ## Schema-level comparison performed
 
