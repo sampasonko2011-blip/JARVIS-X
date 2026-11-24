@@ -54,11 +54,11 @@ The successful smoke test validates the native CPU pipeline on that specific hos
 ## Memory-safety telemetry and failure classification
 
 - iOS-family targets continue to use `os_proc_available_memory()` for the process-available budget.
-- macOS uses `host_statistics64(HOST_VM_INFO64)` and estimates free/reclaimable memory as `(free_count + inactive_count) * vm_kernel_page_size`. Overflow, API failure, or an invalid result remains UNKNOWN; it is never treated as unlimited memory.
+- macOS uses `host_statistics64(HOST_VM_INFO64)` and estimates free/reclaimable memory as `(free_count + inactive_count) * getpagesize()`. The page size is obtained through the POSIX `getpagesize()` API rather than reading the mutable `vm_kernel_page_size` global. Overflow, API failure, or an invalid result remains UNKNOWN; it is never treated as unlimited memory.
 - `ExocortexError.memoryUnavailable` distinguishes an unknown/unavailable measurement from a measured value below the configured threshold (`memoryPressure`). Both block model loading; an unavailable reading also requests emergency unload during inference.
 - This macOS estimate is host-level free + inactive memory, not an iOS-style per-process memory budget. It is appropriate for a hosted macOS smoke-test preflight, but it must not be described as equivalent to the iPadOS process limit.
 
-The first manual run (`45269936888`) verified the pinned GGUF size and SHA-256, built the native package, and ran on an arm64 virtualized Apple M1 macOS runner. It stopped at the memory preflight before llama.cpp model loading or generation. Therefore no tokens/sec or successful inference were produced. The new telemetry path and error distinction are intended to address that preflight failure; they remain unvalidated until a subsequent run succeeds.
+The first manual run (`45269936888`) verified the pinned GGUF size and SHA-256 and built the native package, but stopped at memory preflight before model loading or generation. This was an unsuccessful historical attempt, superseded by the successful bounded CPU smoke test `45356577656` documented below. The successful run validates only that hosted runner's CPU path.
 
 ## iPad GGUF benchmark safeguards
 
@@ -91,7 +91,7 @@ Run 45356577656 completed successfully on commit 80f0de177490fb4e24573be0d5c60a5
 
 This is VALIDATED evidence for one short CPU inference on that virtualized macOS runner only. It is not a measurement of the user's iPad Air 5, not evidence of iPad free RAM, not a Metal performance result, and not evidence for 12-agent concurrency. The suggested 20–40x Metal speedup remains UNPROVEN and must not be presented as a benchmark result.
 
-The run compiled ExocortexCore.swift and ExocortexCoreTests.swift, but its test filter executed NativeLlamaBackendTests; SystemPageSizeTests.testSystemPageSizeUsesPositivePOSIXValue was compiled but was not executed in that run. A subsequent rerun of the cancelled swift-core-and-ios-simulator job in workflow run 45355431744 did execute the SystemPageSize test, which PASSED. The overall core job FAILED because two other tests failed: testLlamaRuntimeThermalLimitTriggersUnload and testLlamaRuntimeUnavailableMemoryHasDistinctFailure. Both expected the runtime to call emergencyUnload() when preflight rejected a critical thermal state or unknown memory; current LlamaCppRuntimeAdapter.load throws before invoking that cleanup. This can leave a previously loaded backend resident if a later load attempt encounters unsafe conditions. Treat as a real fail-closed cleanup defect to fix before merge.
+The historical run `45355431744` initially had a cancelled Core job. Its rerun exposed two runtime-unload regressions (`testLlamaRuntimeThermalLimitTriggersUnload` and `testLlamaRuntimeUnavailableMemoryHasDistinctFailure`); both were subsequently fixed on the EXOCORTEX feature branch. The exact follow-up Core + Native run `45369925842` on `c7e46f19ffbdc7d7df371236feab76aa18dccdff` passed 41 Core tests and 5 Native tests. That evidence is separate from the P0 branch's JavaScript/TypeScript CI.
 
 
 ## 2026-11-24 status correction
