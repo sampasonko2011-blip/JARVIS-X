@@ -9,7 +9,7 @@ The following deployment facts were read from Supabase metadata; no secrets or u
 | Edge Function | Supabase state | Version | Role |
 |---|---|---:|---|
 | `hq-gateway-v12` | ACTIVE | 40 | Current executive gateway |
-| `hq-memory-v1` | ACTIVE | 34 | Legacy local WebLLM memory gateway |
+| `hq-memory-v1` | ACTIVE | 34 | Legacy memory gateway; retained during OAuth cutover |
 | `hq-gateway` | ACTIVE | 45 | Older three-pass OpenAI gateway; retirement review required |
 
 The v12 deployed `index.ts`, `provider-cascade.mjs`, and `xmemo-oauth-router.mjs` matched the corresponding files inspected on `main` during this audit. Deployment version numbers are not Git commit SHAs and do not establish end-to-end behavior.
@@ -36,7 +36,7 @@ The v12 Edge Function is ACTIVE in Supabase, but that does not mean live model i
 |---|---|---|
 | Executive reasoning | v12 cognitive kernel, Responses tool loop, provider cascade | v12 ACTIVE; paid inference remains fail-closed; no live model call performed in this audit |
 | XMemo OAuth | PKCE router, AES-GCM credential store, service-role transaction storage | OAuth migration and tables observed live; end-to-end account flow unverified |
-| Legacy XMemo | API-key adapter and local chat bridge | v1 ACTIVE; current RPC contract mismatch identified for correction |
+| Legacy XMemo v1 | API-key adapter behind the legacy memory Edge Function | v1 ACTIVE version 34; source RPC adapter corrected on this branch, but production remains on deployed code until separately approved deployment |
 | Local WebLLM | Browser WebGPU engine and local conversation UI | Source-integrated; runtime requires supported browser/device and model initialization |
 | Local tool broker | Deterministic read-only `text.analyze` capability; default off | No general external connector executor established |
 | Image generation | Nano Banana adapter, authenticated route, separate budget guard | Do not enable without separate migration/configuration and explicit cost approval |
@@ -49,7 +49,7 @@ Provider adapter presence does not prove that provider credentials are configure
 - The browser is an untrusted client. Provider credentials and Supabase service-role credentials must remain in server-side Edge Function secrets. Provider/service-role credentials never belong in browser code.
 - The gateway must authenticate sessions, enforce a server-side allowlist, rate limits, strict schemas, payload bounds, explicit per-turn consent, cost limits, and redacted audit records.
 - Retrieved memory and tool output are untrusted data, not instructions or authorization. cross-platform retrieval requires a separately authenticated and authorized transport; it is not automatic cross-device synchronization.
-- Memory bridges must require explicit consent at their own API boundary; an upstream checkbox alone is not sufficient.
+- Memory bridges must require explicit consent at their own API boundary; an upstream checkbox alone is not sufficient. The feature branch now requires a positive consent argument and routes local chat memory to the authenticated v12 OAuth endpoints. This source change is not deployed.
 - Mock fixtures make zero model calls and do not demonstrate model quality or live service connectivity.
 - CI success is not deployment; source integration is not live invocation; a deployment status is not proof of successful end-to-end behavior.
 - Migration history in Git currently differs from the live Supabase migration ledger. See `docs/supabase-migration-reconciliation.md`. Do not apply, rename, or backfill migrations until schema-level reconciliation is complete.
