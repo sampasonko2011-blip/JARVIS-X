@@ -437,10 +437,13 @@ public struct ReasoningResult: Sendable, Equatable {
     public let output: [Float]
     public let confidence: Float?
     public let claims: [EvidenceClaim]
-    public init(output: [Float], confidence: Float?, claims: [EvidenceClaim] = []) {
+    /// Exact text proposed by the reasoning engine for persistence; the orchestrator hashes this only after Saboteur approval.
+    public let memoryCandidate: String?
+    public init(output: [Float], confidence: Float?, claims: [EvidenceClaim] = [], memoryCandidate: String? = nil) {
         self.output = output
         self.confidence = confidence
         self.claims = claims
+        self.memoryCandidate = memoryCandidate
     }
 }
 public protocol ReasoningEngine: Sendable {
@@ -497,14 +500,14 @@ public struct ExocortexOrchestrator: Sendable {
         self.toolRegistry = toolRegistry
         self.localRuntime = localRuntime
     }
-    public func think(seed: [Float], budget: ThermalBudget, memoryCandidate: String? = nil) async throws -> OrchestrationDecision {
+    public func think(seed: [Float], budget: ThermalBudget) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
         var context = await collectEvidence(into: CognitiveTurnContext())
         context = await collectRuntimeObservation(seed: seed, budget: budget, into: context)
         let result = try await engine.reason(input: seed, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: context, memoryCandidate: memoryCandidate)
+        return decide(result, context: context)
     }
-    public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget, memoryCandidate: String? = nil) async throws -> OrchestrationDecision {
+    public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
         guard let contextualEngine = engine as? any ContextualReasoningEngine else {
             throw ExocortexError.contextualEngineRequired
@@ -512,7 +515,7 @@ public struct ExocortexOrchestrator: Sendable {
         var enriched = await collectEvidence(into: context)
         enriched = await collectRuntimeObservation(seed: seed, budget: budget, into: enriched)
         let result = try await contextualEngine.reason(context: enriched, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: enriched, memoryCandidate: memoryCandidate)
+        return decide(result, context: enriched)
     }
     private func collectRuntimeObservation(seed: [Float], budget: ThermalBudget, into context: CognitiveTurnContext) async -> CognitiveTurnContext {
         guard let localRuntime else { return context }
@@ -550,7 +553,7 @@ public struct ExocortexOrchestrator: Sendable {
         let toolRecords = await toolRegistry?.evidenceSnapshot() ?? []
         return context.addingEvidence(memory: memoryRecords, workingSet: workingRecords, tools: toolRecords)
     }
-    private func decide(_ result: ReasoningResult, context: CognitiveTurnContext, memoryCandidate: String?) -> OrchestrationDecision {
+    private func decide(_ result: ReasoningResult, context: CognitiveTurnContext) -> OrchestrationDecision {
         let structural = saboteur.validateStructure(output: result.output, confidence: result.confidence)
         let runtimeFailures = context.runtimeObservations.filter { $0.status != "completed" }
         let factual: EvidenceValidation
@@ -577,9 +580,9 @@ public struct ExocortexOrchestrator: Sendable {
             output: approved ? result.output : [],
             reason: reason,
             evidenceValidation: factual,
-            memoryProof: approved ? memoryCandidate.map { candidate in
+            memoryProof: approved ? result.memoryCandidate.flatMap { candidate in
                 candidate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : MemoryValidationProof(content: candidate)
-            } ?? nil : nil
+            } : nil
         )
     }
     public func recallContext(_ query: String, consent: Bool, userAccessToken: String) async throws -> CognitiveTurnContext {
