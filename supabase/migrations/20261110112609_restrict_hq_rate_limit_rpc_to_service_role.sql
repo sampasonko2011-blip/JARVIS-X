@@ -1,8 +1,7 @@
--- Expand phase: add the service-role-only rate-limit RPC without breaking gateway v11.
--- Apply this migration while v11 still uses consume_hq_rate_limit(text), then deploy
--- the matching gateway revision and verify the new overload is being used.
--- Revoke the legacy overload only in a separate cleanup phase after live verification.
--- Do not put that destructive permission change into this compatibility migration.
+-- Canonical source for the live service-role-only rate-limit RPC.
+-- The UUID overload is used by trusted Edge Functions. The authenticated user's
+-- UUID is supplied only after the gateway verifies the bearer session.
+-- Keep the legacy text overload untouched until its own retirement is approved.
 CREATE OR REPLACE FUNCTION public.consume_hq_rate_limit(
   p_user_id uuid,
   p_limit_key text
@@ -25,6 +24,10 @@ DECLARE
   v_window_started_at timestamptz;
   v_request_count integer;
 BEGIN
+  IF coalesce(auth.role(), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501';
+  END IF;
+
   IF p_user_id IS NULL THEN
     RAISE EXCEPTION 'user_id_required' USING ERRCODE = '22023';
   END IF;

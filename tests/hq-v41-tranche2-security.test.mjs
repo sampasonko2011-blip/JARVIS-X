@@ -30,7 +30,8 @@ test("v41 server provider endpoints are fixed constants and routing remains doub
  const provider=await read("../supabase/functions/hq-gateway-v12/provider-cascade.mjs");
  const gateway=await read("../supabase/functions/hq-gateway-v12/index.ts");
  assert.match(provider,/JX_ENABLE_PROVIDER_CASCADE/);
- for(const flag of ["JX_PROVIDER_OPENROUTER_ENABLED","JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED","JX_PROVIDER_CEREBRAS_ENABLED","JX_PROVIDER_NVIDIA_ENABLED","JX_PROVIDER_SAMBANOVA_ENABLED","JX_PROVIDER_MISTRAL_ENABLED","JX_PROVIDER_GITHUB_MODELS_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ for(const flag of ["JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED","JX_PROVIDER_CEREBRAS_ENABLED","JX_PROVIDER_NVIDIA_ENABLED","JX_PROVIDER_SAMBANOVA_ENABLED","JX_PROVIDER_MISTRAL_ENABLED","JX_PROVIDER_GITHUB_MODELS_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ assert.doesNotMatch(provider,/openrouter/i);
  assert.match(provider,/new Set\(\[402, 429\]\)/);
  assert.match(provider,/AbortSignal\.timeout/);
  assert.match(provider,/provider\.endpoint/);
@@ -50,7 +51,11 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
  assert.match(engine,/memoryConsent\?\.checked === true/);
  assert.match(engine,/memoryConsent\.checked = false/);
  assert.match(bridge,/Authorization: "Bearer " \+ token/);
- assert.match(bridge,/memory_consent: true/);
+ assert.match(bridge,/body: JSON\.stringify\(\{ \.\.\.payload, consent \}\)/);
+ assert.match(bridge,/functions\/v1\/hq-gateway-v12\/memory\/xmemo/);
+ assert.match(bridge,/explicit_memory_consent_required/);
+ assert.ok(engine.includes("memoryBridge.recall(text, { consent: useMemory })"));
+ assert.ok(engine.includes("memoryBridge.remember(text, finalAnswer, { consent: useMemory })"));
  assert.match(memory,/authenticate/);
  assert.match(memory,/consumeRateLimit/);
  assert.match(handler,/body\.memory_consent !== true/);

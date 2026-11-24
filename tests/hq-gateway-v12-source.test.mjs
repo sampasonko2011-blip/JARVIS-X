@@ -92,6 +92,15 @@ test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the h
   assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth-preferred"/);
 });
 
+test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
+  assert.ok(gateway.includes("const oauthMemoryReady = Boolean("));
+  assert.ok(gateway.includes("new TextEncoder().encode(oauthEncryptionSecret.trim()).byteLength >= 32"));
+  assert.ok(gateway.includes('const legacyMemoryReady = Boolean(Deno.env.get("XMEMO_API_KEY"))'));
+  assert.ok(gateway.includes("oauthMemoryReady,\n      legacyMemoryReady,"));
+  assert.ok(gateway.includes("memoryConfigured: oauthMemoryReady || legacyMemoryReady"));
+});
+
+
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
   assert.ok(gateway.includes("OPENAI_MODEL"));
   assert.ok(gateway.includes("OPENAI_API_KEY"));
@@ -175,4 +184,16 @@ test("Nano Banana image route is separate, authenticated, confirmed, and zero-bu
   assert.match(hqClient, /user_confirmed:true/);
   assert.match(hqClient, /No automatic retry was made/);
   assert.doesNotMatch(hqClient, /GOOGLE_API_KEY|JARVIS_X_GEMINI_API_KEY/);
+});
+
+test("the active HQ frontend targets v12 and does not call the legacy gateway", async () => {
+  const frontend = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
+  const legacy = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
+  assert.ok(frontend.includes("functions/v1/hq-gateway-v12"));
+  assert.ok(!frontend.includes("'/functions/v1/hq-gateway'"));
+  assert.ok(!frontend.includes('"/functions/v1/hq-gateway"'));
+  assert.match(legacy, /JX_ALLOWED_EMAILS/);
+  assert.match(gateway, /context_is_untrusted: true/);
+  assert.ok(legacy.includes("reserveGlobalBudget("));
+  assert.ok(legacy.includes("reserve_hq_global_budget"));
 });

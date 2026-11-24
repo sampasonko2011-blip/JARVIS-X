@@ -1,13 +1,5 @@
 const PROVIDERS = Object.freeze([
   {
-    id: "openrouter",
-    secret: "OPENROUTER_API_KEY",
-    enabled: "JX_PROVIDER_OPENROUTER_ENABLED",
-    model: "JX_OPENROUTER_MODEL",
-    endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    defaultModel: "openrouter/free",
-  },
-  {
     id: "gemini",
     secret: "GEMINI_API_KEY",
     enabled: "JX_PROVIDER_GEMINI_ENABLED",

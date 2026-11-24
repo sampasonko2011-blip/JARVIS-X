@@ -1,66 +1,75 @@
 # JARVIS-X HQ
 
-JARVIS-X HQ is a progressive web app (PWA) served from `hq/`. Its target architecture is one coherent **JARVIS-X executive identity**. The Vegeto analogy means one fused identity—not a provider council, model picker, or collection of separate assistants.
+JARVIS-X HQ is the progressive web app served from `hq/`. Its target architecture is one coherent JARVIS-X executive identity. The Vegeto analogy means one integrated identity—not a provider council, model picker, or collection of separate assistants.
 
-## Release state
+## Observed production and source state — 2026-11-24
 
-- **Default-branch shell:** A previous HQ shell was published on GitHub Pages. That historical publication is separate from the current feature branch.
-- **Current implementation:** PR #73, `feature/jarvis-x-cognitive-kernel`, is source-only and remains open/draft. It is not merged or deployed.
-- **CI:** Treat only the latest completed Actions run on the exact PR head SHA as evidence. Earlier runs on older commits are superseded.
-- **Live executive inference:** Not independently verified. The gateway requires a configured server-side runtime and a separately enabled global budget guard.
-- **XMemo memory:** Per-request consent, bounded payloads, account-scoped paths, and fail-closed behavior have mock/contract tests. Live persistence, account isolation, deletion, and cross-platform retrieval remain unverified.
-- **Image generation:** Nano Banana 2.1 adapter, authenticated `/image` route, Image Studio UI, and a separate atomic budget migration are source-integrated. `JX_ENABLE_IMAGE_GENERATION` is off by default; the migration is not applied to production; the image budget defaults to disabled/zero; account-owner approval and a price review within 30 days are mandatory. The API key is server-only. No live image call has been made. The published standard 1K price is approximately USD 0.0336 per image; there is no free API tier for this model.
-- **Budget:** The live paid-inference budget guard remains disabled by default. Do not enable paid inference or image generation without separately reviewed limits, account-owner approval, and verified server-side spend controls.
+The following deployment facts were read from Supabase metadata; no secrets or user data were read:
 
-## Install and portable continuity
+| Edge Function | Supabase state | Version | Role |
+|---|---|---:|---|
+| `hq-gateway-v12` | ACTIVE | 40 | Current executive gateway |
+| `hq-memory-v1` | ACTIVE | 34 | Legacy memory gateway; retained during OAuth cutover |
+| `hq-gateway` | ACTIVE | 45 | Older three-pass OpenAI gateway; retirement review required |
 
-Open the published HTTPS HQ URL in Safari on iPhone/iPad and use **Share → Add to Home Screen**. On desktop, use the browser's install option when offered.
+The v12 deployed `index.ts`, `provider-cascade.mjs`, and `xmemo-oauth-router.mjs` matched the corresponding files inspected on `main` during this audit. Deployment version numbers are not Git commit SHAs and do not establish end-to-end behavior.
 
-The Secure Vault supports local AES-GCM encrypted export/import. This is the supported manual cross-platform handoff: export an encrypted file on one supported platform and import it on another. It is **not automatic cross-device synchronization**. A successful home-screen install or local export does not prove remote memory or gateway execution.
+The live database records the XMemo OAuth storage migration and has the OAuth transaction and credential tables with RLS enabled. OAuth uses PKCE and AES-GCM in the deployed source. Live account authorization, token refresh, memory recall/write, account isolation, and deletion have not been exercised end-to-end in this audit.
 
-## Vegeto architecture
+The live global paid-inference budget configuration was observed as disabled, with the kill-switch flag false and no positive per-request reservation configured. The v12 code fails closed when the budget is disabled or cannot be verified. Do not enable paid inference as part of source-only work.
 
-- One executive identity owns task understanding, planning, capability selection, challenge, synthesis, and the final response.
-- Lead, challenge, and synthesis are internal passes of that same identity—not separate model votes.
+## Live executive inference
+
+The v12 Edge Function is ACTIVE in Supabase, but that does not mean live model inference is enabled. The observed global budget guard is disabled and no positive per-request reservation is configured, so the paid inference route remains fail-closed. Not independently verified: no live model call was performed during the audit.
+
+## Current source architecture
+
+- One executive identity owns task understanding, planning, capability selection, challenge, synthesis, and the final answer.
 - The configured reasoning runtime is an implementation detail, not a user-facing identity or provider choice.
-- Image generation, memory, research, coding, and connectors are capabilities under executive governance, not alternate reasoning assistants.
-- The v12 source router accepts only the JARVIS-X identity. Secondary reasoning-provider adapters and user-facing provider selection are not part of this architecture.
+- Memory, research, coding, image generation, and connectors are capabilities under executive governance, not alternate reasoning assistants.
+- The HQ shell contains 13 navigation views. The Spatial Observatory and Mission Control are separate experiences that can be progressively unified without deleting existing views.
+- The local chat uses WebLLM in the browser and has a separate optional persistent-memory bridge. Local inference does not imply cloud inference or external tool access.
 
-## Capability register
+## Capability and deployment status
 
 | Capability | Source status | Live status |
 |---|---|---|
-| Executive reasoning | Single-core cognitive kernel integrated in PR source | Runtime calls unverified; PR not deployed |
-| Nano Banana image generation | Adapter, authenticated route, UI, and zero-default budget guard integrated | Disabled; migration unapplied; no live call |
-| XMemo memory | Consent-gated adapter with mocked contract tests | Live persistence/isolation unverified |
-| Local tool broker | Deterministic read-only `text.analyze` capability; default off | No external connector executor registered |
-| Portable export/import | Local AES-GCM encrypted vault | Manual transfer only; no automatic sync |
-| External integrations | UI roadmap only | Not connected to gateway |
+| Executive reasoning | v12 cognitive kernel, Responses tool loop, provider cascade | v12 ACTIVE; paid inference remains fail-closed; no live model call performed in this audit |
+| XMemo OAuth | PKCE router, AES-GCM credential store, service-role transaction storage | OAuth migration and tables observed live; end-to-end account flow unverified |
+| Legacy XMemo v1 | API-key adapter behind the legacy memory Edge Function | v1 ACTIVE version 34; source RPC adapter corrected on this branch, but production remains on deployed code until separately approved deployment |
+| Local WebLLM | Browser WebGPU engine and local conversation UI | Source-integrated; runtime requires supported browser/device and model initialization |
+| Local tool broker | Deterministic read-only `text.analyze` capability; default off | No general external connector executor established |
+| Image generation | Nano Banana adapter, authenticated route, separate budget guard | Do not enable without separate migration/configuration and explicit cost approval |
+| External integrations | UI and adapter foundations | Each connector must be separately authenticated, authorized, invoked, and verified |
+
+Provider adapter presence does not prove that provider credentials are configured or that a provider is enabled. OpenRouter is prohibited by the project's current policy and must remain absent from all routing allowlists.
 
 ## Security and privacy boundaries
 
-- The browser is an untrusted client. Provider/service-role credentials never belong in browser code, localStorage, prompts, or Git.
-- The gateway must authenticate sessions, enforce a server-side account allowlist, rate limits, strict schemas, payload bounds, consent, cost limits, and redacted audit records.
-- Retrieved memory and tool output are untrusted data, not instructions or authorization.
+- The browser is an untrusted client. Provider credentials and Supabase service-role credentials must remain in server-side Edge Function secrets. Provider/service-role credentials never belong in browser code.
+- The gateway must authenticate sessions, enforce a server-side allowlist, rate limits, strict schemas, payload bounds, explicit per-turn consent, cost limits, and redacted audit records.
+- Retrieved memory and tool output are untrusted data, not instructions or authorization. cross-platform retrieval requires a separately authenticated and authorized transport; it is not automatic cross-device synchronization.
+- Memory bridges must require explicit consent at their own API boundary; an upstream checkbox alone is not sufficient. The feature branch now requires a positive consent argument and routes local chat memory to the authenticated v12 OAuth endpoints. This source change is not deployed.
 - Mock fixtures make zero model calls and do not demonstrate model quality or live service connectivity.
-- CI success is not deployment; source integration is not live invocation; an execution receipt is not proof of an external world-state change.
-- The production gateway and published mainline shell remain separate from the PR candidate. No production settings, secrets, migrations, paid calls, merge, or deployment were performed as part of this source work.
+- CI success is not deployment; source integration is not live invocation; a deployment status is not proof of successful end-to-end behavior.
+- All nine live migration ledger entries now have exact version/name files in Git, including five historical statements recovered and byte-compared from the live ledger. The separate image-budget migration remains unapplied. See `docs/supabase-migration-reconciliation.md` for remaining schema-level comparison limits. Do not apply production migrations from this source-only branch.
+- The older `hq-gateway` v45 remains ACTIVE. See `docs/hq-gateway-v45-retirement.md`; no production disablement is authorized by this source branch.
 
-## Required release gates
+## Release gates
 
-1. Reconcile the PR source with the current production frontend/gateway contract.
-2. Validate schema/RPC compatibility and authorization in a genuinely no-cost nonproduction environment; do not assume a paid staging project is free.
-3. Run the full CI suite on the exact candidate SHA, including build, type-check, unit tests, browser E2E, and static security checks.
-4. Verify authenticated live executive inference, execution-ledger writes, rate limits, budget reservations, and timeout behavior only in an explicitly authorized environment.
-5. Verify XMemo consent-off zero-network behavior, consent-on read/write, A/B account isolation, deletion, and read-after-write before claiming live memory.
-6. Keep Nano Banana disabled unless its separate migration, feature flag, server credential, and budget ceiling are reviewed and explicitly authorized.
-7. Merge, deploy, and production changes remain separate approval decisions.
+1. Reconcile the live Supabase schema, function definitions, grants, RLS policies, and migration ledger with the repository.
+2. Validate RPC and memory contracts using mocked tests or a genuinely no-cost disposable environment.
+3. Verify consent-off zero-network behavior and consent-on read/write with test accounts before claiming live memory.
+4. Verify account isolation, deletion, token refresh, and OAuth error handling before claiming XMemo production readiness.
+5. Inventory all callers of `hq-gateway` v45 and observe invocation logs before any separately authorized disablement.
+6. Run the full CI suite on the exact candidate SHA, including build, type-check, unit tests, browser E2E, and static security checks.
+7. Keep paid inference and image generation disabled unless their separate budgets, credentials, and explicit approval are verified.
+8. Merge, deploy, production configuration changes, migrations, and function disablement are separate approval decisions.
 
 ## Development checks
 
-Run `npm test` and `npm run build`. CI additionally runs Deno type-checking, browser E2E, syntax checks, and benchmarks. Browser automation is not a substitute for physical-device testing or live-service verification.
+Run `npm test` and `npm run build`. CI additionally runs type checks, browser E2E, syntax checks, and benchmarks. Browser automation is not a substitute for physical-device testing or live-service verification.
 
-## Deployment workflow
+## Deployment
 
-The GitHub Pages workflow publishes the `hq/` directory only after an authorized change reaches the configured deployment path. A feature-branch commit does not publish the site. Verify the exact workflow run and published URL before claiming deployment.
-
+A feature-branch commit does not publish the HQ site or update Supabase Edge Functions. Verify the exact workflow run, deployed function version, and published URL before claiming deployment.

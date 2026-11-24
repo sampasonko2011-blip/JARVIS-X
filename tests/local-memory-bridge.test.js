@@ -23,8 +23,30 @@ test("local memory bridge refuses to call the gateway without an HQ session", as
     storage: storage(),
     fetchImpl: async () => { calls += 1; throw new Error("must not fetch"); },
   });
-  await assert.rejects(bridge.recall("continuity"), /Sign in from HQ Chat/);
+  await assert.rejects(bridge.recall("continuity", { consent: true }), /Sign in from HQ Chat/);
   assert.equal(calls, 0);
+});
+
+test("missing or false consent is rejected before session access or network access", () => {
+  let calls = 0;
+  const bridge = createLocalMemoryBridge({
+    storage: storage(),
+    fetchImpl: async () => { calls += 1; throw new Error("must not fetch"); },
+  });
+  assert.throws(() => bridge.recall("query"), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.recall("query", { consent: false }), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.remember("task", "answer"), /explicit_memory_consent_required/);
+  assert.throws(() => bridge.remember("task", "answer", { consent: false }), /explicit_memory_consent_required/);
+  assert.equal(calls, 0);
+});
+
+test("v12 OAuth bridge treats an unconnected XMemo account as a safe unavailable result", async () => {
+  const bridge = createLocalMemoryBridge({
+    storage: storage(freshSession()),
+    supabaseUrl: "https://example.supabase.co",
+    fetchImpl: async () => new Response(JSON.stringify({ ok: true, status: "not_connected" }), { status: 409 }),
+  });
+  assert.deepEqual(await bridge.recall("query", { consent: true }), { ok: true, status: "not_connected" });
 });
 
 test("recall and remember send explicit consent and the current session", async () => {
@@ -39,17 +61,17 @@ test("recall and remember send explicit consent and the current session", async 
       return new Response(JSON.stringify({ ok: true, status: "stored", context: "prior note" }), { status: 200 });
     },
   });
-  await bridge.recall("previous decisions");
-  await bridge.remember("task", "answer");
+  await bridge.recall("previous decisions", { consent: true });
+  await bridge.remember("task", "answer", { consent: true });
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /hq-memory-v1\/recall$/);
-  assert.match(calls[1].url, /hq-memory-v1\/remember$/);
+  assert.match(calls[0].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
+  assert.match(calls[1].url, /hq-gateway-v12\/memory\/xmemo\/remember$/);
   for (const call of calls) {
     assert.equal(call.options.headers.Authorization, "Bearer session-access");
     assert.equal(call.options.headers.apikey, "public-test-key");
-    assert.equal(JSON.parse(call.options.body).memory_consent, true);
+    assert.equal(JSON.parse(call.options.body).consent, true);
   }
-  assert.equal(JSON.parse(calls[1].options.body).task_type, "local_chat");
+  assert.equal(typeof JSON.parse(calls[1].options.body).content, "string");
 });
 
 test("expired HQ session refreshes without putting tokens in the URL", async () => {
@@ -74,9 +96,9 @@ test("expired HQ session refreshes without putting tokens in the URL", async () 
       return new Response(JSON.stringify({ ok: true, status: "recalled", context: "" }), { status: 200 });
     },
   });
-  await bridge.recall("test");
+  await bridge.recall("test", { consent: true });
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /auth\/v1\/token/);
+  assert.match(calls[1].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
   assert.equal(calls[1].options.headers.Authorization, "Bearer new-access");
   assert.equal(store.read().refresh_token, "new-refresh");
   assert.equal(calls.some(call => call.url.includes("new-access")), false);
@@ -92,7 +114,7 @@ test("failed refresh clears the stale session and stops memory access", async ()
     storage: store,
     fetchImpl: async () => new Response("{}", { status: 401 }),
   });
-  await assert.rejects(bridge.recall("test"), /sign-in expired/i);
+  await assert.rejects(bridge.recall("test", { consent: true }), /sign-in expired/i);
   assert.equal(store.read(), null);
 });
 
@@ -114,6 +136,17 @@ test("local chat exposes per-turn opt-in without a checked default and trusts on
   assert.match(html, /id="local-memory-consent" type="checkbox"/);
   assert.doesNotMatch(html, /id="local-memory-consent"[^>]*checked/);
   assert.match(engine, /const useMemory = memoryConsent\?\.checked === true/);
+  assert.ok(engine.includes("memoryBridge.recall(text, { consent: useMemory })"));
+  assert.ok(engine.includes("memoryBridge.remember(text, finalAnswer, { consent: useMemory })"));
   assert.match(engine, /recalled\.context_is_untrusted === true/);
   assert.match(engine, /messages\[0\]\.content = SYSTEM/);
+});
+
+test("local chat's memory bridge targets the v12 OAuth memory routes", async () => {
+  const source = await (await import("node:fs/promises")).readFile(new URL("../hq/local-memory-bridge.js", import.meta.url), "utf8");
+  assert.ok(source.includes("functions/v1/hq-gateway-v12"));
+  assert.ok(source.includes("/functions/v1/hq-gateway-v12/memory/xmemo/"));
+  assert.ok(source.includes('request("recall"'));
+  assert.ok(source.includes('request("remember"'));
+  assert.ok(!source.includes("hq-memory-v1"));
 });

@@ -2,6 +2,7 @@ import { createXMemoMemoryClient } from "../hq-gateway-v12/xmemo-memory.mjs";
 import { createMemoryGateway } from "./memory-gateway.mjs";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const PUBLISHABLE_KEY = (() => {
   try {
     const keys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
@@ -25,16 +26,16 @@ async function authenticate(token: string) {
   return await response.json();
 }
 
-async function consumeRateLimit(key: "minute" | "day", token: string) {
-  if (!SUPABASE_URL || !PUBLISHABLE_KEY || !token) throw new Error("rate_limit_config_missing");
+async function consumeRateLimit(userId: string, key: "minute" | "day") {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !userId) throw new Error("rate_limit_config_missing");
   const response = await fetch(SUPABASE_URL + "/rest/v1/rpc/consume_hq_rate_limit", {
     method: "POST",
     headers: {
-      apikey: PUBLISHABLE_KEY,
-      Authorization: "Bearer " + token,
+      apikey: SERVICE_ROLE_KEY,
+      Authorization: "Bearer " + SERVICE_ROLE_KEY,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ p_limit_key: key }),
+    body: JSON.stringify({ p_user_id: userId, p_limit_key: key }),
     signal: AbortSignal.timeout(8_000),
   });
   if (!response.ok) throw new Error("rate_limit_unavailable");
@@ -55,7 +56,7 @@ const handle = createMemoryGateway({
   allowedEmails: Deno.env.get("JX_MEMORY_ALLOWED_EMAILS") ?? "",
   allowedOrigins,
   authenticate,
-  consumeRateLimit: (_userId: string, key: "minute" | "day", token: string) => consumeRateLimit(key, token),
+  consumeRateLimit: (userId: string, key: "minute" | "day") => consumeRateLimit(userId, key),
   memoryClient,
 });
 
