@@ -1,66 +1,57 @@
 # JARVIS-X HQ
 
-JARVIS-X HQ is a progressive web app (PWA) served from `hq/`. Its target architecture is one coherent **JARVIS-X executive identity**. The Vegeto analogy means one fused identity—not a provider council, model picker, or collection of separate assistants.
+JARVIS-X HQ is the progressive web app served from `hq/`. Its target is one coherent executive identity: one objective, one policy, one evidence ledger, one synthesized answer. Internal routing and capability adapters are implementation details, not separate assistant streams.
 
-## Release state
+## Verified release and runtime state — 2026-11-24
 
-- **Default-branch shell:** A previous HQ shell was published on GitHub Pages. That historical publication is separate from the current feature branch.
-- **Current implementation:** PR #73, `feature/jarvis-x-cognitive-kernel`, is source-only and remains open/draft. It is not merged or deployed.
-- **CI:** Treat only the latest completed Actions run on the exact PR head SHA as evidence. Earlier runs on older commits are superseded.
-- **Live executive inference:** Not independently verified. The gateway requires a configured server-side runtime and a separately enabled global budget guard.
-- **XMemo memory:** Per-request consent, bounded payloads, account-scoped paths, and fail-closed behavior have mock/contract tests. Live persistence, account isolation, deletion, and cross-platform retrieval remain unverified.
-- **Image generation:** Nano Banana 2.1 adapter, authenticated `/image` route, Image Studio UI, and a separate atomic budget migration are source-integrated. `JX_ENABLE_IMAGE_GENERATION` is off by default; the migration is not applied to production; the image budget defaults to disabled/zero; account-owner approval and a price review within 30 days are mandatory. The API key is server-only. No live image call has been made. The published standard 1K price is approximately USD 0.0336 per image; there is no free API tier for this model.
-- **Budget:** The live paid-inference budget guard remains disabled by default. Do not enable paid inference or image generation without separately reviewed limits, account-owner approval, and verified server-side spend controls.
+- **Mainline:** PR #136 (EXOCORTEX Swift Core/XMemo) is merged. Main was verified at `c6e10592744c934044535122ccccf89bf58bfac2`.
+- **Current work:** P0 security/reconciliation is isolated on `feat/p0-security-reconciliation-spatial-hud`. This branch has not been merged or deployed.
+- **Supabase Edge Functions:** `hq-gateway-v12` is ACTIVE version 40; `hq-memory-v1` is ACTIVE version 34; legacy `hq-gateway` is ACTIVE version 45.
+- **Gateway call sites:** the current `hq/app.js` still calls `/functions/v1/hq-gateway` and expects the legacy health/response contract. The separate local WebLLM path calls `hq-memory-v1` through `hq/local-memory-bridge.js`.
+- **Legacy route risk:** the active v45 deployment is older than the current Git source and lacks the global budget/kill-switch gate. Its rate-limit call also does not match the current service-role-only database RPC contract. The mismatch is expected to fail closed before inference, but no live chat request was sent to prove runtime behavior. Do not disable v45 until the frontend is migrated and callers are verified.
+- **v12 budget:** the active global budget row is disabled, kill switch is false, and request reservation is unset. v12 paid inference is therefore expected to fail closed. No paid inference call was made.
+- **XMemo OAuth:** the v12 OAuth router and encrypted credential storage are deployed; the two OAuth storage tables exist with server-only grants. A real XMemo account connect/recall/write cycle has not been verified.
+- **Migration history:** Git contains five migration files while the active database ledger contains nine versions; only one version string matches exactly. See [migration reconciliation](../docs/supabase-migration-reconciliation.md). No migration was applied or repaired.
+- **Provider policy:** this branch removes OpenRouter from the v12 provider-cascade source and adds a non-routing regression test. The active v12 deployment remains unchanged until a separately approved deployment.
+- **Memory consent:** this branch requires explicit per-operation consent at the local memory bridge boundary. The live v1 deployment remains unchanged until deployment approval.
 
-## Install and portable continuity
+## Architecture boundaries
 
-Open the published HTTPS HQ URL in Safari on iPhone/iPad and use **Share → Add to Home Screen**. On desktop, use the browser's install option when offered.
+- The HQ shell and the local WebLLM chat engine are separate browser runtime paths; they do not currently share one local model runtime or one memory transport.
+- The Swift EXOCORTEX package is a third runtime surface. CI and hosted CPU GGUF inference do not prove physical iPad Metal execution or Swift Playgrounds import.
+- XMemo is the intended durable memory authority. The OAuth router is preferred in v12; the legacy API-key adapter remains a transition fallback when OAuth is not connected.
+- The browser is untrusted. Service-role keys, provider credentials, and encryption secrets stay server-side.
+- Memory and tool outputs are untrusted data, not instructions or authorization. Consent must be explicit at the operation boundary.
+- Available credentials or adapters do not prove that a provider is configured, authenticated, invoked, or validated.
+- No OpenRouter routing is authorized. No paid inference, image generation, or budget activation is authorized by this branch.
 
-The Secure Vault supports local AES-GCM encrypted export/import. This is the supported manual cross-platform handoff: export an encrypted file on one supported platform and import it on another. It is **not automatic cross-device synchronization**. A successful home-screen install or local export does not prove remote memory or gateway execution.
+## HQ experience
 
-## Vegeto architecture
+The current HQ shell retains its existing views and navigation. The Spatial Observatory is an existing visual foundation, not a replacement app. P1 will progressively unify the shell and Observatory with centralized design tokens and three functional zones: Neural Pill (real telemetry), adaptive Liquid Canvas, and Control Dock (including a real, reversible Undo action). Preserve existing view routes, keyboard/accessibility behavior, and tests while evolving the presentation.
 
-- One executive identity owns task understanding, planning, capability selection, challenge, synthesis, and the final response.
-- Lead, challenge, and synthesis are internal passes of that same identity—not separate model votes.
-- The configured reasoning runtime is an implementation detail, not a user-facing identity or provider choice.
-- Image generation, memory, research, coding, and connectors are capabilities under executive governance, not alternate reasoning assistants.
-- The v12 source router accepts only the JARVIS-X identity. Secondary reasoning-provider adapters and user-facing provider selection are not part of this architecture.
+## P0 release gates
 
-## Capability register
+1. OpenRouter is absent from the v12 source provider registry and a regression test proves it cannot be selected.
+2. Local memory recall/write refuses missing or false per-operation consent before any network request.
+3. `hq-memory-v1` uses the service-role RPC contract with both `p_user_id` and `p_limit_key`; failures remain fail-closed.
+4. The old v45 route's frontend caller is migrated to a tested v12 contract before any disablement. No production disablement is included in this branch.
+5. Health reports OAuth configuration readiness separately from legacy fallback configuration; neither label claims that an XMemo account is connected.
+6. Git/live migration drift is mapped and reviewed before any migration repair or SQL execution.
+7. EXOCORTEX validation docs and this release-state document reflect observed merged-main and live-function status.
 
-| Capability | Source status | Live status |
-|---|---|---|
-| Executive reasoning | Single-core cognitive kernel integrated in PR source | Runtime calls unverified; PR not deployed |
-| Nano Banana image generation | Adapter, authenticated route, UI, and zero-default budget guard integrated | Disabled; migration unapplied; no live call |
-| XMemo memory | Consent-gated adapter with mocked contract tests | Live persistence/isolation unverified |
-| Local tool broker | Deterministic read-only `text.analyze` capability; default off | No external connector executor registered |
-| Portable export/import | Local AES-GCM encrypted vault | Manual transfer only; no automatic sync |
-| External integrations | UI roadmap only | Not connected to gateway |
+## P1 release gates
 
-## Security and privacy boundaries
-
-- The browser is an untrusted client. Provider/service-role credentials never belong in browser code, localStorage, prompts, or Git.
-- The gateway must authenticate sessions, enforce a server-side account allowlist, rate limits, strict schemas, payload bounds, consent, cost limits, and redacted audit records.
-- Retrieved memory and tool output are untrusted data, not instructions or authorization.
-- Mock fixtures make zero model calls and do not demonstrate model quality or live service connectivity.
-- CI success is not deployment; source integration is not live invocation; an execution receipt is not proof of an external world-state change.
-- The production gateway and published mainline shell remain separate from the PR candidate. No production settings, secrets, migrations, paid calls, merge, or deployment were performed as part of this source work.
-
-## Required release gates
-
-1. Reconcile the PR source with the current production frontend/gateway contract.
-2. Validate schema/RPC compatibility and authorization in a genuinely no-cost nonproduction environment; do not assume a paid staging project is free.
-3. Run the full CI suite on the exact candidate SHA, including build, type-check, unit tests, browser E2E, and static security checks.
-4. Verify authenticated live executive inference, execution-ledger writes, rate limits, budget reservations, and timeout behavior only in an explicitly authorized environment.
-5. Verify XMemo consent-off zero-network behavior, consent-on read/write, A/B account isolation, deletion, and read-after-write before claiming live memory.
-6. Keep Nano Banana disabled unless its separate migration, feature flag, server credential, and budget ceiling are reviewed and explicitly authorized.
-7. Merge, deploy, and production changes remain separate approval decisions.
+- Centralized Obsidian Glass base (`#09090B`) and contextual Cyan/Emerald/Amber/Red accents.
+- Three-zone shell composition: Neural Pill, Liquid Canvas, Control Dock.
+- Reuse the existing Observatory canvas/astrolabe/dock and preserve all 13 HQ views.
+- Bind telemetry UI to real, timestamped source data; display UNKNOWN when telemetry is absent.
+- Undo must represent a real reversible action with a verified before/after state; do not present a decorative button as functional.
+- Responsive, keyboard-accessible, reduced-motion-aware behavior and regression tests.
 
 ## Development checks
 
-Run `npm test` and `npm run build`. CI additionally runs Deno type-checking, browser E2E, syntax checks, and benchmarks. Browser automation is not a substitute for physical-device testing or live-service verification.
+Run `npm test`, `npm run build`, and the relevant Deno checks. CI success is evidence only for the exact commit and the checks actually executed. It is not production deployment or live-provider validation.
 
-## Deployment workflow
+## Production change policy
 
-The GitHub Pages workflow publishes the `hq/` directory only after an authorized change reaches the configured deployment path. A feature-branch commit does not publish the site. Verify the exact workflow run and published URL before claiming deployment.
-
+This source branch must not deploy, merge, alter Supabase secrets, apply migrations, enable paid inference, or disable live functions. Those are separate approval decisions. Verify the exact deployment version and live behavior before claiming any production change.
