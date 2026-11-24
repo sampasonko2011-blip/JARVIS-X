@@ -99,8 +99,6 @@ test("memory health distinguishes OAuth configuration from legacy fallback confi
   assert.ok(gateway.includes("memoryConfigured: oauthMemoryReady || legacyMemoryReady"));
 });
 
-test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
-});
 
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
   assert.ok(gateway.includes("OPENAI_MODEL"));
