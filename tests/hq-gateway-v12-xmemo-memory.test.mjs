@@ -112,6 +112,7 @@ test("adapter requires a bounded timeout", () => {
 test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and explicit per-request consent", async () => {
   const { readFile } = await import("node:fs/promises");
   const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
+  const readiness = await readFile(new URL("../supabase/functions/hq-gateway-v12/memory-readiness.mjs", import.meta.url), "utf8");
   assert.match(gateway, /createXMemoOAuthRouter\(\)/);
   assert.match(gateway, /\/auth\/xmemo\/start/);
   assert.match(gateway, /\/auth\/xmemo\/callback/);
@@ -120,9 +121,9 @@ test("gateway wires encrypted XMemo OAuth MCP through authenticated identity and
   assert.match(gateway, /recallMemory\(task, user\.id, memoryConsent\)/);
   assert.match(gateway, /storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
   assert.match(gateway, /memoryProvider: "xmemo-mcp-oauth-preferred"/);
-  assert.match(gateway, /memoryOAuthConfigured/);
-  assert.match(gateway, /memoryLegacyFallbackConfigured/);
   assert.match(gateway, /resolveMemoryReadiness/);
+  assert.match(readiness, /memoryOAuthConfigured/);
+  assert.match(readiness, /memoryLegacyFallbackConfigured/);
   assert.match(gateway, /createXMemoMemoryClient/);
   assert.match(gateway, /XMEMO_API_KEY/);
   assert.match(gateway, /result\.status === "not_connected"[\s\S]*xmemoLegacyMemory/);
