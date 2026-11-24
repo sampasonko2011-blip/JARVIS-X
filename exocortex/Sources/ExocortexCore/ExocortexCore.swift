@@ -67,6 +67,13 @@ public struct RuntimeSafetySnapshot: Sendable, Equatable {
 public protocol RuntimeSafetyMonitoring: Sendable {
     func snapshot() -> RuntimeSafetySnapshot
 }
+/// Returns the host page size without reading the mutable vm_kernel_page_size C global.
+func exocortexSystemPageSizeBytes() -> UInt64? {
+    let pageSize = getpagesize()
+    guard pageSize > 0 else { return nil }
+    return UInt64(pageSize)
+}
+
 public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
     public init() {}
     public func snapshot() -> RuntimeSafetySnapshot {
@@ -90,10 +97,11 @@ public struct SystemRuntimeSafetyMonitor: RuntimeSafetyMonitoring {
         let freePages = Int64(statistics.free_count)
         let inactivePages = Int64(statistics.inactive_count)
         let (pageCount, pageCountOverflow) = freePages.addingReportingOverflow(inactivePages)
+        let pageSize = exocortexSystemPageSizeBytes()
         let (availableBytes, byteCountOverflow) = UInt64(max(0, pageCount))
-            .multipliedReportingOverflow(by: UInt64(vm_kernel_page_size))
+            .multipliedReportingOverflow(by: pageSize ?? 0)
         memory = result == KERN_SUCCESS && !pageCountOverflow && !byteCountOverflow &&
-            availableBytes <= UInt64(Int64.max)
+            pageSize != nil && availableBytes <= UInt64(Int64.max)
             ? Int64(availableBytes) : -1
         #else
         memory = -1 // UNKNOWN on unsupported hosts; never interpreted as unlimited memory.
