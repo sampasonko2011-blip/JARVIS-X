@@ -4,8 +4,8 @@ export function resolveMemoryReadiness({
   encryptionSecretConfigured = false,
   legacyApiKeyConfigured = false,
 } = {}) {
-  const oauthReady = supabaseUrlConfigured && serviceRoleConfigured && encryptionSecretConfigured;
-  const legacyFallbackReady = legacyApiKeyConfigured;
+  const oauthConfigurationReady = supabaseUrlConfigured && serviceRoleConfigured && encryptionSecretConfigured;
+  const legacyFallbackConfigured = legacyApiKeyConfigured;
   return Object.freeze({
     oauthReady,
     legacyFallbackReady,
