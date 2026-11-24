@@ -69,8 +69,8 @@ Do not run on a hot device or when iPadOS reports memory pressure. The benchmark
 ## Current decision
 
 - Continue portable/native source work through GitHub and CI.
-- Keep PR #136 open, draft, and unmerged. The manual smoke workflow cannot be dispatched until it is separately present on the default branch.
-- Treat real-model inference as UNPROVEN until the manual workflow succeeds on its exact run; Metal, Playgrounds-import, and physical-iPad claims remain UNPROVEN until their specific evidence exists.
+- PR #136 is merged. The manual smoke workflow was dispatched from its feature branch and completed run 3; default-branch availability depends on the merged workflow file.
+- Hosted virtual-M1 CPU GGUF inference is VALIDATED for run 3 only. Metal, Playgrounds-import, and physical-iPad claims remain UNPROVEN until their specific evidence exists.
 - No paid services, hosted model calls, or external inference are required by the current CI workflow.
 
 
@@ -91,4 +91,4 @@ Run 45356577656 completed successfully on commit 80f0de177490fb4e24573be0d5c60a5
 
 This is VALIDATED evidence for one short CPU inference on that virtualized macOS runner only. It is not a measurement of the user's iPad Air 5, not evidence of iPad free RAM, not a Metal performance result, and not evidence for 12-agent concurrency. The suggested 20–40x Metal speedup remains UNPROVEN and must not be presented as a benchmark result.
 
-The run compiled ExocortexCore.swift and ExocortexCoreTests.swift, but its test filter executed NativeLlamaBackendTests; SystemPageSizeTests.testSystemPageSizeUsesPositivePOSIXValue was compiled but was not executed in that run. A subsequent rerun of the cancelled swift-core-and-ios-simulator job in workflow run 45355431744 did execute the SystemPageSize test, which PASSED. The overall core job FAILED because two other tests failed: testLlamaRuntimeThermalLimitTriggersUnload and testLlamaRuntimeUnavailableMemoryHasDistinctFailure. Both expected the runtime to call emergencyUnload() when preflight rejected a critical thermal state or unknown memory; current LlamaCppRuntimeAdapter.load throws before invoking that cleanup. This can leave a previously loaded backend resident if a later load attempt encounters unsafe conditions. Treat as a real fail-closed cleanup defect to fix before merge.
+Historical failure (superseded): the first Core rerun of workflow `45355431744` found that thermal and unknown-memory preflight rejections did not unload a previously resident backend. The defect was fixed in the subsequent cleanup patch (`3a083c4`); the exact-content memory proof was also hardened. The later Core + Native CI run `45369925842` passed 41/41 Core tests and all 5 Native tests. This historical failure remains in the evidence record but is no longer the current test state.
