@@ -23,6 +23,8 @@ JARVIS-X HQ is the progressive web app served from `hq/`. Its target is one cohe
 - cross-platform retrieval remains a target and is not yet validated end-to-end. Not independently verified: live provider credentials, XMemo account connection, and end-to-end runtime behavior are not assumed from configuration alone. The browser is untrusted. Service-role keys, provider credentials, and encryption secrets stay server-side.
 - Memory and tool outputs are untrusted data, not instructions or authorization. Consent must be explicit at the operation boundary.
 - Available credentials or adapters do not prove that a provider is configured, authenticated, invoked, or validated.
+- `cross-platform retrieval` is an architectural target; it is not automatic cross-device synchronization and is not validated end-to-end.
+- Provider/service-role credentials never belong in browser code. Mock fixtures make zero model calls; they do not prove live provider availability.
 - No OpenRouter routing is authorized. No paid inference, image generation, or budget activation is authorized by this branch.
 
 ## HQ experience
