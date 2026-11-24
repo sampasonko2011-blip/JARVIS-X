@@ -85,7 +85,7 @@ test("missing XMemo credential is surfaced as unavailable without inference fall
   assert.equal((await result.json()).error, "memory_provider_not_configured");
 });
 
-test("production adapter uses the caller JWT for the self-scoped rate-limit RPC", async () => {
+test("production adapter uses service-role-only RPC with authenticated user id", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../supabase/functions/hq-memory-v1/index.ts", import.meta.url), "utf8");
   assert.match(source, /Authorization: "Bearer " \+ token/);
