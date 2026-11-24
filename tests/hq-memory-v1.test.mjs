@@ -88,8 +88,9 @@ test("missing XMemo credential is surfaced as unavailable without inference fall
 test("production adapter uses service-role-only RPC with authenticated user id", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../supabase/functions/hq-memory-v1/index.ts", import.meta.url), "utf8");
+  const rateLimit = source.slice(source.indexOf("async function consumeRateLimit"), source.indexOf("const memoryClient"));
   assert.ok(source.includes("SUPABASE_SERVICE_ROLE_KEY"));
-  assert.ok(source.includes('Authorization: "Bearer " + SERVICE_ROLE_KEY'));
-  assert.ok(source.includes("p_user_id: userId, p_limit_key: key"));
-  assert.ok(!source.includes('Authorization: "Bearer " + token'));
+  assert.ok(rateLimit.includes('Authorization: "Bearer " + SERVICE_ROLE_KEY'));
+  assert.ok(rateLimit.includes("p_user_id: userId, p_limit_key: key"));
+  assert.ok(!rateLimit.includes('Authorization: "Bearer " + token'));
 });
