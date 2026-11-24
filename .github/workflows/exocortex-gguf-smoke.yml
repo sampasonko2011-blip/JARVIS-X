@@ -48,9 +48,9 @@ jobs:
             echo "## Manual CPU GGUF smoke test"
             echo "- Model: Qwen2.5-0.5B-Instruct Q4_K_M"
             echo "- Pinned revision: 21ef23001f314d0895bd8439b08157c2d4cd9bb7"
-            echo "- SHA-256: `$MODEL_SHA256` (verified)"
+            echo "- SHA-256: \`$MODEL_SHA256\` (verified)"
             echo "- File size: $ACTUAL_SIZE bytes (verified)"
-            echo "- Runner architecture: `$(uname -m)`"
+            echo "- Runner architecture: \`$(uname -m)\`"
           } >> "$GITHUB_STEP_SUMMARY"
           echo "EXOCORTEX_GGUF_PATH=$MODEL_PATH" >> "$GITHUB_ENV"
 

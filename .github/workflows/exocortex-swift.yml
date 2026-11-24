@@ -1,0 +1,53 @@
+name: Exocortex Swift Core and Native Llama
+on:
+  pull_request:
+    paths: ['Package.swift', 'README.md', 'docs/exocortex-validation.md', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
+  push:
+    branches: [main, 'feat/**', 'feature/**']
+    paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
+permissions:
+  contents: read
+jobs:
+  swift-core-and-ios-simulator:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: exocortex
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain and runner identity
+        run: |
+          swift --version
+          xcodebuild -version
+          echo "runner_arch=$(uname -m)"
+          system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
+      - name: Root Swift package manifest — iPad import entry point
+        working-directory: .
+        run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
+      - name: Portable core tests
+        run: swift test --filter ExocortexCoreTests -Xswiftc -warnings-as-errors
+      - name: Portable core release build
+        run: swift build --target ExocortexCore -c release -Xswiftc -warnings-as-errors
+      - name: Device probe portable module build
+        run: swift build --target ExocortexDeviceProbe -c release -Xswiftc -warnings-as-errors
+      - name: iOS Simulator build — portable core only
+        run: xcodebuild -scheme ExocortexCore -destination 'generic/platform=iOS Simulator' build
+  swift-native-llama-macos:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: exocortex
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain and runner identity
+        run: |
+          swift --version
+          xcodebuild -version
+          echo "runner_arch=$(uname -m)"
+          system_profiler SPHardwareDataType | grep -E 'Chip|Processor Name|Memory' || true
+      - name: Resolve pinned llama.swift 3.0.0
+        run: swift package resolve
+      - name: Native llama product build
+        run: swift build --target ExocortexLlamaNative -c release -Xswiftc -warnings-as-errors
+      - name: Native llama deterministic lifecycle tests
+        run: swift test --filter NativeLlamaBackendTests -Xswiftc -warnings-as-errors
