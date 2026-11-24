@@ -6,7 +6,7 @@ Audit date: 2026-11-24. This document records repository and live Supabase metad
 
 Live Supabase project: `xfewajxkqntflfntisut`.
 
-The active database reports these nine migration versions. Four have canonical source files in this branch; five are historical live migrations whose SQL is not present in this checkout:
+The active database reports these nine migration versions. All nine now have canonical source files in this branch; five historical SQL statements were restored from the live migration ledger:
 
 | Live version | Name |
 |---|---|
