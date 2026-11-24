@@ -52,7 +52,7 @@ Provider adapter presence does not prove that provider credentials are configure
 - Memory bridges must require explicit consent at their own API boundary; an upstream checkbox alone is not sufficient. The feature branch now requires a positive consent argument and routes local chat memory to the authenticated v12 OAuth endpoints. This source change is not deployed.
 - Mock fixtures make zero model calls and do not demonstrate model quality or live service connectivity.
 - CI success is not deployment; source integration is not live invocation; a deployment status is not proof of successful end-to-end behavior.
-- Migration history in Git currently differs from the live Supabase migration ledger. See `docs/supabase-migration-reconciliation.md`. Do not apply, rename, or backfill migrations until schema-level reconciliation is complete.
+- All nine live migration ledger entries now have exact version/name files in Git, including five historical statements recovered and byte-compared from the live ledger. The separate image-budget migration remains unapplied. See `docs/supabase-migration-reconciliation.md` for remaining schema-level comparison limits. Do not apply production migrations from this source-only branch.
 - The older `hq-gateway` v45 remains ACTIVE. See `docs/hq-gateway-v45-retirement.md`; no production disablement is authorized by this source branch.
 
 ## Release gates
