@@ -386,6 +386,65 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(writes, 0)
     }
 
+    func testXMemoPersistenceProofBindsExactReasoningCandidate() async throws {
+        let memory = MemoryWriteSpy()
+        let candidate = "Only persist this exact approved text."
+        let engine = FixedContextualEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            memoryCandidate: candidate
+        ))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: CognitiveTurnContext(),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(decision.approved)
+        XCTAssertNotNil(decision.memoryProof)
+        do {
+            _ = try await orchestrator.rememberValidated(
+                "Different text must never inherit this approval.",
+                decision: decision,
+                consent: true,
+                userAccessToken: "session"
+            )
+            XCTFail("A decision proof must not authorize different content")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        XCTAssertEqual(await memory.writeCount(), 0)
+
+        _ = try await orchestrator.rememberValidated(
+            candidate,
+            decision: decision,
+            consent: true,
+            userAccessToken: "session"
+        )
+        XCTAssertEqual(await memory.writeCount(), 1)
+    }
+
+    func testApprovedDecisionWithoutMemoryCandidateCannotPersist() async throws {
+        let memory = MemoryWriteSpy()
+        let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: CognitiveTurnContext(),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertTrue(decision.approved)
+        XCTAssertNil(decision.memoryProof)
+        do {
+            _ = try await orchestrator.rememberValidated(
+                "No candidate was validated.",
+                decision: decision,
+                consent: true,
+                userAccessToken: "session"
+            )
+            XCTFail("No approved candidate means no persistence")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        XCTAssertEqual(await memory.writeCount(), 0)
+    }
+
     func testOrchestratorRequiresSeparateMemoryConsentAfterValidation() async throws {
         let memory = MemoryWriteSpy()
         let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99))
