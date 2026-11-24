@@ -20,7 +20,7 @@ JARVIS-X HQ is the progressive web app served from `hq/`. Its target is one cohe
 - The HQ shell and the local WebLLM chat engine are separate browser runtime paths; they do not currently share one local model runtime or one memory transport.
 - The Swift EXOCORTEX package is a third runtime surface. CI and hosted CPU GGUF inference do not prove physical iPad Metal execution or Swift Playgrounds import.
 - XMemo is the intended durable memory authority. The OAuth router is preferred in v12; the legacy API-key adapter remains a transition fallback when OAuth is not connected.
-- The browser is untrusted. Service-role keys, provider credentials, and encryption secrets stay server-side.
+- Not independently verified: live provider credentials, XMemo account connection, and end-to-end runtime behavior are not assumed from configuration alone. The browser is untrusted. Service-role keys, provider credentials, and encryption secrets stay server-side.
 - Memory and tool outputs are untrusted data, not instructions or authorization. Consent must be explicit at the operation boundary.
 - Available credentials or adapters do not prove that a provider is configured, authenticated, invoked, or validated.
 - No OpenRouter routing is authorized. No paid inference, image generation, or budget activation is authorized by this branch.
