@@ -3,8 +3,9 @@
 ## Current branch contract
 
 - Repository: `sampasonko2011-blip/JARVIS-X`
-- Working branch: `feat/exocortex-swift-core-xmemo`
-- Pull request: #136 — must remain open, draft, and unmerged until separately authorized.
+- Default branch: `main` at `c6e10592744c934044535122ccccf89bf58bfac2` as observed at the start of this audit.
+- PR #136 was merged into `main`; it is not open or draft.
+- Current hardening work is isolated on `feat/jarvisx-p0-hardening-spatial-hud`; it must not be merged or deployed without separate approval.
 - Root Swift package products: `ExocortexCore`, `ExocortexLlamaNative`, `ExocortexDeviceProbe`.
 - Native dependency: `llama.swift` pinned to exact version `3.0.0`.
 
@@ -13,10 +14,10 @@
 | Capability | Evidence required | Current status |
 |---|---|---|
 | Root package resolves/builds on hosted macOS | Successful `swift build` in CI on the exact commit | CI baseline was green at `b2543a865ffb96351519a3e4e3098f560dd2ff7c`; subsequent workflow/documentation commits require fresh CI |
-| Portable core tests | Successful `swift test --filter ExocortexCoreTests` | FAILED on rerun `45355431744`: 2 existing runtime-unload assertions failed; details below |
+| Portable core tests | Successful `swift test --filter ExocortexCoreTests` on exact candidate SHA | VALIDATED on `c7e46f19ffbdc7d7df371236feab76aa18dccdff`: 41/41 tests passed, including runtime cleanup and XMemo proof-binding regressions |
 | Portable core iOS Simulator build | Successful `xcodebuild` for generic iOS Simulator | Same baseline qualification |
 | Native llama adapter compiles | Successful native target build on hosted macOS | Same baseline qualification |
-| Native lifecycle/fail-closed tests | Successful `swift test --filter NativeLlamaBackendTests` | Same baseline qualification; tests do not load a real model |
+| Native lifecycle/fail-closed tests | Successful `swift test --filter NativeLlamaBackendTests` on exact candidate SHA | VALIDATED on `c7e46f19ffbdc7d7df371236feab76aa18dccdff`: 5 tests passed; opt-in GGUF test skipped in ordinary CI |
 | Hosted runner CPU architecture | Captured `uname -m` from the actual job | Diagnostic only; architecture is reported, not enforced |
 | Real GGUF load and generation | Test run with a pinned model artifact, checksum verification, and successful load/generate/unload report | VALIDATED on hosted virtual M1 CPU (run 45356577656); not iPad/Metal |
 | Metal execution | Device/runtime telemetry proving Metal backend use and layer offload | UNPROVEN |
@@ -39,7 +40,7 @@ These checks establish compilation and deterministic test behavior only. They do
 
 ## Real-model smoke test: design requirements
 
-A real-model smoke test is implemented in `.github/workflows/exocortex-gguf-smoke.yml` as a manual-only `workflow_dispatch` workflow. It requires the operator to set `confirm_model_download=true`; it is not part of ordinary pull-request CI. The candidate is `bartowski/Qwen2.5-0.5B-Instruct-GGUF`, file `Qwen2.5-0.5B-Instruct-Q4_K_M.gguf`, pinned to revision `21ef23001f314d0895bd8439b08157c2d4cd9bb7`, expected size `397808192` bytes, SHA-256 `6eb923e7d26e9cea28811e1a8e852009b21242fb157b26149d3b188f3a8c8653`. The workflow verifies both size and SHA-256 before invoking Swift. Its opt-in XCTest requests CPU-only execution (`gpuLayers = 0`), context 128, one repetition, and at most 8 generated tokens; it logs load/generation timings and sampled `phys_footprint`, then asserts that the model is unloaded. This validates only the hosted runner's CPU path, not iPad or Metal. Run `45269936888` verified the artifact and build but stopped at memory preflight before model load or generation. A later run (`45356577656`) completed the bounded CPU load/generate/unload smoke test; see the run-3 evidence section below. The PR remains draft/unmerged. Before changing the pinned artifact:
+A real-model smoke test is implemented in `.github/workflows/exocortex-gguf-smoke.yml` as a manual-only `workflow_dispatch` workflow. It requires the operator to set `confirm_model_download=true`; it is not part of ordinary pull-request CI. The candidate is `bartowski/Qwen2.5-0.5B-Instruct-GGUF`, file `Qwen2.5-0.5B-Instruct-Q4_K_M.gguf`, pinned to revision `21ef23001f314d0895bd8439b08157c2d4cd9bb7`, expected size `397808192` bytes, SHA-256 `6eb923e7d26e9cea28811e1a8e852009b21242fb157b26149d3b188f3a8c8653`. The workflow verifies both size and SHA-256 before invoking Swift. Its opt-in XCTest requests CPU-only execution (`gpuLayers = 0`), context 128, one repetition, and at most 8 generated tokens; it logs load/generation timings and sampled `phys_footprint`, then asserts that the model is unloaded. This validates only the hosted runner's CPU path, not iPad or Metal. Run `45269936888` verified the artifact and build but stopped at memory preflight before model load or generation. A later run (`45356577656`) completed the bounded CPU load/generate/unload smoke test; see the run-3 evidence section below. PR #136 was later merged into main; this historical smoke result is independent of the current hardening branch. Before changing the pinned artifact:
 - Select a small, legally redistributable GGUF artifact from a stable, pinned revision.
 - Pin and verify its SHA-256 before invoking llama.cpp.
 - Keep model download and inference behind an explicit manual opt-in; never download a model on every PR run.
@@ -68,7 +69,7 @@ Do not run on a hot device or when iPadOS reports memory pressure. The benchmark
 ## Current decision
 
 - Continue portable/native source work through GitHub and CI.
-- Keep PR #136 open, draft, and unmerged. The manual smoke workflow cannot be dispatched until it is separately present on the default branch.
+- PR #136 is merged into main. Keep the current hardening branch unmerged and do not deploy it without separate approval.
 - Treat real-model inference as UNPROVEN until the manual workflow succeeds on its exact run; Metal, Playgrounds-import, and physical-iPad claims remain UNPROVEN until their specific evidence exists.
 - No paid services, hosted model calls, or external inference are required by the current CI workflow.
 
@@ -91,3 +92,12 @@ Run 45356577656 completed successfully on commit 80f0de177490fb4e24573be0d5c60a5
 This is VALIDATED evidence for one short CPU inference on that virtualized macOS runner only. It is not a measurement of the user's iPad Air 5, not evidence of iPad free RAM, not a Metal performance result, and not evidence for 12-agent concurrency. The suggested 20–40x Metal speedup remains UNPROVEN and must not be presented as a benchmark result.
 
 The run compiled ExocortexCore.swift and ExocortexCoreTests.swift, but its test filter executed NativeLlamaBackendTests; SystemPageSizeTests.testSystemPageSizeUsesPositivePOSIXValue was compiled but was not executed in that run. A subsequent rerun of the cancelled swift-core-and-ios-simulator job in workflow run 45355431744 did execute the SystemPageSize test, which PASSED. The overall core job FAILED because two other tests failed: testLlamaRuntimeThermalLimitTriggersUnload and testLlamaRuntimeUnavailableMemoryHasDistinctFailure. Both expected the runtime to call emergencyUnload() when preflight rejected a critical thermal state or unknown memory; current LlamaCppRuntimeAdapter.load throws before invoking that cleanup. This can leave a previously loaded backend resident if a later load attempt encounters unsafe conditions. Treat as a real fail-closed cleanup defect to fix before merge.
+
+
+## 2026-11-24 status correction
+
+PR #136 is merged. The earlier statement that it must remain open/draft/unmerged is obsolete and superseded.
+
+The exact candidate commit `c7e46f19ffbdc7d7df371236feab76aa18dccdff` has successful Core, Native, and Verify CI checks (3/3). The Core run executed 41 tests, including the previously failing runtime-unload assertions and XMemo exact-content proof tests. The Native run executed five tests; the manual real-GGUF smoke test was skipped by its opt-in gate. The separate manual run `45356577656` remains evidence only for one short CPU inference on a virtualized hosted M1 runner.
+
+This document is a historical validation record. It does not certify physical iPad, Metal inference, Swift Playgrounds import, live XMemo OAuth, or current production deployment behavior.
