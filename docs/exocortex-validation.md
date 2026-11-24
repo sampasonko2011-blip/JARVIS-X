@@ -49,7 +49,7 @@ A real-model smoke test is implemented in `.github/workflows/exocortex-gguf-smok
 - Do not call a macOS Metal run an iPad test; do not infer GPU execution from `gpuLayers = -1` alone.
 - Keep the test bounded and avoid sustained stress workloads.
 
-A successful smoke test would validate the native pipeline on that specific hosted runner. It would still not validate the iPad Air 5 M1.
+The successful smoke test validates the native CPU pipeline on that specific hosted runner only. It does not validate the iPad Air 5 M1.
 
 ## Memory-safety telemetry and failure classification
 
@@ -70,7 +70,7 @@ Do not run on a hot device or when iPadOS reports memory pressure. The benchmark
 
 - Continue portable/native source work through GitHub and CI.
 - PR #136 is merged into main. Keep the current hardening branch unmerged and do not deploy it without separate approval.
-- Treat real-model inference as UNPROVEN until the manual workflow succeeds on its exact run; Metal, Playgrounds-import, and physical-iPad claims remain UNPROVEN until their specific evidence exists.
+- Real-model CPU inference is VALIDATED only for the bounded hosted virtual-M1 run 45356577656. Metal execution, Swift Playgrounds import, and physical-iPad behavior remain UNPROVEN until their specific evidence exists.
 - No paid services, hosted model calls, or external inference are required by the current CI workflow.
 
 
