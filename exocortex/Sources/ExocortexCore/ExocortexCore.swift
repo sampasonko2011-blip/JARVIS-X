@@ -432,12 +432,22 @@ public struct SaboteurAgent: Sendable {
     /// of the exact structured claims that the evidence ledger can verify.
     public static func canonicalMemoryCandidate(from claims: [EvidenceClaim]) -> String? {
         guard !claims.isEmpty else { return nil }
-        let orderedClaims = claims.sorted {
+        let normalizedClaims = claims.map { claim in
+            EvidenceClaim(
+                propositionKey: claim.propositionKey,
+                value: claim.value,
+                polarity: claim.polarity,
+                supportingEvidenceIDs: claim.supportingEvidenceIDs.sorted {
+                    $0.uuidString < $1.uuidString
+                }
+            )
+        }
+        let orderedClaims = normalizedClaims.sorted {
             if $0.propositionKey != $1.propositionKey { return $0.propositionKey < $1.propositionKey }
             if $0.value != $1.value { return $0.value < $1.value }
             if $0.polarity.rawValue != $1.polarity.rawValue { return $0.polarity.rawValue < $1.polarity.rawValue }
-            return $0.supportingEvidenceIDs.map(\.uuidString).sorted().joined() <
-                $1.supportingEvidenceIDs.map(\.uuidString).sorted().joined()
+            return $0.supportingEvidenceIDs.map(\.uuidString).joined() <
+                $1.supportingEvidenceIDs.map(\.uuidString).joined()
         }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
