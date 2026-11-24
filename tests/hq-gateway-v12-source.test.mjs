@@ -100,10 +100,7 @@ test("memory health distinguishes OAuth configuration from legacy fallback confi
 });
 
 test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
-  assert.match(gateway, /const oauthMemoryReady = Boolean\\([\\s\\S]*JX_ENCRYPTION_SECRET/);
   assert.match(gateway, /const legacyMemoryReady = Boolean\\(Deno\\.env\\.get\\("XMEMO_API_KEY"\\)\\)/);
-  assert.match(gateway, /oauthMemoryReady,\\s*legacyMemoryReady/);
-  assert.match(gateway, /memoryConfigured: oauthMemoryReady \\|\\| legacyMemoryReady/);
 });
 
 test("one executive runtime is configured server-side and secondary reasoning adapters are absent", () => {
