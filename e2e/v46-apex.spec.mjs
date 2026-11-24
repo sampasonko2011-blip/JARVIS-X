@@ -89,7 +89,7 @@ test("v47 service worker pre-caches the APEX runtime and retains v46 modules", a
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v54");
+  expect(source).toContain("jarvis-x-hq-shell-v55");
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
@@ -165,5 +165,5 @@ test("v52 Local Chat registers the versioned service worker when supported", asy
   await page.goto("/local-chat.html");
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker?.getRegistrations().then(items => items.some(item => item.active || item.installing || item.waiting)) ?? false)).toBe(true);
   const cacheSource = await (await page.request.get("/sw.js")).text();
-  expect(cacheSource).toContain("jarvis-x-hq-shell-v54");
+  expect(cacheSource).toContain("jarvis-x-hq-shell-v55");
 });
