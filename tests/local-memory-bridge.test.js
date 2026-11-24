@@ -127,8 +127,8 @@ test("local chat exposes per-turn opt-in without a checked default and trusts on
   assert.match(html, /id="local-memory-consent" type="checkbox"/);
   assert.doesNotMatch(html, /id="local-memory-consent"[^>]*checked/);
   assert.match(engine, /const useMemory = memoryConsent\?\.checked === true/);
-  assert.match(engine, /memoryBridge\\.recall\\(text, \\{ consent: useMemory \\}\\)/);
-  assert.match(engine, /memoryBridge\\.remember\\(text, finalAnswer, \\{ consent: useMemory \\}\\)/);
+  assert.ok(engine.includes("memoryBridge.recall(text, { consent: useMemory })"));
+  assert.ok(engine.includes("memoryBridge.remember(text, finalAnswer, { consent: useMemory })"));
   assert.match(engine, /recalled\.context_is_untrusted === true/);
   assert.match(engine, /messages\[0\]\.content = SYSTEM/);
 });
