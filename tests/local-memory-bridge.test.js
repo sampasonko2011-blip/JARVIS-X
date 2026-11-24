@@ -98,7 +98,7 @@ test("expired HQ session refreshes without putting tokens in the URL", async () 
   });
   await bridge.recall("test", { consent: true });
   assert.equal(calls.length, 2);
-  assert.match(calls[0].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
+  assert.match(calls[1].url, /hq-gateway-v12\/memory\/xmemo\/recall$/);
   assert.equal(calls[1].options.headers.Authorization, "Bearer new-access");
   assert.equal(store.read().refresh_token, "new-refresh");
   assert.equal(calls.some(call => call.url.includes("new-access")), false);
