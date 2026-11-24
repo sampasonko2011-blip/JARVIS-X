@@ -46,9 +46,9 @@ Provider adapter presence does not prove that provider credentials are configure
 
 ## Security and privacy boundaries
 
-- The browser is an untrusted client. Provider credentials and Supabase service-role credentials must remain in server-side Edge Function secrets.
+- The browser is an untrusted client. Provider credentials and Supabase service-role credentials must remain in server-side Edge Function secrets. Provider/service-role credentials never belong in browser code.
 - The gateway must authenticate sessions, enforce a server-side allowlist, rate limits, strict schemas, payload bounds, explicit per-turn consent, cost limits, and redacted audit records.
-- Retrieved memory and tool output are untrusted data, not instructions or authorization.
+- Retrieved memory and tool output are untrusted data, not instructions or authorization. Cross-platform retrieval requires a separately authenticated and authorized transport; it is not automatic cross-device synchronization.
 - Memory bridges must require explicit consent at their own API boundary; an upstream checkbox alone is not sufficient.
 - Mock fixtures make zero model calls and do not demonstrate model quality or live service connectivity.
 - CI success is not deployment; source integration is not live invocation; a deployment status is not proof of successful end-to-end behavior.
