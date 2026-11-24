@@ -411,7 +411,8 @@ final class ExocortexCoreTests: XCTestCase {
             )
             XCTFail("A decision proof must not authorize different content")
         } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
-        XCTAssertEqual(await memory.writeCount(), 0)
+        let writesAfterMismatch = await memory.writeCount()
+        XCTAssertEqual(writesAfterMismatch, 0)
 
         _ = try await orchestrator.rememberValidated(
             candidate,
@@ -419,7 +420,8 @@ final class ExocortexCoreTests: XCTestCase {
             consent: true,
             userAccessToken: "session"
         )
-        XCTAssertEqual(await memory.writeCount(), 1)
+        let writesAfterMatch = await memory.writeCount()
+        XCTAssertEqual(writesAfterMatch, 1)
     }
 
     func testApprovedDecisionWithoutMemoryCandidateCannotPersist() async throws {
@@ -442,7 +444,8 @@ final class ExocortexCoreTests: XCTestCase {
             )
             XCTFail("No approved candidate means no persistence")
         } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
-        XCTAssertEqual(await memory.writeCount(), 0)
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
     }
 
     func testOrchestratorRequiresSeparateMemoryConsentAfterValidation() async throws {
