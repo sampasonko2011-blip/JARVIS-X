@@ -5,6 +5,7 @@
 - Supabase reports Edge Function `hq-gateway` as ACTIVE, deployed version 45.
 - Its deployed source directly invokes the OpenAI Chat Completions API in a three-pass flow.
 - The inspected source contains authentication, email allowlisting, and rate-limit checks, but no global budget reservation or global kill-switch check.
+- Its deployed rate-limit adapter still uses the legacy caller-JWT RPC shape. The active database exposes only the service-role-only `consume_hq_rate_limit(uuid,text)` contract, and the old gateway supplies neither `p_user_id` nor the service-role credential. Therefore the inspected v45 source is expected to fail closed with a rate-limit service error before reaching its model calls, assuming the current database function set remains unchanged.
 - The current `hq-gateway-v12` route has the global budget guard and is the intended executive gateway.
 - GitHub code search did not return repository references to `/functions/v1/hq-gateway`. Search-index absence is not proof that no external client, cached page, scheduled job, or third-party caller exists.
 
