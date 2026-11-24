@@ -83,7 +83,7 @@ Run 45356577656 completed successfully on commit 80f0de177490fb4e24573be0d5c60a5
 - Result: actual GGUF load, 8 generated tokens, successful unload; the opt-in XCTest passed.
 - Backend: CPU-only, gpu_layers_requested=0; native logs report 0/25 layers offloaded to GPU. Metal initialization messages are not evidence of Metal inference.
 - Load: 22,346 ms. Prefill: 1,383 ms. Decode: 9,323 ms. Generation: 9,332 ms.
-- Decode throughput: approximately 0.858 tokens/s (8 tokens / decode time); end-to-end generation throughput: approximately 0.857 tokens/s.
+- Decode throughput: approximately 0.751 tokens/s using the backend's definition of 7 decode steps / decode time; end-to-end generation throughput: approximately 0.857 tokens/s (8 generated tokens / total generation time). Prompt token count was not included in the emitted result line, so prefill tokens/s cannot be reconstructed from this log.
 - Sampled peak phys_footprint: 290,589,952 bytes (277.13 MiB), sampled every 20 ms; approximate and not a guaranteed peak.
 - Minimum available memory reported: 3,164,520,448 bytes (approximately 2.947 GiB).
 - Thermal state: nominal before and after.
