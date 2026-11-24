@@ -287,6 +287,12 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
 // OAuth-connected account encounters a refresh, transport, or authorization error.
 const xmemoOAuthRouter = createXMemoOAuthRouter();
 const xmemoLegacyMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
+const oauthMemoryReady = Boolean(
+  Deno.env.get("SUPABASE_URL") &&
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") &&
+  Deno.env.get("JX_ENCRYPTION_SECRET")
+);
+const legacyMemoryReady = Boolean(Deno.env.get("XMEMO_API_KEY"));
 
 async function recallMemory(task: string, userId: string, consent: boolean) {
   if (!consent) return { status: "not_consented", context: "" };
@@ -525,7 +531,9 @@ Deno.serve(async (req: Request) => {
       lockReasons,
       imageGenerationEnabled: Deno.env.get("JX_ENABLE_IMAGE_GENERATION") === "true" && Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY")),
       memoryProvider: "xmemo-mcp-oauth-preferred",
-      memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
+      memoryConfigured: oauthMemoryReady || legacyMemoryReady,
+      oauthMemoryReady,
+      legacyMemoryReady,
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",
