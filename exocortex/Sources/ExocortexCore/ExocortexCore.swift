@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 #if os(macOS)
 import Darwin
 #endif
@@ -448,12 +449,31 @@ public protocol ReasoningEngine: Sendable {
 public protocol ContextualReasoningEngine: ReasoningEngine {
     func reason(context: CognitiveTurnContext, cycleBudget: Int) async throws -> ReasoningResult
 }
+public struct MemoryValidationProof: Sendable, Equatable {
+    public let id: UUID
+    public let contentSHA256: String
+
+    public init(content: String) {
+        self.id = UUID()
+        self.contentSHA256 = SHA256.hash(data: Data(content.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
+
+    public func matches(_ content: String) -> Bool {
+        let candidate = SHA256.hash(data: Data(content.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+        return candidate == contentSHA256
+    }
+}
 public struct OrchestrationDecision: Sendable, Equatable {
     public let approved: Bool
     public let confidence: Float?
     public let output: [Float]
     public let reason: String
     public let evidenceValidation: EvidenceValidation
+    public let memoryProof: MemoryValidationProof?
 }
 public struct ExocortexOrchestrator: Sendable {
     private let engine: any ReasoningEngine
@@ -477,14 +497,14 @@ public struct ExocortexOrchestrator: Sendable {
         self.toolRegistry = toolRegistry
         self.localRuntime = localRuntime
     }
-    public func think(seed: [Float], budget: ThermalBudget) async throws -> OrchestrationDecision {
+    public func think(seed: [Float], budget: ThermalBudget, memoryCandidate: String? = nil) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
         var context = await collectEvidence(into: CognitiveTurnContext())
         context = await collectRuntimeObservation(seed: seed, budget: budget, into: context)
         let result = try await engine.reason(input: seed, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: context)
+        return decide(result, context: context, memoryCandidate: memoryCandidate)
     }
-    public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget) async throws -> OrchestrationDecision {
+    public func think(seed: [Float], context: CognitiveTurnContext, budget: ThermalBudget, memoryCandidate: String? = nil) async throws -> OrchestrationDecision {
         guard !seed.isEmpty, seed.allSatisfy(\.isFinite) else { throw ExocortexError.invalidVector }
         guard let contextualEngine = engine as? any ContextualReasoningEngine else {
             throw ExocortexError.contextualEngineRequired
@@ -492,7 +512,7 @@ public struct ExocortexOrchestrator: Sendable {
         var enriched = await collectEvidence(into: context)
         enriched = await collectRuntimeObservation(seed: seed, budget: budget, into: enriched)
         let result = try await contextualEngine.reason(context: enriched, cycleBudget: budget.reasoningCycles)
-        return decide(result, context: enriched)
+        return decide(result, context: enriched, memoryCandidate: memoryCandidate)
     }
     private func collectRuntimeObservation(seed: [Float], budget: ThermalBudget, into context: CognitiveTurnContext) async -> CognitiveTurnContext {
         guard let localRuntime else { return context }
@@ -530,7 +550,7 @@ public struct ExocortexOrchestrator: Sendable {
         let toolRecords = await toolRegistry?.evidenceSnapshot() ?? []
         return context.addingEvidence(memory: memoryRecords, workingSet: workingRecords, tools: toolRecords)
     }
-    private func decide(_ result: ReasoningResult, context: CognitiveTurnContext) -> OrchestrationDecision {
+    private func decide(_ result: ReasoningResult, context: CognitiveTurnContext, memoryCandidate: String?) -> OrchestrationDecision {
         let structural = saboteur.validateStructure(output: result.output, confidence: result.confidence)
         let runtimeFailures = context.runtimeObservations.filter { $0.status != "completed" }
         let factual: EvidenceValidation
@@ -556,7 +576,10 @@ public struct ExocortexOrchestrator: Sendable {
             confidence: result.confidence,
             output: approved ? result.output : [],
             reason: reason,
-            evidenceValidation: factual
+            evidenceValidation: factual,
+            memoryProof: approved ? memoryCandidate.map { candidate in
+                candidate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : MemoryValidationProof(content: candidate)
+            } ?? nil : nil
         )
     }
     public func recallContext(_ query: String, consent: Bool, userAccessToken: String) async throws -> CognitiveTurnContext {
@@ -567,6 +590,7 @@ public struct ExocortexOrchestrator: Sendable {
     public func rememberValidated(_ content: String, decision: OrchestrationDecision, consent: Bool, userAccessToken: String) async throws -> MemoryReceipt {
         guard decision.approved, decision.evidenceValidation.mayPersist else { throw ExocortexError.validationRejected }
         guard consent else { throw ExocortexError.memoryConsentRequired }
+        guard decision.memoryProof?.matches(content) == true else { throw ExocortexError.validationRejected }
         guard let memoryStore else { throw ExocortexError.invalidEndpoint }
         return try await memoryStore.remember(content, consent: true, userAccessToken: userAccessToken)
     }
@@ -747,35 +771,46 @@ public actor LlamaCppRuntimeAdapter: LocalModelRuntime {
         self.criticalMemoryBytes = max(1, criticalMemoryBytes)
     }
     public func load(_ descriptor: LocalModelDescriptor) async throws {
+        if loaded { await emergencyUnload() }
         guard let modelURL = locator.modelURL, modelURL.isFileURL,
               modelURL.pathExtension.lowercased() == "gguf",
               FileManager.default.isReadableFile(atPath: modelURL.path) else {
-            throw ExocortexError.modelNotLoaded
+            try await unloadAndRejectLoad(.modelNotLoaded)
         }
         guard descriptor.quantization.uppercased().contains("Q4") else {
-            throw ExocortexError.invalidPayload
+            try await unloadAndRejectLoad(.invalidPayload)
         }
         let file: FileHandle
         do { file = try FileHandle(forReadingFrom: modelURL) }
         catch { throw ExocortexError.modelNotLoaded }
         let header = try file.read(upToCount: 4) ?? Data()
         try? file.close()
-        guard header == Data("GGUF".utf8) else { throw ExocortexError.modelNotLoaded }
+        guard header == Data("GGUF".utf8) else {
+            try await unloadAndRejectLoad(.modelNotLoaded)
+        }
 
         let state = safety.snapshot()
         guard state.thermalCondition == .nominal || state.thermalCondition == .fair else {
-            throw ExocortexError.thermalLimit
+            try await unloadAndRejectLoad(.thermalLimit)
         }
         guard state.availableMemoryBytes >= 0 else {
-            throw ExocortexError.memoryUnavailable
+            try await unloadAndRejectLoad(.memoryUnavailable)
         }
         guard ThermalGuardian.allowsInference(state, minimumMemoryBytes: max(minimumLoadMemoryBytes, Int64(descriptor.maximumResidentBytes) + criticalMemoryBytes)) else {
-            if ThermalGuardian.shouldEmergencyUnload(state, criticalMemoryBytes: criticalMemoryBytes) { await emergencyUnload() }
-            throw ExocortexError.memoryPressure
+            try await unloadAndRejectLoad(.memoryPressure)
         }
-        try await backend.loadModel(at: modelURL, contextTokens: ThermalGuardian.budget(for: state.thermalCondition).maximumContextTokens)
-        self.descriptor = descriptor
-        loaded = true
+        do {
+            try await backend.loadModel(at: modelURL, contextTokens: ThermalGuardian.budget(for: state.thermalCondition).maximumContextTokens)
+            self.descriptor = descriptor
+            loaded = true
+        } catch {
+            await emergencyUnload()
+            throw error
+        }
+    }
+    private func unloadAndRejectLoad(_ error: ExocortexError) async throws -> Never {
+        await emergencyUnload()
+        throw error
     }
     public func infer(prompt: String, cycleBudget: Int) async throws -> String {
         guard loaded, descriptor != nil else { throw ExocortexError.modelNotLoaded }
