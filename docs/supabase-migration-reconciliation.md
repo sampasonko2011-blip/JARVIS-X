@@ -2,7 +2,7 @@
 
 ## Scope and observed state
 
-Audit date: 2026-11-24. This document records repository and live Supabase metadata observed through read-only inspection. No migration was applied, reverted, repaired, or renamed.
+Audit date: 2026-11-24. This document records repository and live Supabase metadata observed through read-only inspection. No migration was applied, reverted, or changed in the active database. Three repository migration paths were renamed to match their already-applied live version/name entries.
 
 Live Supabase project: `xfewajxkqntflfntisut`.
 
