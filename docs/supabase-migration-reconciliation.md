@@ -20,7 +20,7 @@ The active database reports these nine migration versions. Four have canonical s
 | 20261110112609 | restrict_hq_rate_limit_rpc_to_service_role |
 | 20261110113744 | hq_xmemo_oauth_storage |
 
-The repository currently contains five SQL migration files. Four now match a live version/name exactly after the source paths were aligned to the observed Supabase ledger; the image-budget migration is not observed live:
+The repository now contains ten SQL migration files: all nine live migration entries have exact version/name source files; the image-budget migration remains an additional repository file and is not observed live:
 
 | Repository file/version | Live history comparison |
 |---|---|
@@ -30,7 +30,11 @@ The repository currently contains five SQL migration files. Four now match a liv
 | 20261102120000_hq_image_budget_guard.sql | No matching live version/name observed |
 | 20261110113744_hq_xmemo_oauth_storage.sql | Exact version and name match after source-path reconciliation |
 
-The five live versions without repository files are earlier baseline migrations whose SQL is not present in this checkout. The image-budget migration is present in Git but its tables/function are not observed live. Migration history is metadata, not a complete schema diff.
+All nine live version/name entries now have matching source files. The five earlier baseline migration bodies were recovered byte-for-byte from the live `supabase_migrations.schema_migrations.statements[1]` field after confirming no secret-like literals, then verified by exact string comparison against the branch files. The image-budget migration is present in Git but its tables/function are not observed live. Migration history is metadata, not a complete schema diff.
+
+## Migration-ledger reconciliation — exact version/name coverage
+
+<badge>VALIDATED</badge> All nine live migration ledger entries now have corresponding files in this branch with the exact version and name. Five historical SQL statements were retrieved from the live ledger, checked for secret-like literals, restored as files, and compared byte-for-byte with the ledger statements. The four pre-existing matching migrations were also retained. The extra image-budget migration is intentionally left in Git as unapplied because its tables and function are absent from the active schema and image generation remains disabled.
 
 ## Schema-level comparison performed
 
