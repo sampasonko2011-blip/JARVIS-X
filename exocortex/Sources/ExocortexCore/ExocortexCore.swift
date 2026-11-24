@@ -436,8 +436,8 @@ public struct SaboteurAgent: Sendable {
             if $0.propositionKey != $1.propositionKey { return $0.propositionKey < $1.propositionKey }
             if $0.value != $1.value { return $0.value < $1.value }
             if $0.polarity.rawValue != $1.polarity.rawValue { return $0.polarity.rawValue < $1.polarity.rawValue }
-            return $0.supportingEvidenceIDs.map(\\.uuidString).sorted().joined() <
-                $1.supportingEvidenceIDs.map(\\.uuidString).sorted().joined()
+            return $0.supportingEvidenceIDs.map(\.uuidString).sorted().joined() <
+                $1.supportingEvidenceIDs.map(\.uuidString).sorted().joined()
         }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
