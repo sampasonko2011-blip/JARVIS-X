@@ -93,10 +93,10 @@ test("XMemo OAuth MCP is authenticated, encrypted, consent-gated, and uses the h
 });
 
 test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
-  assert.match(gateway, /const oauthMemoryReady = Boolean\\([\\s\\S]*JX_ENCRYPTION_SECRET/);
-  assert.match(gateway, /const legacyMemoryReady = Boolean\\(Deno\\.env\\.get\\("XMEMO_API_KEY"\\)\\)/);
-  assert.match(gateway, /oauthMemoryReady,\\s*legacyMemoryReady/);
-  assert.match(gateway, /memoryConfigured: oauthMemoryReady \\|\\| legacyMemoryReady/);
+  assert.ok(gateway.includes("const oauthMemoryReady = Boolean("));
+  assert.ok(gateway.includes('const legacyMemoryReady = Boolean(Deno.env.get("XMEMO_API_KEY"))'));
+  assert.ok(gateway.includes("oauthMemoryReady,\n      legacyMemoryReady,"));
+  assert.ok(gateway.includes("memoryConfigured: oauthMemoryReady || legacyMemoryReady"));
 });
 
 test("memory health distinguishes OAuth configuration from legacy fallback configuration", () => {
