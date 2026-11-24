@@ -32,8 +32,9 @@ test("provider cascade is opt-in globally and per provider; keys alone do not ac
   assert.deepEqual(listProviderConfiguration({ ...allEnv, JX_ENABLE_PROVIDER_CASCADE: "false" }), []);
   const keysOnly = Object.fromEntries(Object.entries(allEnv).filter(([key]) => key.endsWith("_API_KEY") || key === "GITHUB_TOKEN"));
   assert.deepEqual(listProviderConfiguration(keysOnly), []);
-  assert.equal(listProviderConfiguration(allEnv).length, 8);
-  assert.deepEqual(PROVIDER_IDS, ["openrouter", "gemini", "groq", "cerebras", "nvidia", "sambanova", "mistral", "github-models"]);
+  assert.equal(listProviderConfiguration(allEnv).length, 7);
+  assert.equal(listProviderConfiguration(allEnv).some((provider) => provider.id === "openrouter"), false);
+  assert.deepEqual(PROVIDER_IDS, ["gemini", "groq", "cerebras", "nvidia", "sambanova", "mistral", "github-models"]);
 });
 
 test("provider order is deterministic and a successful first provider stops the cascade", async () => {
@@ -48,13 +49,13 @@ test("provider order is deterministic and a successful first provider stops the 
     },
   });
   assert.equal(calls.length, 1);
-  assert.match(calls[0].url, /openrouter\.ai/);
-  assert.equal(calls[0].body.model, "openrouter/free");
-  assert.equal(calls[0].authorization, "Bearer test-openrouter");
-  assert.equal(result.provider, "openrouter");
+  assert.match(calls[0].url, /generativelanguage\.googleapis\.com/);
+  assert.equal(calls[0].body.model, "gemini-2.5-flash");
+  assert.equal(calls[0].authorization, "Bearer test-gemini");
+  assert.equal(result.provider, "gemini");
   assert.equal(result.response.status, "completed");
   assert.equal(result.response.output_text, "Verified fixture response");
-  assert.equal(result.response.model, "openrouter/fixture-model");
+  assert.equal(result.response.model, "gemini/fixture-model");
 });
 
 test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async () => {
@@ -70,11 +71,11 @@ test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async
     },
   });
   assert.equal(urls.length, 3);
-  assert.match(urls[0], /openrouter\.ai/);
-  assert.match(urls[1], /generativelanguage\.googleapis\.com/);
-  assert.match(urls[2], /api\.groq\.com/);
-  assert.equal(result.provider, "groq");
-  assert.deepEqual(result.attempts, ["openrouter:402", "gemini:429", "groq:200"]);
+  assert.match(urls[0], /generativelanguage\.googleapis\.com/);
+  assert.match(urls[1], /api\.groq\.com/);
+  assert.match(urls[2], /api\.cerebras\.ai/);
+  assert.equal(result.provider, "cerebras");
+  assert.deepEqual(result.attempts, ["gemini:402", "groq:429", "cerebras:200"]);
 });
 
 test("transport errors and server errors do not silently fan out to additional providers", async () => {
@@ -83,14 +84,14 @@ test("transport errors and server errors do not silently fan out to additional p
     input: "hello",
     env: allEnv,
     fetchImpl: async () => { calls++; return { ok: false, status: 503 }; },
-  }), /provider_http_503_openrouter/);
+  }), /provider_http_503_gemini/);
   assert.equal(calls, 1);
   calls = 0;
   await assert.rejects(() => invokeProviderCascade({
     input: "hello",
     env: allEnv,
     fetchImpl: async () => { calls++; throw new Error("network details must not leak"); },
-  }), /provider_transport_failed_openrouter/);
+  }), /provider_transport_failed_gemini/);
   assert.equal(calls, 1);
 });
 
@@ -103,7 +104,7 @@ test("Responses function tools and tool outputs are translated for chat-completi
       { type: "function_call_output", call_id: "call-1", output: "{\"status\":\"succeeded\"}" },
     ],
     tools: [{ type: "function", name: "lookup", description: "Lookup", parameters: { type: "object", properties: {} } }],
-    env: { ...allEnv, JX_PROVIDER_OPENROUTER_ENABLED: "false" },
+    env: { ...allEnv, JX_PROVIDER_GEMINI_ENABLED: "false" },
     fetchImpl: async (_url, init) => {
       request = JSON.parse(init.body);
       return ok("groq-model", {
@@ -119,6 +120,7 @@ test("Responses function tools and tool outputs are translated for chat-completi
   assert.equal(request.tools[0].function.name, "lookup");
   assert.equal(result.response.output[0].type, "function_call");
   assert.equal(result.response.output[0].call_id, "call-2");
+  assert.equal(result.provider, "groq");
 });
 
 test("provider errors never return credential values", async () => {
@@ -127,8 +129,8 @@ test("provider errors never return credential values", async () => {
     env: allEnv,
     fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ error: "test-openrouter" }) }),
   }), (error) => {
-    assert.match(error.message, /provider_http_401_openrouter/);
-    assert.doesNotMatch(error.message, /test-openrouter/);
+    assert.match(error.message, /provider_http_401_gemini/);
+    assert.doesNotMatch(error.message, /test-gemini/);
     return true;
   });
 });
