@@ -6,7 +6,9 @@
 
 ## Observed inventories
 
-### Git `main` inventory (5 files)
+### Git branch inventory (5 files)
+
+These are the five migration files present on `feat/p0-security-reconciliation-spatial-hud`; this inventory is source-control state, not proof that every file is already part of `main`.
 
 | Version in Git | File |
 |---|---|
@@ -32,6 +34,20 @@
 
 Only `20261024185449` is an exact version match. The global-budget, rate-limit hardening, and XMemo OAuth migrations have plausible source/live counterparts under different versions, but matching names or resulting tables do **not** prove identical SQL or identical migration history. The image-budget migration exists in Git but is absent from the active ledger.
 
+## Source-only reconciliation outcome
+
+| Git migration | Live-ledger relationship | Disposition on this branch |
+|---|---|---|
+| `20261024185449_hq_execution_ledger_server_only_writes.sql` | Exact version/name match | Retain unchanged; semantic schema equivalence still requires a schema diff |
+| `20261025225000_hq_global_budget_guard.sql` | Live `20261027220313_hq_global_budget_guard` has a different version | Retain original filename; candidate counterpart only, not proven equivalent |
+| `20261026100000_hq_rate_limit_server_only_rpc.sql` | Live `20261110112609_restrict_hq_rate_limit_rpc_to_service_role` has a different version | Retain original filename; candidate counterpart only, not proven equivalent |
+| `20261102120000_hq_image_budget_guard.sql` | No corresponding live ledger entry observed | Mark source-only; do not apply automatically |
+| `20261109190000_hq_xmemo_oauth_storage.sql` | Live `20261110113744_hq_xmemo_oauth_storage` has a different version | Retain original filename; candidate counterpart only, not proven equivalent |
+
+Five live ledger entries (`20261023172530`, `20261023175736`, `20261023180128`, `20261023180213`, `20261023180246`) have no matching migration source file in this repository inventory. Their original SQL must be recovered from immutable history/deployment artifacts before any future ledger repair.
+
+**P0.6 source-documentation deliverable:** complete on this branch: the two inventories, exact-version match, candidate counterparts, source-only migration, and live-only entries are explicitly recorded. **Production/schema reconciliation remains open** pending a full schema/function diff and separate authorization. No migration file was renamed, synthesized, applied, or repaired.
+
 ## What this means
 
 - **OBSERVED:** Git has 5 migration files; the active project records 9 applied versions.
@@ -39,6 +55,7 @@ Only `20261024185449` is an exact version match. The global-budget, rate-limit h
 - **OBSERVED:** The active rate-limit RPC is restricted to `service_role`/postgres and accepts both `p_user_id` and `p_limit_key`.
 - **UNPROVEN:** Whether each differently-versioned source migration is semantically equivalent to its live counterpart. A table or RPC existing is not proof that every constraint, index, policy, grant, and function body matches.
 - **NOT DONE:** No migration ledger repair, SQL execution, schema mutation, or production deployment occurred.
+- **P0.6 branch scope:** documentary inventory is complete; database-history/schema equivalence is intentionally not declared complete.
 
 ## Safe reconciliation sequence
 
