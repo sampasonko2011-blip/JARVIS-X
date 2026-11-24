@@ -20,7 +20,7 @@ The live global paid-inference budget configuration was observed as disabled, wi
 
 ## Live executive inference
 
-The v12 Edge Function is ACTIVE in Supabase, but that does not mean live model inference is enabled. The observed global budget guard is disabled and no positive per-request reservation is configured, so the paid inference route remains fail-closed. No live model call was performed during the audit.
+The v12 Edge Function is ACTIVE in Supabase, but that does not mean live model inference is enabled. The observed global budget guard is disabled and no positive per-request reservation is configured, so the paid inference route remains fail-closed. Not independently verified: no live model call was performed during the audit.
 
 ## Current source architecture
 
