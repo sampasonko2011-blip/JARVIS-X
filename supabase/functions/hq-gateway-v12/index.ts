@@ -287,10 +287,11 @@ async function consumeRateLimit(userId: string, key: "minute" | "day") {
 // OAuth-connected account encounters a refresh, transport, or authorization error.
 const xmemoOAuthRouter = createXMemoOAuthRouter();
 const xmemoLegacyMemory = createXMemoMemoryClient({ apiKey: Deno.env.get("XMEMO_API_KEY") });
+const oauthEncryptionSecret = Deno.env.get("JX_ENCRYPTION_SECRET") ?? "";
 const oauthMemoryReady = Boolean(
   Deno.env.get("SUPABASE_URL") &&
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") &&
-  Deno.env.get("JX_ENCRYPTION_SECRET")
+  new TextEncoder().encode(oauthEncryptionSecret.trim()).byteLength >= 32
 );
 const legacyMemoryReady = Boolean(Deno.env.get("XMEMO_API_KEY"));
 
