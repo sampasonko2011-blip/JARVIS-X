@@ -92,7 +92,7 @@ test("failed refresh clears the stale session and stops memory access", async ()
     storage: store,
     fetchImpl: async () => new Response("{}", { status: 401 }),
   });
-  await assert.rejects(bridge.recall("test"), /sign-in expired/i);
+  await assert.rejects(bridge.recall("test", { consent: true }), /sign-in expired/i);
   assert.equal(store.read(), null);
 });
 
