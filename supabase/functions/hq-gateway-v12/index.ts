@@ -444,7 +444,7 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: "memory_query_invalid" }, 400, origin);
         }
         const result = await xmemoOAuthRouter.recall(user.id, memoryBody.query);
-        return jsonResponse({ ok: true, ...result }, result.status === "not_connected" ? 409 : 200, origin);
+        return jsonResponse({ ok: true, ...result, ...(isXMemoRecall && result.status !== "not_connected" ? { context_is_untrusted: true } : {}) }, result.status === "not_connected" ? 409 : 200, origin);
       }
       if (typeof memoryBody.content !== "string" || !memoryBody.content.trim() || memoryBody.content.length > 18_000) {
         return jsonResponse({ error: "memory_content_invalid" }, 400, origin);
