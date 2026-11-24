@@ -473,6 +473,25 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(writes, 0)
     }
 
+    func testCanonicalMemoryCandidateNormalizesEvidenceIDOrder() throws {
+        let first = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+        let second = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+        let forward = EvidenceClaim(
+            propositionKey: "profile.preference",
+            value: "concise",
+            supportingEvidenceIDs: [first, second]
+        )
+        let reversed = EvidenceClaim(
+            propositionKey: "profile.preference",
+            value: "concise",
+            supportingEvidenceIDs: [second, first]
+        )
+        XCTAssertEqual(
+            SaboteurAgent.canonicalMemoryCandidate(from: [forward]),
+            SaboteurAgent.canonicalMemoryCandidate(from: [reversed])
+        )
+    }
+
     func testXMemoCandidateWithoutStructuredClaimsCannotBeSealed() async throws {
         let memory = MemoryWriteSpy()
         let unstructuredText = "A free-form note with no evidence mapping."
