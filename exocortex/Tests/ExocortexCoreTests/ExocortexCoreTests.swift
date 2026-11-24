@@ -386,30 +386,42 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertEqual(writes, 0)
     }
 
-    func testXMemoPersistenceProofBindsExactReasoningCandidate() async throws {
+    func testXMemoPersistenceProofBindsExactValidatedCandidate() async throws {
         let memory = MemoryWriteSpy()
-        let candidate = "Only persist this exact approved text."
+        let fact = EvidenceRecord(
+            propositionKey: "profile.preference",
+            value: "concise",
+            source: .xmemo,
+            provenance: "xmemo://profile/preference"
+        )
+        let claim = EvidenceClaim(
+            propositionKey: "profile.preference",
+            value: "concise",
+            supportingEvidenceIDs: [fact.id]
+        )
+        let candidate = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: [claim]))
         let engine = FixedContextualEngine(result: ReasoningResult(
             output: [1],
             confidence: 0.99,
+            claims: [claim],
             memoryCandidate: candidate
         ))
         let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
         let decision = try await orchestrator.think(
             seed: [0],
-            context: CognitiveTurnContext(),
+            context: CognitiveTurnContext(memoryEvidence: [fact]),
             budget: ThermalGuardian.budget(for: .nominal)
         )
         XCTAssertTrue(decision.approved)
         XCTAssertNotNil(decision.memoryProof)
         do {
             _ = try await orchestrator.rememberValidated(
-                "Different text must never inherit this approval.",
+                candidate + " appended unverified text",
                 decision: decision,
                 consent: true,
                 userAccessToken: "session"
             )
-            XCTFail("A decision proof must not authorize different content")
+            XCTFail("A decision proof must not authorize altered content")
         } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
         let writesAfterMismatch = await memory.writeCount()
         XCTAssertEqual(writesAfterMismatch, 0)
@@ -422,6 +434,64 @@ final class ExocortexCoreTests: XCTestCase {
         )
         let writesAfterMatch = await memory.writeCount()
         XCTAssertEqual(writesAfterMatch, 1)
+    }
+
+    func testXMemoCandidateWithUnsupportedClaimCannotBeSealed() async throws {
+        let memory = MemoryWriteSpy()
+        let unsupported = EvidenceClaim(
+            propositionKey: "profile.secret",
+            value: "unsupported assertion",
+            supportingEvidenceIDs: []
+        )
+        let candidate = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: [unsupported]))
+        let engine = FixedContextualEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            claims: [unsupported],
+            memoryCandidate: candidate
+        ))
+        let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: CognitiveTurnContext(),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
+        XCTAssertFalse(decision.approved)
+        XCTAssertNil(decision.memoryProof)
+        do {
+            _ = try await orchestrator.rememberValidated(
+                candidate,
+                decision: decision,
+                consent: true,
+                userAccessToken: "session"
+            )
+            XCTFail("Unsupported claims must never be persisted")
+        } catch { XCTAssertEqual(error as? ExocortexError, .validationRejected) }
+        let writes = await memory.writeCount()
+        XCTAssertEqual(writes, 0)
+    }
+
+    func testXMemoCandidateWithExtraUnverifiedTextCannotBeSealed() async throws {
+        let fact = EvidenceRecord(
+            propositionKey: "device.chip",
+            value: "M1",
+            source: .xmemo,
+            provenance: "xmemo://device/chip"
+        )
+        let claim = EvidenceClaim(
+            propositionKey: "device.chip",
+            value: "M1",
+            supportingEvidenceIDs: [fact.id]
+        )
+        let canonical = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: [claim]))
+        let appended = canonical + "\\nAdditional claim: this device has 64 GB RAM."
+        let validation = SaboteurAgent().validateMemoryCandidate(
+            candidate: appended,
+            claims: [claim],
+            context: CognitiveTurnContext(memoryEvidence: [fact])
+        )
+        XCTAssertFalse(validation.mayPersist)
+        XCTAssertEqual(validation.unknownClaims, ["memoryCandidate.contains_unbound_text"])
     }
 
     func testApprovedDecisionWithoutMemoryCandidateCannotPersist() async throws {
