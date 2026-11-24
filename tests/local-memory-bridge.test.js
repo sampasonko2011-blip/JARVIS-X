@@ -145,7 +145,8 @@ test("local chat exposes per-turn opt-in without a checked default and trusts on
 test("local chat's memory bridge targets the v12 OAuth memory routes", async () => {
   const source = await (await import("node:fs/promises")).readFile(new URL("../hq/local-memory-bridge.js", import.meta.url), "utf8");
   assert.ok(source.includes("functions/v1/hq-gateway-v12"));
-  assert.ok(source.includes("memory/xmemo/recall"));
-  assert.ok(source.includes("memory/xmemo/remember"));
+  assert.ok(source.includes("/functions/v1/hq-gateway-v12/memory/xmemo/"));
+  assert.ok(source.includes('request("recall"'));
+  assert.ok(source.includes('request("remember"'));
   assert.ok(!source.includes("hq-memory-v1"));
 });
