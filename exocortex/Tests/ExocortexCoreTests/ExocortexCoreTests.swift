@@ -5,6 +5,16 @@ import FoundationNetworking
 @testable import ExocortexCore
 
 
+#if os(macOS)
+final class SystemPageSizeTests: XCTestCase {
+    func testSystemPageSizeUsesPositivePOSIXValue() {
+        let pageSize = exocortexSystemPageSizeBytes()
+        XCTAssertNotNil(pageSize)
+        XCTAssertGreaterThan(pageSize ?? 0, 0)
+    }
+}
+#endif
+
 private actor StubMemoryTransport: MemoryHTTPTransport {
     private let statusCode: Int
     private let responseBody: Data
