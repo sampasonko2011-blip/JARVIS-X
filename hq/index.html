@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="./arrival-experience.css">
 <link rel="stylesheet" href="./observatory-premium.css">
 <link rel="stylesheet" href="./kardashev-hud.css">
+<link rel="stylesheet" href="./spatial-liquid-hud.css">
 </head>
 <body>
 <a class="jx-observatory-launch" href="./observatory.html">ENTER SPATIAL OBSERVATORY ↗</a>
@@ -40,6 +41,7 @@
 </aside>
 <main class="main">
 <header class="top"><div><div class="eyebrow">HUMAN × AI PERFORMANCE OS</div><h1 id="page-title" tabindex="-1">Command overview</h1><div class="sub" id="page-sub">A calm, evidence-first operating surface. No fake green lights.</div></div><div class="statusrow"><button id="jx-global-focus" class="pill jx-global-focus-toggle" type="button" aria-pressed="false">FOCUS MODE</button><span class="pill"><b id="net-status" role="status" aria-live="polite">● ONLINE</b> · network</span><span class="pill" aria-live="polite">LOCAL DATA · <span id="data-count">0</span> records</span><span class="pill">RUNTIME · <span id="runtime-status">SHELL ONLY</span></span></div></header>
+<section class="jx-neural-pill" id="jx-neural-pill" aria-label="Live interface telemetry"><div class="jx-neural-pill__identity"><span class="jx-neural-pill__orb" aria-hidden="true"></span><div><strong>JARVIS-X / NEURAL PILL</strong><small>OBSERVED INTERFACE STATE</small></div></div><div class="jx-neural-pill__signal" data-signal-wrap="network"><small>Network</small><strong data-signal="network">UNKNOWN</strong></div><div class="jx-neural-pill__signal" data-signal-wrap="records"><small>Local records</small><strong data-signal="records">UNKNOWN</strong></div><div class="jx-neural-pill__signal" data-signal-wrap="runtime"><small>Runtime</small><strong data-signal="runtime">UNKNOWN</strong></div><div class="jx-neural-pill__signal" data-signal-wrap="gateway"><small>Gateway</small><strong data-signal="gateway">UNKNOWN</strong></div></section>
 <div id="storage-warning" role="alert" class="card hide csp-inline-3"></div><section id="view-overview" class="view">
 <section class="jx-core-stage" aria-label="JARVIS-X animated executive core">
   <div class="jx-core-head"><div><span class="jx-kicker">VEGITO EXECUTIVE CORE</span><h2>One Mind. Infinite Possibilities.</h2><p>One integrated intelligence. Evidence before claims.</p></div><span class="jx-live"><i></i> HQ INTERFACE</span></div>
@@ -154,11 +156,12 @@
 </div>
 </section>
 <footer class="footnote csp-inline-16">JARVIS-X HQ · FOUNDATION PROTOTYPE · Local UI and browser storage only. No account security, remote sync, model calls, or backend execution is implied.</footer>
-</main></div>
+</main><nav class="jx-control-dock" id="jx-control-dock" aria-label="Spatial controls"><button type="button" class="jx-dock-undo" data-jx-undo disabled><span aria-hidden="true">↶</span><span data-jx-undo-label>UNDO · NONE</span></button><a class="jx-dock-observatory" href="./observatory.html">◈ OBSERVATORY</a><button type="button" data-view="overview">OVERVIEW</button><button type="button" data-view="chat">CHAT</button><button type="button" data-view="audit">EVIDENCE</button></nav></div>
 <script src="./hq.js"></script>
 <script src="./conversation-experience.js" defer></script>
 <script src="./arrival-experience.js" defer></script>
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>
 <script src="./kardashev-engine.js" defer></script>
+<script src="./spatial-liquid-hud.js" defer></script>
 </body></html>
