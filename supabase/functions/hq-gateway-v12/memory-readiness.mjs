@@ -4,12 +4,14 @@ export function resolveMemoryReadiness({
   encryptionSecretConfigured = false,
   legacyApiKeyConfigured = false,
 } = {}) {
-  const oauthConfigurationReady = supabaseUrlConfigured && serviceRoleConfigured && encryptionSecretConfigured;
-  const legacyFallbackConfigured = legacyApiKeyConfigured;
+  const memoryOAuthConfigured = supabaseUrlConfigured && serviceRoleConfigured && encryptionSecretConfigured;
+  const memoryLegacyFallbackConfigured = legacyApiKeyConfigured;
   return Object.freeze({
-    oauthConfigurationReady,
-    legacyFallbackConfigured,
-    memoryConfigured: oauthConfigurationReady || legacyFallbackConfigured,
-    mode: oauthConfigurationReady ? "oauth-configured" : legacyFallbackConfigured ? "legacy-fallback-configured" : "unavailable",
+    memoryOAuthConfigured,
+    memoryLegacyFallbackConfigured,
+    memoryConfigured: memoryOAuthConfigured || memoryLegacyFallbackConfigured,
+    memoryConfigurationMode: memoryOAuthConfigured
+      ? "oauth-configured"
+      : memoryLegacyFallbackConfigured ? "legacy-fallback-configured" : "unavailable",
   });
 }
