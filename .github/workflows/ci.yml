@@ -6,10 +6,10 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-permissions:
-  contents: write
 jobs:
   verify:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,16 +18,6 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-      - name: Sync generated local-chat bundle on the P0 branch
-        if: github.ref == 'refs/heads/feat/p0-security-reconciliation-spatial-hud'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add hq/local-chat-engine.bundle.js
-          if ! git diff --cached --quiet; then
-            git commit -m "build(local-chat): sync consent-hardened bundle [skip ci]"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -74,3 +64,30 @@ jobs:
             hq/local-chat-engine.bundle.js
           if-no-files-found: warn
           retention-days: 14
+  sync-bundle:
+    needs: verify
+    if: github.ref == 'refs/heads/feat/p0-security-reconciliation-spatial-hud'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: jarvis-x-runtime-benchmark-${{ github.sha }}
+          path: generated
+      - name: Commit generated bundle to this feature branch only
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp generated/hq/local-chat-engine.bundle.js hq/local-chat-engine.bundle.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hq/local-chat-engine.bundle.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build(local-chat): sync consent-hardened bundle [skip ci]"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
