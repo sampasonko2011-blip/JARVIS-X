@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="./arrival-experience.css">
 <link rel="stylesheet" href="./observatory-premium.css">
 <link rel="stylesheet" href="./kardashev-hud.css">
+<link rel="stylesheet" href="./spatial-liquid-hud.css">
 </head>
 <body>
 <a class="jx-observatory-launch" href="./observatory.html">ENTER SPATIAL OBSERVATORY ↗</a>
@@ -40,6 +41,15 @@
 </aside>
 <main class="main">
 <header class="top"><div><div class="eyebrow">HUMAN × AI PERFORMANCE OS</div><h1 id="page-title" tabindex="-1">Command overview</h1><div class="sub" id="page-sub">A calm, evidence-first operating surface. No fake green lights.</div></div><div class="statusrow"><button id="jx-global-focus" class="pill jx-global-focus-toggle" type="button" aria-pressed="false">FOCUS MODE</button><span class="pill"><b id="net-status" role="status" aria-live="polite">● ONLINE</b> · network</span><span class="pill" aria-live="polite">LOCAL DATA · <span id="data-count">0</span> records</span><span class="pill">RUNTIME · <span id="runtime-status">SHELL ONLY</span></span></div></header>
+<section class="jx-neural-pill" id="jx-neural-pill" aria-label="Neural Pill system telemetry">
+  <div class="jx-pill-brand"><span class="jx-pill-kicker">JARVIS-X / NEURAL PILL</span><strong class="jx-pill-value">OBSIDIAN GLASS · EXECUTIVE SHELL</strong><span class="jx-pill-note">One identity · observed state only</span></div>
+  <div class="jx-pill-metric"><span class="jx-pill-kicker">Gateway</span><strong class="jx-pill-value" id="jx-hud-gateway">NOT CHECKED</strong><span class="jx-pill-note">HQ gateway diagnostic</span></div>
+  <div class="jx-pill-metric"><span class="jx-pill-kicker">Local runtime</span><strong class="jx-pill-value" id="jx-hud-runtime">SHELL ONLY</strong><span class="jx-pill-note">WebLLM / EXOCORTEX not attached here</span></div>
+  <div class="jx-pill-metric"><span class="jx-pill-kicker">Memory readiness</span><strong class="jx-pill-value" id="jx-hud-memory">OAUTH · NOT CHECKED / LEGACY · NOT CHECKED</strong><span class="jx-pill-note">No readiness probe issued</span></div>
+  <div class="jx-pill-metric"><span class="jx-pill-kicker">Browser network</span><strong class="jx-pill-value" id="jx-hud-network">NOT CHECKED</strong><span class="jx-pill-note">Browser connectivity hint only</span></div>
+  <div class="jx-activity" id="jx-hud-activity" data-active="false"><span class="jx-pill-kicker">UI activity · real input</span><div class="jx-activity-track" aria-hidden="true"><span id="jx-hud-activity-fill"></span></div><span class="jx-pill-note">No model workload inferred</span></div>
+</section>
+<div class="jx-canvas-rail" aria-label="Liquid Canvas workspace"><strong>LIQUID CANVAS</strong><span id="jx-canvas-context">COMMAND OVERVIEW</span><span class="jx-canvas-proof"><span id="jx-canvas-view-count">13</span> PRESERVED VIEWS</span></div>
 <div id="storage-warning" role="alert" class="card hide csp-inline-3"></div><section id="view-overview" class="view">
 <section class="jx-core-stage" aria-label="JARVIS-X animated executive core">
   <div class="jx-core-head"><div><span class="jx-kicker">VEGITO EXECUTIVE CORE</span><h2>One Mind. Infinite Possibilities.</h2><p>One integrated intelligence. Evidence before claims.</p></div><span class="jx-live"><i></i> HQ INTERFACE</span></div>
@@ -153,6 +163,15 @@
 <div class="card span12"><div class="cardhead"><h2>Last diagnostic report</h2><span class="tag">NO SECRETS</span></div><div id="gateway-report" class="gateway-report">No check performed. Select “Test gateway connection” to perform a real same-origin request.</div></div>
 </div>
 </section>
+<nav class="jx-control-dock" id="jx-control-dock" aria-label="Control Dock">
+  <button type="button" class="jx-dock-accent" data-jx-dock-view="chat" aria-label="Open Chat">◉ <span>CHAT</span></button>
+  <button type="button" data-jx-dock-view="workspace" aria-label="Open task workspace">⌘ <span>WORKSPACE</span></button>
+  <button type="button" data-jx-dock-view="memory" aria-label="Open memory vault">▤ <span>MEMORY</span></button>
+  <a href="./observatory.html" aria-label="Open Spatial Observatory">◈ <span>OBSERVATORY</span></a>
+  <span class="jx-dock-divider" aria-hidden="true"></span>
+  <button type="button" id="jx-dock-undo" disabled aria-label="Undo previous view navigation">↶ <span>UNDO</span></button>
+  <span class="jx-dock-count" id="jx-dock-record-count">0 LOCAL RECORDS</span>
+</nav>
 <footer class="footnote csp-inline-16">JARVIS-X HQ · FOUNDATION PROTOTYPE · Local UI and browser storage only. No account security, remote sync, model calls, or backend execution is implied.</footer>
 </main></div>
 <script src="./hq.js"></script>
@@ -161,4 +180,5 @@
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>
 <script src="./kardashev-engine.js" defer></script>
+<script src="./spatial-liquid-hud.js" defer></script>
 </body></html>
