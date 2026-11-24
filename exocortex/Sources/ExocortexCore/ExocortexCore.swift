@@ -427,6 +427,50 @@ public struct SaboteurAgent: Sendable {
     public func validateFacts(context: CognitiveTurnContext, claims: [EvidenceClaim]) -> EvidenceValidation {
         EvidenceLedger().evaluate(claims: claims, against: context.allEvidence)
     }
+
+    /// Produces the only persistence-safe text representation: a deterministic serialization
+    /// of the exact structured claims that the evidence ledger can verify.
+    public static func canonicalMemoryCandidate(from claims: [EvidenceClaim]) -> String? {
+        guard !claims.isEmpty else { return nil }
+        let orderedClaims = claims.sorted {
+            if $0.propositionKey != $1.propositionKey { return $0.propositionKey < $1.propositionKey }
+            if $0.value != $1.value { return $0.value < $1.value }
+            if $0.polarity.rawValue != $1.polarity.rawValue { return $0.polarity.rawValue < $1.polarity.rawValue }
+            return $0.supportingEvidenceIDs.map(\\.uuidString).sorted().joined() <
+                $1.supportingEvidenceIDs.map(\\.uuidString).sorted().joined()
+        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        guard let data = try? encoder.encode(orderedClaims) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// A candidate is persistable only when every encoded byte is the canonical projection
+    /// of non-empty claims, and every claim is independently supported by context evidence.
+    public func validateMemoryCandidate(
+        candidate: String,
+        claims: [EvidenceClaim],
+        context: CognitiveTurnContext
+    ) -> EvidenceValidation {
+        guard let canonical = Self.canonicalMemoryCandidate(from: claims) else {
+            return EvidenceValidation(
+                disposition: .rejected,
+                contradictions: [],
+                unknownClaims: ["memoryCandidate.requires_structured_claims"],
+                unsupportedClaims: ["memoryCandidate.requires_structured_claims"]
+            )
+        }
+        guard candidate == canonical else {
+            return EvidenceValidation(
+                disposition: .rejected,
+                contradictions: [],
+                unknownClaims: ["memoryCandidate.contains_unbound_text"],
+                unsupportedClaims: ["memoryCandidate.contains_unbound_text"]
+            )
+        }
+        return validateFacts(context: context, claims: claims)
+    }
+
     public func validate(output: [Float], confidence: Float?) -> Bool {
         validateStructure(output: output, confidence: confidence)
     }
@@ -574,15 +618,18 @@ public struct ExocortexOrchestrator: Sendable {
         else if !factual.contradictions.isEmpty { reason = "factual_contradiction_detected" }
         else if !factual.mayPersist { reason = "evidence_unknown_or_unsupported" }
         else { reason = "structural_and_evidence_checks_passed" }
+        let candidateValidation: EvidenceValidation? = result.memoryCandidate.map { candidate in
+            saboteur.validateMemoryCandidate(candidate: candidate, claims: result.claims, context: context)
+        }
         return OrchestrationDecision(
             approved: approved,
             confidence: result.confidence,
             output: approved ? result.output : [],
             reason: reason,
             evidenceValidation: factual,
-            memoryProof: approved ? result.memoryCandidate.flatMap { candidate in
-                candidate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : MemoryValidationProof(content: candidate)
-            } : nil
+            memoryProof: approved && candidateValidation?.mayPersist == true
+                ? result.memoryCandidate.map { MemoryValidationProof(content: $0) }
+                : nil
         )
     }
     public func recallContext(_ query: String, consent: Bool, userAccessToken: String) async throws -> CognitiveTurnContext {
