@@ -189,7 +189,9 @@ test("the active HQ frontend targets v12 and does not call the legacy gateway", 
   const frontend = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
   const legacy = await readFile(new URL("../supabase/functions/hq-gateway/index.ts", import.meta.url), "utf8");
   assert.ok(frontend.includes("functions/v1/hq-gateway-v12"));
-  assert.ok(!frontend.includes("functions/v1/hq-gateway/"));
+  assert.ok(!frontend.includes("'/functions/v1/hq-gateway'"));
+  assert.ok(!frontend.includes('"/functions/v1/hq-gateway"'));
   assert.match(legacy, /JX_ALLOWED_EMAILS/);
+  assert.match(gateway, /context_is_untrusted: true/);
   assert.doesNotMatch(legacy, /reserveGlobalBudget|reserve_hq_global_budget/);
 });
