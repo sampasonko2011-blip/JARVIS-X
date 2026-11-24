@@ -323,14 +323,17 @@ final class ExocortexCoreTests: XCTestCase {
         )
         let recall = MemoryRecall(status: "recalled", context: "User prefers concise explanations")
         let context = CognitiveTurnContext(memoryRecall: recall, memoryEvidence: [xmemoFact])
+        let claim = EvidenceClaim(
+            propositionKey: "session.goal",
+            value: "learn swift",
+            supportingEvidenceIDs: [workingFact.id]
+        )
+        let memoryCandidate = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: [claim]))
         let engine = ContextCaptureEngine(result: ReasoningResult(
             output: [1],
             confidence: 0.99,
-            claims: [EvidenceClaim(
-                propositionKey: "session.goal",
-                value: "learn swift",
-                supportingEvidenceIDs: [workingFact.id]
-            )]
+            claims: [claim],
+            memoryCandidate: memoryCandidate
         ))
         let orchestrator = ExocortexOrchestrator(
             engine: engine,
@@ -354,7 +357,7 @@ final class ExocortexCoreTests: XCTestCase {
 
         do {
             _ = try await orchestrator.rememberValidated(
-                "approved turn",
+                memoryCandidate,
                 decision: decision,
                 consent: false,
                 userAccessToken: "user-session"
@@ -571,12 +574,34 @@ final class ExocortexCoreTests: XCTestCase {
 
     func testOrchestratorRequiresSeparateMemoryConsentAfterValidation() async throws {
         let memory = MemoryWriteSpy()
-        let engine = FixedContextualEngine(result: ReasoningResult(output: [1], confidence: 0.99))
+        let fact = EvidenceRecord(
+            propositionKey: "profile.preference",
+            value: "concise",
+            source: .xmemo,
+            provenance: "xmemo://memory/consent-test"
+        )
+        let claim = EvidenceClaim(
+            propositionKey: "profile.preference",
+            value: "concise",
+            supportingEvidenceIDs: [fact.id]
+        )
+        let memoryCandidate = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: [claim]))
+        let engine = FixedContextualEngine(result: ReasoningResult(
+            output: [1],
+            confidence: 0.99,
+            claims: [claim],
+            memoryCandidate: memoryCandidate
+        ))
         let orchestrator = ExocortexOrchestrator(engine: engine, memoryStore: memory)
-        let decision = try await orchestrator.think(seed: [0], context: CognitiveTurnContext(), budget: ThermalGuardian.budget(for: .nominal))
+        let decision = try await orchestrator.think(
+            seed: [0],
+            context: CognitiveTurnContext(memoryEvidence: [fact]),
+            budget: ThermalGuardian.budget(for: .nominal)
+        )
         XCTAssertTrue(decision.approved)
+        XCTAssertTrue(decision.memoryCandidateValidation?.mayPersist == true)
         do {
-            _ = try await orchestrator.rememberValidated("turn", decision: decision, consent: false, userAccessToken: "session")
+            _ = try await orchestrator.rememberValidated(memoryCandidate, decision: decision, consent: false, userAccessToken: "session")
             XCTFail("Separate persistence consent must be required")
         } catch { XCTAssertEqual(error as? ExocortexError, .memoryConsentRequired) }
         let writes = await memory.writeCount()
@@ -619,14 +644,17 @@ final class ExocortexCoreTests: XCTestCase {
             memoryRecall: MemoryRecall(status: "recalled", context: "Chip M1"),
             memoryEvidence: [xmemoFact]
         )
+        let claims = [
+            EvidenceClaim(propositionKey: "device.ram", value: "8 GB", supportingEvidenceIDs: [workingFact.id]),
+            EvidenceClaim(propositionKey: "device.os", value: "iPadOS", supportingEvidenceIDs: [toolFact.id]),
+            EvidenceClaim(propositionKey: "device.chip", value: "M1", supportingEvidenceIDs: [xmemoFact.id])
+        ]
+        let memoryCandidate = try XCTUnwrap(SaboteurAgent.canonicalMemoryCandidate(from: claims))
         let engine = FixedContextualEngine(result: ReasoningResult(
             output: [1],
             confidence: 0.99,
-            claims: [
-                EvidenceClaim(propositionKey: "device.ram", value: "8 GB", supportingEvidenceIDs: [workingFact.id]),
-                EvidenceClaim(propositionKey: "device.os", value: "iPadOS", supportingEvidenceIDs: [toolFact.id]),
-                EvidenceClaim(propositionKey: "device.chip", value: "M1", supportingEvidenceIDs: [xmemoFact.id])
-            ]
+            claims: claims,
+            memoryCandidate: memoryCandidate
         ))
         let orchestrator = ExocortexOrchestrator(
             engine: engine,
@@ -642,7 +670,7 @@ final class ExocortexCoreTests: XCTestCase {
         XCTAssertTrue(decision.approved)
         do {
             _ = try await orchestrator.rememberValidated(
-                "validated turn",
+                memoryCandidate,
                 decision: decision,
                 consent: false,
                 userAccessToken: "session"
