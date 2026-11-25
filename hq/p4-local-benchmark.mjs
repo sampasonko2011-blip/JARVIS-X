@@ -23,9 +23,11 @@ async function complete(engine, prompt) {
   return content.trim();
 }
 
-export async function runLocalModelComparison({ engine, modelId, prompt, reference = "" }) {
+export async function runLocalModelComparison({ engine, modelId, prompt, reference = "", runtimeEvidence = "UNVERIFIED" }) {
   if (!engine || typeof engine.chat?.completions?.create !== "function") throw new Error("LOCAL_MODEL_NOT_READY");
   if (typeof modelId !== "string" || !/^Qwen/i.test(modelId)) throw new Error("SELECT_A_QWEN_MODEL");
+  if (!["WEBLLM_ENGINE_READY", "TEST_DOUBLE"].includes(runtimeEvidence)) throw new Error("LOCAL_RUNTIME_EVIDENCE_REQUIRED");
+  const realRuntime = runtimeEvidence === "WEBLLM_ENGINE_READY";
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 12000) throw new Error("BENCHMARK_PROMPT_INVALID");
 
   let modelCalls = 0;
@@ -68,15 +70,16 @@ export async function runLocalModelComparison({ engine, modelId, prompt, referen
 
   return {
     schema: "jx.p4.local-qwen-comparison.v1",
-    mode: "REAL_LOCAL_WEBLLM",
-    inferenceRoute: "BROWSER_WEBGPU_LOCAL",
+    mode: realRuntime ? "REAL_LOCAL_WEBLLM" : "SIMULATED_TEST_DOUBLE",
+    inferenceRoute: realRuntime ? "BROWSER_WEBGPU_LOCAL" : "TEST_DOUBLE",
     modelId,
     modelCalls,
     cloudInferenceCalls: 0,
-    rawQwen: { status: "REAL_LOCAL_MODEL_OUTPUT", output: rawOutput, latencyMs: rawLatencyMs, lexicalCoverage: lexicalCoverage(reference, rawOutput) },
+    rawQwen: { status: realRuntime ? "REAL_LOCAL_MODEL_OUTPUT" : "SIMULATED_TEST_DOUBLE_OUTPUT", output: rawOutput, latencyMs: rawLatencyMs, lexicalCoverage: lexicalCoverage(reference, rawOutput) },
     pipeline: {
       status: pipeline.status,
       output: pipeline.output,
+      outputStatus: realRuntime ? "REAL_LOCAL_PIPELINE_OUTPUT" : "SIMULATED_TEST_DOUBLE_OUTPUT",
       latencyMs: pipelineLatencyMs,
       agentFactory: "EXECUTED",
       saboteur: saboteurInvoked ? (pipeline.status === "VALIDATED" ? "PASSED" : "EXECUTED_WITH_REJECTION") : "NOT_REACHED",
