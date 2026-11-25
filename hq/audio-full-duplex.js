@@ -95,7 +95,7 @@ import { AudioSessionController } from "./audio-session.mjs";
     if (recognition) return;
     try {
       recognition = new recognitionConstructor();
-      recognition.lang = "fr-FR";
+      recognition.lang = languageSelect.value === "auto" ? "fr-FR" : languageSelect.value;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.onstart = () => {
