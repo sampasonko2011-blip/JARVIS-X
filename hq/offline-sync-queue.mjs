@@ -4,7 +4,7 @@
  * claim encryption, account sync, or a configured remote transport.
  */
 const DB_NAME = "jarvis-x-p5";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = "outbox";
 const MAX_PAYLOAD_BYTES = 256 * 1024;
 const now = () => Date.now();
@@ -41,6 +41,7 @@ export class OfflineSyncQueue {
           if (!db.objectStoreNames.contains(STORE)) {
             const store = db.createObjectStore(STORE, { keyPath: "id" });
             store.createIndex("status_createdAt", ["status", "createdAt"], { unique: false });
+            store.createIndex("idempotencyKey", "idempotencyKey", { unique: true });
           }
         };
         request.onsuccess = () => resolve(request.result);
@@ -59,31 +60,33 @@ export class OfflineSyncQueue {
     if (!/^[\w:.-]{8,160}$/.test(String(idempotencyKey))) throw new TypeError("INVALID_IDEMPOTENCY_KEY");
     const db = await this.open();
     const tx = db.transaction(STORE, "readwrite");
+    const done = transactionDone(tx);
     const store = tx.objectStore(STORE);
-    const existing = await requestResult(store.index("status_createdAt").getAll());
-    const duplicate = existing.find((item) => item.idempotencyKey === idempotencyKey);
-    if (duplicate) { await transactionDone(tx); return { ...duplicate, duplicate: true }; }
+    const duplicate = await requestResult(store.index("idempotencyKey").get(idempotencyKey));
+    if (duplicate) { await done; return { ...duplicate, duplicate: true }; }
     const record = {
       id: makeId(), idempotencyKey, type: String(type), payload: JSON.parse(serialized),
       metadata: metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {},
       status: "pending", attempts: 0, createdAt: this.clock(), updatedAt: this.clock(), lastError: null,
     };
     store.add(record);
-    await transactionDone(tx);
+    await done;
     return { ...record, duplicate: false };
   }
 
   async list() {
     const db = await this.open();
     const tx = db.transaction(STORE, "readonly");
+    const done = transactionDone(tx);
     const records = await requestResult(tx.objectStore(STORE).getAll());
-    await transactionDone(tx);
+    await done;
     return records.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
   }
 
   async recoverInterrupted() {
     const db = await this.open();
     const tx = db.transaction(STORE, "readwrite");
+    const done = transactionDone(tx);
     const store = tx.objectStore(STORE);
     const records = await requestResult(store.getAll());
     for (const record of records) {
@@ -94,7 +97,7 @@ export class OfflineSyncQueue {
         store.put(record);
       }
     }
-    await transactionDone(tx);
+    await done;
     return records.filter((item) => item.status === "sending").length;
   }
 
@@ -106,7 +109,10 @@ export class OfflineSyncQueue {
     let sent = 0, failed = 0;
     for (const item of candidates) {
       if (!this.isOnline()) break;
-      await this.#update(item.id, (current) => ({ ...current, status: "sending", attempts: current.attempts + 1, updatedAt: this.clock() }));
+      const claimed = await this.#update(item.id, (current) => current.status === "pending"
+        ? { ...current, status: "sending", attempts: current.attempts + 1, updatedAt: this.clock() }
+        : current, { requirePending: true });
+      if (!claimed) continue;
       try {
         await send({ type: item.type, payload: item.payload, idempotencyKey: item.idempotencyKey, metadata: item.metadata });
         await this.#update(item.id, (current) => ({ ...current, status: "synced", updatedAt: this.clock(), lastError: null }));
@@ -119,13 +125,16 @@ export class OfflineSyncQueue {
     return { status: failed ? "PARTIAL" : "COMPLETE", sent, failed };
   }
 
-  async #update(id, update) {
+  async #update(id, update, { requirePending = false } = {}) {
     const db = await this.open();
     const tx = db.transaction(STORE, "readwrite");
+    const done = transactionDone(tx);
     const store = tx.objectStore(STORE);
     const current = await requestResult(store.get(id));
-    if (current) store.put(update(current));
-    await transactionDone(tx);
+    const claimed = Boolean(current && (!requirePending || current.status === "pending"));
+    if (claimed) store.put(update(current));
+    await done;
+    return claimed;
   }
 }
 export const OFFLINE_QUEUE_CONTRACT = Object.freeze({
