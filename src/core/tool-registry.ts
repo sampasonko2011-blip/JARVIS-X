@@ -9,9 +9,9 @@ function validate(value:unknown,s:JsonSchema,path="$"):void {
  if(s.enum&&!s.enum.some(x=>Object.is(x,value)))fail("not in enum");
  switch(s.type){
  case "object":{if(!value||typeof value!=="object"||Array.isArray(value))fail("expected object");const r=value as Record<string,unknown>;for(const k of s.required??[])if(!(k in r))fail("missing required property "+k);for(const [k,v] of Object.entries(r)){const child=s.properties?.[k];if(!child){if(s.additionalProperties===false)fail("unknown property "+k);continue;}validate(v,child,path+"."+k);}break;}
- case "array":if(!Array.isArray(value))fail("expected array");if(s.items)value.forEach((v,i)=>validate(v,s.items!,path+"["+i+"]"));break;
- case "string":if(typeof value!=="string")fail("expected string");if(s.minLength!==undefined&&value.length<s.minLength)fail("too short");if(s.maxLength!==undefined&&value.length>s.maxLength)fail("too long");break;
- case "number":case "integer":if(typeof value!=="number"||!Number.isFinite(value)||(s.type==="integer"&&!Number.isInteger(value)))fail("expected finite "+s.type);if(s.minimum!==undefined&&value<s.minimum)fail("below minimum");if(s.maximum!==undefined&&value>s.maximum)fail("above maximum");break;
+ case "array":{if(!Array.isArray(value))fail("expected array");const items:unknown[]=value;if(s.items)items.forEach((v:number|unknown,i:number)=>validate(v,s.items!,path+"["+i+"]"));break;}
+ case "string":{if(typeof value!=="string")fail("expected string");const text=value as string;if(s.minLength!==undefined&&text.length<s.minLength)fail("too short");if(s.maxLength!==undefined&&text.length>s.maxLength)fail("too long");break;}
+ case "number":case "integer":{if(typeof value!=="number"||!Number.isFinite(value)||(s.type==="integer"&&!Number.isInteger(value)))fail("expected finite "+s.type);const number=value as number;if(s.minimum!==undefined&&number<s.minimum)fail("below minimum");if(s.maximum!==undefined&&number>s.maximum)fail("above maximum");break;}
  case "boolean":if(typeof value!=="boolean")fail("expected boolean");
  }
 }
