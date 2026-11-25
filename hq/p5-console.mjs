@@ -1,4 +1,5 @@
 import { OfflineSyncQueue } from "./offline-sync-queue.mjs";
+import { LwwElementSet } from "./crdt-lww-set.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const queue = (() => {
@@ -92,6 +93,34 @@ $("#p5-export")?.addEventListener("click", async () => {
     URL.revokeObjectURL(url);
     message("Local outbox export prepared. Treat the file as sensitive if its payloads contain personal data.", "success");
   } catch (error) { message(`Export failed: ${error.message}`, "error"); }
+});
+window.addEventListener("jx:pronote-snapshot", async (event) => {
+  if (!queue) return message("PRONOTE snapshot received, but encrypted local outbox is unavailable.", "error");
+  const detail = event.detail || {};
+  if (detail.schema_version !== "pronote.snapshot.v1" || !Array.isArray(detail.snapshot?.events)) return;
+  try {
+    const previous = (await queue.list()).filter((item) => item.type === "pronote.snapshot.crdt").at(-1);
+    const crdt = new LwwElementSet({ actor: "hq-browser", state: previous?.payload?.crdt });
+    const normalized = detail.snapshot.events.slice(0, 250).map((item, index) => ({
+      id: String(item.id ?? item.event_id ?? [item.kind, item.start, item.summary, index].join(":")).slice(0, 240),
+      kind: String(item.kind ?? "other").slice(0, 80),
+      summary: String(item.summary ?? "Événement sans titre").slice(0, 1000),
+      start: String(item.start ?? "").slice(0, 80),
+      end: String(item.end ?? "").slice(0, 80)
+    }));
+    for (const item of normalized) crdt.add(item);
+    const hash = String(detail.snapshot_hash ?? `local-${detail.generated_at ?? Date.now()}`).replace(/[^a-zA-Z0-9._:-]/g, "").slice(0, 120);
+    await queue.enqueue({
+      type: "pronote.snapshot.crdt",
+      idempotencyKey: `pronote:${hash || Date.now()}`,
+      metadata: { schema_version: detail.schema_version, generated_at: detail.generated_at ?? null, source: "authenticated-pronote-read" },
+      payload: { schema_version: detail.schema_version, snapshot_hash: hash, events: normalized, crdt: crdt.export() }
+    });
+    message("Authenticated PRONOTE snapshot encrypted and queued locally. No remote write or sync was performed.", "success");
+    await refresh();
+  } catch (error) {
+    message(`PRONOTE local queue failed: ${error.message}`, "error");
+  }
 });
 window.addEventListener("online", refresh);
 window.addEventListener("offline", refresh);
