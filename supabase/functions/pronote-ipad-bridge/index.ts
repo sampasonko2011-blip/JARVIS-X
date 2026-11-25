@@ -113,6 +113,14 @@ function eventSnapshotFromIcs(ics: string) {
 async function issueToken(req: Request, origin: string) {
   const user = await authenticatedUser(req);
   if (!user) return json({ error: "user_authentication_required" }, 401, origin);
+  try {
+    const minute = await consumeRateLimit(user.id, "minute");
+    const day = await consumeRateLimit(user.id, "day");
+    const denied = !minute.allowed ? minute : !day.allowed ? day : null;
+    if (denied) return json({ error: "bridge_rate_limit_exceeded", reset_at: denied.reset_at }, 429, origin);
+  } catch {
+    return json({ error: "bridge_rate_limit_unavailable" }, 503, origin);
+  }
   const now = new Date().toISOString();
   const prior = await rest("pronote_ipad_ingest_tokens?user_id=eq." + user.id + "&revoked_at=is.null", {
     method: "PATCH", body: JSON.stringify({ revoked_at: now })
