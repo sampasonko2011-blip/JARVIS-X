@@ -11,6 +11,17 @@
   const copyButton = $("pronote-token-copy");
   const refreshButton = $("pronote-snapshot-refresh");
   let activeTokenId = null;
+  try {
+    const storedTokenId = sessionStorage.getItem("jx-pronote-token-id");
+    if (typeof storedTokenId === "string" && /^[0-9a-f-]{36}$/i.test(storedTokenId)) {
+      activeTokenId = storedTokenId;
+      revokeButton.disabled = false;
+    } else {
+      sessionStorage.removeItem("jx-pronote-token-id");
+    }
+  } catch {
+    activeTokenId = null;
+  }
 
   function setStatus(message) {
     status.textContent = message;
@@ -55,6 +66,7 @@
         throw new Error("Réponse de création du jeton invalide.");
       }
       activeTokenId = result.token_id;
+      try { sessionStorage.setItem("jx-pronote-token-id", activeTokenId); } catch {}
       tokenValue.value = result.token;
       tokenValue.type = "password";
       revokeButton.disabled = false;
@@ -85,6 +97,7 @@
       const result = await responseJson(response, "Révocation impossible");
       if (result.revoked !== true) throw new Error("Le serveur n’a pas confirmé la révocation.");
       activeTokenId = null;
+      try { sessionStorage.removeItem("jx-pronote-token-id"); } catch {}
       tokenValue.value = "";
       copyButton.disabled = true;
       setStatus("Token revoked · l’ancien jeton ne doit plus pouvoir ingérer de données.");
