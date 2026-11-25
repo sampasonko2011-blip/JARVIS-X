@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { OfflineSyncQueue, OFFLINE_QUEUE_CONTRACT } from "../hq/offline-sync-queue.mjs";
 
-test("queue is IndexedDB-backed and explicitly not encrypted or remotely synced by default", () => {
+test("queue is IndexedDB-backed, AES-GCM encrypted at rest, and not remotely synced by default", () => {
   assert.equal(OFFLINE_QUEUE_CONTRACT.storage,"IndexedDB");
-  assert.equal(OFFLINE_QUEUE_CONTRACT.encryptedAtRest,false);
+  assert.equal(OFFLINE_QUEUE_CONTRACT.encryptedAtRest,true);
+  assert.equal(OFFLINE_QUEUE_CONTRACT.encryption,"AES-GCM-256");
+  assert.equal(OFFLINE_QUEUE_CONTRACT.automaticRemoteSync,false);
   assert.equal(OFFLINE_QUEUE_CONTRACT.automaticRemoteSync,false);
   assert.equal(OFFLINE_QUEUE_CONTRACT.transport,"injected explicitly by caller");
 });
