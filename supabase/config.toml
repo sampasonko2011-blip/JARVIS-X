@@ -1,0 +1,5 @@
+[functions.pronote-ipad-bridge]
+# This function uses its own authenticated-user check for token issuance and
+# a separate revocable opaque token for snapshot ingestion. Do not rely on
+# gateway JWT middleware for the scoped iPad token.
+verify_jwt = false
