@@ -15,6 +15,7 @@ import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
 import { resolveMemoryReadiness } from "./memory-readiness.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
+import { resolveBehaviorDomain, reviewResponse } from "../../../src/core/behavioral-engine.ts";
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
   "http://localhost:3000",
@@ -798,13 +799,31 @@ Deno.serve(async (req: Request) => {
     const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
     const reportedProvider = result.providersUsed[0]?.provider ?? PRIMARY_PROVIDER;
     const reportedModel = result.providersUsed[0]?.model ?? EXECUTIVE_CONFIG.model;
-    const memoryWriteStatus = await storeConversationMemory(task, result.answer, user.id, taskType, memoryConsent);
+    const behaviorDomain = resolveBehaviorDomain({ context: task });
+    const behaviorReview = reviewResponse(result.answer, behaviorDomain);
+    if (!behaviorReview.accepted) {
+      try {
+        await writeRun(user.id, {
+          task_type: taskType, status: "failed", provider: reportedProvider, model: reportedModel,
+          input_summary: "Prompt omitted; sensitive content not persisted",
+          output_summary: "Response withheld by mandatory BehavioralEngine review",
+          error_code: "behavioral_review_rejected",
+          metadata: { input_chars: task.length, latency_ms: Date.now() - started, executive_identity: "JARVIS-X", behavioral_domain: behaviorDomain, behavioral_issues: behaviorReview.issues },
+          completed_at: new Date().toISOString(),
+        });
+      } catch {
+        return jsonResponse({ error: "audit_logging_failed" }, 503, origin);
+      }
+      return jsonResponse({ error: "response_quality_gate_rejected", domain: behaviorDomain, issues: behaviorReview.issues }, 502, origin);
+    }
+    const reviewedAnswer = behaviorReview.text;
+    const memoryWriteStatus = await storeConversationMemory(task, reviewedAnswer, user.id, taskType, memoryConsent);
     try {
       await writeRun(user.id, {
         task_type: taskType, status: "succeeded", provider: reportedProvider, model: reportedModel,
         input_summary: "Prompt omitted; sensitive content not persisted",
         output_summary: "Single-core cognitive kernel answer returned; response content not persisted",
-        metadata: { input_chars: task.length, output_chars: result.answer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence, executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
+        metadata: { input_chars: task.length, output_chars: reviewedAnswer.length, latency_ms: Date.now() - started, model_calls: result.providerCalls, tool_calls: result.toolCalls ?? 0, capabilities_used: result.capabilitiesUsed ?? [], execution_mode: executionMode, executive_identity: "JARVIS-X", orchestration_mode: orchestrationMode, independence, executive_runtime_model: reportedModel, memory_read_status: memory.status, memory_write_status: memoryWriteStatus },
         completed_at: new Date().toISOString(),
       });
     } catch {
@@ -820,7 +839,7 @@ Deno.serve(async (req: Request) => {
       model_calls: result.providerCalls,
       tool_calls: result.toolCalls ?? 0,
       capabilities_used: result.capabilitiesUsed ?? [],
-      output: result.answer,
+      output: reviewedAnswer,
       latency_ms: Date.now() - started,
       memory: { provider: "xmemo", read_status: memory.status, write_status: memoryWriteStatus },
     }, 200, origin);

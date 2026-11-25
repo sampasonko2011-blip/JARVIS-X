@@ -694,3 +694,16 @@ test("P1.2 all 13 views stay within mobile and iPad portrait/landscape layouts w
     }
   }
 });
+
+test("P2 Workspace imports local PRONOTE and football ICS files and displays conflicts", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="workspace"]').click();
+  const school = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:assessment\nDTSTART:20261202T080000Z\nDTEND:20261202T090000Z\nSUMMARY:Contrôle de mathématiques\nEND:VEVENT\nEND:VCALENDAR";
+  const football = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:training\nDTSTART:20261201T180000Z\nDTEND:20261201T213000Z\nSUMMARY:Entraînement football\nEND:VEVENT\nEND:VCALENDAR";
+  await page.locator("#school-ics").setInputFiles({name:"pronote.ics",mimeType:"text/calendar",buffer:Buffer.from(school)});
+  await page.locator("#football-ics").setInputFiles({name:"football.ics",mimeType:"text/calendar",buffer:Buffer.from(football)});
+  await expect(page.locator("#calendar-status")).toContainText("2 événement(s)");
+  await expect(page.locator("#calendar-events")).toContainText("Contrôle de mathématiques");
+  await expect(page.locator("#calendar-events")).toContainText("Entraînement football");
+  await expect(page.locator("#calendar-conflicts")).toContainText("Évaluation/devoir le lendemain");
+});

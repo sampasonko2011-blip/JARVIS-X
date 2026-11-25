@@ -2,6 +2,7 @@ const PROVIDERS = Object.freeze([
   {
     id: "gemini",
     secret: "GEMINI_API_KEY",
+    secretFallbacks: ["JARVIS_X_GEMINI_API_KEY"],
     enabled: "JX_PROVIDER_GEMINI_ENABLED",
     model: "JX_GEMINI_MODEL",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -175,13 +176,13 @@ function normalizeResponse(data, providerId, configuredModel) {
 
 function configuredProviders(env) {
   if (env.JX_ENABLE_PROVIDER_CASCADE !== "true") return [];
-  return PROVIDERS.filter((provider) =>
-    env[provider.enabled] === "true" &&
-    typeof env[provider.secret] === "string" &&
-    env[provider.secret].trim().length > 0
-  ).map((provider) => ({
+  return PROVIDERS.filter((provider) => {
+    const enabled = env[provider.enabled] === "true";
+    const secretNames = [provider.secret, ...(provider.secretFallbacks ?? [])];
+    return enabled && secretNames.some((name) => typeof env[name] === "string" && env[name].trim().length > 0);
+  }).map((provider) => ({
     ...provider,
-    apiKey: env[provider.secret],
+    apiKey: [provider.secret, ...(provider.secretFallbacks ?? [])].map((name) => env[name]).find((value) => typeof value === "string" && value.trim().length > 0),
     modelId: typeof env[provider.model] === "string" && env[provider.model].trim()
       ? env[provider.model].trim()
       : provider.defaultModel,

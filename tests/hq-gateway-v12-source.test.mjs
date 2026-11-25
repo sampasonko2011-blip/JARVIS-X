@@ -13,6 +13,7 @@ const xmemoOAuthStore = await readFile(new URL("../supabase/functions/hq-gateway
 const hqHtml = await readFile(new URL("../hq/index.html", import.meta.url), "utf8");
 const hqClient = await readFile(new URL("../hq/hq.js", import.meta.url), "utf8");
 const serviceWorker = await readFile(new URL("../hq/sw.js", import.meta.url), "utf8");
+const workspaceCalendar = await readFile(new URL("../hq/workspace-calendar.js", import.meta.url), "utf8");
 
 test("v12 imports the cognitive kernel and deterministic mock dependency", () => {
   assert.match(gateway, /executeCognitiveKernel/);
@@ -118,7 +119,7 @@ test("cross-platform memory is explicit opt-in and consent is sent per request",
   assert.match(client, /memory_consent:effectiveMemoryConsent/);
   assert.match(gateway, /body\.memory_consent === true/);
   assert.match(gateway, /await recallMemory\(task, user\.id, memoryConsent\)/);
-  assert.match(gateway, /await storeConversationMemory\(task, result\.answer, user\.id, taskType, memoryConsent\)/);
+  assert.match(gateway, /await storeConversationMemory\(task, reviewedAnswer, user\.id, taskType, memoryConsent\)/);
   assert.match(html, /Off by default/);
   assert.match(html, /Encrypted portable export\/import is available; automatic sync is not/);
 });
@@ -175,4 +176,20 @@ test("Nano Banana image route is separate, authenticated, confirmed, and zero-bu
   assert.match(hqClient, /user_confirmed:true/);
   assert.match(hqClient, /No automatic retry was made/);
   assert.doesNotMatch(hqClient, /GOOGLE_API_KEY|JARVIS_X_GEMINI_API_KEY/);
+});
+
+
+test("v12 applies BehavioralEngine review before memory persistence and response delivery", () => {
+  assert.match(gateway, /resolveBehaviorDomain\(\{ context: task \}\)/);
+  assert.match(gateway, /reviewResponse\(result\.answer, behaviorDomain\)/);
+  assert.match(gateway, /if \(!behaviorReview\.accepted\)/);
+  assert.match(gateway, /storeConversationMemory\(task, reviewedAnswer/);
+  assert.match(gateway, /output: reviewedAnswer/);
+});
+
+test("Workspace L3 proposal acknowledgement is explicit and never writes the calendar", () => {
+  assert.match(workspaceCalendar, /Valider la recommandation \(L3\)/);
+  assert.match(workspaceCalendar, /REVUE L3 VALIDÉE · LOCAL/);
+  assert.match(workspaceCalendar, /aucun agenda modifié/);
+  assert.doesNotMatch(workspaceCalendar, /fetch\s*\(/);
 });
