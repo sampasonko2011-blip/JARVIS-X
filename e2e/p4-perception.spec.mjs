@@ -107,3 +107,9 @@ test("P4.3 extracts text from a valid PDF locally for the oral coach", async ({ 
   await page.locator("#p4-coach-next").click();
   await expect(page.locator("#p4-coach-output")).toContainText("Local PDF extraction works");
 });
+
+test("local Qwen benchmark is opt-in and cannot run before a model is loaded", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await expect(page.locator("#p4-run-local-benchmark")).toBeDisabled();
+  await expect(page.locator("#p4-local-benchmark-status")).toContainText("Load a Qwen model first");
+});
