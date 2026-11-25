@@ -14,7 +14,8 @@
     "test:e2e": "playwright test --config=playwright.config.mjs",
     "forge:local": "node scripts/forge-local-runner.mjs",
     "forge:sandbox": "node scripts/forge-sandbox-runner.mjs",
-    "build:local-chat": "esbuild hq/local-chat-engine.js --bundle --format=iife --platform=browser --target=es2022 --outfile=hq/local-chat-engine.bundle.js && node scripts/verify-local-chat-engine-bundle.mjs"
+    "build:local-chat": "esbuild hq/local-chat-engine.js --bundle --format=iife --platform=browser --target=es2022 --outfile=hq/local-chat-engine.bundle.js && node scripts/verify-local-chat-engine-bundle.mjs",
+    "benchmark:p4": "npm run build && node benchmarks/p4-pipeline-benchmark.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
