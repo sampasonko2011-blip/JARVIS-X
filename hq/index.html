@@ -193,6 +193,12 @@
    <div class="p4-actions"><button id="p5-enqueue" type="button">Save to local outbox</button><button id="p5-refresh" type="button">Refresh status</button><button id="p5-recover" type="button">Recover interrupted sends</button><button id="p5-export" type="button">Export outbox JSON</button></div>
    <p id="p5-message" role="status" aria-live="polite">Checking local storage…</p><div id="p5-outbox" class="p5-outbox"></div>
   </div>
+  <div class="p5-xmemo-handoff">
+   <h3>Authenticated XMemo handoff · manual only</h3>
+   <p>Send queued records to the linked XMemo account only after sign-in, explicit consent, and confirmation. This uses the existing authenticated HQ memory endpoint. Remote duplicate suppression is not yet validated; do not retry an ambiguous delivery without checking XMemo first.</p>
+   <label><input id="p5-xmemo-consent" type="checkbox"> I consent to send the pending local records to my linked XMemo account now.</label>
+   <button id="p5-xmemo-sync" type="button">Send pending records to XMemo</button>
+  </div>
  </div>
  <div class="card span6"><div class="cardhead"><h2>CRDT · observed-remove set</h2><span class="tag">DETERMINISTIC MODULE</span></div><p>Hybrid logical clock, tagged adds, observed tombstones, deterministic merge and compensating undo are implemented as a reusable data structure. Not yet wired to cross-device replication.</p><p><a href="../docs/p5-offline-sync-evolution.md">Read P5 technical contract ↗</a></p></div>
  <div class="card span6"><div class="cardhead"><h2>L3 · controlled evolution</h2><span class="tag">HUMAN GATE</span></div><p>Candidate proposals require a non-empty passing regression suite, named human approval, exact evidence-suite match, and a separate activation confirmation. No silent prompt or rule mutation.</p><p><a href="../docs/ipad-physical-validation.md">Open iPad Air 5 validation checklist ↗</a></p></div>
