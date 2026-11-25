@@ -48,7 +48,8 @@ test('Shared design tokens include the requested Obsidian Glass and contextual a
   assert.ok(css.includes('prefers-reduced-motion'));
 });
 
-\ntest('Spatial HUD exposes navigable signal targets and the complete accent mapping', () => {
+
+test('Spatial HUD exposes navigable signal targets and the complete accent mapping', () => {
   for (const view of ['settings', 'memory', 'chat', 'gateway']) {
     assert.ok(hq.includes(`data-view="${view}"`));
   }
