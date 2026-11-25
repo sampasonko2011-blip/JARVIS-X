@@ -5,10 +5,11 @@ import { validateImport, normalizeText, buildCoachPrompt, scoreBenchmark } from 
 test("P4 import accepts supported text and image types within limit",()=>{
  assert.deepEqual(validateImport({size:10,type:"text/plain"}),{valid:true,kind:"text"});
  assert.deepEqual(validateImport({size:10,type:"image/png"}),{valid:true,kind:"image"});
+ assert.deepEqual(validateImport({size:10,type:"application/pdf"}),{valid:true,kind:"pdf"});
 });
 test("P4 import rejects oversized and unsupported files",()=>{
  assert.equal(validateImport({size:8*1024*1024+1,type:"text/plain"}).reason,"FILE_TOO_LARGE");
- assert.equal(validateImport({size:10,type:"application/pdf"}).reason,"UNSUPPORTED_TYPE");
+ assert.equal(validateImport({size:10,type:"application/x-msdownload"}).reason,"UNSUPPORTED_TYPE");
 });
 test("P4 text normalization rejects empty input and strips NUL",()=>{
  assert.equal(normalizeText("  A\u0000B  "),"AB");
