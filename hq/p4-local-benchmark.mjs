@@ -2,8 +2,8 @@ import { runAgentFactory } from "../dist/core/agent-factory.js";
 import { applyBehavioralPolicy, reviewResponse } from "../dist/core/behavioral-engine.js";
 
 function lexicalCoverage(reference, answer) {
-  const terms = new Set(String(reference).toLocaleLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu) || []);
-  const output = new Set(String(answer).toLocaleLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu) || []);
+  const terms = new Set(String(reference).toLocaleLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []);
+  const output = new Set(String(answer).toLocaleLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []);
   if (!terms.size) return null;
   return Number(([...terms].filter(term => output.has(term)).length / terms.size).toFixed(4));
 }
