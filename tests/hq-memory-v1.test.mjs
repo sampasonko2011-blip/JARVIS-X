@@ -85,10 +85,14 @@ test("missing XMemo credential is surfaced as unavailable without inference fall
   assert.equal((await result.json()).error, "memory_provider_not_configured");
 });
 
-test("production adapter uses the caller JWT for the self-scoped rate-limit RPC", async () => {
+test("production adapter uses the service-role rate-limit RPC contract", async () => {
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../supabase/functions/hq-memory-v1/index.ts", import.meta.url), "utf8");
-  assert.match(source, /Authorization: "Bearer " \+ token/);
-  assert.match(source, /JSON\.stringify\(\{ p_limit_key: key \}\)/);
-  assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY|p_user_id/);
+  const client = await readFile(new URL("../supabase/functions/hq-memory-v1/rate-limit-client.mjs", import.meta.url), "utf8");
+  assert.match(source, /createRateLimitConsumer/);
+  assert.match(source, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(client, /p_user_id: userId/);
+  assert.match(client, /p_limit_key: key/);
+  assert.ok(client.includes('Authorization: "Bearer " + serviceRoleKey'));
+  assert.ok(!client.includes('Authorization: "Bearer " + token'));
 });

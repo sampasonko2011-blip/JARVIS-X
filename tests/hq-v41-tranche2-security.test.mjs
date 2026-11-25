@@ -30,7 +30,8 @@ test("v41 server provider endpoints are fixed constants and routing remains doub
  const provider=await read("../supabase/functions/hq-gateway-v12/provider-cascade.mjs");
  const gateway=await read("../supabase/functions/hq-gateway-v12/index.ts");
  assert.match(provider,/JX_ENABLE_PROVIDER_CASCADE/);
- for(const flag of ["JX_PROVIDER_OPENROUTER_ENABLED","JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED","JX_PROVIDER_CEREBRAS_ENABLED","JX_PROVIDER_NVIDIA_ENABLED","JX_PROVIDER_SAMBANOVA_ENABLED","JX_PROVIDER_MISTRAL_ENABLED","JX_PROVIDER_GITHUB_MODELS_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ for(const flag of ["JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED","JX_PROVIDER_CEREBRAS_ENABLED","JX_PROVIDER_NVIDIA_ENABLED","JX_PROVIDER_SAMBANOVA_ENABLED","JX_PROVIDER_MISTRAL_ENABLED","JX_PROVIDER_GITHUB_MODELS_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ assert.doesNotMatch(provider,/OPENROUTER|openrouter/);
  assert.match(provider,/new Set\(\[402, 429\]\)/);
  assert.match(provider,/AbortSignal\.timeout/);
  assert.match(provider,/provider\.endpoint/);
@@ -50,7 +51,8 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
  assert.match(engine,/memoryConsent\?\.checked === true/);
  assert.match(engine,/memoryConsent\.checked = false/);
  assert.match(bridge,/Authorization: "Bearer " \+ token/);
- assert.match(bridge,/memory_consent: true/);
+ assert.match(bridge,/memory_consent: consent/);
+ assert.match(bridge,/consent !== true/);
  assert.match(memory,/authenticate/);
  assert.match(memory,/consumeRateLimit/);
  assert.match(handler,/body\.memory_consent !== true/);
@@ -64,7 +66,7 @@ test("v41 XMemo memory is per-turn consent-gated, authenticated, allowlisted and
 
 test("v41 service worker caches the Inspector UI and local cognitive router under v42",async()=>{
  const sw=await read("../hq/sw.js");
- assert.match(sw,/jarvis-x-hq-shell-v54/);
+ assert.match(sw,/jarvis-x-hq-shell-v55/);
  assert.match(sw,/local-chat\.html/);
  assert.match(sw,/local-chat-engine\.bundle\.js/);
  assert.match(sw,/jarvis-brain-v36\.js/);

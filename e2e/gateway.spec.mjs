@@ -6,7 +6,7 @@ async function enterHQ(page) {
     await page.keyboard.press("Escape");
     await expect(arrival).toHaveCount(0, { timeout: 5000 });
   }
-  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.side .nav [data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -39,8 +39,8 @@ async function installGatewayFetchMock(page, config) {
 }
 
 test("gateway is discoverable and fails closed before a real health response", async ({ page }) => {
-  await expect(page.locator('[data-view="gateway"]')).toBeVisible();
-  await page.locator('[data-view="gateway"]').click();
+  await expect(page.locator('.side .nav [data-view="gateway"]')).toBeVisible();
+  await page.locator('.side .nav [data-view="gateway"]').click();
   await expect(page.locator("#view-gateway")).toBeVisible();
   await expect(page.locator("#gateway-state")).toContainText("UNAVAILABLE");
   await expect(page.locator("#gateway-auth")).toHaveText("NOT VERIFIED");
@@ -60,7 +60,7 @@ test("gateway records a valid health response but does not claim provider execut
       providers: [{ id: "provider-fixture", configured: true, authenticated: true, tested: false, status: "CONFIGURED", model: "fixture-model" }],
     }),
   }));
-  await page.locator('[data-view="gateway"]').click();
+  await page.locator('.side .nav [data-view="gateway"]').click();
   await page.locator("#gateway-test").click();
   await expect(page.locator("#gateway-state")).toHaveText("● VERIFIED");
   await expect(page.locator("#gateway-service")).toHaveText("jarvis-x-gateway");
@@ -77,7 +77,7 @@ test("gateway records a valid health response but does not claim provider execut
 
 test("gateway remains unavailable and chat disabled when the health endpoint is missing", async ({ page }) => {
   await page.route("**/api/v1/health", route => route.fulfill({ status: 404, contentType: "text/plain", body: "not configured" }));
-  await page.locator('[data-view="gateway"]').click();
+  await page.locator('.side .nav [data-view="gateway"]').click();
   await page.locator("#gateway-test").click();
   await expect(page.locator("#gateway-state")).toHaveText("● FAILED");
   await expect(page.locator("#gateway-result")).toContainText("HTTP 404");
@@ -90,7 +90,7 @@ test("gateway rejects invalid health schemas even when HTTP returns 200", async 
     status: 200, contentType: "application/json",
     body: JSON.stringify({ ok: true, auth: "verified-supabase-session" }),
   }));
-  await page.locator('[data-view="gateway"]').click();
+  await page.locator('.side .nav [data-view="gateway"]').click();
   await page.locator("#gateway-test").click();
   await expect(page.locator("#gateway-state")).toHaveText("● FAILED");
   await expect(page.locator("#gateway-result")).toContainText("schema validation");
@@ -99,7 +99,7 @@ test("gateway rejects invalid health schemas even when HTTP returns 200", async 
 
 test("gateway bounds stalled health requests and exposes safe diagnostics", async ({ page }) => {
   await page.route("**/api/v1/health", route => new Promise(() => {}));
-  await page.locator('[data-view="gateway"]').click();
+  await page.locator('.side .nav [data-view="gateway"]').click();
   await page.locator("#gateway-test").click();
   await expect(page.locator("#gateway-state")).toHaveText("● UNAVAILABLE", { timeout: 8000 });
   await expect(page.locator("#gateway-result")).toContainText("timed out");
@@ -110,7 +110,7 @@ test("gateway bounds stalled health requests and exposes safe diagnostics", asyn
 test("direct chat health check times out and remains fail-closed", async ({ page }) => {
   await installGatewayFetchMock(page, { health: "timeout" });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED", { timeout: 10000 });
   await expect(page.locator("#chat-gateway-status")).toContainText("timed out after 8 seconds");
@@ -120,7 +120,7 @@ test("direct chat health check times out and remains fail-closed", async ({ page
 test("direct chat send fails safely when provider is unavailable", async ({ page }) => {
   await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 503, body: { error: "executive_runtime_not_configured" } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-compose").fill("timeout regression");
@@ -133,7 +133,7 @@ test("direct chat send fails safely when provider is unavailable", async ({ page
 test("direct chat refuses incomplete health schemas", async ({ page }) => {
   await installGatewayFetchMock(page, { health: { status: 200, body: { status: "ok", authenticated: true, chat_enabled: true } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-connection-tag")).toHaveText("GATEWAY NOT VERIFIED");
   await expect(page.locator("#chat-gateway-status")).toContainText("schema validation");

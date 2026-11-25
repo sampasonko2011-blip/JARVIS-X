@@ -14,7 +14,8 @@ test("v49 health advertises chat when OpenAI OR an explicitly enabled cascade pr
   assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /global_request_reservation_missing/);
   assert.match(gateway, /configuredInferenceProviders/);
   assert.match(cascade, /JX_ENABLE_PROVIDER_CASCADE/);
-  for (const provider of ["OPENROUTER", "GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
+  assert.doesNotMatch(cascade, /OPENROUTER|openrouter/);
+  for (const provider of ["GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
     assert.ok(cascade.includes("JX_PROVIDER_" + provider + "_ENABLED"), "missing explicit enable flag for " + provider);
   }
   assert.match(gateway, /authenticatedUser\(/);
@@ -36,7 +37,7 @@ test("v49 frontend removes the misleading V46 title and aligns the Gemma model I
 test("v50 service worker cache and conditional Supabase deployment workflow are versioned", async () => {
   const sw = await read("hq/sw.js");
   const workflow = await read(".github/workflows/deploy-hq-gateway.yml");
-  assert.match(sw, /jarvis-x-hq-shell-v54/);
+  assert.match(sw, /jarvis-x-hq-shell-v55/);
   assert.match(workflow, /supabase\/functions\/hq-gateway-v12\/\*\*/);
   assert.match(workflow, /SUPABASE_ACCESS_TOKEN/);
   assert.match(workflow, /supabase functions deploy hq-gateway-v12/);

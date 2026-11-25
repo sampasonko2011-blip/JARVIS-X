@@ -8,6 +8,8 @@ on:
   workflow_dispatch:
 jobs:
   verify:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +59,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-x-runtime-benchmark-${{ github.event.pull_request.head.sha || github.sha }}
-          path: benchmark-results.json
+          path: |
+            benchmark-results.json
+            hq/local-chat-engine.bundle.js
           if-no-files-found: warn
           retention-days: 14
+  sync-bundle:
+    needs: verify
+    if: github.ref == 'refs/heads/feat/p0-security-reconciliation-spatial-hud'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: jarvis-x-runtime-benchmark-${{ github.sha }}
+          path: generated
+      - name: Commit generated bundle to this feature branch only
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp generated/hq/local-chat-engine.bundle.js hq/local-chat-engine.bundle.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hq/local-chat-engine.bundle.js
+          if ! git diff --cached --quiet; then
+            git commit -m "build(local-chat): sync consent-hardened bundle [skip ci]"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

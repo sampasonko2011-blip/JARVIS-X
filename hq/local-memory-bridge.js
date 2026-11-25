@@ -48,7 +48,8 @@ export function createLocalMemoryBridge({
     return updated.access_token;
   }
 
-  async function request(route, payload) {
+  async function request(route, payload, consent) {
+    if (consent !== true) throw new Error("explicit_memory_consent_required");
     const token = await accessToken();
     const response = await fetchImpl(supabaseUrl + "/functions/v1/hq-memory-v1/" + route, {
       method: "POST",
@@ -58,7 +59,7 @@ export function createLocalMemoryBridge({
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ ...payload, memory_consent: true }),
+      body: JSON.stringify({ ...payload, memory_consent: consent }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -69,13 +70,13 @@ export function createLocalMemoryBridge({
   }
 
   return Object.freeze({
-    recall(query) {
+    recall(query, options = {}) {
       if (typeof query !== "string" || !query.trim() || query.length > 4000) {
         throw new TypeError("memory_query_invalid");
       }
-      return request("recall", { query: query.trim() });
+      return request("recall", { query: query.trim() }, options?.consent === true);
     },
-    remember(task, answer) {
+    remember(task, answer, options = {}) {
       if (typeof task !== "string" || !task.trim() || task.length > 4000 ||
           typeof answer !== "string" || !answer.trim() || answer.length > 8000) {
         throw new TypeError("memory_record_invalid");
@@ -84,7 +85,7 @@ export function createLocalMemoryBridge({
         task: task.trim(),
         answer: answer.trim(),
         task_type: "local_chat",
-      });
+      }, options?.consent === true);
     },
   });
 }

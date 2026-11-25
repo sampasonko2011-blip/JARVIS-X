@@ -12,6 +12,7 @@ import { executeResponsesToolLoop } from "./responses-tool-loop.mjs";
 import { invokeProviderCascade, listProviderConfiguration } from "./provider-cascade.mjs";
 import { createXMemoMemoryClient } from "./xmemo-memory.mjs";
 import { createXMemoOAuthRouter } from "./xmemo-oauth-router.mjs";
+import { resolveMemoryReadiness } from "./memory-readiness.mjs";
 import { resolveRucheRoute, type RucheRoute } from "./ruche-router.ts";
 import { createNanoBananaImageGenerator, NANO_BANANA_MODEL } from "./nano-banana-image.mjs";
 const ALLOWED_ORIGINS = new Set([
@@ -525,7 +526,12 @@ Deno.serve(async (req: Request) => {
       lockReasons,
       imageGenerationEnabled: Deno.env.get("JX_ENABLE_IMAGE_GENERATION") === "true" && Boolean(Deno.env.get("JARVIS_X_GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY")),
       memoryProvider: "xmemo-mcp-oauth-preferred",
-      memoryConfigured: Boolean((Deno.env.get("JX_ENCRYPTION_SECRET") && Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) || Deno.env.get("XMEMO_API_KEY")),
+      ...resolveMemoryReadiness({
+        supabaseUrlConfigured: Boolean(Deno.env.get("SUPABASE_URL")),
+        serviceRoleConfigured: Boolean(Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")),
+        encryptionSecretConfigured: Boolean(Deno.env.get("JX_ENCRYPTION_SECRET")),
+        legacyApiKeyConfigured: Boolean(Deno.env.get("XMEMO_API_KEY")),
+      }),
       mockModeEnabled: Deno.env.get("JX_ENABLE_MOCK_MODE") === "true",
       localToolCallsEnabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
       auth: "verified-supabase-session",

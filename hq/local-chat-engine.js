@@ -287,7 +287,7 @@ sendButton.addEventListener("click", async () => {
       if (syncBadge) syncBadge.textContent = "XMEMO CLOUD · CONSENT GRANTED · CHECKING";
       memoryStatus.textContent = "Explicit consent received for this turn. Retrieving approved memory…";
       try {
-        const recalled = await memoryBridge.recall(text);
+        const recalled = await memoryBridge.recall(text, { consent: useMemory });
         if (recalled.status === "recalled" && recalled.context_is_untrusted === true && typeof recalled.context === "string") {
           recalledContext = recalled.context.slice(0, 3000);
           memoryStatus.textContent = recalledContext
@@ -352,7 +352,7 @@ sendButton.addEventListener("click", async () => {
         : "Demande de mémoire détectée, mais stockage local indisponible.";
       if (useMemory && saved.status === "stored-local") {
         try {
-          const synced = await memoryBridge.remember("Mémoire explicitement demandée : " + memoryNote, answer);
+          const synced = await memoryBridge.remember("Mémoire explicitement demandée : " + memoryNote, answer, { consent: useMemory });
           memoryStatus.textContent = synced.status === "stored"
             ? "Note enregistrée localement et synchronisée via le service mémoire authentifié."
             : "Note enregistrée localement ; synchronisation distante : " + String(synced.status || "unknown") + ".";
@@ -368,7 +368,7 @@ sendButton.addEventListener("click", async () => {
     output = null; answer = ""; recalledContext = "";
     if (useMemory && !memoryNote) {
       try {
-        const stored = await memoryBridge.remember(text, finalAnswer);
+        const stored = await memoryBridge.remember(text, finalAnswer, { consent: useMemory });
         memoryStatus.textContent = stored.status === "stored"
           ? "This turn was saved to your private memory namespace."
           : "Local reply generated; memory save returned " + String(stored.status || "unknown") + ".";

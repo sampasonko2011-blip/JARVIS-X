@@ -3,8 +3,6 @@ import { test, expect } from "@playwright/test";
 
 async function enterHQ(page) {
   const arrival = page.locator("#jx-arrival");
-  const enter = page.locator("#jx-arrival-enter");
-
   // Prefer the documented keyboard dismissal path: it cannot be intercepted
   // by the overlay itself and mirrors the dedicated accessibility test.
   if (await arrival.isVisible().catch(() => false)) {
@@ -14,7 +12,7 @@ async function enterHQ(page) {
 
   // Some builds omit the arrival overlay entirely; ensure the workspace is
   // ready before downstream tests interact with navigation or vault controls.
-  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.side .nav [data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 async function installGatewayFetchMock(page, config) {
@@ -53,7 +51,7 @@ test("clear draft resets the composer counter and local presence state", async (
   const input = page.locator("#chat-compose");
   const counter = page.locator("#chat-draft-count");
   const presence = page.locator("#jx-chat-presence");
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await expect(input).toBeVisible();
   await input.fill("A draft that should be cleared");
   await expect(counter).toContainText("30 / 12000");
@@ -72,18 +70,18 @@ test("cinematic arrival is keyboard-dismissible and returns focus to the workspa
   await expect(page.locator("#jx-arrival-enter")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(arrival).toHaveCount(0, { timeout: 2500 });
-  await expect(page.locator('[data-view="chat"]')).toBeVisible();
+  await expect(page.locator('.side .nav [data-view="chat"]')).toBeVisible();
   await expect(page.locator('#page-title')).toBeFocused();
 });
 
 test("creates a memory, survives reload, and deletes it with confirmation", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Browser persistence proof");
   await page.locator("#memory-body").fill("Real Chromium end-to-end test");
   await page.locator("#save-memory").click();
   await expect(page.locator("#memory-list")).toContainText("Browser persistence proof");
   await page.reload();
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await expect(page.locator("#memory-list")).toContainText("Browser persistence proof");
 
   page.once("dialog", dialog => dialog.accept());
@@ -92,18 +90,18 @@ test("creates a memory, survives reload, and deletes it with confirmation", asyn
 });
 
 test("rejects an empty memory and does not persist it", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#save-memory").click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBeNull();
 });
 
 test("exports a JSON backup containing saved records", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Export proof");
   await page.locator("#memory-body").fill("Export round-trip fixture");
   await page.locator("#save-memory").click();
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#export-data").click();
   const download = await downloadPromise;
@@ -116,7 +114,7 @@ test("exports a JSON backup containing saved records", async ({ page }) => {
 });
 
 test("navigation changes the visible section and current-page marker", async ({ page }) => {
-  const memoryNav = page.locator('[data-view="memory"]');
+  const memoryNav = page.locator('.side .nav [data-view="memory"]');
   await memoryNav.click();
   await expect(page.locator("#view-memory")).toBeVisible();
   await expect(memoryNav).toHaveAttribute("aria-current", "page");
@@ -125,12 +123,12 @@ test("navigation changes the visible section and current-page marker", async ({ 
 
 
 test("rejects malformed backup data without overwriting existing records", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Keep existing record");
   await page.locator("#memory-body").fill("Must survive invalid import");
   await page.locator("#save-memory").click();
   const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   const dialogPromise = page.waitForEvent("dialog");
   await page.locator("#import-file").setInputFiles({
     name: "malformed.json",
@@ -144,12 +142,12 @@ test("rejects malformed backup data without overwriting existing records", async
 });
 
 test("cancelling delete-all confirmation preserves saved data", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Protected by confirmation");
   await page.locator("#memory-body").fill("Cancel must preserve this");
   await page.locator("#save-memory").click();
   const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   page.once("dialog", dialog => dialog.dismiss());
   await page.locator("#clear-data").click();
   await expect.poll(() => page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"))).toBe(before);
@@ -190,7 +188,7 @@ test("cached HQ page remains navigable when the browser goes offline", async ({ 
   try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator("body")).toContainText("JARVIS-X HQ");
-    await page.locator('[data-view="memory"]').click();
+    await page.locator('.side .nav [data-view="memory"]').click();
     await expect(page.locator("#view-memory")).toBeVisible();
   } finally {
     await context.setOffline(false);
@@ -216,24 +214,41 @@ test("mobile viewport keeps the command interface within the screen width", asyn
   }));
   expect(dimensions.content, JSON.stringify(dimensions)).toBeLessThanOrEqual(dimensions.viewport);
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
-  await expect(page.locator('[data-view="memory"]')).toBeVisible();
+  await expect(page.locator('.side .nav [data-view="memory"]')).toBeVisible();
+});
+
+
+test("Control Dock chat action is distinct from sidebar navigation", async ({ page }) => {
+  const sidebarChat = page.locator('.side .nav [data-view="chat"]');
+  const dockChat = page.locator('#jx-control-dock [data-view="chat"]');
+
+  await expect(sidebarChat).toHaveCount(1);
+  await expect(dockChat).toHaveCount(1);
+  await expect(sidebarChat).toBeVisible();
+  await expect(dockChat).toBeVisible();
+  await expect(sidebarChat).toHaveAccessibleName(/chat/i);
+  await expect(dockChat).toHaveAccessibleName(/chat/i);
+
+  await dockChat.click();
+  await expect(page.locator("#view-chat")).toBeVisible();
+  await expect(sidebarChat).toHaveAttribute("aria-current", "page");
 });
 
 test("navigation buttons are keyboard operable and expose accessible names", async ({ page }) => {
-  const memoryNav = page.locator('[data-view="memory"]');
+  const memoryNav = page.locator('.side .nav [data-view="memory"]');
   await memoryNav.focus();
   await expect(memoryNav).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#view-memory")).toBeVisible();
   await expect(memoryNav).toHaveAttribute("aria-current", "page");
   for (const key of ["overview", "workspace", "memory", "audit", "settings"]) {
-    await expect(page.locator(`[data-view="${key}"]`)).toHaveAccessibleName(/.+/);
+    await expect(page.locator(`.side .nav [data-view="${key}"]`)).toHaveAccessibleName(/.+/);
   }
 });
 
 
 test("imports a valid backup only after confirmation and replaces records", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Old record");
   await page.locator("#memory-body").fill("Should be replaced");
   await page.locator("#save-memory").click();
@@ -245,7 +260,7 @@ test("imports a valid backup only after confirmation and replaces records", asyn
     audits: [{ id: "audit-import-1", claim: "Import succeeds", status: "OBSERVED", proof: "Browser regression fixture", time: "2026-10-22" }],
   };
   page.once("dialog", dialog => dialog.accept());
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   await page.locator("#import-file").setInputFiles({
     name: "valid-backup.json",
     mimeType: "application/json",
@@ -260,13 +275,13 @@ test("imports a valid backup only after confirmation and replaces records", asyn
 });
 
 test("rejects oversized backup files without changing saved records", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Oversize guard sentinel");
   await page.locator("#memory-body").fill("Must remain after rejected import");
   await page.locator("#save-memory").click();
   const before = await page.evaluate(() => localStorage.getItem("jarvis-x-hq-v0"));
   page.once("dialog", dialog => dialog.accept());
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   await page.locator("#import-file").setInputFiles({
     name: "oversized.json",
     mimeType: "application/json",
@@ -277,7 +292,7 @@ test("rejects oversized backup files without changing saved records", async ({ p
 
 
 test("rejects duplicate IDs in imported backups without replacing records", async ({ page }) => {
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill("Duplicate guard sentinel");
   await page.locator("#memory-body").fill("Existing records must survive");
   await page.locator("#save-memory").click();
@@ -290,7 +305,7 @@ test("rejects duplicate IDs in imported backups without replacing records", asyn
     ],
     audits: [],
   };
-  await page.locator('[data-view="settings"]').click();
+  await page.locator('.side .nav [data-view="settings"]').click();
   const rejected = page.waitForEvent("dialog").then(async dialog => {
     expect(dialog.type()).toBe("alert");
     expect(dialog.message()).toContain("duplicate record IDs");
@@ -323,7 +338,7 @@ test("HQ shell CSP permits only the app and its configured Supabase origin", asy
 
 test("renders hostile memory text as inert text instead of executable markup", async ({ page }) => {
   const hostile = '<img src=x onerror="window.__hqXss=1"> hostile title';
-  await page.locator('[data-view="memory"]').click();
+  await page.locator('.side .nav [data-view="memory"]').click();
   await page.locator("#memory-title").fill(hostile);
   await page.locator("#memory-body").fill('<svg onload="window.__hqXss=2"></svg>');
   await page.locator("#save-memory").click();
@@ -336,7 +351,7 @@ test("renders hostile memory text as inert text instead of executable markup", a
 
 
 test("prompt console saves format-aware drafts and keeps handoff manual", async ({ page }) => {
-  await page.locator('[data-view="console"]').click();
+  await page.locator('.side .nav [data-view="console"]').click();
   await page.locator("#prompt-format").selectOption("research");
   await page.locator("#prompt-context").fill("Project context, intentionally selected");
   await page.locator("#prompt-input").fill("Compare two approaches and cite sources");
@@ -349,12 +364,12 @@ test("prompt console saves format-aware drafts and keeps handoff manual", async 
   expect(saved.chats[0].content).toContain("Project context, intentionally selected");
   expect(saved.chats[0].content).toContain("source links, dates, confidence");
   await page.reload();
-  await page.locator('[data-view="console"]').click();
+  await page.locator('.side .nav [data-view="console"]').click();
   await expect(page.locator("#chat-history")).toContainText("Compare two approaches and cite sources");
 });
 
 test("integration registry records proposals without connecting a provider", async ({ page }) => {
-  await page.locator('[data-view="integrations"]').click();
+  await page.locator('.side .nav [data-view="integrations"]').click();
   await page.locator('[data-integration="GitHub scoped connector"]').click();
   await expect(page.locator("#integration-list")).toContainText("GitHub scoped connector");
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("jarvis-x-hq-v0")));
@@ -365,7 +380,7 @@ test("integration registry records proposals without connecting a provider", asy
 
 
 test("upgrade center checks the stable release manifest without executing or installing code", async ({ page }) => {
-  await page.locator('[data-view="upgrades"]').click();
+  await page.locator('.side .nav [data-view="upgrades"]').click();
   await expect(page.locator("#hq-version")).toHaveText("0.2.1");
   await page.locator("#check-updates").click();
   await expect(page.locator("#upgrade-status")).toHaveText("Up to date");
@@ -378,7 +393,7 @@ test("upgrade center checks the stable release manifest without executing or ins
 
 test("upgrade center fails closed when release metadata cannot be fetched", async ({ page }) => {
   await page.route("**/release-manifest.json", route => route.fulfill({ status: 503, body: "unavailable" }));
-  await page.locator('[data-view="upgrades"]').click();
+  await page.locator('.side .nav [data-view="upgrades"]').click();
   await page.locator("#check-updates").click();
   await expect(page.locator("#upgrade-status")).toHaveText("Unavailable");
   await expect(page.locator("#upgrade-message")).toContainText("failed closed");
@@ -388,7 +403,7 @@ test("upgrade center fails closed when release metadata cannot be fetched", asyn
 
 test("direct chat stays disabled when the authenticated gateway is unavailable", async ({ page }) => {
   await page.route("**/api/v1/health", route => route.fulfill({ status: 404, body: "not configured" }));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await expect(page.locator("#view-chat")).toBeVisible();
   await expect(page.locator("#chat-send")).toBeDisabled();
   await page.locator("#chat-compose").fill("Hello JARVIS-X");
@@ -402,7 +417,7 @@ test("direct chat stays disabled when the authenticated gateway is unavailable",
 test("direct chat sends a message and displays a reply only after a verified gateway response", async ({ page }) => {
   await installGatewayFetchMock(page, { health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } }, chat: { status: 200, body: { output: "Verified gateway reply", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executive_identity: "JARVIS-X", executive_runtime: {model:"openai-model"}, model_calls: 1 } } });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").uncheck();
@@ -422,7 +437,7 @@ test("zero-model mock chat works with the live budget disabled and is labelled a
     chat: { status: 200, body: { ok: true, mock: true, executive_identity: "JARVIS-X", executive_runtime: {model:"mock-fixture"}, execution_mode: "mock-executive-placeholder", mock: true, model_calls: 0, execution_receipt: { mode: "mock-fixture", modelCalls: 0 }, output: "JARVIS-X MOCK MODE — no real AI inference was performed.", memory: { provider: "xmemo", read_status: "not_consented", write_status: "not_consented" } } }
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator(".jx-advanced-drawer").filter({ hasText: "ROUTING & EXECUTION" }).locator("summary").click();
   await page.locator("#chat-execution-mode").selectOption("mock");
   await page.locator("#chat-check-gateway").click();
@@ -446,7 +461,7 @@ test("cross-platform memory is sent only when explicitly enabled for the message
     chat: { status: 200, body: { output: "Consent-enabled reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1 } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").check();
@@ -464,7 +479,7 @@ test("cross-platform memory preference persists across messages and can be disab
     chat: { status: 200, body: { ok: true, output: "Reply", provider: "jarvis-x-cognitive-kernel", executive_runtime: {model:"openai-model"}, model_calls: 1, memory: { read_status: "recalled", write_status: "stored" } } },
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
-  await page.locator('[data-view="chat"]').click();
+  await page.locator('.side .nav [data-view="chat"]').click();
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   // Memory is now opt-in: explicitly enable it for this persistence scenario.
@@ -492,7 +507,7 @@ test("cross-platform memory preference persists across messages and can be disab
 });
 
 test("upgrade proposals show per-candidate decisions and preserve approval as planning-only", async ({ page }) => {
-  await page.locator('[data-view="upgrades"]').click();
+  await page.locator('.side .nav [data-view="upgrades"]').click();
   await expect(page.locator("#upgrade-proposals")).toContainText("Secure live AI chat gateway");
   await expect(page.locator("#upgrade-proposals")).toContainText("Cross-platform portable export and import");
   await expect(page.locator("#upgrade-proposals")).toContainText("Least-privilege plugin broker");
@@ -501,12 +516,12 @@ test("upgrade proposals show per-candidate decisions and preserve approval as pl
   await expect(page.locator('[data-proposal-approve="secure-chat-gateway"]')).toBeDisabled();
   await expect(page.locator("#proposal-status")).toContainText("no external action was executed");
   await page.reload();
-  await page.locator('[data-view="upgrades"]').click();
+  await page.locator('.side .nav [data-view="upgrades"]').click();
   await expect(page.locator('[data-proposal="secure-chat-gateway"]')).toContainText("APPROVED FOR PLANNING");
 });
 
 test("image studio builds a local prompt and never claims an image was generated", async ({ page }) => {
-  await page.locator('[data-view="images"]').click();
+  await page.locator('.side .nav [data-view="images"]').click();
   await expect(page.locator("#view-images")).toBeVisible();
   await expect(page.locator("#page-title")).toHaveText("Image Studio");
   await page.locator("#image-subject").fill("A futuristic football training academy at sunset");
@@ -522,7 +537,7 @@ test("image studio builds a local prompt and never claims an image was generated
 });
 
 test("HQ presents JARVIS-X as one executive identity, not separate model roles", async ({ page }) => {
-  await page.locator('[data-view="console"]').click();
+  await page.locator('.side .nav [data-view="console"]').click();
   await expect(page.locator("#view-console")).toContainText("One assistant identity");
   await expect(page.locator("#view-console")).toContainText("JARVIS-X is one coherent executive identity");
   await expect(page.locator("#view-console")).toContainText("Planning, challenge, and synthesis are internal passes of that same identity");
@@ -532,7 +547,7 @@ test("HQ presents JARVIS-X as one executive identity, not separate model roles",
   await expect(page.locator("#council-synthesis")).toHaveCount(0);
 });
 test("encrypted vault refuses a short passphrase and documents local-only transfer", async ({ page }) => {
-  await page.locator('[data-view="sync"]').click();
+  await page.locator('.side .nav [data-view="sync"]').click();
   await page.locator("#vault-passphrase").fill("short");
   await page.locator("#vault-export").click();
   await expect(page.locator("#vault-status")).toContainText("at least 12 characters");
@@ -564,7 +579,7 @@ test("strict CSP blocks injected inline scripts and style blocks", async ({ page
 
 
 test("Capability Forge exposes Nano Banana, XMemo, and portable export under one executive identity", async ({ page }) => {
-  await page.locator('[data-view="forge"]').click();
+  await page.locator('.side .nav [data-view="forge"]').click();
   await expect(page.locator("#view-forge")).toBeVisible();
   await expect(page.locator("#capability-registry")).toContainText("Nano Banana image generation");
   await expect(page.locator("#capability-registry")).toContainText("XMemo memory");
@@ -608,4 +623,74 @@ test("global Locked-In Mode retracts navigation and always exposes a working exi
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await expect(toggle).toHaveText("FOCUS MODE");
   await expect(side).toBeVisible();
+});
+
+
+test("P1.2 touch targets and Neural Pill shortcuts meet the 44px accessibility floor", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await enterHQ(page);
+  const dockTargets = page.locator("#jx-control-dock button, #jx-control-dock a");
+  const pillTargets = page.locator("#jx-neural-pill button[data-signal-wrap]");
+  await expect(dockTargets).toHaveCount(5);
+  await expect(pillTargets).toHaveCount(4);
+  for (const targets of [dockTargets, pillTargets]) {
+    for (let i = 0; i < await targets.count(); i++) {
+      const target = targets.nth(i);
+      await expect(target).toBeVisible();
+      const box = await target.boundingBox();
+      expect(box?.height, `target ${i} height`).toBeGreaterThanOrEqual(44);
+      expect(box?.width, `target ${i} width`).toBeGreaterThanOrEqual(44);
+      await expect(target).toHaveAccessibleName(/.+/);
+    }
+  }
+  await expect(page.locator("#jx-neural-pill button[data-signal-wrap='network']")).toHaveAttribute("data-view", "settings");
+  await page.locator("#jx-neural-pill button[data-signal-wrap='records']").click();
+  await expect(page.locator("#view-memory")).toBeVisible();
+});
+
+test("P1.2 contextual accents follow the active workspace and Sampa.co remains amber", async ({ page }) => {
+  await enterHQ(page);
+  for (const [view, accent] of [["console", "cyan"], ["forge", "cyan"], ["workspace", "emerald"], ["audit", "red"], ["gateway", "red"]]) {
+    await page.locator(`.side .nav [data-view="${view}"]`).click();
+    await expect(page.locator("body")).toHaveAttribute("data-jx-accent", accent);
+  }
+  await expect(page.locator('.hq-mission-link[href="/JARVIS-X/career/"]')).toHaveAttribute("data-jx-accent", "amber");
+});
+
+test("P1.2 all 13 views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
+  test.setTimeout(180000);
+  await enterHQ(page);
+  const views = await page.locator(".side .nav [data-view]").evaluateAll(nodes => nodes.map(node => node.dataset.view));
+  expect(views).toHaveLength(13);
+  const viewports = [
+    { width: 390, height: 844, label: "mobile-portrait" },
+    { width: 600, height: 900, label: "ipad-split-portrait" },
+    { width: 820, height: 1180, label: "ipad-portrait" },
+    { width: 1180, height: 820, label: "ipad-landscape" },
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    for (const view of views) {
+      await page.locator(`.side .nav [data-view="${view}"]`).click();
+      const active = page.locator(`#view-${view}`);
+      await expect(active).toBeVisible();
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      const geometry = await page.evaluate(() => {
+        const dock = document.querySelector("#jx-control-dock").getBoundingClientRect();
+        const main = document.querySelector(".main").getBoundingClientRect();
+        return {
+          viewport: window.innerWidth,
+          document: document.documentElement.scrollWidth,
+          dockLeft: dock.left,
+          dockRight: dock.right,
+          dockTop: dock.top,
+          mainBottom: main.bottom,
+        };
+      });
+      expect(geometry.document, `${viewport.label}/${view} horizontal overflow ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.viewport);
+      expect(geometry.dockLeft, `${viewport.label}/${view} dock left`).toBeGreaterThanOrEqual(0);
+      expect(geometry.dockRight, `${viewport.label}/${view} dock right`).toBeLessThanOrEqual(geometry.viewport);
+      expect(geometry.mainBottom, `${viewport.label}/${view} content container overlaps dock ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.dockTop - 4);
+    }
+  }
 });
