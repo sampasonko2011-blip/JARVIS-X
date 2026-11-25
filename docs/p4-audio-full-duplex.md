@@ -11,7 +11,7 @@ This tranche adds an explicit, user-controlled voice output and microphone adapt
 - Only verified live-mode assistant responses are eligible for automatic playback. Mock fixtures are never spoken as AI answers.
 - A user-triggered voice self-test speaks a fixed local phrase before any model response is needed.
 - The last live response can be replayed on demand.
-- The adapter prefers a French (`fr-*`) system voice and otherwise uses the browser default.
+- A quick language selector supports `fr-FR`, `en-US`, `en-GB`, and `es-ES` for both speech synthesis and speech recognition. The adapter selects a matching installed system voice when available and reports the actual voice; otherwise it reports that the browser default will be used. The `Automatique` option currently defaults to French; automatic language identification is not yet implemented.
 - The stop control cancels speech and disables voice output.
 
 ## Microphone and barge-in
