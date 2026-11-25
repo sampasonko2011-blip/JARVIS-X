@@ -643,8 +643,8 @@ test("P1.2 touch targets and Neural Pill shortcuts meet the 44px accessibility f
       await expect(target).toHaveAccessibleName(/.+/);
     }
   }
-  await expect(page.locator("#jx-neural-pill button[data-signal='network']")).toHaveAttribute("data-view", "settings");
-  await page.locator("#jx-neural-pill button[data-signal='records']").click();
+  await expect(page.locator("#jx-neural-pill button[data-signal-wrap='network']")).toHaveAttribute("data-view", "settings");
+  await page.locator("#jx-neural-pill button[data-signal-wrap='records']").click();
   await expect(page.locator("#view-memory")).toBeVisible();
 });
 
