@@ -14,7 +14,7 @@ async function openChat(page) {
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.__speech = { spoken: [], cancelled: 0, recognition: null };
-    window.SpeechSynthesisUtterance = class {
+    Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: class {
       constructor(text) { this.text = text; this.lang = ""; this.rate = 1; this.pitch = 1; this.voice = null; }
     };
     window.speechSynthesis = {
