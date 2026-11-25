@@ -130,3 +130,12 @@ test("provider errors never return credential values", async () => {
     return true;
   });
 });
+
+test("Gemini accepts the JARVIS_X secret alias only when Gemini is explicitly enabled", async () => {
+  const env = { JX_ENABLE_PROVIDER_CASCADE: "true", JX_PROVIDER_GEMINI_ENABLED: "true", JARVIS_X_GEMINI_API_KEY: "fixture-alias" };
+  let authorization = "";
+  const result = await invokeProviderCascade({ input: "hello", env, fetchImpl: async (_url, init) => { authorization = init.headers.Authorization; return ok(); } });
+  assert.equal(authorization, "Bearer fixture-alias");
+  assert.equal(result.provider, "gemini");
+  assert.deepEqual(listProviderConfiguration({ ...env, JX_ENABLE_PROVIDER_CASCADE: "false" }), []);
+});
