@@ -119,8 +119,8 @@ async function withTimeout<T>(operation: (signal: AbortSignal) => Promise<T>, ti
       operation(controller.signal),
       new Promise<T>((_, reject) => {
         timer = setTimeout(() => {
-          controller.abort();
           reject(new Error("factory_agent_timeout"));
+          controller.abort();
         }, timeoutMs);
       })
     ]);
