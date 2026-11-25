@@ -3,8 +3,6 @@ import { test, expect } from "@playwright/test";
 
 async function enterHQ(page) {
   const arrival = page.locator("#jx-arrival");
-  const enter = page.locator("#jx-arrival-enter");
-
   // Prefer the documented keyboard dismissal path: it cannot be intercepted
   // by the overlay itself and mirrors the dedicated accessibility test.
   if (await arrival.isVisible().catch(() => false)) {
@@ -14,7 +12,7 @@ async function enterHQ(page) {
 
   // Some builds omit the arrival overlay entirely; ensure the workspace is
   // ready before downstream tests interact with navigation or vault controls.
-  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.side .nav [data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 async function installGatewayFetchMock(page, config) {
