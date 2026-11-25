@@ -33,6 +33,9 @@ test("canonical snapshot hash is stable across event order and changes with cont
   const c = await sha256Hex(canonicalSnapshot({ ...snapshot, events: [{ ...event, summary: "Changed" }, second] }));
   assert.equal(a, b);
   assert.notEqual(a, c);
+  const icsA = await sha256Hex(canonicalSnapshot({ ...snapshot, freshnessBasis: "ingestion_time_only", generatedAt: "2026-11-25T12:00:00.000Z" }));
+  const icsB = await sha256Hex(canonicalSnapshot({ ...snapshot, freshnessBasis: "ingestion_time_only", generatedAt: "2026-11-26T12:00:00.000Z" }));
+  assert.equal(icsA, icsB);
 });
 
 test("official-style iCalendar events are parsed into normalized PRONOTE events", () => {
