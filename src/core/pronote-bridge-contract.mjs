@@ -6,7 +6,8 @@ export function validatePronoteSnapshot(value) {
   const errors = [];
   if (!value || typeof value !== "object" || Array.isArray(value)) return { valid: false, errors: ["snapshot_must_be_object"] };
   if (value.schemaVersion !== "pronote.snapshot.v1" || value.source !== "pronote") errors.push("snapshot_schema_or_source_invalid");
-  if (typeof value.generatedAt !== "string" || !Number.isFinite(Date.parse(value.generatedAt))) errors.push("snapshot_generated_at_invalid");
+  if (typeof value.generatedAt !== "string" || !Number.isFinite(Date.parse(value.generatedAt)) || Date.parse(value.generatedAt) > Date.now() + 300_000) errors.push("snapshot_generated_at_invalid_or_future");
+  if (value.freshnessBasis !== undefined && !["source_generated_at", "ingestion_time_only"].includes(value.freshnessBasis)) errors.push("snapshot_freshness_basis_invalid");
   if (!Array.isArray(value.events) || value.events.length > MAX_EVENTS) errors.push("snapshot_events_invalid");
   if (Array.isArray(value.events)) {
     const ids = new Set();
