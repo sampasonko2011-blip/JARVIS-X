@@ -16,12 +16,12 @@ test.beforeEach(async ({ page }) => {
     window.__speech = { spoken: [], cancelled: 0, recognition: null };
     Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: class {
       constructor(text) { this.text = text; this.lang = ""; this.rate = 1; this.pitch = 1; this.voice = null; }
-    };
-    window.speechSynthesis = {
+    } });
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
       getVoices: () => [{ lang: "fr-FR", name: "French test voice" }],
       speak: utterance => window.__speech.spoken.push(utterance),
       cancel: () => { window.__speech.cancelled += 1; },
-    };
+    } });
     window.SpeechRecognition = class {
       constructor() { window.__speech.recognition = this; }
       start() { this.started = true; this.onstart?.(); }
