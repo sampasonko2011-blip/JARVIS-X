@@ -40,6 +40,11 @@ function render(records) {
     const key = document.createElement("small");
     key.textContent = `ID ${item.id.slice(0, 12)} · idem ${item.idempotencyKey.slice(0, 18)}`;
     row.append(detail, key);
+    if (item.status === "delivery_unknown") {
+      const retry = document.createElement("button");
+      retry.type = "button"; retry.textContent = "Retry after checking XMemo"; retry.dataset.p5RetryUncertain = item.id;
+      row.append(retry);
+    }
     root.append(row);
   }
 }
@@ -105,12 +110,20 @@ $("#p5-xmemo-sync")?.addEventListener("click", async () => {
     button.disabled = false;
   }
 });
+$("#p5-outbox")?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-p5-retry-uncertain]");
+  if (!button || !queue) return;
+  if (!confirm("Only retry if you checked XMemo and confirmed this record was NOT stored. Continue?")) return;
+  const ok = await queue.retryUncertain(button.dataset.p5RetryUncertain);
+  message(ok ? "Record returned to PENDING after your confirmation. It will not send until you explicitly choose XMemo handoff." : "Record state changed; refresh before retrying.", ok ? "success" : "error");
+  await refresh();
+});
 $("#p5-refresh")?.addEventListener("click", refresh);
 $("#p5-recover")?.addEventListener("click", async () => {
   if (!queue) return refresh();
   try {
     const count = await queue.recoverInterrupted();
-    message(`Recovered ${count} interrupted send(s) to PENDING. Nothing was transmitted.`, "success");
+    message(`Recovered ${count} interrupted send(s) as DELIVERY UNKNOWN. Check XMemo before explicitly retrying.`, count ? "error" : "success");
     await refresh();
   } catch (error) { message(`Recovery failed: ${error.message}`, "error"); }
 });
