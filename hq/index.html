@@ -77,7 +77,7 @@
 <p>Crée un jeton d’ingestion limité à ce pont. Il ne donne pas accès à PRONOTE. Il expire après 90 jours et le prochain jeton révoque automatiquement le précédent.</p>
 <div class="actions"><button class="btn primary" id="pronote-token-create" type="button">Créer / renouveler le jeton iPad</button><button class="btn ghost" id="pronote-token-revoke" type="button" disabled>Révoquer le jeton actif</button><button class="btn ghost" id="pronote-token-copy" type="button" disabled>Copier le jeton</button></div>
 <label class="fieldlabel" for="pronote-token-value">Jeton affiché une seule fois — enregistre-le dans un gestionnaire de mots de passe</label>
-<input id="pronote-token-value" type="password" readonly autocomplete="off" placeholder="Aucun jeton créé dans cette session" style="width:100%">
+<input id="pronote-token-value" type="password" readonly autocomplete="off" placeholder="Aucun jeton créé dans cette session">
 <div id="pronote-token-status" role="status" aria-live="polite">Connexion JARVIS-X requise. Aucun secret PRONOTE n’est demandé ici.</div>
 <div class="footnote">Le jeton d’ingestion ne doit jamais être envoyé dans un chat, une URL, une capture d’écran ou un dépôt Git. L’interface ne le conserve pas après fermeture/actualisation de l’onglet.</div>
 <div class="actions"><button class="btn ghost" id="pronote-snapshot-refresh" type="button">Actualiser le snapshot sécurisé</button></div>
