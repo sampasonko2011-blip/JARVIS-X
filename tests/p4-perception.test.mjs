@@ -25,7 +25,7 @@ test("P4 benchmark distinguishes fixture simulation from manual comparison",()=>
  const simulated=scoreBenchmark({reference:"alpha beta gamma",raw:"alpha",pipeline:"alpha beta",mode:"fixture-simulated"});
  assert.equal(simulated.simulated,true);
  assert.equal(simulated.raw.coverage,0.3333);
- const manual=scoreBenchmark({reference:"alpha beta",raw:"alpha",pipeline:"beta",mode:"manual-real"});
+ const manual=scoreBenchmark({reference:"alpha beta",raw:"alpha",pipeline:"beta",mode:"manual-unverified"});
  assert.equal(manual.simulated,false);
  assert.equal(manual.note.includes("not a correctness"),true);
 });
