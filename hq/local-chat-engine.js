@@ -272,7 +272,7 @@ benchmarkButton?.addEventListener("click", async () => {
   setBusy(true);
   if (benchmarkStatus) benchmarkStatus.textContent = "Running two local WebGPU generations; no cloud inference or model download is initiated by this benchmark…";
   try {
-    const report = await runLocalModelComparison({ engine, modelId: modelSelect?.value || "", prompt, reference });
+    const report = await runLocalModelComparison({ engine, modelId: modelSelect?.value || "", prompt, reference, runtimeEvidence: "WEBLLM_ENGINE_READY" });
     if (benchmarkStatus) benchmarkStatus.textContent = JSON.stringify(report, null, 2);
   } catch (error) {
     if (benchmarkStatus) benchmarkStatus.textContent = "Benchmark not completed: " + String(error?.message || error);
