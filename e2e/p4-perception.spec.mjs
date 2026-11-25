@@ -33,7 +33,7 @@ test("P4.3 imports supported text locally and builds a support-grounded multilin
     buffer: Buffer.from("La photosynthèse transforme l'énergie lumineuse en énergie chimique chez les plantes."),
   });
   await page.locator("#p4-import").click();
-  await expect(page.locator("#p4-text")).toContainText("photosynthèse");
+  await expect(page.locator("#p4-text")).toHaveValue(/photosynthèse/);
   await page.locator("#p4-use-text").click();
   await page.locator("#p4-language").selectOption("fr-FR");
   await page.locator("#p4-coach-next").click();
