@@ -624,3 +624,83 @@ test("global Locked-In Mode retracts navigation and always exposes a working exi
   await expect(toggle).toHaveText("FOCUS MODE");
   await expect(side).toBeVisible();
 });
+
+
+test("P1.2 touch targets and Neural Pill shortcuts meet the 44px accessibility floor", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await enterHQ(page);
+  const dockTargets = page.locator("#jx-control-dock button, #jx-control-dock a");
+  const pillTargets = page.locator("#jx-neural-pill button[data-signal]");
+  await expect(dockTargets).toHaveCount(5);
+  await expect(pillTargets).toHaveCount(4);
+  for (const targets of [dockTargets, pillTargets]) {
+    for (let i = 0; i < await targets.count(); i++) {
+      const target = targets.nth(i);
+      await expect(target).toBeVisible();
+      const box = await target.boundingBox();
+      expect(box?.height, `target ${i} height`).toBeGreaterThanOrEqual(44);
+      expect(box?.width, `target ${i} width`).toBeGreaterThanOrEqual(44);
+      await expect(target).toHaveAccessibleName(/.+/);
+    }
+  }
+  await expect(page.locator("#jx-neural-pill button[data-signal='network']")).toHaveAttribute("data-view", "settings");
+  await page.locator("#jx-neural-pill button[data-signal='records']").click();
+  await expect(page.locator("#view-memory")).toBeVisible();
+});
+
+test("P1.2 contextual accents follow the active workspace and Sampa.co remains amber", async ({ page }) => {
+  await enterHQ(page);
+  for (const [view, accent] of [["console", "cyan"], ["forge", "cyan"], ["workspace", "emerald"], ["audit", "red"], ["gateway", "red"]]) {
+    await page.locator(`.side .nav [data-view="${view}"]`).click();
+    await expect(page.locator("body")).toHaveAttribute("data-jx-accent", accent);
+  }
+  await expect(page.locator('.hq-mission-link[href="/JARVIS-X/career/"]')).toHaveAttribute("data-jx-accent", "amber");
+});
+
+test("P1.2 all 13 views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
+  test.setTimeout(180000);
+  await enterHQ(page);
+  const views = await page.locator(".side .nav [data-view]").evaluateAll(nodes => nodes.map(node => node.dataset.view));
+  expect(views).toHaveLength(13);
+  const viewports = [
+    { width: 390, height: 844, label: "mobile-portrait" },
+    { width: 600, height: 900, label: "ipad-split-portrait" },
+    { width: 820, height: 1180, label: "ipad-portrait" },
+    { width: 1180, height: 820, label: "ipad-landscape" },
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    for (const view of views) {
+      await page.locator(`.side .nav [data-view="${view}"]`).click();
+      const active = page.locator(`#view-${view}`);
+      await expect(active).toBeVisible();
+      const lastControl = active.locator("button:visible, a:visible, input:visible, select:visible, textarea:visible, [tabindex]:visible").last();
+      if (await lastControl.count()) {
+        await lastControl.evaluate(node => node.scrollIntoView({ block: "end", inline: "nearest" }));
+        const geometry = await page.evaluate(() => {
+          const dock = document.querySelector("#jx-control-dock").getBoundingClientRect();
+          const activeView = document.querySelector(".view:not(.hide)");
+          const controls = [...activeView.querySelectorAll("button,a,input,select,textarea,[tabindex]")].filter(node => {
+            const rect = node.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0 && getComputedStyle(node).visibility !== "hidden";
+          });
+          const tail = controls.at(-1)?.getBoundingClientRect();
+          return {
+            viewport: window.innerWidth,
+            document: document.documentElement.scrollWidth,
+            dockLeft: dock.left,
+            dockRight: dock.right,
+            dockTop: dock.top,
+            tailBottom: tail?.bottom ?? null,
+          };
+        });
+        expect(geometry.document, `${viewport.label}/${view} horizontal overflow ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.viewport);
+        expect(geometry.dockLeft, `${viewport.label}/${view} dock left`).toBeGreaterThanOrEqual(0);
+        expect(geometry.dockRight, `${viewport.label}/${view} dock right`).toBeLessThanOrEqual(geometry.viewport);
+        if (geometry.tailBottom !== null) {
+          expect(geometry.tailBottom, `${viewport.label}/${view} last control obscured by dock ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.dockTop - 4);
+        }
+      }
+    }
+  }
+});
