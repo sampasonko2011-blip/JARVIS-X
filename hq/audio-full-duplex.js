@@ -98,7 +98,7 @@ import { AudioSessionController } from "./audio-session.mjs";
       recognition.interimResults = true;
       recognition.onstart = () => {
         controller.startListening();
-        render("Microphone actif à ta demande. La transcription reste un brouillon jusqu'à ton envoi.");
+        render("Microphone actif à ta demande. Le navigateur peut traiter l'audio via son propre service ; la transcription reste un brouillon.");
       };
       recognition.onresult = (event) => {
         let finalText = "";
