@@ -66,3 +66,25 @@ test("authenticated PRONOTE snapshot and HQ memory events enter encrypted CRDT o
   expect(decoded[0].payload.crdt.adds.length).toBe(1);
   expect(decoded[1].payload.crdt.adds.length).toBe(1);
 });
+
+test("XMemo handoff requires consent and uses the authenticated HQ endpoint", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
+    access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
+  })));
+  let received;
+  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/memory/xmemo/remember", async route => {
+    received = { headers: route.request().headers(), body: route.request().postDataJSON() };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, status: "stored", receipt: "mock-xmemo-receipt" }) });
+  });
+  page.on("dialog", dialog => dialog.accept());
+  await page.goto("/index.html");
+  await page.getByRole("button", { name: /Offline & evolution/i }).click();
+  await page.locator("#p5-payload").fill('{"title":"XMemo handoff fixture","body":"synthetic non-sensitive data"}');
+  await page.locator("#p5-enqueue").click();
+  await expect(page.locator("#p5-pending-count")).toHaveText("1");
+  await page.locator("#p5-xmemo-sync").click();
+  await expect(page.locator("#p5-synced-count")).toHaveText("1");
+  expect(received.headers.authorization).toBe("Bearer mock-session-token");
+  expect(received.body.consent).toBe(true);
+  expect(received.body.content).toContain("idempotency_key");
+});
