@@ -188,7 +188,7 @@ test("v12 applies BehavioralEngine review before memory persistence and response
 });
 
 test("Workspace L3 proposal acknowledgement is explicit and never writes the calendar", () => {
-  assert.match(workspaceCalendar, /Approuver la proposition \(L3\)/);
+  assert.match(workspaceCalendar, /Valider la recommandation \(L3\)/);
   assert.match(workspaceCalendar, /REVUE L3 VALIDÉE · LOCAL/);
   assert.match(workspaceCalendar, /aucun agenda modifié/);
   assert.doesNotMatch(workspaceCalendar, /fetch\s*\(/);
