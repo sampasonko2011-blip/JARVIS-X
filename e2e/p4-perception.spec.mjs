@@ -74,3 +74,36 @@ test("P4.3 benchmark labels manual output as unverified and reports lexical over
   expect(result.pipeline.coverage).toBe(0.6667);
   expect(result.note).toContain("not a correctness");
 });
+
+test("P4.3 extracts text from a valid PDF locally for the oral coach", async ({ page }) => {
+  const text = "Local PDF extraction works";
+  const stream = "BT /F1 16 Tf 20 80 Td (" + text + ") Tj ET";
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    "<< /Length " + Buffer.byteLength(stream) + " >>\\nstream\\n" + stream + "\\nendstream"
+  ];
+  let source = "%PDF-1.4\\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(source));
+    source += (index + 1) + " 0 obj\\n" + object + "\\nendobj\\n";
+  });
+  const xrefOffset = Buffer.byteLength(source);
+  source += "xref\\n0 6\\n0000000000 65535 f \\n";
+  for (const offset of offsets.slice(1)) source += String(offset).padStart(10, "0") + " 00000 n \\n";
+  source += "trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n" + xrefOffset + "\\n%%EOF";
+  await page.locator("#p4-file").setInputFiles({
+    name: "lesson.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(source, "binary")
+  });
+  await page.locator("#p4-import").click();
+  await expect(page.locator("#p4-text")).toHaveValue(/Local PDF extraction works/);
+  await expect(page.locator("#p4-status")).toContainText("PDF_TEXT_EXTRACTED_LOCAL");
+  await page.locator("#p4-use-text").click();
+  await page.locator("#p4-coach-next").click();
+  await expect(page.locator("#p4-coach-output")).toContainText("Local PDF extraction works");
+});
