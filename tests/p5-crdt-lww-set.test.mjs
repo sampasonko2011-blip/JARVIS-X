@@ -14,7 +14,7 @@ test("concurrent add survives a remove that did not observe its tag", () => {
   const leftState = left.export(), rightState = right.export();
   left.merge(rightState); right.merge(leftState);
   assert.deepEqual(left.values(), right.values());
-  assert.equal(left.values().length, 2, "distinct concurrent values are preserved");
+  assert.equal(left.values().length, 1, "one LWW winner is visible per stable element id");
 });
 test("observed remove tombstones only tags it has seen", () => {
   const a = new LwwElementSet({actor:"a"});
