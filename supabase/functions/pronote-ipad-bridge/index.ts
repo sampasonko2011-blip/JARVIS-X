@@ -82,6 +82,23 @@ async function rest(path: string, init: RequestInit = {}) {
   });
   return response;
 }
+async function consumeRateLimit(userId: string, key: "minute" | "day") {
+  const result = await rest("rpc/consume_hq_rate_limit", {
+    method: "POST",
+    body: JSON.stringify({ p_user_id: userId, p_limit_key: key })
+  });
+  if (!result.ok) { await result.text(); throw new Error("bridge_rate_limit_unavailable"); }
+  const data = await result.json().catch(() => null);
+  const row = Array.isArray(data) ? data[0] : null;
+  const expected = key === "minute" ? 10 : 100;
+  const reset = typeof row?.reset_at === "string" ? Date.parse(row.reset_at) : Number.NaN;
+  if (!row || typeof row.allowed !== "boolean" || row.limit_key !== key ||
+      row.request_limit !== expected || !Number.isInteger(row.remaining) ||
+      row.remaining < 0 || row.remaining >= expected || !Number.isFinite(reset) || reset <= Date.now()) {
+    throw new Error("bridge_rate_limit_response_invalid");
+  }
+  return row as { allowed: boolean; reset_at: string; remaining: number; request_limit: number; limit_key: string };
+}
 function randomToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
@@ -147,6 +164,15 @@ async function ingest(req: Request, origin: string) {
   const tokenRows = await tokenResponse.json().catch(() => []);
   const tokenRow = Array.isArray(tokenRows) ? tokenRows[0] : null;
   if (!tokenRow?.user_id) return json({ error: "ingest_token_invalid_or_expired" }, 401, origin);
+  let minute: { allowed: boolean; reset_at: string }, day: { allowed: boolean; reset_at: string };
+  try {
+    minute = await consumeRateLimit(tokenRow.user_id, "minute");
+    day = await consumeRateLimit(tokenRow.user_id, "day");
+  } catch {
+    return json({ error: "bridge_rate_limit_unavailable" }, 503, origin);
+  }
+  const denied = !minute.allowed ? minute : !day.allowed ? day : null;
+  if (denied) return json({ error: "bridge_rate_limit_exceeded", reset_at: denied.reset_at }, 429, origin);
 
   let snapshot: Record<string, unknown>;
   try {
