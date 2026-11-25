@@ -79,12 +79,36 @@ test("XMemo handoff requires consent and uses the authenticated HQ endpoint", as
   page.on("dialog", dialog => dialog.accept());
   await page.goto("/index.html");
   await page.getByRole("button", { name: /Offline & evolution/i }).click();
+  await page.context().setOffline(true);
   await page.locator("#p5-payload").fill('{"title":"XMemo handoff fixture","body":"synthetic non-sensitive data"}');
   await page.locator("#p5-enqueue").click();
   await expect(page.locator("#p5-pending-count")).toHaveText("1");
+  await expect.poll(() => received).toBeUndefined();
+  await page.context().setOffline(false);
+  await expect(page.locator("#p5-pending-count")).toHaveText("1");
+  expect(received).toBeUndefined();
+  await page.locator("#p5-xmemo-consent").check();
   await page.locator("#p5-xmemo-sync").click();
   await expect(page.locator("#p5-synced-count")).toHaveText("1");
   expect(received.headers.authorization).toBe("Bearer mock-session-token");
   expect(received.body.consent).toBe(true);
   expect(received.body.content).toContain("idempotency_key");
+});
+
+test("P5 CRDT merges two concurrent local replicas deterministically in the browser", async ({ page }) => {
+  await page.goto("/index.html");
+  const result = await page.evaluate(async () => {
+    const { LwwElementSet } = await import("./crdt-lww-set.mjs");
+    const ipad = new LwwElementSet({ actor: "ipad" });
+    const web = new LwwElementSet({ actor: "web" });
+    ipad.add({ id: "shared-note", text: "offline iPad edit" });
+    web.add({ id: "shared-note", text: "web edit" });
+    const ipadState = ipad.export(), webState = web.export();
+    ipad.merge(webState); web.merge(ipadState);
+    return { ipad: ipad.values(), web: web.values(), ipadHistory: ipad.export().history.length, webHistory: web.export().history.length };
+  });
+  expect(result.ipad).toEqual(result.web);
+  expect(result.ipad).toHaveLength(1);
+  expect(result.ipadHistory).toBe(2);
+  expect(result.webHistory).toBe(2);
 });
