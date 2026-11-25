@@ -43,6 +43,9 @@ test("HQ offline shell has a service worker and an SVG app icon", async () => {
   assert.ok(sw.includes("addEventListener('install'"));
   assert.ok(sw.includes("'./hq.css'"));
   assert.ok(sw.includes("'./hq.js'"));
+  assert.ok(sw.includes("'./audio-full-duplex.js'"));
+  assert.ok(sw.includes("'./audio-full-duplex.css'"));
+  assert.ok(sw.includes("'./audio-session.mjs'"));
   assert.ok(sw.includes("caches.match"));
   assert.ok(sw.includes("fetch"));
   assert.ok(icon.includes("<svg"));
@@ -110,7 +113,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v55'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v56'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./local-chat-preflight.html'"));
   assert.ok(sw.includes("'./local-chat-preflight.js'"));
