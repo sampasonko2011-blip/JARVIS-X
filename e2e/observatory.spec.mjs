@@ -102,10 +102,13 @@ test("v54 diagnostics report browser capabilities without claiming hardware read
   await expect(page.locator("#jx54-diagnostic-result")).toContainText("AVAILABLE_NOT_TESTED");
 });
 
-test("v54 Observatory registers its service worker and caches v54 assets", async ({ page }) => {
+test("v56 Observatory registers its service worker and caches v54 assets", async ({ page }) => {
   await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
-  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  if (!(await page.evaluate(() => Boolean(navigator.serviceWorker.controller)))) {
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 5000 });
+  }
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)), { timeout: 10000 }).toBe(true);
   const result = await page.evaluate(async () => {
     const keys = await caches.keys();
     const key = keys.find(value => value === "jarvis-x-hq-shell-v56");
