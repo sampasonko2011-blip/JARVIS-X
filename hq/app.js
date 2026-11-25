@@ -100,4 +100,78 @@ async function vaultKey(pass,salt){const base=await crypto.subtle.importKey('raw
 document.querySelector('#vault-export')?.addEventListener('click',async()=>{const pass=document.querySelector('#vault-passphrase').value;if(pass.length<12){vaultStatus.textContent='Use a passphrase of at least 12 characters.';return}if(!crypto?.subtle){vaultStatus.textContent='Secure Web Crypto is unavailable in this browser context. No file was created.';return}try{const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await vaultKey(pass,salt),plain=vaultBytes(JSON.stringify({format:'jarvis-x-hq-vault',version:1,created_at:new Date().toISOString(),data})),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);const envelope={format:'jarvis-x-hq-encrypted-backup',version:1,kdf:'PBKDF2-SHA-256',iterations:310000,cipher:'AES-256-GCM',salt:vaultB64(salt),iv:vaultB64(iv),ciphertext:vaultB64(new Uint8Array(cipher))};const blob=new Blob([JSON.stringify(envelope)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='jarvis-x-hq-encrypted-backup.json';a.click();URL.revokeObjectURL(url);vaultStatus.textContent='Encrypted backup created locally. Nothing was uploaded; keep the passphrase safe.'}catch(e){vaultStatus.textContent='Encryption failed; no successful backup is claimed.'}});
 document.querySelector('#vault-import-file')?.addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;const pass=document.querySelector('#vault-passphrase').value;try{if(file.size>8*1024*1024)throw Error('Encrypted backup exceeds the 8 MB limit.');if(pass.length<12)throw Error('Enter the original passphrase (12+ characters).');const env=JSON.parse(await file.text());if(env.format!=='jarvis-x-hq-encrypted-backup'||env.version!==1||env.kdf!=='PBKDF2-SHA-256'||env.cipher!=='AES-256-GCM'||env.iterations!==310000)throw Error('Unsupported encrypted-backup format.');const salt=vaultUnB64(env.salt),iv=vaultUnB64(env.iv),cipher=vaultUnB64(env.ciphertext);if(salt.length!==16||iv.length!==12||cipher.length>6*1024*1024)throw Error('Encrypted backup fields are outside accepted limits.');const key=await vaultKey(pass,salt),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher),parsed=JSON.parse(new TextDecoder().decode(plain)),d=parsed.data;if(parsed.format!=='jarvis-x-hq-vault'||parsed.version!==1||!d||!Array.isArray(d.tasks)||!Array.isArray(d.memories)||!Array.isArray(d.audits))throw Error('Decrypted data failed schema validation.');const sections=['tasks','memories','audits','chats','integrationRequests','upgradeProposals'];for(const name of sections){const a=d[name]??[];if(!Array.isArray(a)||a.length>5000||!a.every(x=>x&&typeof x==='object'&&!Array.isArray(x)&&(typeof x.id==='string'||typeof x.id==='number')))throw Error('Invalid records in '+name+'.');const ids=a.map(x=>String(x.id));if(new Set(ids).size!==ids.length)throw Error('Duplicate record IDs in '+name+'.')}if(!confirm('Replace this browser’s current local HQ records with the decrypted backup? Export current data first if needed.'))return;const previous=data,problem=loadProblem;data={...empty()};for(const name of sections)data[name]=d[name]??[];loadProblem='';if(persist())vaultStatus.textContent='Backup decrypted and imported into this browser. No server sync occurred.';else{data=previous;loadProblem=problem;render();throw Error('Local storage write failed; previous in-memory state restored.')}}catch(err){vaultStatus.textContent='Import failed: '+String(err?.message||'decryption or validation error')+'. Current saved records were not intentionally replaced.'}finally{e.target.value=''}});
 
+async function pronoteBridgeRequest(path,body){
+  const session=await jxEnsureSession().catch(()=>null);
+  if(!session)throw new Error('Sign in to JARVIS-X first; no bridge token was created.');
+  const response=await fetch(JX_SUPABASE_URL+'/functions/v1/pronote-ipad-bridge'+path,{
+    method:'POST',cache:'no-store',
+    headers:{'Content-Type':'application/json',apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+session.access_token},
+    body:JSON.stringify(body||{})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||('Bridge returned HTTP '+response.status));
+  return result;
+}
+const pronoteCreate=document.querySelector('#pronote-token-create');
+if(pronoteCreate)pronoteCreate.addEventListener('click',async()=>{
+  const status=document.querySelector('#pronote-token-status'),field=document.querySelector('#pronote-token-value'),revoke=document.querySelector('#pronote-token-revoke'),copy=document.querySelector('#pronote-token-copy');
+  if(!confirm('Create a new iPad ingestion token? Any previous active token for this account will be revoked.'))return;
+  pronoteCreate.disabled=true;status.textContent='Requesting a scoped token from the authenticated JARVIS-X bridge…';
+  try{
+    const result=await pronoteBridgeRequest('/token',{});
+    if(typeof result.token!=='string'||typeof result.token_id!=='string')throw new Error('Token issuance receipt is invalid.');
+    field.value=result.token;field.type='text';sessionStorage.setItem('jx-pronote-token-id',result.token_id);
+    revoke.disabled=false;copy.disabled=false;
+    status.textContent='Token created. Expires '+result.expires_at+'. Copy it now into a user-controlled password manager; it will not be shown again after this page is closed or refreshed.';
+  }catch(error){status.textContent='Token creation failed: '+String(error.message||error)+'.';}
+  finally{pronoteCreate.disabled=false;}
+});
+const pronoteCopy=document.querySelector('#pronote-token-copy');
+if(pronoteCopy)pronoteCopy.addEventListener('click',async()=>{
+  const field=document.querySelector('#pronote-token-value'),status=document.querySelector('#pronote-token-status');
+  if(!field.value)return;
+  try{await navigator.clipboard.writeText(field.value);status.textContent='Copied once. Save it directly into your password manager; do not paste it into chat, notes, URLs or screenshots.';}
+  catch{status.textContent='Clipboard unavailable. Select the visible token and save it directly into your password manager.';}
+});
+const pronoteRevoke=document.querySelector('#pronote-token-revoke');
+if(pronoteRevoke)pronoteRevoke.addEventListener('click',async()=>{
+  const status=document.querySelector('#pronote-token-status'),id=sessionStorage.getItem('jx-pronote-token-id');
+  if(!id){status.textContent='No token ID is recorded in this browser tab.';return;}
+  if(!confirm('Revoke the active PRONOTE iPad ingestion token? The Shortcut will stop syncing.'))return;
+  pronoteRevoke.disabled=true;status.textContent='Revoking token…';
+  try{const result=await pronoteBridgeRequest('/token/revoke',{token_id:id});if(result.revoked){sessionStorage.removeItem('jx-pronote-token-id');document.querySelector('#pronote-token-value').value='';document.querySelector('#pronote-token-value').type='password';document.querySelector('#pronote-token-copy').disabled=true;status.textContent='Token revoked. Future uploads using it will be rejected.';}else{status.textContent='No active token was changed; it may already be revoked.';}}
+  catch(error){status.textContent='Revocation failed: '+String(error.message||error)+'.';}
+  finally{pronoteRevoke.disabled=false;}
+});
+if(document.querySelector('#pronote-token-revoke')&&sessionStorage.getItem('jx-pronote-token-id'))document.querySelector('#pronote-token-revoke').disabled=false;
+
+const pronoteSnapshotRefresh=document.querySelector('#pronote-snapshot-refresh');
+if(pronoteSnapshotRefresh)pronoteSnapshotRefresh.addEventListener('click',async()=>{
+  const status=document.querySelector('#pronote-snapshot-status'),list=document.querySelector('#pronote-snapshot-events');
+  pronoteSnapshotRefresh.disabled=true;status.textContent='Reading the authenticated account snapshot…';list.replaceChildren();
+  try{
+    const session=await jxEnsureSession().catch(()=>null);
+    if(!session)throw new Error('Sign in to JARVIS-X first.');
+    const query='?select=schema_version,generated_at,received_at,snapshot_hash,event_count,snapshot&limit=1';
+    const response=await fetch(JX_SUPABASE_URL+'/rest/v1/pronote_ipad_snapshots'+query,{
+      method:'GET',cache:'no-store',headers:{apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+session.access_token,Accept:'application/json'}
+    });
+    const rows=await response.json().catch(()=>[]);
+    if(!response.ok)throw new Error('Snapshot read returned HTTP '+response.status+'. Verify migration and RLS.');
+    if(!Array.isArray(rows)||!rows.length){status.textContent='No PRONOTE snapshot has been received for this account yet.';return;}
+    const row=rows[0],snap=row.snapshot;
+    if(!snap||snap.schemaVersion!=='pronote.snapshot.v1'||!Array.isArray(snap.events))throw new Error('Stored snapshot failed schema validation.');
+    const age=Date.now()-Date.parse(row.generated_at),freshness=snap.freshnessBasis==='ingestion_time_only'?'unknown':!Number.isFinite(age)||age<0?'unknown':age<=86400000?'fresh':'stale';
+    status.textContent='Snapshot '+freshness.toUpperCase()+' · '+row.event_count+' events · generated '+row.generated_at+' · received '+row.received_at+'. Only this signed-in account can read these records.';
+    for(const event of snap.events.slice(0,50)){
+      const item=document.createElement('div');item.className='rowitem';
+      const title=document.createElement('strong');title.textContent=String(event.summary||'Untitled event').slice(0,180);
+      const detail=document.createElement('p');detail.textContent=String(event.kind||'other')+' · '+String(event.start||'')+' → '+String(event.end||'');
+      item.append(title,detail);list.append(item);
+    }
+    if(snap.events.length>50){const note=document.createElement('p');note.textContent='Showing 50 of '+snap.events.length+' events.';list.append(note);}
+  }catch(error){status.textContent='Snapshot unavailable: '+String(error.message||error)+'.';}
+  finally{pronoteSnapshotRefresh.disabled=false;}
+});
+
 if(document.querySelector('#chat-auth-send'))jxHandleAuthCallback().then(()=>{if(jxSession)checkChatGateway();}).catch(()=>{});if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').then(registration=>registration.update()).catch(()=>{});render();

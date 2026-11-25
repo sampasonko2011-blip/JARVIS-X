@@ -26,6 +26,10 @@ jobs:
       # Keep the isolated memory endpoint type-checked independently of inference.
       - name: Type-check the isolated memory gateway
         run: deno check supabase/functions/hq-memory-v1/index.ts
+      - name: Type-check the PRONOTE iPad bridge
+        run: deno check supabase/functions/pronote-ipad-bridge/index.ts
+      - name: Type-check the AI Builder approval gateway
+        run: deno check supabase/functions/ai-builder-approval/index.ts
       - run: npm test
       - name: Install Chromium for browser tests
         run: npx playwright install --with-deps chromium
