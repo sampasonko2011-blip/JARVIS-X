@@ -38,10 +38,12 @@ export async function sha256Hex(value) {
   return [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, "0")).join("");
 }
 export function canonicalSnapshot(snapshot) {
+  const ingestionOnly = snapshot.freshnessBasis === "ingestion_time_only";
   return JSON.stringify({
     schemaVersion: snapshot.schemaVersion,
     source: snapshot.source,
-    generatedAt: snapshot.generatedAt,
+    freshnessBasis: ingestionOnly ? "ingestion_time_only" : "source_generated_at",
+    generatedAt: ingestionOnly ? null : snapshot.generatedAt,
     events: [...snapshot.events].sort((a, b) => a.uid.localeCompare(b.uid))
   });
 }
