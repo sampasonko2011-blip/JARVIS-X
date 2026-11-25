@@ -183,17 +183,25 @@ import { AudioSessionController } from "./audio-session.mjs";
 
   window.addEventListener("jx:assistant-response", (event) => {
     const detail = event.detail || {};
-    if (detail.mode !== "live" || typeof detail.text !== "string" || !detail.text.trim()) return;
+    if (detail.mode !== "live") {
+      controller.finishSpeech();
+      render("Réponse de test reçue. Les fixtures ne sont jamais présentées comme une réponse IA ni lues à voix haute.");
+      return;
+    }
+    if (typeof detail.text !== "string" || !detail.text.trim()) return;
     lastAssistantText = detail.text;
     replayButton.disabled = !speechAvailable;
     if (enabled.checked) speak(lastAssistantText);
+    else {
+      controller.finishSpeech();
+      render("Réponse live reçue. Active la voix pour l'écouter.");
+    }
   });
 
   window.addEventListener("jx:assistant-request-start", () => {
-    if (controller.snapshot.microphoneActive && !controller.snapshot.speaking) {
-      controller.beginThinking();
-      render("JARVIS-X traite ta demande.");
-    }
+    cancelSpeech();
+    controller.beginThinking();
+    render("JARVIS-X traite ta demande.");
   });
 
   window.addEventListener("pagehide", () => {
