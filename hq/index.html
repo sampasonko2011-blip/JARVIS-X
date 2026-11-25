@@ -182,6 +182,21 @@
 <div class="card span12"><div class="cardhead"><h2>Last diagnostic report</h2><span class="tag">NO SECRETS</span></div><div id="gateway-report" class="gateway-report">No check performed. Select “Test gateway connection” to perform a real same-origin request.</div></div>
 </div>
 </section>
+<section id="view-p5" class="view hide">
+ <div class="card span12 jx-p5-panel">
+  <div class="cardhead"><h2>P5 · Offline-first & controlled evolution</h2><span class="tag">LOCAL ONLY · NO REMOTE SYNC</span></div>
+  <p>Mutations added here are stored in this browser's IndexedDB. They are not encrypted and are not sent anywhere. A remote transport must be separately reviewed and explicitly injected; none is configured.</p>
+  <div class="p5-status-grid"><div><small>IndexedDB</small><strong id="p5-db-status">CHECKING</strong></div><div><small>Network</small><strong id="p5-network-status">UNKNOWN</strong></div><div><small>Pending</small><strong id="p5-pending-count">0</strong></div><div><small>Synced</small><strong id="p5-synced-count">0</strong></div></div>
+  <div class="p5-compose"><label class="fieldlabel" for="p5-mutation-type">Mutation type</label><select id="p5-mutation-type"><option value="memory.note">Local memory note</option><option value="pronote.snapshot">PRONOTE snapshot</option><option value="action.pending">Pending action</option></select>
+   <label class="fieldlabel" for="p5-payload">JSON payload (do not include secrets or credentials)</label><textarea id="p5-payload" maxlength="262144" placeholder='{"title":"Offline test note","body":"Non-sensitive test data"}'></textarea>
+   <label class="fieldlabel" for="p5-idempotency">Idempotency key (optional; generated if empty)</label><input id="p5-idempotency" maxlength="160" placeholder="e.g. ipad-note-2026-11-25-001">
+   <div class="p4-actions"><button id="p5-enqueue" type="button">Save to local outbox</button><button id="p5-refresh" type="button">Refresh status</button><button id="p5-recover" type="button">Recover interrupted sends</button><button id="p5-export" type="button">Export outbox JSON</button></div>
+   <p id="p5-message" role="status" aria-live="polite">Checking local storage…</p><div id="p5-outbox" class="p5-outbox"></div>
+  </div>
+ </div>
+ <div class="card span6"><div class="cardhead"><h2>CRDT · observed-remove set</h2><span class="tag">DETERMINISTIC MODULE</span></div><p>Hybrid logical clock, tagged adds, observed tombstones, deterministic merge and compensating undo are implemented as a reusable data structure. Not yet wired to cross-device replication.</p><p><a href="../docs/p5-offline-sync-evolution.md">Read P5 technical contract ↗</a></p></div>
+ <div class="card span6"><div class="cardhead"><h2>L3 · controlled evolution</h2><span class="tag">HUMAN GATE</span></div><p>Candidate proposals require a non-empty passing regression suite, named human approval, exact evidence-suite match, and a separate activation confirmation. No silent prompt or rule mutation.</p><p><a href="../docs/ipad-physical-validation.md">Open iPad Air 5 validation checklist ↗</a></p></div>
+</section>
 <section id="view-perception" class="view hide"><div id="p4-perception" class="card span12">
  <div class="cardhead"><h2>P4.3 · Perception & oral coach</h2><span class="tag">LOCAL-FIRST</span></div>
  <p>Imports are processed on this device. Supported: TXT, Markdown, CSV, JSON, PDF, PNG, JPEG, WebP · maximum 8 MiB. PDF text is extracted locally with a bundled PDF.js engine (maximum 8 MiB, 80 pages, 120,000 characters, 15-second limit). Scanned PDFs without a text layer require manual text input; no remote OCR is used.</p>
@@ -199,7 +214,7 @@
 <script src="./pronote-ipad-bridge.js" defer></script>
 <script src="./conversation-experience.js" defer></script>
 <script type="module" src="./audio-full-duplex.js"></script>
-<script type="module" src="./p4-perception.bundle.mjs"></script>
+<script type="module" src="./p4-perception.bundle.mjs"></script>\n<script type="module" src="./p5-console.mjs"></script>
 <script src="./arrival-experience.js" defer></script>
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>
