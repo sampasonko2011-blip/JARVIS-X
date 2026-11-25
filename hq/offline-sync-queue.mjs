@@ -168,14 +168,20 @@ export class OfflineSyncQueue {
     const records = await requestResult(store.getAll());
     for (const record of records) {
       if (record.status === "sending") {
-        record.status = "pending";
+        record.status = "delivery_unknown";
         record.updatedAt = this.clock();
-        record.lastError = "RECOVERED_AFTER_INTERRUPTED_ATTEMPT";
+        record.lastError = "DELIVERY_UNKNOWN_AFTER_INTERRUPTED_ATTEMPT";
         store.put(record);
       }
     }
     await done;
     return records.filter((item) => item.status === "sending").length;
+  }
+
+  async retryUncertain(id) {
+    return await this.#update(id, (current) => current.status === "delivery_unknown"
+      ? { ...current, status: "pending", updatedAt: this.clock(), lastError: null }
+      : current, { requireStatus: "delivery_unknown" });
   }
 
   async flush({ send, limit = 10 } = {}) {
@@ -195,20 +201,21 @@ export class OfflineSyncQueue {
         await this.#update(item.id, (current) => ({ ...current, status: "synced", updatedAt: this.clock(), lastError: null }));
         sent++;
       } catch (error) {
-        await this.#update(item.id, (current) => ({ ...current, status: "pending", updatedAt: this.clock(), lastError: String(error?.code ?? error?.message ?? "TRANSPORT_FAILED").slice(0, 240) }));
+        const uncertain = error?.deliveryUnknown === true;
+        await this.#update(item.id, (current) => ({ ...current, status: uncertain ? "delivery_unknown" : "pending", updatedAt: this.clock(), lastError: String(error?.code ?? error?.message ?? "TRANSPORT_FAILED").slice(0, 240) }));
         failed++;
       }
     }
     return { status: failed ? "PARTIAL" : "COMPLETE", sent, failed };
   }
 
-  async #update(id, update, { requirePending = false } = {}) {
+  async #update(id, update, { requirePending = false, requireStatus = null } = {}) {
     const db = await this.open();
     const tx = db.transaction(STORE, "readwrite");
     const done = transactionDone(tx);
     const store = tx.objectStore(STORE);
     const current = await requestResult(store.get(id));
-    const claimed = Boolean(current && (!requirePending || current.status === "pending"));
+    const claimed = Boolean(current && (!requirePending || current.status === "pending") && (!requireStatus || current.status === requireStatus));
     if (claimed) store.put(update(current));
     await done;
     return claimed;
