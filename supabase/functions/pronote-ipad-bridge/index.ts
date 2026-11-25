@@ -96,6 +96,11 @@ function eventSnapshotFromIcs(ics: string) {
 async function issueToken(req: Request, origin: string) {
   const user = await authenticatedUser(req);
   if (!user) return json({ error: "user_authentication_required" }, 401, origin);
+  const now = new Date().toISOString();
+  const prior = await rest("pronote_ipad_ingest_tokens?user_id=eq." + user.id + "&revoked_at=is.null", {
+    method: "PATCH", body: JSON.stringify({ revoked_at: now })
+  });
+  if (!prior.ok) { await prior.text(); return json({ error: "prior_token_rotation_failed" }, 503, origin); }
   const token = randomToken();
   const tokenHash = await sha256Hex(token);
   const expiresAt = new Date(Date.now() + MAX_TOKEN_DAYS * 86400_000).toISOString();
