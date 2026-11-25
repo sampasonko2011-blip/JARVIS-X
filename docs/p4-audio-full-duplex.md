@@ -9,7 +9,8 @@ This tranche adds an explicit, user-controlled voice output and microphone adapt
 - Uses the browser/device `speechSynthesis` API and installed system voices.
 - Output is disabled by default. The user explicitly enables it.
 - Only verified live-mode assistant responses are eligible for automatic playback. Mock fixtures are never spoken as AI answers.
-- A user-triggered voice self-test speaks a fixed local phrase before any model response is needed.\n- The last live response can be replayed on demand.
+- A user-triggered voice self-test speaks a fixed local phrase before any model response is needed.
+- The last live response can be replayed on demand.
 - The adapter prefers a French (`fr-*`) system voice and otherwise uses the browser default.
 - The stop control cancels speech and disables voice output.
 
