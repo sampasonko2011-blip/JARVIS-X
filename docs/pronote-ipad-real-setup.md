@@ -73,7 +73,7 @@ Les noms exacts des actions peuvent varier selon la version d'iPadOS. Faire d'ab
 |---|---|---|
 | Écran verrouillé | Automatisation programmée, iPad verrouillé, fichier source disponible | Réponse serveur et heure de réception concordantes, sans interaction |
 | Données réelles dans Workspace | Export officiel choisi par l'utilisateur, upload puis lecture du snapshot connecté | Événements attendus visibles et champs comparés à la source ; devoirs/évaluations uniquement s'ils sont réellement exportés |
-| Expiration / fraîcheur | Révoquer le jeton, refaire un upload, puis réutiliser un export ancien | Jeton révoqué → HTTP 401 ; export de plus de 24 h → stale ; un échec ne doit jamais être affiché comme succès |
+| Expiration / fraîcheur | Révoquer le jeton, refaire un upload, puis envoyer un snapshot JSON dont generatedAt date de plus de 24 h | Jeton révoqué → HTTP 401 ; export de plus de 24 h → stale ; un échec ne doit jamais être affiché comme succès |
 
 La CI, un snapshot synthétique ou une réponse HTTP isolée ne remplacent aucune de ces preuves.
 
