@@ -36,7 +36,14 @@ test("voice output is opt-in and speaks only a live assistant response", async (
     detail: { mode: "live", text: "Bonjour, prêt à travailler." },
   })));
   expect(await page.evaluate(() => window.__speech.spoken.length)).toBe(0);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:assistant-request-start")));
+  await expect(page.locator("#jx-audio-state")).toHaveText("THINKING");
   await page.locator("#jx-audio-enabled").check();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:assistant-response", {
+    detail: { mode: "mock", text: "Ceci est une fixture, pas une réponse IA." },
+  })));
+  await expect(page.locator("#jx-audio-state")).toHaveText("IDLE");
+  expect(await page.evaluate(() => window.__speech.spoken.length)).toBe(0);
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:assistant-response", {
     detail: { mode: "live", text: "Bonjour, prêt à travailler." },
   })));
