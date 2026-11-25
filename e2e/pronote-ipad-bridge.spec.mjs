@@ -37,6 +37,7 @@ test("PRONOTE bridge token UI creates once, copies and revokes through authentic
   expect(await page.evaluate(() => localStorage.getItem("a".repeat(64)))).toBeNull();
 
   await page.reload();
+  await page.locator('.side .nav [data-view="workspace"]').click();
   await expect(page.locator("#pronote-token-revoke")).toBeEnabled();
   await expect(page.locator("#pronote-token-value")).toHaveValue("");
 
