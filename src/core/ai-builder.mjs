@@ -63,9 +63,20 @@ export function createToolArtifact({ id, source, tests, contract }) {
   const artifactHash = sha256(canonicalJson(artifact));
   return Object.freeze({ ...artifact, artifactHash });
 }
+export function computeArtifactHash(artifact) {
+  if (!artifact || artifact.schema !== "jarvis.tool-artifact.v1") throw new TypeError("ai_builder_artifact_invalid");
+  const { schema, id, source, tests, contract } = artifact;
+  requireBoundedString(id, "id", 80);
+  requireBoundedString(source, "source", MAX_SOURCE_CHARS);
+  requireBoundedString(tests, "tests", MAX_TEST_CHARS);
+  const normalizedContract = normalizeContract(contract);
+  return sha256(canonicalJson({ schema, id, source, tests, contract: normalizedContract }));
+}
 export function computeApprovalDigest(artifact) {
   const { artifactHash, contract } = artifact ?? {};
-  if (!/^[a-f0-9]{64}$/.test(artifactHash ?? "")) throw new TypeError("ai_builder_artifact_hash_invalid");
+  if (!/^[a-f0-9]{64}$/.test(artifactHash ?? "") || computeArtifactHash(artifact) !== artifactHash) {
+    throw new TypeError("ai_builder_artifact_hash_invalid_or_mismatched");
+  }
   return sha256(canonicalJson({ schema: "jarvis.tool-approval.v1", artifactHash, contract }));
 }
 /**
