@@ -4,13 +4,14 @@ import { AudioSessionController } from "./audio-session.mjs";
   const view = document.querySelector("#view-chat");
   const input = document.querySelector("#chat-compose");
   const enabled = document.querySelector("#jx-audio-enabled");
+  const languageSelect = document.querySelector("#jx-audio-language");
   const testVoiceButton = document.querySelector("#jx-audio-test-voice");
   const listenButton = document.querySelector("#jx-audio-listen");
   const stopButton = document.querySelector("#jx-audio-stop");
   const replayButton = document.querySelector("#jx-audio-replay");
   const stateLabel = document.querySelector("#jx-audio-state");
   const status = document.querySelector("#jx-audio-status");
-  if (!view || !input || !enabled || !testVoiceButton || !listenButton || !stopButton || !replayButton || !stateLabel || !status) return;
+  if (!view || !input || !enabled || !languageSelect || !testVoiceButton || !listenButton || !stopButton || !replayButton || !stateLabel || !status) return;
   if (view.dataset.audioReady === "true") return;
   view.dataset.audioReady = "true";
 
@@ -60,12 +61,13 @@ import { AudioSessionController } from "./audio-session.mjs";
     if (!enabled.checked || !speechAvailable || typeof text !== "string" || !text.trim()) return false;
     cancelSpeech();
     const utterance = new window.SpeechSynthesisUtterance(text.trim().slice(0, 8000));
-    utterance.lang = "fr-FR";
+    const language = languageSelect.value === "auto" ? "fr-FR" : languageSelect.value;
+    utterance.lang = language;
     utterance.rate = 1;
     utterance.pitch = 1;
     const voices = window.speechSynthesis.getVoices?.() || [];
-    const frenchVoice = voices.find((voice) => /^fr([-_]|$)/i.test(voice.lang));
-    if (frenchVoice) utterance.voice = frenchVoice;
+    const matchingVoice = voices.find((voice) => voice.lang?.toLowerCase() === language.toLowerCase()) || voices.find((voice) => voice.lang?.slice(0, 2).toLowerCase() === language.slice(0, 2).toLowerCase());
+    if (matchingVoice) utterance.voice = matchingVoice;
     activeUtterance = utterance;
     controller.beginSpeaking();
     render(frenchVoice ? "Voix système française sélectionnée." : "Voix système activée. La voix française dépend des voix installées sur l'appareil.");
@@ -143,6 +145,11 @@ import { AudioSessionController } from "./audio-session.mjs";
       render("Impossible d'activer le microphone : " + String(error?.message || error) + ".");
     }
   };
+
+  languageSelect.addEventListener("change", () => {
+    if (recognition) { stopRecognition(); controller.stopListening(); }
+    render("Langue vocale mise à jour. Réactive le microphone pour appliquer la langue de reconnaissance.");
+  });
 
   enabled.addEventListener("change", () => {
     if (!enabled.checked) {
