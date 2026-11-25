@@ -9,7 +9,7 @@ Ce guide devient exécutable après revue/merge, application de la migration et 
 - Authentifie les uploads avec un jeton JARVIS-X opaque, limité à cette fonction, stocké côté serveur sous forme de SHA-256, révocable et expirant après 90 jours.
 - Vérifie le format, les dates, les doublons, la taille (2 Mo max), le nombre d'événements (2 000 max) et l'identité PRONOTE de la source.
 - Conserve le dernier snapshot de chaque compte dans pronote_ipad_snapshots; RLS autorise uniquement son propriétaire à lire ses propres données.
-- Détecte un snapshot identique et ne le réécrit pas. Renvoie fresh ou stale selon l'âge de generatedAt (seuil initial : 24 h).
+- Détecte un snapshot identique et ne le réécrit pas ; refuse aussi qu'un snapshot JSON horodaté plus ancien remplace un snapshot horodaté plus récent. Renvoie fresh ou stale selon l'âge de generatedAt (seuil initial : 24 h). Pour un ICS sans date source fiable, freshness reste unknown et le contrôle anti-rejeu ne peut pas déduire l'âge réel du fichier.
 - N'enregistre aucun mot de passe PRONOTE, QR code, cookie Safari ou jeton en clair en base.
 
 **Limite de données :** un export iCalendar PRONOTE est généralement un calendrier d'événements. Il ne garantit pas l'export des devoirs, notes ou évaluations. Le pont ne peut afficher que les champs réellement présents dans l'export choisi. Ne pas déclarer la preuve « vrais devoirs/évaluations reçus » si ces données ne figurent pas dans la source officielle.
