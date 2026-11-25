@@ -1,5 +1,5 @@
-import { runAgentFactory } from "../src/core/agent-factory.ts";
-import { applyBehavioralPolicy, reviewResponse } from "../src/core/behavioral-engine.ts";
+import { runAgentFactory } from "../dist/core/agent-factory.js";
+import { applyBehavioralPolicy, reviewResponse } from "../dist/core/behavioral-engine.js";
 
 function lexicalCoverage(reference, answer) {
   const terms = new Set(String(reference).toLocaleLowerCase().match(/[\\p{L}\\p{N}]{3,}/gu) || []);
