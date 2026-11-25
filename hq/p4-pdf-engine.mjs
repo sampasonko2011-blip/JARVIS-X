@@ -36,7 +36,7 @@ export async function extractPdfText(input, options = {}) {
           .filter(item => item && typeof item.str === "string")
           .map(item => item.str)
           .join(" ")
-          .replace(/[\\t ]+/g, " ")
+          .replace(/[\t ]+/g, " ")
           .trim();
         if (line) {
           length += line.length + 1;
@@ -45,7 +45,7 @@ export async function extractPdfText(input, options = {}) {
         }
         page.cleanup();
       }
-      const text = pages.join("\\n").trim();
+      const text = pages.join("\n").trim();
       if (!text) throw new Error("PDF_TEXT_LAYER_UNAVAILABLE");
       return { text, pages: pdf.numPages, extractedPages: pages.length, characters: text.length, status: "PDF_TEXT_EXTRACTED_LOCAL" };
     })();
