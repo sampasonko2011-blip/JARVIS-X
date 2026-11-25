@@ -1,10 +1,10 @@
 name: Exocortex Swift Core and Native Llama
 on:
   pull_request:
-    paths: ['Package.swift', 'README.md', 'docs/exocortex-validation.md', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
+    paths: ['Package.swift', 'README.md', 'docs/exocortex-validation.md', 'docs/p3-agent-factory-pronote-ipad-bridge.md', 'docs/ai-builder-sandbox-l3.md', 'docs/pronote-ipad-real-setup.md', 'src/core/agent-factory.ts', 'src/core/ai-builder.mjs', 'src/core/pronote-bridge-contract.mjs', 'src/forge/tool-sandbox-runner.mjs', 'supabase/functions/pronote-ipad-bridge/**', 'supabase/functions/ai-builder-approval/**', 'supabase/migrations/*pronote_ipad_bridge.sql', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
   push:
     branches: [main, 'feat/**', 'feature/**']
-    paths: ['Package.swift', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
+    paths: ['Package.swift', 'docs/p3-agent-factory-pronote-ipad-bridge.md', 'docs/ai-builder-sandbox-l3.md', 'docs/pronote-ipad-real-setup.md', 'src/core/agent-factory.ts', 'src/core/ai-builder.mjs', 'src/core/pronote-bridge-contract.mjs', 'src/forge/tool-sandbox-runner.mjs', 'supabase/functions/pronote-ipad-bridge/**', 'supabase/functions/ai-builder-approval/**', 'supabase/migrations/*pronote_ipad_bridge.sql', 'exocortex/**', '.github/workflows/exocortex-swift.yml']
 permissions:
   contents: read
 jobs:
