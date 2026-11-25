@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validatePronoteSnapshot, canonicalSnapshot, sha256Hex } from "../src/core/pronote-bridge-contract.mjs";
+import { validatePronoteSnapshot, canonicalSnapshot, sha256Hex, isOlderSnapshotReplay } from "../src/core/pronote-bridge-contract.mjs";
 import { parseICalendar } from "../dist/core/icalendar.js";
 
 const event = {
@@ -56,4 +56,11 @@ test("official-style iCalendar events are parsed into normalized PRONOTE events"
 test("iCalendar parser rejects invalid envelopes and empty calendars", () => {
   assert.throws(() => parseICalendar("BEGIN:VCALENDAR\r\nEND:VCALENDAR", "pronote"), /no VEVENT/);
   assert.throws(() => parseICalendar("BEGIN:VEVENT\r\nEND:VEVENT", "pronote"), /envelope/);
+});
+
+test("rejects older timestamped snapshots as replays but does not invent source time for iCalendar", () => {
+  const stored = { generated_at: "2026-11-25T12:00:00.000Z", snapshot: { freshnessBasis: "source_generated_at" } };
+  assert.equal(isOlderSnapshotReplay({ ...snapshot, generatedAt: "2026-11-25T11:00:00.000Z" }, stored), true);
+  assert.equal(isOlderSnapshotReplay({ ...snapshot, generatedAt: "2026-11-25T13:00:00.000Z" }, stored), false);
+  assert.equal(isOlderSnapshotReplay({ ...snapshot, freshnessBasis: "ingestion_time_only" }, stored), false);
 });
