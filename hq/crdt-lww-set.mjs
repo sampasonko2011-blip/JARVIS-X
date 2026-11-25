@@ -23,6 +23,7 @@ export class HybridLogicalClock {
   }
 }
 const clone = (value) => JSON.parse(JSON.stringify(value));
+const elementKey = (value) => value && typeof value === "object" && !Array.isArray(value) && value.id !== undefined ? String(value.id) : JSON.stringify(value);
 const opKey = (op) => `${op.clock.wall}:${op.clock.logical}:${op.clock.actor}:${op.kind}:${op.tag}`;
 export class LwwElementSet {
   constructor({ actor, state } = {}) {
@@ -35,11 +36,11 @@ export class LwwElementSet {
   add(value) {
     const clock = this.clock.tick();
     const tag = `${clock.actor}:${clock.wall}:${clock.logical}`;
-    const op = { kind: "add", tag, value: clone(value), clock };
+    const op = { kind: "add", tag, key: elementKey(value), value: clone(value), clock };
     this.adds.set(tag, op); this.history.push(clone(op)); return clone(op);
   }
   remove(value) {
-    const matching = [...this.adds.values()].filter((op) => !this.removed.has(op.tag) && JSON.stringify(op.value) === JSON.stringify(value));
+    const matching = [...this.adds.values()].filter((op) => !this.removed.has(op.tag) && (op.key ?? elementKey(op.value)) === elementKey(value));
     const clock = this.clock.tick();
     const op = { kind: "remove", tags: matching.map((item) => item.tag).sort(), value: clone(value), clock };
     for (const tag of op.tags) this.removed.add(tag);
@@ -60,7 +61,7 @@ export class LwwElementSet {
     const visible = [...this.adds.values()].filter((op) => !this.removed.has(op.tag));
     const winners = new Map();
     for (const op of visible) {
-      const key = JSON.stringify(op.value), old = winners.get(key);
+      const key = op.key ?? elementKey(op.value), old = winners.get(key);
       if (!old || compareHlc(old.clock, op.clock) < 0) winners.set(key, op);
     }
     return [...winners.values()].sort((a, b) => JSON.stringify(a.value).localeCompare(JSON.stringify(b.value))).map((op) => clone(op.value));
