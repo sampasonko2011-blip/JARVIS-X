@@ -191,7 +191,7 @@ async function ingest(req: Request, origin: string) {
     method: "PATCH", body: JSON.stringify({ last_used_at: receivedAt })
   }).catch(() => new Response(null, { status: 503 }));
   return json({ accepted: true, duplicate: false, snapshot_hash: snapshotHash, received_at: receivedAt,
-    event_count: (snapshot.events as unknown[]).length, freshness: freshnessBasis === "ingestion_time_only" ? "unknown" : Date.now() - Date.parse(snapshot.generatedAt as string) <= 24 * 60 * 60 * 1000 ? "fresh" : "stale" }, 201, origin);
+    event_count: (snapshot.events as unknown[]).length, freshness: freshnessBasis === "ingestion_time_only" ? "unknown" : Date.now() - Date.parse(snapshot.generatedAt as string) < 0 ? "unknown" : Date.now() - Date.parse(snapshot.generatedAt as string) <= 24 * 60 * 60 * 1000 ? "fresh" : "stale" }, 201, origin);
 }
 
 Deno.serve(async req => {
