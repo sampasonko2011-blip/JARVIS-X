@@ -94,6 +94,20 @@ $("#p5-export")?.addEventListener("click", async () => {
     message("Local outbox export prepared. Treat the file as sensitive if its payloads contain personal data.", "success");
   } catch (error) { message(`Export failed: ${error.message}`, "error"); }
 });
+window.addEventListener("jx:memory-mutation", async (event) => {
+  if (!queue) return message("Memory change was saved in HQ, but encrypted outbox is unavailable.", "error");
+  const note = event.detail;
+  if (!note || typeof note.id !== "string" || typeof note.title !== "string" || typeof note.body !== "string") return;
+  try {
+    const previous = (await queue.list()).filter((item) => item.type === "memory.note.crdt").at(-1);
+    const crdt = new LwwElementSet({ actor: "hq-browser", state: previous?.payload?.crdt });
+    const record = { id: note.id, title: note.title.slice(0, 240), body: note.body.slice(0, 12000), time: String(note.time ?? "") };
+    crdt.add(record);
+    await queue.enqueue({ type: "memory.note.crdt", idempotencyKey: `memory:${note.id}`, metadata: { source: "hq-local-memory", queuedAt: Date.now() }, payload: { record, crdt: crdt.export() } });
+    message("HQ memory change encrypted and queued locally. No XMemo write or remote sync was performed.", "success");
+    await refresh();
+  } catch (error) { message(`Memory queue failed: ${error.message}`, "error"); }
+});
 window.addEventListener("jx:pronote-snapshot", async (event) => {
   if (!queue) return message("PRONOTE snapshot received, but encrypted local outbox is unavailable.", "error");
   const detail = event.detail || {};
