@@ -211,6 +211,11 @@ import { AudioSessionController } from "./audio-session.mjs";
     render("JARVIS-X traite ta demande.");
   });
 
+  window.addEventListener("jx:assistant-request-failed", () => {
+    controller.finishSpeech();
+    render("Aucune réponse reçue. Vérifie le statut du gateway avant de réessayer.");
+  });
+
   window.addEventListener("pagehide", () => {
     stopRecognition();
     cancelSpeech();
