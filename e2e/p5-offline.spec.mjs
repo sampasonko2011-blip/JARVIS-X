@@ -48,8 +48,12 @@ test("authenticated PRONOTE snapshot and HQ memory events enter encrypted CRDT o
   const decoded = await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => { const req = indexedDB.open("jarvis-x-p5", 3); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
     const tx = db.transaction(["outbox", "crypto_keys"], "readonly");
-    const rows = await new Promise((resolve, reject) => { const req = tx.objectStore("outbox").getAll(); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
-    const keyRow = await new Promise((resolve, reject) => { const req = tx.objectStore("crypto_keys").get("payload-aes-gcm-v1"); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); });
+    const rowsRequest = tx.objectStore("outbox").getAll();
+    const keyRequest = tx.objectStore("crypto_keys").get("payload-aes-gcm-v1");
+    const [rows, keyRow] = await Promise.all([
+      new Promise((resolve, reject) => { rowsRequest.onsuccess = () => resolve(rowsRequest.result); rowsRequest.onerror = () => reject(rowsRequest.error); }),
+      new Promise((resolve, reject) => { keyRequest.onsuccess = () => resolve(keyRequest.result); keyRequest.onerror = () => reject(keyRequest.error); })
+    ]);
     const values = [];
     for (const row of rows) {
       const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(row.payloadIv) }, keyRow.key, row.payloadCiphertext);
