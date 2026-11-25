@@ -121,6 +121,17 @@
   <label for="message">Message</label>
   <textarea id="message" rows="3" placeholder="Talk to JARVIS-X locally…" disabled></textarea>
   <div class="actions"><button class="btn primary" id="send-message" disabled>Send</button><button class="btn ghost" id="clear-chat" disabled>Clear chat</button><button class="btn ghost" id="voice-dictation" type="button" aria-pressed="false">START VOICE DICTATION</button></div><p id="voice-dictation-status" class="footnote" role="status" aria-live="polite">Voice dictation availability depends on this browser.</p>
+  <section id="p4-local-benchmark" class="integration">
+    <div class="eyebrow">P4.3 · REAL LOCAL MODEL BENCHMARK</div>
+    <h2>Qwen raw vs JARVIS-X guarded pipeline</h2>
+    <p>Load a Qwen model above using the explicit model-load button. This benchmark does not download or initialize a model. It performs two generations with the already-loaded WebLLM engine: raw baseline, then AgentFactory + Saboteur review + BehavioralEngine synthesis.</p>
+    <label for="p4-benchmark-prompt">Same prompt for both runs</label>
+    <textarea id="p4-benchmark-prompt" rows="3">Explique la photosynthèse en t’appuyant uniquement sur le support de cours fourni : la lumière permet aux plantes de transformer l’eau et le dioxyde de carbone en glucose et en oxygène.</textarea>
+    <label for="p4-benchmark-reference">Reference answer (optional, for lexical overlap only)</label>
+    <textarea id="p4-benchmark-reference" rows="2" placeholder="Paste a trusted reference answer…"></textarea>
+    <button class="btn primary" id="p4-run-local-benchmark" type="button" disabled>Run real local Qwen benchmark</button>
+    <pre id="p4-local-benchmark-status" role="status" aria-live="polite">Load a Qwen model first. No model is loaded automatically.</pre>
+  </section>
   <p class="footnote">Runtime: WebLLM 0.2.87. The selected model runs locally; smaller models trade response quality for a lower memory requirement. This is a small starter model, not a frontier-model replacement.</p>
 </section>
 

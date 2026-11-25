@@ -3,6 +3,7 @@ import "./v54-harmony-core.js";
 import { CreateMLCEngine, prebuiltAppConfig } from "@mlc-ai/web-llm";
 import { selectSampling } from "./cognitive-policy.js";
 import { createLocalMemoryBridge } from "./local-memory-bridge.js";
+import { runLocalModelComparison } from "./p4-local-benchmark.mjs";
 
 const MODEL_PREFERENCE_ORDER = ["Qwen2.5-3B-Instruct-q4f16_1-MLC","Phi-3.5-mini-instruct-q4f16_1-MLC","Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC","gemma-2-2b-it-q4f16_1-MLC","Qwen2.5-1.5B-Instruct-q4f16_1-MLC","Qwen2.5-0.5B-Instruct-q4f16_1-MLC"];
 
@@ -92,6 +93,8 @@ const SYSTEM = [
 ].join("\n\n");
 const $ = (id) => document.getElementById(id);
 const loadButton = $("load-model");
+const benchmarkButton = $("p4-run-local-benchmark");
+const benchmarkStatus = $("p4-local-benchmark-status");
 const modelSelect = $("jx-model-select");
 const sendButton = $("send-message");
 const clearButton = $("clear-chat");
@@ -153,6 +156,7 @@ function setBusy(value) {
   input.disabled = value || !engine;
   clearButton.disabled = value || !engine;
   if (memoryConsent) memoryConsent.disabled = value;
+  if (benchmarkButton) benchmarkButton.disabled = value || !engine;
 }
 function createLocalEngine(modelId, options) {
   const localTestHost = location.hostname === "127.0.0.1" || location.hostname === "localhost";
@@ -261,6 +265,22 @@ attachmentInput?.addEventListener("change", async () => {
     pendingAttachmentContext = "";
   }
 });
+benchmarkButton?.addEventListener("click", async () => {
+  if (!engine || busy) return;
+  const prompt = $("p4-benchmark-prompt")?.value?.trim() || "";
+  const reference = $("p4-benchmark-reference")?.value?.trim() || "";
+  setBusy(true);
+  if (benchmarkStatus) benchmarkStatus.textContent = "Running two local WebGPU generations; no cloud inference or model download is initiated by this benchmark…";
+  try {
+    const report = await runLocalModelComparison({ engine, modelId: modelSelect?.value || "", prompt, reference, runtimeEvidence: "WEBLLM_ENGINE_READY" });
+    if (benchmarkStatus) benchmarkStatus.textContent = JSON.stringify(report, null, 2);
+  } catch (error) {
+    if (benchmarkStatus) benchmarkStatus.textContent = "Benchmark not completed: " + String(error?.message || error);
+  } finally {
+    setBusy(false);
+  }
+});
+
 sendButton.addEventListener("click", async () => {
   const text = input.value.trim();
   const attachment = pendingAttachmentContext;

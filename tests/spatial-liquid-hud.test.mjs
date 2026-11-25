@@ -9,9 +9,10 @@ const [hq, observatory, css, behavior] = await Promise.all([
   readFile(new URL('../hq/spatial-liquid-hud.js', import.meta.url), 'utf8'),
 ]);
 
-test('HQ shell keeps its existing 13 views and loads the shared Spatial Liquid HUD', () => {
+test('HQ shell keeps its existing views plus the new perception workspace and loads the shared Spatial Liquid HUD', () => {
   const views = [...hq.matchAll(/<section id="view-([a-z-]+)"/g)].map((match) => match[1]);
-  assert.equal(views.length, 13);
+  assert.equal(views.length, 14);
+  assert.ok(views.includes('perception'));
   assert.ok(hq.includes('./spatial-liquid-hud.css'));
   assert.ok(hq.includes('./spatial-liquid-hud.js'));
   assert.ok(hq.includes('id="jx-neural-pill"'));
