@@ -6,7 +6,7 @@ async function enterHQ(page) {
     await page.keyboard.press("Escape");
     await expect(arrival).toHaveCount(0, { timeout: 5000 });
   }
-  await expect(page.locator('[data-view="chat"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('.side .nav [data-view="chat"]')).toBeVisible({ timeout: 10000 });
 }
 
 test.beforeEach(async ({ page }) => {
