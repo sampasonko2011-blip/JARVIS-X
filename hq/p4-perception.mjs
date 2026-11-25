@@ -1,3 +1,4 @@
+import { extractPdfText } from "./p4-pdf-engine.mjs";
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_TEXT_CHARS = 120000;
 const STORAGE_KEY = "jx-p4-perception-v1";
@@ -9,7 +10,8 @@ export function validateImport(file) {
   if (!file || typeof file.size !== "number" || typeof file.type !== "string") return { valid:false, reason:"INVALID_FILE" };
   if (file.size < 1) return { valid:false, reason:"EMPTY_FILE" };
   if (file.size > MAX_FILE_BYTES) return { valid:false, reason:"FILE_TOO_LARGE", maxBytes:MAX_FILE_BYTES };
-  if (!MIME_TEXT.has(file.type) && !MIME_IMAGE.has(file.type) && !MIME_PDF.has(file.type)) return { valid:false, reason:"UNSUPPORTED_TYPE" };
+  const isPdf = MIME_PDF.has(file.type) || String(file.name || "").toLowerCase().endsWith(".pdf");
+  if (!MIME_TEXT.has(file.type) && !MIME_IMAGE.has(file.type) && !isPdf) return { valid:false, reason:"UNSUPPORTED_TYPE" };
   return { valid:true, kind:MIME_TEXT.has(file.type) ? "text" : MIME_IMAGE.has(file.type) ? "image" : "pdf" };
 }
 export function normalizeText(text) {
@@ -70,14 +72,15 @@ function init() {
     try{
       if(check.kind==="text"){supportText=normalizeText(await selected.text());text.value=supportText;say("Texte importé localement · "+supportText.length+" caractères · aucun envoi réseau.");}
       else if(check.kind==="pdf"){
-        supportText="";
-        text.value="";
-        const preview=$("p4-image-preview");
-        preview.replaceChildren();
+        supportText=""; text.value="";
+        const preview=$("p4-image-preview"); preview.replaceChildren();
+        say("Lecture PDF locale en cours · aucun envoi réseau.");
+        const extracted=await extractPdfText(selected,{maxPages:80,maxChars:120000,timeoutMs:15000});
+        supportText=normalizeText(extracted.text); text.value=supportText;
         const notice=document.createElement("p");
-        notice.textContent="PDF accepté localement ("+selected.name+"). PDF_TEXT_EXTRACTION_UNAVAILABLE : aucun moteur PDF local n’est installé dans cette version. Aucun envoi réseau ni extraction fictive. Copie/colle le texte dans le champ Support pour utiliser le coach.";
+        notice.textContent="PDF lu localement · "+extracted.pages+" page(s) · "+extracted.characters+" caractères extraits. Vérifie le texte avant de l’utiliser.";
         preview.append(notice);
-        say("PDF accepté · PDF_TEXT_EXTRACTION_UNAVAILABLE · extraction non effectuée.");
+        say("PDF_TEXT_EXTRACTED_LOCAL · "+extracted.pages+" page(s) · "+extracted.characters+" caractères · aucun envoi réseau.");
       }
       else {
         const url=URL.createObjectURL(selected); const preview=$("p4-image-preview"); preview.replaceChildren(); const img=document.createElement("img");img.onload=()=>URL.revokeObjectURL(url);img.onerror=()=>URL.revokeObjectURL(url);img.src=url;img.alt="Aperçu local du document image";preview.append(img);
@@ -87,7 +90,7 @@ function init() {
         else say("Image importée pour annotation · OCR_UNAVAILABLE dans ce navigateur. Aucun texte n'a été inventé : saisis ou colle le contenu manuellement.");
         img.onload=()=>URL.revokeObjectURL(url);
       }
-    }catch(error){say("Import non traité : "+String(error.message||error));}
+    }catch(error){const reason=String(error.message||error);if(reason==="PDF_TEXT_LAYER_UNAVAILABLE")say("PDF_TEXT_LAYER_UNAVAILABLE · PDF probablement scanné ou sans couche texte. OCR local non disponible : colle le texte manuellement.");else say("Import non traité : "+reason);}
   });
   window.addEventListener("jx:pronote-snapshot",event=>{const snapshot=event.detail?.snapshot;if(event.detail?.schema_version!=="pronote.snapshot.v1"||!Array.isArray(snapshot?.events))return;supportText=normalizeText(snapshot.events.slice(0,250).map(item=>[item.summary,item.kind,item.start,item.description].filter(v=>typeof v==="string").join(" · ")).join("\n"));text.value=supportText;say("Snapshot PRONOTE v1 chargé · "+snapshot.events.length+" événements · vérifie la fraîcheur et le contenu.");});
   lang?.addEventListener("change",()=>{$("p4-question-index").value="0";});
