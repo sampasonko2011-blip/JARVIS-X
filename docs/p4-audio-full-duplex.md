@@ -29,7 +29,7 @@ This tranche adds an explicit, user-controlled voice output and microphone adapt
 - System speech synthesis is a device/browser voice, not a cloned or custom neural JARVIS voice.
 - True low-latency full-duplex audio, native `AVAudioEngine`, local offline ASR, acoustic echo cancellation, and audio streaming are not implemented by this browser adapter.
 - Barge-in is available only when the browser exposes recognition concurrently with speech synthesis. Physical iPad testing is required.
-- No audio recording is saved, uploaded, or placed in local chat history by this adapter. Recognized text remains an editable draft until the user sends it.
+- The adapter does not itself persist audio or send raw audio to the JARVIS-X gateway. However, browser-provided speech recognition may process audio through the browser/OS vendor service; its network and retention behavior is platform-dependent and must not be assumed offline or local. Recognized text remains an editable draft until the user sends it.
 
 ## State model
 
