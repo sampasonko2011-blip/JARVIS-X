@@ -69,7 +69,7 @@ function init() {
     try{
       if(check.kind==="text"){supportText=normalizeText(await selected.text());text.value=supportText;say("Texte importé localement · "+supportText.length+" caractères · aucun envoi réseau.");}
       else {
-        const url=URL.createObjectURL(selected); const preview=$("p4-image-preview"); preview.replaceChildren(); const img=document.createElement("img");img.src=url;img.alt="Aperçu local du document image";preview.append(img);
+        const url=URL.createObjectURL(selected); const preview=$("p4-image-preview"); preview.replaceChildren(); const img=document.createElement("img");img.onload=()=>URL.revokeObjectURL(url);img.onerror=()=>URL.revokeObjectURL(url);img.src=url;img.alt="Aperçu local du document image";preview.append(img);
         if(typeof img.decode==="function") await img.decode();
         const Detector=window.TextDetector;
         if(typeof Detector==="function"){try{const detector=new Detector();const blocks=await detector.detect(img);supportText=normalizeText(blocks.map(b=>b.rawValue||"").join("\n"));text.value=supportText;say("OCR navigateur disponible · texte extrait localement. Vérifie le résultat.");}catch{say("OCR disponible mais extraction échouée. Saisis ou colle le texte manuellement.");}}
