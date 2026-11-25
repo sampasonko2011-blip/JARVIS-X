@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  createToolArtifact, computeApprovalDigest, sealHumanApproval, verifyHumanApproval,
-  authorizeToolActivation, inspectToolProposal, buildToolProposal
+  createToolArtifact, computeApprovalDigest, createLocalApprovalFixture, verifyLocalApprovalFixture,
+  inspectToolProposal, buildToolProposal
 } from "../src/core/ai-builder.mjs";
 import { validateToolSandboxRequest, runToolSandbox } from "../src/forge/tool-sandbox-runner.mjs";
 
@@ -28,20 +28,18 @@ test("static proposal review rejects dynamic execution, network, env and filesys
 
 test("L3 approval is bound to exact artifact and permission contract", () => {
   const artifact = createToolArtifact({ id: "add", source, tests, contract });
-  const receipt = sealHumanApproval(artifact, {
+  const receipt = createLocalApprovalFixture(artifact, {
     approved: true, digest: computeApprovalDigest(artifact), actor: "human-reviewer",
     confirmedAt: "2026-11-25T10:00:00.000Z"
   });
-  assert.equal(verifyHumanApproval(artifact, receipt), true);
-  assert.equal(authorizeToolActivation(artifact, receipt).status, "APPROVED_FOR_SEPARATELY_AUTHORIZED_ACTIVATION");
+  assert.equal(verifyLocalApprovalFixture(artifact, receipt), true);
   const changed = createToolArtifact({ id: "add", source: source + "\n", tests, contract });
-  assert.equal(verifyHumanApproval(changed, receipt), false);
-  assert.throws(() => authorizeToolActivation(changed, receipt), /approval_missing/);
+  assert.equal(verifyLocalApprovalFixture(changed, receipt), false);
 });
 
 test("L3 approval rejects unbound or missing human confirmation", () => {
   const artifact = createToolArtifact({ id: "add", source, tests, contract });
-  assert.throws(() => sealHumanApproval(artifact, { approved: true, digest: "0".repeat(64), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
+  assert.throws(() => createLocalApprovalFixture(artifact, { approved: true, digest: "0".repeat(64), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
   assert.throws(() => sealHumanApproval(artifact, { approved: false, digest: computeApprovalDigest(artifact), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
 });
 
@@ -89,4 +87,16 @@ test("sandbox runner checks cached digest and executes without network, secrets 
 test("sandbox refuses a locally missing exact image digest", async () => {
   const fakeSpawn = () => ({ status: 0, stdout: JSON.stringify([{ RepoDigests: [] }]), stderr: "" });
   await assert.rejects(runToolSandbox({ source, tests, image }, { spawn: fakeSpawn }), /not_cached_exact_digest/);
+});
+
+test("approval verification recomputes the complete artifact hash instead of trusting its stored digest", () => {
+  const artifact = createToolArtifact({ id: "add", source, tests, contract });
+  const receipt = createLocalApprovalFixture(artifact, {
+    approved: true, digest: computeApprovalDigest(artifact), actor: "reviewer",
+    confirmedAt: "2026-11-25T10:00:00.000Z"
+  });
+  const tampered = { ...artifact, source: source + "\\n" };
+  assert.equal(verifyLocalApprovalFixture(tampered, receipt), false);
+  const changedContract = { ...artifact, contract: { ...artifact.contract, permissions: ["pure:compute"] } };
+  assert.equal(verifyLocalApprovalFixture(changedContract, receipt), false);
 });
