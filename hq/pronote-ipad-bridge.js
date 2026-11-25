@@ -147,6 +147,7 @@
       const age = Date.now() - Date.parse(row.generated_at);
       const freshness = row.snapshot.freshnessBasis === "ingestion_time_only" ? "UNKNOWN" : age < 0 ? "UNKNOWN" : age <= 24 * 60 * 60 * 1000 ? "FRESH" : "STALE";
       const count = row.snapshot.events.length;
+      window.dispatchEvent(new CustomEvent("jx:pronote-snapshot", { detail: { schema_version: row.schema_version, snapshot: row.snapshot } }));
       snapshotStatus.textContent = freshness + " · " + count + " events · reçu " + String(row.received_at || "inconnu") +
         " · source " + row.schema_version;
       for (const event of row.snapshot.events.slice(0, 250)) {
