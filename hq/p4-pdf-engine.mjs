@@ -1,6 +1,6 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-GlobalWorkerOptions.workerSrc = new URL("./pdf.worker.bundle.mjs", import.meta.url).toString();
+if (typeof window !== "undefined") GlobalWorkerOptions.workerSrc = new URL("./pdf.worker.bundle.mjs", import.meta.url).toString();
 
 const MAX_PDF_PAGES = 80;
 const MAX_PDF_TEXT_CHARS = 120000;
