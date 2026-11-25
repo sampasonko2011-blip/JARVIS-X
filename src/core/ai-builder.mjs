@@ -83,7 +83,7 @@ export function computeApprovalDigest(artifact) {
  * A trusted UI/authentication layer must produce the confirmation receipt.
  * This module checks its binding; it cannot prove who clicked a button.
  */
-export function sealHumanApproval(artifact, confirmation) {
+export function createLocalApprovalFixture(artifact, confirmation) {
   const digest = computeApprovalDigest(artifact);
   if (!confirmation || confirmation.approved !== true || confirmation.digest !== digest ||
       typeof confirmation.actor !== "string" || !confirmation.actor.trim() ||
@@ -98,7 +98,7 @@ export function sealHumanApproval(artifact, confirmation) {
     confirmedAt: confirmation.confirmedAt
   });
 }
-export function verifyHumanApproval(artifact, receipt) {
+export function verifyLocalApprovalFixture(artifact, receipt) {
   try {
     return Boolean(receipt && receipt.schema === "jarvis.tool-approval-receipt.v1" &&
       receipt.artifactHash === artifact.artifactHash &&
@@ -134,8 +134,5 @@ export async function buildToolProposal({ id, source, tests, contract, sandboxIm
       controls: sandbox.controls }
   };
 }
-export function authorizeToolActivation(artifact, receipt) {
-  if (!verifyHumanApproval(artifact, receipt)) throw new Error("ai_builder_artifact_changed_or_l3_approval_missing");
-  return { status: "APPROVED_FOR_SEPARATELY_AUTHORIZED_ACTIVATION", artifactHash: artifact.artifactHash,
-    approvalDigest: receipt.approvalDigest, actor: receipt.actor, confirmedAt: receipt.confirmedAt };
-}
+// Production L3 authorization is persisted and verified by the authenticated
+// ai-builder-approval Edge Function. A local fixture is never execution authority.
