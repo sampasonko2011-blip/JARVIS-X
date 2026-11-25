@@ -82,6 +82,40 @@ function init() {
   $("p4-use-text")?.addEventListener("click",()=>{try{supportText=normalizeText(text.value);say("Support prêt pour le coach oral. Source conservée localement.");}catch(e){say("Support invalide : "+String(e.message||e));}});
   $("p4-use-pronote")?.addEventListener("click",()=>say("Rafraîchis d’abord le snapshot PRONOTE dans son panneau, puis réessaie."));
   $("p4-coach-next")?.addEventListener("click",()=>{try{if(!supportText)supportText=normalizeText(text.value);const n=Number($("p4-question-index").value||0);const prompt=buildCoachPrompt(supportText,lang.value,n);$("p4-question-index").value=String(n+1);coachOut.textContent=prompt.question+"\n\nSupport utilisé : "+prompt.source.slice(0,700)+(prompt.source.length>700?"…":"");}catch(e){coachOut.textContent="Ajoute d'abord un support textuel valide.";say(String(e.message||e));}});
+  let coachRecognition = null;
+  $("p4-listen")?.addEventListener("click", () => {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) { say("Reconnaissance vocale indisponible dans ce navigateur."); return; }
+    if (coachRecognition) return;
+    try {
+      coachRecognition = new Recognition();
+      coachRecognition.lang = lang.value;
+      coachRecognition.continuous = false;
+      coachRecognition.interimResults = true;
+      coachRecognition.onresult = (event) => {
+        let finalText = "", interim = "";
+        for (let i = event.resultIndex || 0; i < event.results.length; i += 1) {
+          const value = event.results[i]?.[0]?.transcript || "";
+          if (event.results[i].isFinal) finalText += value; else interim += value;
+        }
+        const answer = $("p4-answer");
+        if (finalText.trim()) answer.value = (answer.value + " " + finalText.trim()).trim();
+        say(interim ? "Transcription en cours · " + interim : "Transcription ajoutée au brouillon. Relis-la avant toute utilisation.");
+      };
+      coachRecognition.onerror = (event) => say("Reconnaissance vocale : " + String(event.error || "erreur") + " · aucune soumission automatique.");
+      coachRecognition.onend = () => { coachRecognition = null; };
+      coachRecognition.start();
+      say("Microphone activé par ton clic. Le navigateur peut traiter l’audio via son service ; transcription modifiable, jamais envoyée automatiquement.");
+    } catch (error) { coachRecognition = null; say("Microphone non activé : " + String(error.message || error)); }
+  });
+  $("p4-stop-listen")?.addEventListener("click", () => {
+    if (coachRecognition) { try { coachRecognition.stop(); } catch {} coachRecognition = null; }
+    say("Microphone coach arrêté.");
+  });
+  window.addEventListener("pagehide", () => {
+    if (coachRecognition) { try { coachRecognition.stop(); } catch {} coachRecognition = null; }
+    window.speechSynthesis?.cancel();
+  });
   $("p4-speak")?.addEventListener("click",()=>{const speech=window.speechSynthesis;if(!speech||!window.SpeechSynthesisUtterance){say("Synthèse vocale indisponible.");return;}const u=new SpeechSynthesisUtterance(coachOut.textContent);u.lang=lang.value;speech.cancel();speech.speak(u);});
   $("p4-stop-speech")?.addEventListener("click",()=>window.speechSynthesis?.cancel());
   $("p4-benchmark")?.addEventListener("click",()=>{const result=scoreBenchmark({reference:$("p4-reference").value,raw:$("p4-raw").value,pipeline:$("p4-pipeline").value,mode:$("p4-benchmark-mode").value});$("p4-benchmark-result").textContent=JSON.stringify(result,null,2);say(result.simulated?"Résultat de fixture simulée · ne pas confondre avec une exécution de modèle.":"Comparaison saisie manuellement · sorties réelles non vérifiées par cette interface.");});
