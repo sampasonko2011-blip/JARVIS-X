@@ -32,7 +32,7 @@ Synthetic unit and browser fixtures do not establish correctness against a live 
 
 ## P2.3 implementation boundary
 - `pronote.snapshot.v1` is a typed, validated contract for events supplied by a local PRONOTE bridge. The adapter only pushes caller-supplied snapshots to an explicitly allowlisted HTTPS endpoint; it does not authenticate to PRONOTE, scrape Safari, or retrieve school data itself.
-- The outbound adapter uses a short-lived access-token callback, HTTPS-only host allowlisting, redirect rejection, an idempotency key, and explicit outcomes for expired sessions, network/server failures, and rejected requests. Tokens are never persisted or included in receipts.
+- The outbound adapter uses a short-lived access-token callback, HTTPS-only host allowlisting, redirect rejection, duplicate-UID rejection, and an idempotency key. The receiving endpoint must enforce that key for cross-request deduplication. It reports expired sessions, network/server failures, and rejected requests. Tokens are never persisted or included in receipts.
 - Workspace conflict approvals are one-tap, in-memory acknowledgements of advisory proposals only. No calendar write capability is exposed by this UI; any future write must pass a separately authenticated L3 approval gate.
 - The v12 live response path applies BehavioralEngine review before memory persistence and response delivery. This does not claim coverage of separate offline/local-chat or TTS paths.
 - Provider secret variable names audited from source only: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `JARVIS_X_GEMINI_API_KEY`, `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `NVIDIA_API_KEY`, `SAMBANOVA_API_KEY`, `MISTRAL_API_KEY`, `GITHUB_TOKEN`. No secret values were read.

@@ -1,5 +1,7 @@
 import type { CalendarEvent } from "./icalendar.js";
 
+export const PRONOTE_AUTO_SYNC_ID = "pronote.auto-sync" as const;
+
 export type PronoteSyncStatus = "idle" | "syncing" | "success" | "session_expired" | "network_error" | "rejected";
 export type PronoteDataFreshness = "fresh" | "stale" | "unknown";
 
@@ -40,6 +42,7 @@ export function createPronoteSnapshot(events: CalendarEvent[], options: {
   const generatedAt = options.generatedAt ?? now.toISOString();
   if (!Number.isFinite(Date.parse(generatedAt))) throw new TypeError("pronote_snapshot_generated_at_invalid");
   if (!Array.isArray(events) || events.length > 5000) throw new TypeError("pronote_snapshot_events_invalid");
+  if (new Set(events.map(event => event?.uid)).size !== events.length) throw new TypeError("pronote_snapshot_duplicate_event");
   for (const event of events) {
     if (!event || typeof event.uid !== "string" || !event.uid || typeof event.start !== "string" || typeof event.end !== "string" ||
         !Number.isFinite(Date.parse(event.start)) || !Number.isFinite(Date.parse(event.end)) || Date.parse(event.end) <= Date.parse(event.start)) {

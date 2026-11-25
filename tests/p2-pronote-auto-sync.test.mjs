@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPronoteSnapshot, evaluatePronoteFreshness, pushPronoteSnapshot } from "../dist/core/pronote-auto-sync.js";
+import { PRONOTE_AUTO_SYNC_ID, createPronoteSnapshot, evaluatePronoteFreshness, pushPronoteSnapshot } from "../dist/core/pronote-auto-sync.js";
 
 const event = {
   uid: "synthetic-homework",
@@ -17,6 +17,10 @@ const event = {
 const now = () => new Date("2026-11-25T10:00:00.000Z");
 const snapshot = () => createPronoteSnapshot([event], { now: now(), lastSuccessfulSync: "2026-11-25T09:00:00.000Z" });
 
+test("adapter is registered under the stable pronote.auto-sync identifier", () => {
+  assert.equal(PRONOTE_AUTO_SYNC_ID, "pronote.auto-sync");
+});
+
 test("pronote.snapshot.v1 exposes freshness and sync state without secrets", () => {
   const value = snapshot();
   assert.equal(value.schemaVersion, "pronote.snapshot.v1");
@@ -31,6 +35,10 @@ test("pronote.snapshot.v1 exposes freshness and sync state without secrets", () 
 test("snapshot rejects malformed events and oversized collections", () => {
   assert.throws(() => createPronoteSnapshot([{ ...event, end: event.start }]), /event_invalid/);
   assert.throws(() => createPronoteSnapshot(Array(5001).fill(event)), /events_invalid/);
+});
+
+test("snapshot rejects duplicate event identifiers", () => {
+  assert.throws(() => createPronoteSnapshot([event, event]), /duplicate_event/);
 });
 
 test("push accepts only allowlisted HTTPS endpoints and does not request a token for rejected hosts", async () => {
