@@ -38,9 +38,13 @@ export class OfflineSyncQueue {
         const request = this.indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = () => {
           const db = request.result;
-          if (!db.objectStoreNames.contains(STORE)) {
-            const store = db.createObjectStore(STORE, { keyPath: "id" });
+          const store = db.objectStoreNames.contains(STORE)
+            ? request.transaction.objectStore(STORE)
+            : db.createObjectStore(STORE, { keyPath: "id" });
+          if (!store.indexNames.contains("status_createdAt")) {
             store.createIndex("status_createdAt", ["status", "createdAt"], { unique: false });
+          }
+          if (!store.indexNames.contains("idempotencyKey")) {
             store.createIndex("idempotencyKey", "idempotencyKey", { unique: true });
           }
         };
