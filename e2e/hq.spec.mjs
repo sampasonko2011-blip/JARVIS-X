@@ -674,33 +674,23 @@ test("P1.2 all 13 views stay within mobile and iPad portrait/landscape layouts w
       await page.locator(`.side .nav [data-view="${view}"]`).click();
       const active = page.locator(`#view-${view}`);
       await expect(active).toBeVisible();
-      const lastControl = active.locator("button:visible, a:visible, input:visible, select:visible, textarea:visible, [tabindex]:visible").last();
-      if (await lastControl.count()) {
-        await lastControl.evaluate(node => node.scrollIntoView({ block: "end", inline: "nearest" }));
-        const geometry = await page.evaluate(() => {
-          const dock = document.querySelector("#jx-control-dock").getBoundingClientRect();
-          const activeView = document.querySelector(".view:not(.hide)");
-          const controls = [...activeView.querySelectorAll("button,a,input,select,textarea,[tabindex]")].filter(node => {
-            const rect = node.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && getComputedStyle(node).visibility !== "hidden";
-          });
-          const tail = controls.at(-1)?.getBoundingClientRect();
-          return {
-            viewport: window.innerWidth,
-            document: document.documentElement.scrollWidth,
-            dockLeft: dock.left,
-            dockRight: dock.right,
-            dockTop: dock.top,
-            tailBottom: tail?.bottom ?? null,
-          };
-        });
-        expect(geometry.document, `${viewport.label}/${view} horizontal overflow ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.viewport);
-        expect(geometry.dockLeft, `${viewport.label}/${view} dock left`).toBeGreaterThanOrEqual(0);
-        expect(geometry.dockRight, `${viewport.label}/${view} dock right`).toBeLessThanOrEqual(geometry.viewport);
-        if (geometry.tailBottom !== null) {
-          expect(geometry.tailBottom, `${viewport.label}/${view} last control obscured by dock ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.dockTop - 4);
-        }
-      }
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      const geometry = await page.evaluate(() => {
+        const dock = document.querySelector("#jx-control-dock").getBoundingClientRect();
+        const main = document.querySelector(".main").getBoundingClientRect();
+        return {
+          viewport: window.innerWidth,
+          document: document.documentElement.scrollWidth,
+          dockLeft: dock.left,
+          dockRight: dock.right,
+          dockTop: dock.top,
+          mainBottom: main.bottom,
+        };
+      });
+      expect(geometry.document, `${viewport.label}/${view} horizontal overflow ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.viewport);
+      expect(geometry.dockLeft, `${viewport.label}/${view} dock left`).toBeGreaterThanOrEqual(0);
+      expect(geometry.dockRight, `${viewport.label}/${view} dock right`).toBeLessThanOrEqual(geometry.viewport);
+      expect(geometry.mainBottom, `${viewport.label}/${view} content container overlaps dock ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.dockTop - 4);
     }
   }
 });
