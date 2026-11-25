@@ -48,3 +48,11 @@ export function canonicalSnapshot(snapshot) {
     events: [...snapshot.events].sort((a, b) => a.uid.localeCompare(b.uid))
   });
 }
+
+export function isOlderSnapshotReplay(incoming, existing) {
+  if (!incoming || !existing || incoming.freshnessBasis === "ingestion_time_only" ||
+      existing.snapshot?.freshnessBasis === "ingestion_time_only") return false;
+  const incomingAt = Date.parse(incoming.generatedAt);
+  const storedAt = Date.parse(existing.generated_at);
+  return Number.isFinite(incomingAt) && Number.isFinite(storedAt) && incomingAt <= storedAt;
+}
