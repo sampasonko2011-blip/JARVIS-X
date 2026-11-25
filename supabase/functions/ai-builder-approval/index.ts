@@ -83,8 +83,18 @@ Deno.serve(async req => {
       const approvalDigest = await hash(stable({ schema: "jarvis.tool-approval.v1", artifactHash, contract }));
       if (input.approval_digest !== approvalDigest) return response({ error: "approval_digest_mismatch" }, 409);
       const contractHash = await hash(stable(contract));
-      const saved = await rest("ai_builder_l3_approvals?on_conflict=user_id,artifact_hash,approval_digest", {
-        method: "POST", headers: { prefer: "resolution=merge-duplicates,return=representation" },
+      const existingQuery = new URLSearchParams({ select: "id,created_at", user_id: "eq." + user.id,
+        artifact_hash: "eq." + artifactHash, approval_digest: "eq." + approvalDigest,
+        contract_hash: "eq." + contractHash, revoked_at: "is.null", limit: "1" });
+      const existingResponse = await rest("ai_builder_l3_approvals?" + existingQuery);
+      if (!existingResponse.ok) { await existingResponse.text(); return response({ error: "approval_lookup_failed" }, 503); }
+      const existingRows = await existingResponse.json().catch(() => []);
+      const existing = Array.isArray(existingRows) ? existingRows[0] : null;
+      if (existing?.id) return response({ approved: true, already_approved: true, approval_id: existing.id,
+        artifact_hash: artifactHash, approval_digest: approvalDigest, contract_hash: contractHash,
+        actor: user.id, approved_at: existing.created_at }, 200);
+      const saved = await rest("ai_builder_l3_approvals", {
+        method: "POST", headers: { prefer: "return=representation" },
         body: JSON.stringify({ user_id: user.id, artifact_hash: artifactHash, approval_digest: approvalDigest,
           contract_hash: contractHash, permission_contract: contract, revoked_at: null })
       });
