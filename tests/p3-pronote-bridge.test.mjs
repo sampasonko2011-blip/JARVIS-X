@@ -17,6 +17,8 @@ test("accepts a well-formed versioned PRONOTE snapshot", () => {
 test("rejects wrong schema, non-PRONOTE source and duplicate event identifiers", () => {
   assert.equal(validatePronoteSnapshot({ ...snapshot, schemaVersion: "v0" }).valid, false);
   assert.equal(validatePronoteSnapshot({ ...snapshot, source: "unknown" }).valid, false);
+  assert.equal(validatePronoteSnapshot({ ...snapshot, generatedAt: "2999-01-01T00:00:00.000Z" }).valid, false);
+  assert.equal(validatePronoteSnapshot({ ...snapshot, freshnessBasis: "pretend_fresh" }).valid, false);
   assert.equal(validatePronoteSnapshot({ ...snapshot, events: [event, event] }).valid, false);
 });
 
