@@ -49,9 +49,11 @@ CREATE TABLE IF NOT EXISTS public.ai_builder_l3_approvals (
   contract_hash text NOT NULL CHECK (contract_hash ~ '^[a-f0-9]{64}$'),
   permission_contract jsonb NOT NULL CHECK (jsonb_typeof(permission_contract) = 'object'),
   created_at timestamptz NOT NULL DEFAULT now(),
-  revoked_at timestamptz,
-  UNIQUE (user_id, artifact_hash, approval_digest)
+  revoked_at timestamptz
 );
+CREATE UNIQUE INDEX IF NOT EXISTS ai_builder_l3_one_active_approval_idx
+  ON public.ai_builder_l3_approvals(user_id, artifact_hash, approval_digest)
+  WHERE revoked_at IS NULL;
 
 ALTER TABLE public.ai_builder_l3_approvals ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can read their own AI Builder approvals" ON public.ai_builder_l3_approvals;
