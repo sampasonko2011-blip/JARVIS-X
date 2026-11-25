@@ -70,7 +70,7 @@ import { AudioSessionController } from "./audio-session.mjs";
     if (matchingVoice) utterance.voice = matchingVoice;
     activeUtterance = utterance;
     controller.beginSpeaking();
-    render(frenchVoice ? "Voix système française sélectionnée." : "Voix système activée. La voix française dépend des voix installées sur l'appareil.");
+    render(matchingVoice ? "Voix système sélectionnée : " + matchingVoice.name + " (" + matchingVoice.lang + ")." : "Aucune voix correspondante installée ; voix par défaut du navigateur.");
     utterance.onend = () => {
       if (activeUtterance !== utterance) return;
       activeUtterance = null;
