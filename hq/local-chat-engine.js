@@ -269,7 +269,7 @@ benchmarkButton?.addEventListener("click", async () => {
   if (!engine || busy) return;
   const prompt = $("p4-benchmark-prompt")?.value?.trim() || "";
   const reference = $("p4-benchmark-reference")?.value?.trim() || "";
-  benchmarkButton.disabled = true;
+  setBusy(true);
   if (benchmarkStatus) benchmarkStatus.textContent = "Running two local WebGPU generations; no cloud inference or model download is initiated by this benchmark…";
   try {
     const report = await runLocalModelComparison({ engine, modelId: modelSelect?.value || "", prompt, reference });
@@ -277,7 +277,7 @@ benchmarkButton?.addEventListener("click", async () => {
   } catch (error) {
     if (benchmarkStatus) benchmarkStatus.textContent = "Benchmark not completed: " + String(error?.message || error);
   } finally {
-    benchmarkButton.disabled = !engine || busy;
+    setBusy(false);
   }
 });
 
