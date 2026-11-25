@@ -5,13 +5,13 @@
 
 ## Pillar 1 — Offline outbox
 
-`hq/offline-sync-queue.mjs` provides an IndexedDB outbox with stable idempotency keys, bounded JSON payloads, retryable pending state, interrupted-send recovery, and an explicitly injected transport. No transport is configured by HQ. The current queue stores plaintext in the browser origin's IndexedDB; it is **not encrypted at rest**. It is not a sync service until a reviewed, authenticated, user-scoped transport exists. Never queue credentials, cookies, tokens, or secrets.
+`hq/offline-sync-queue.mjs` provides an IndexedDB outbox with stable idempotency keys, bounded JSON payloads, retryable pending state, interrupted-send recovery, and an explicitly injected transport. No transport is configured by HQ. Payloads are encrypted with AES-GCM-256 before entering IndexedDB. A non-extractable CryptoKey is persisted in a separate object store in the same origin database. This protects raw IndexedDB exports at rest, but **does not protect against same-origin script compromise, XSS, or a compromised browser profile**. Queue metadata (type, idempotency key, timestamps, status and retry count) remains readable. Existing pre-encryption records are lazily encrypted when read; if WebCrypto is unavailable, reads fail closed rather than returning plaintext. It is not a sync service until a reviewed, authenticated, user-scoped transport exists. Never queue credentials, cookies, tokens, or secrets.
 
-Acceptance still required: real Safari/iPad persistence across force-close/reopen, quota behavior, two-tab concurrency, transaction interruption, and explicit authenticated transport contract review.
+Acceptance still required: real Safari/iPad persistence across force-close/reopen, quota behavior, two-tab concurrency, transaction interruption, key-loss recovery, authenticated transport contract review, and a server-side idempotent write API before remote sync.
 
 ## Pillar 2 — CRDT and history
 
-`hq/crdt-lww-set.mjs` implements an observed-remove set with per-add tags, tombstones, a hybrid logical clock, deterministic merge ordering, and compensating undo operations. Concurrent adds not observed by a remove are retained. This is a deterministic local data structure, not yet wired to PRONOTE/XMemo sync or a multi-device replication protocol. Schema/version migration and real multi-replica stress tests remain required.
+`hq/crdt-lww-set.mjs` implements an observed-remove set with per-add tags, tombstones, a hybrid logical clock, deterministic merge ordering, and compensating undo operations. Concurrent adds not observed by a remove are retained. This deterministic data structure is now wired to the authenticated PRONOTE snapshot-read event and local HQ memory-save events: both are normalized, merged into CRDT state, encrypted, and queued locally. It is **not** a multi-device replication protocol. The current PRONOTE bridge only reads snapshots; no authenticated remote mutation endpoint or XMemo queue transport has been identified, so no remote writes or automatic sync are claimed. Schema/version migration and real multi-replica stress tests remain required.
 
 ## Pillar 3 — L3 controlled evolution
 
