@@ -91,7 +91,7 @@ function eventSnapshotFromIcs(ics: string) {
   const start = new Date(now.getTime() - 30 * 86400_000).toISOString();
   const end = new Date(now.getTime() + 365 * 86400_000).toISOString();
   const events = parseICalendar(ics, "pronote", { defaultTimezone: "Africa/Dakar", rangeStart: start, rangeEnd: end, maxOccurrences: 2000 });
-  return { schemaVersion: "pronote.snapshot.v1", source: "pronote", generatedAt: now.toISOString(), events };
+  return { schemaVersion: "pronote.snapshot.v1", source: "pronote", generatedAt: now.toISOString(), freshnessBasis: "ingestion_time_only", events };
 }
 async function issueToken(req: Request, origin: string) {
   const user = await authenticatedUser(req);
@@ -161,6 +161,7 @@ async function ingest(req: Request, origin: string) {
   }
   const validation = validatePronoteSnapshot(snapshot);
   if (!validation.valid) return json({ error: "snapshot_validation_failed", reasons: validation.errors }, 422, origin);
+  const freshnessBasis = snapshot.freshnessBasis === "ingestion_time_only" ? "ingestion_time_only" : "source_generated_at";
   const canonical = canonicalSnapshot(snapshot as never);
   const snapshotHash = await sha256Hex(canonical);
   const userId = tokenRow.user_id as string;
@@ -190,7 +191,7 @@ async function ingest(req: Request, origin: string) {
     method: "PATCH", body: JSON.stringify({ last_used_at: receivedAt })
   }).catch(() => new Response(null, { status: 503 }));
   return json({ accepted: true, duplicate: false, snapshot_hash: snapshotHash, received_at: receivedAt,
-    event_count: (snapshot.events as unknown[]).length, freshness: Date.now() - Date.parse(snapshot.generatedAt as string) <= 24 * 60 * 60 * 1000 ? "fresh" : "stale" }, 201, origin);
+    event_count: (snapshot.events as unknown[]).length, freshness: freshnessBasis === "ingestion_time_only" ? "unknown" : Date.now() - Date.parse(snapshot.generatedAt as string) <= 24 * 60 * 60 * 1000 ? "fresh" : "stale" }, 201, origin);
 }
 
 Deno.serve(async req => {
