@@ -161,7 +161,7 @@ if(pronoteSnapshotRefresh)pronoteSnapshotRefresh.addEventListener('click',async(
     if(!Array.isArray(rows)||!rows.length){status.textContent='No PRONOTE snapshot has been received for this account yet.';return;}
     const row=rows[0],snap=row.snapshot;
     if(!snap||snap.schemaVersion!=='pronote.snapshot.v1'||!Array.isArray(snap.events))throw new Error('Stored snapshot failed schema validation.');
-    const age=Date.now()-Date.parse(row.generated_at),freshness=!Number.isFinite(age)||age<0?'unknown':age<=86400000?'fresh':'stale';
+    const age=Date.now()-Date.parse(row.generated_at),freshness=snap.freshnessBasis==='ingestion_time_only'?'unknown':!Number.isFinite(age)||age<0?'unknown':age<=86400000?'fresh':'stale';
     status.textContent='Snapshot '+freshness.toUpperCase()+' · '+row.event_count+' events · generated '+row.generated_at+' · received '+row.received_at+'. Only this signed-in account can read these records.';
     for(const event of snap.events.slice(0,50)){
       const item=document.createElement('div');item.className='rowitem';
