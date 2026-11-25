@@ -144,7 +144,7 @@ test("HQ separates zero-model integration fixtures from budget-gated live infere
   assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /lockReason: chatEnabled \? null : lockReasons\.join/);
 });
 test("updated HQ client assets are included in a versioned offline shell cache", () => {
-  assert.match(serviceWorker, /jarvis-x-hq-shell-v55/);
+  assert.match(serviceWorker, /jarvis-x-hq-shell-v56/);
   assert.match(serviceWorker, /\.\/local-chat-engine\.js/);
   assert.match(serviceWorker, /'\.\/mission-control\.js'/);
   assert.match(serviceWorker, /'\.\/hq\.js'/);
