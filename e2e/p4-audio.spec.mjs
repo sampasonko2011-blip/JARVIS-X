@@ -31,6 +31,15 @@ test.beforeEach(async ({ page }) => {
   await openChat(page);
 });
 
+test("voice self-test produces audible text only after explicit voice enablement", async ({ page }) => {
+  await expect(page.locator("#jx-audio-test-voice")).toBeDisabled();
+  await page.locator("#jx-audio-enabled").check();
+  await expect(page.locator("#jx-audio-test-voice")).toBeEnabled();
+  await page.locator("#jx-audio-test-voice").click();
+  await expect.poll(() => page.evaluate(() => window.__speech.spoken.length)).toBe(1);
+  expect(await page.evaluate(() => window.__speech.spoken[0].text)).toContain("JARVIS-X est prêt");
+});
+
 test("voice output is opt-in and speaks only a live assistant response", async ({ page }) => {
   await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:assistant-response", {
     detail: { mode: "live", text: "Bonjour, prêt à travailler." },
