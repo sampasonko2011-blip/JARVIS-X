@@ -12,13 +12,14 @@ test("local Qwen benchmark runs raw and AgentFactory pipeline against the same e
     engine,
     modelId: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
     prompt: "Explique la photosynthèse à partir du cours fourni.",
-    reference: "La photosynthèse utilise la lumière pour produire du glucose et de l’oxygène."
+    reference: "La photosynthèse utilise la lumière pour produire du glucose et de l’oxygène.",
+    runtimeEvidence: "TEST_DOUBLE"
   });
   assert.equal(calls, 2);
-  assert.equal(report.mode, "REAL_LOCAL_WEBLLM");
+  assert.equal(report.mode, "SIMULATED_TEST_DOUBLE");
   assert.equal(report.modelCalls, 2);
   assert.equal(report.cloudInferenceCalls, 0);
-  assert.equal(report.rawQwen.status, "REAL_LOCAL_MODEL_OUTPUT");
+  assert.equal(report.rawQwen.status, "SIMULATED_TEST_DOUBLE_OUTPUT");
   assert.equal(report.pipeline.agentFactory, "EXECUTED");
   assert.equal(report.pipeline.behavioralEngine, "EXECUTED");
   assert.equal(report.estimatedSpendEUR, 0);
