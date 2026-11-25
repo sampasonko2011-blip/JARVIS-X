@@ -132,7 +132,7 @@
         throw new Error("Snapshot enregistré invalide ou incompatible.");
       }
       const age = Date.now() - Date.parse(row.generated_at);
-      const freshness = age < 0 ? "UNKNOWN" : age <= 24 * 60 * 60 * 1000 ? "FRESH" : "STALE";
+      const freshness = row.snapshot.freshnessBasis === "ingestion_time_only" ? "UNKNOWN" : age < 0 ? "UNKNOWN" : age <= 24 * 60 * 60 * 1000 ? "FRESH" : "STALE";
       const count = row.snapshot.events.length;
       snapshotStatus.textContent = freshness + " · " + count + " events · reçu " + String(row.received_at || "inconnu") +
         " · source " + row.schema_version;
