@@ -4,7 +4,8 @@ import { AudioSessionController } from "./audio-session.mjs";
   const view = document.querySelector("#view-chat");
   const input = document.querySelector("#chat-compose");
   const enabled = document.querySelector("#jx-audio-enabled");
-  const testVoiceButton = document.querySelector("#jx-audio-test-voice");\n  const listenButton = document.querySelector("#jx-audio-listen");
+  const testVoiceButton = document.querySelector("#jx-audio-test-voice");
+  const listenButton = document.querySelector("#jx-audio-listen");
   const stopButton = document.querySelector("#jx-audio-stop");
   const replayButton = document.querySelector("#jx-audio-replay");
   const stateLabel = document.querySelector("#jx-audio-state");
@@ -28,7 +29,8 @@ import { AudioSessionController } from "./audio-session.mjs";
     listenButton.setAttribute("aria-pressed", String(snapshot.microphoneActive));
     listenButton.textContent = snapshot.microphoneActive ? "MICROPHONE ACTIF · ARRÊTER" : "ACTIVER MICROPHONE";
     listenButton.disabled = !recognitionConstructor || !speechAvailable && !recognitionConstructor;
-    replayButton.disabled = !lastAssistantText || !speechAvailable;\n    testVoiceButton.disabled = !speechAvailable || !enabled.checked;
+    replayButton.disabled = !lastAssistantText || !speechAvailable;
+    testVoiceButton.disabled = !speechAvailable || !enabled.checked;
     stopButton.disabled = snapshot.state === "IDLE" && !enabled.checked;
     if (message) status.textContent = message;
   };
@@ -157,7 +159,12 @@ import { AudioSessionController } from "./audio-session.mjs";
     render("Voix de sortie activée. Les réponses JARVIS-X reçues en mode live pourront être lues.");
   });
 
-  testVoiceButton.addEventListener("click", () => {\n    if (!enabled.checked) { render("Active la voix de sortie avant le test."); return; }\n    speak("JARVIS-X est prêt. La voix système fonctionne. Active le microphone uniquement lorsque tu souhaites parler.");\n  });\n\n  listenButton.addEventListener("click", () => {
+  testVoiceButton.addEventListener("click", () => {
+    if (!enabled.checked) { render("Active la voix de sortie avant le test."); return; }
+    speak("JARVIS-X est prêt. La voix système fonctionne. Active le microphone uniquement lorsque tu souhaites parler.");
+  });
+
+  listenButton.addEventListener("click", () => {
     if (listeningRequested || recognition) {
       stopRecognition();
       controller.stopListening();
