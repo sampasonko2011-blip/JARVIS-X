@@ -119,7 +119,7 @@ test("cross-platform memory is explicit opt-in and consent is sent per request",
   assert.match(client, /memory_consent:effectiveMemoryConsent/);
   assert.match(gateway, /body\.memory_consent === true/);
   assert.match(gateway, /await recallMemory\(task, user\.id, memoryConsent\)/);
-  assert.match(gateway, /await storeConversationMemory\\(task, reviewedAnswer, user\\.id, taskType, memoryConsent\\)/);
+  assert.match(gateway, /await storeConversationMemory\(task, reviewedAnswer, user\.id, taskType, memoryConsent\)/);
   assert.match(html, /Off by default/);
   assert.match(html, /Encrypted portable export\/import is available; automatic sync is not/);
 });
