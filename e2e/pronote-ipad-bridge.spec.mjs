@@ -18,7 +18,7 @@ test("PRONOTE bridge token UI creates once, copies and revokes through authentic
     expect(request.headers()["authorization"]).toContain("Bearer fixture-access-token");
     created = true;
     await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({
-      token: "one-time-test-token", token_id: "00000000-0000-4000-8000-000000000001",
+      token: "a".repeat(64), token_id: "00000000-0000-4000-8000-000000000001",
       expires_at: "2027-02-23T00:00:00.000Z"
     }) });
   });
@@ -31,10 +31,10 @@ test("PRONOTE bridge token UI creates once, copies and revokes through authentic
   });
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#pronote-token-create").click();
-  await expect(page.locator("#pronote-token-value")).toHaveValue("one-time-test-token");
+  await expect(page.locator("#pronote-token-value")).toHaveValue("a".repeat(64));
   await expect(page.locator("#pronote-token-status")).toContainText("Token created");
   expect(created).toBe(true);
-  expect(await page.evaluate(() => localStorage.getItem("one-time-test-token"))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("a".repeat(64)))).toBeNull();
 
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#pronote-token-revoke").click();
