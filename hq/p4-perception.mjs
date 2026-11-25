@@ -28,7 +28,7 @@ export function buildCoachPrompt(text, language="fr-FR", questionIndex=0) {
   const list = prompts[language] || prompts["fr-FR"];
   return { language:prompts[language] ? language : "fr-FR", question:list[Math.abs(questionIndex)%list.length], source };
 }
-export function scoreBenchmark({reference="",raw="",pipeline="",mode="manual-real"}={}) {
+export function scoreBenchmark({reference="",raw="",pipeline="",mode="manual-unverified"}={}) {
   const words = value => new Set(String(value).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []);
   const target = words(reference);
   const score = answer => {
@@ -70,6 +70,7 @@ function init() {
       if(check.kind==="text"){supportText=normalizeText(await selected.text());text.value=supportText;say("Texte importé localement · "+supportText.length+" caractères · aucun envoi réseau.");}
       else {
         const url=URL.createObjectURL(selected); const preview=$("p4-image-preview"); preview.replaceChildren(); const img=document.createElement("img");img.src=url;img.alt="Aperçu local du document image";preview.append(img);
+        if(typeof img.decode==="function") await img.decode();
         const Detector=window.TextDetector;
         if(typeof Detector==="function"){try{const detector=new Detector();const blocks=await detector.detect(img);supportText=normalizeText(blocks.map(b=>b.rawValue||"").join("\n"));text.value=supportText;say("OCR navigateur disponible · texte extrait localement. Vérifie le résultat.");}catch{say("OCR disponible mais extraction échouée. Saisis ou colle le texte manuellement.");}}
         else say("Image importée pour annotation · OCR_UNAVAILABLE dans ce navigateur. Aucun texte n'a été inventé : saisis ou colle le contenu manuellement.");
@@ -77,7 +78,9 @@ function init() {
       }
     }catch(error){say("Import non traité : "+String(error.message||error));}
   });
+  window.addEventListener("jx:pronote-snapshot",event=>{const snapshot=event.detail?.snapshot;if(event.detail?.schema_version!=="pronote.snapshot.v1"||!Array.isArray(snapshot?.events))return;supportText=normalizeText(snapshot.events.slice(0,250).map(item=>[item.summary,item.kind,item.start,item.description].filter(v=>typeof v==="string").join(" · ")).join("\n"));text.value=supportText;say("Snapshot PRONOTE v1 chargé · "+snapshot.events.length+" événements · vérifie la fraîcheur et le contenu.");});
   $("p4-use-text")?.addEventListener("click",()=>{try{supportText=normalizeText(text.value);say("Support prêt pour le coach oral. Source conservée localement.");}catch(e){say("Support invalide : "+String(e.message||e));}});
+  $("p4-use-pronote")?.addEventListener("click",()=>say("Rafraîchis d’abord le snapshot PRONOTE dans son panneau, puis réessaie."));
   $("p4-coach-next")?.addEventListener("click",()=>{try{if(!supportText)supportText=normalizeText(text.value);const n=Number($("p4-question-index").value||0);const prompt=buildCoachPrompt(supportText,lang.value,n);$("p4-question-index").value=String(n+1);coachOut.textContent=prompt.question+"\n\nSupport utilisé : "+prompt.source.slice(0,700)+(prompt.source.length>700?"…":"");}catch(e){coachOut.textContent="Ajoute d'abord un support textuel valide.";say(String(e.message||e));}});
   $("p4-speak")?.addEventListener("click",()=>{const speech=window.speechSynthesis;if(!speech||!window.SpeechSynthesisUtterance){say("Synthèse vocale indisponible.");return;}const u=new SpeechSynthesisUtterance(coachOut.textContent);u.lang=lang.value;speech.cancel();speech.speak(u);});
   $("p4-stop-speech")?.addEventListener("click",()=>window.speechSynthesis?.cancel());
