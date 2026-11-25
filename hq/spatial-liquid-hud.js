@@ -27,7 +27,7 @@
   ['runtime','#runtime-status'],
   ['gateway','#gateway-nav-state']
  ];
- const signals=new Map();
+ const accentByView={console:'cyan',forge:'cyan',workspace:'emerald',planning:'emerald',football:'amber',terrain:'amber',audit:'red',gateway:'red'};\n const signals=new Map();
  for(const [key] of sources)signals.set(key,pill.querySelector('[data-signal="'+key+'"]'));
  function tone(key,value){
   const v=String(value||'').toUpperCase();
@@ -57,7 +57,7 @@
  }
  // Undo is deliberately scoped to navigation history; it does not reverse data writes or external actions.
  const history=[];
- let activeView=document.querySelector('[data-view].active')?.dataset.view||'overview';
+ let activeView=document.querySelector('.side .nav [data-view].active')?.dataset.view||'overview';\n function applyAccent(view){document.body.dataset.jxAccent=accentByView[view]||'cyan';}\n applyAccent(activeView);
  const undo=dock.querySelector('[data-jx-undo]');
  const undoLabel=undo?.querySelector('[data-jx-undo-label]');
  function updateUndo(){
