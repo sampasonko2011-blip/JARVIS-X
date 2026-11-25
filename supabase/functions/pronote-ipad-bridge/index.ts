@@ -1,5 +1,5 @@
 import { parseICalendar } from "../../../src/core/icalendar.ts";
-import { canonicalSnapshot, sha256Hex, validatePronoteSnapshot } from "../../../src/core/pronote-bridge-contract.mjs";
+import { canonicalSnapshot, isOlderSnapshotReplay, sha256Hex, validatePronoteSnapshot } from "../../../src/core/pronote-bridge-contract.mjs";
 
 const ALLOWED_ORIGINS = new Set([
   "https://sampasonko2011-blip.github.io",
@@ -199,13 +199,16 @@ async function ingest(req: Request, origin: string) {
   const canonical = canonicalSnapshot(snapshot as never);
   const snapshotHash = await sha256Hex(canonical);
   const userId = tokenRow.user_id as string;
-  const existingQuery = new URLSearchParams({ select: "snapshot_hash,received_at", user_id: "eq." + userId, limit: "1" });
+  const existingQuery = new URLSearchParams({ select: "snapshot_hash,received_at,generated_at,snapshot", user_id: "eq." + userId, limit: "1" });
   const existingResponse = await rest("pronote_ipad_snapshots?" + existingQuery);
   if (!existingResponse.ok) { await existingResponse.text(); return json({ error: "snapshot_lookup_failed" }, 503, origin); }
   const existingRows = await existingResponse.json().catch(() => []);
   const existing = Array.isArray(existingRows) ? existingRows[0] : null;
   if (existing?.snapshot_hash === snapshotHash) {
     return json({ accepted: true, duplicate: true, snapshot_hash: snapshotHash, received_at: existing.received_at, event_count: (snapshot.events as unknown[]).length }, 200, origin);
+  }
+  if (isOlderSnapshotReplay(snapshot, existing)) {
+    return json({ error: "stale_snapshot_replay", message: "An older timestamped snapshot cannot replace a newer stored snapshot." }, 409, origin);
   }
   const receivedAt = new Date().toISOString();
   const saved = await rest("pronote_ipad_snapshots?on_conflict=user_id", {
