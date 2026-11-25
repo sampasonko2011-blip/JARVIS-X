@@ -16,7 +16,7 @@
     "forge:sandbox": "node scripts/forge-sandbox-runner.mjs",
     "build:local-chat": "esbuild hq/local-chat-engine.js --bundle --format=iife --platform=browser --target=es2022 --outfile=hq/local-chat-engine.bundle.js && node scripts/verify-local-chat-engine-bundle.mjs",
     "benchmark:p4": "npm run build && node benchmarks/p4-pipeline-benchmark.mjs",
-    "build:p4-perception": "esbuild hq/p4-perception.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=hq/p4-perception.bundle.mjs && esbuild node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs --bundle --format=es --platform=browser --target=es2022 --outfile=hq/pdf.worker.bundle.mjs"
+    "build:p4-perception": "esbuild hq/p4-perception.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=hq/p4-perception.bundle.mjs && esbuild node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs --bundle --format=esm --platform=browser --target=es2022 --outfile=hq/pdf.worker.bundle.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
