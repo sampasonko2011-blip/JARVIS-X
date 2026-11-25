@@ -79,6 +79,7 @@ function init() {
     }catch(error){say("Import non traité : "+String(error.message||error));}
   });
   window.addEventListener("jx:pronote-snapshot",event=>{const snapshot=event.detail?.snapshot;if(event.detail?.schema_version!=="pronote.snapshot.v1"||!Array.isArray(snapshot?.events))return;supportText=normalizeText(snapshot.events.slice(0,250).map(item=>[item.summary,item.kind,item.start,item.description].filter(v=>typeof v==="string").join(" · ")).join("\n"));text.value=supportText;say("Snapshot PRONOTE v1 chargé · "+snapshot.events.length+" événements · vérifie la fraîcheur et le contenu.");});
+  lang?.addEventListener("change",()=>{$("p4-question-index").value="0";});
   $("p4-use-text")?.addEventListener("click",()=>{try{supportText=normalizeText(text.value);say("Support prêt pour le coach oral. Source conservée localement.");}catch(e){say("Support invalide : "+String(e.message||e));}});
   $("p4-use-pronote")?.addEventListener("click",()=>say("Rafraîchis d’abord le snapshot PRONOTE dans son panneau, puis réessaie."));
   $("p4-coach-next")?.addEventListener("click",()=>{try{if(!supportText)supportText=normalizeText(text.value);const n=Number($("p4-question-index").value||0);const prompt=buildCoachPrompt(supportText,lang.value,n);$("p4-question-index").value=String(n+1);coachOut.textContent=prompt.question+"\n\nSupport utilisé : "+prompt.source.slice(0,700)+(prompt.source.length>700?"…":"");}catch(e){coachOut.textContent="Ajoute d'abord un support textuel valide.";say(String(e.message||e));}});
