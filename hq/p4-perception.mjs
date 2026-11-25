@@ -3,13 +3,14 @@ const MAX_TEXT_CHARS = 120000;
 const STORAGE_KEY = "jx-p4-perception-v1";
 const MIME_TEXT = new Set(["text/plain","text/markdown","text/csv","application/json"]);
 const MIME_IMAGE = new Set(["image/png","image/jpeg","image/webp"]);
+const MIME_PDF = new Set(["application/pdf"]);
 
 export function validateImport(file) {
   if (!file || typeof file.size !== "number" || typeof file.type !== "string") return { valid:false, reason:"INVALID_FILE" };
   if (file.size < 1) return { valid:false, reason:"EMPTY_FILE" };
   if (file.size > MAX_FILE_BYTES) return { valid:false, reason:"FILE_TOO_LARGE", maxBytes:MAX_FILE_BYTES };
-  if (!MIME_TEXT.has(file.type) && !MIME_IMAGE.has(file.type)) return { valid:false, reason:"UNSUPPORTED_TYPE" };
-  return { valid:true, kind:MIME_TEXT.has(file.type) ? "text" : "image" };
+  if (!MIME_TEXT.has(file.type) && !MIME_IMAGE.has(file.type) && !MIME_PDF.has(file.type)) return { valid:false, reason:"UNSUPPORTED_TYPE" };
+  return { valid:true, kind:MIME_TEXT.has(file.type) ? "text" : MIME_IMAGE.has(file.type) ? "image" : "pdf" };
 }
 export function normalizeText(text) {
   if (typeof text !== "string") throw new TypeError("TEXT_REQUIRED");
@@ -68,6 +69,16 @@ function init() {
     if(!check.valid){say("Import refusé : "+check.reason+(check.maxBytes?" · maximum 8 Mio":""));return;}
     try{
       if(check.kind==="text"){supportText=normalizeText(await selected.text());text.value=supportText;say("Texte importé localement · "+supportText.length+" caractères · aucun envoi réseau.");}
+      else if(check.kind==="pdf"){
+        supportText="";
+        text.value="";
+        const preview=$("p4-image-preview");
+        preview.replaceChildren();
+        const notice=document.createElement("p");
+        notice.textContent="PDF accepté localement ("+selected.name+"). PDF_TEXT_EXTRACTION_UNAVAILABLE : aucun moteur PDF local n’est installé dans cette version. Aucun envoi réseau ni extraction fictive. Copie/colle le texte dans le champ Support pour utiliser le coach.";
+        preview.append(notice);
+        say("PDF accepté · PDF_TEXT_EXTRACTION_UNAVAILABLE · extraction non effectuée.");
+      }
       else {
         const url=URL.createObjectURL(selected); const preview=$("p4-image-preview"); preview.replaceChildren(); const img=document.createElement("img");img.onload=()=>URL.revokeObjectURL(url);img.onerror=()=>URL.revokeObjectURL(url);img.src=url;img.alt="Aperçu local du document image";preview.append(img);
         if(typeof img.decode==="function") await img.decode();
