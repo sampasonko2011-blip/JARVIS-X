@@ -145,4 +145,33 @@ if(pronoteRevoke)pronoteRevoke.addEventListener('click',async()=>{
 });
 if(document.querySelector('#pronote-token-revoke')&&sessionStorage.getItem('jx-pronote-token-id'))document.querySelector('#pronote-token-revoke').disabled=false;
 
+const pronoteSnapshotRefresh=document.querySelector('#pronote-snapshot-refresh');
+if(pronoteSnapshotRefresh)pronoteSnapshotRefresh.addEventListener('click',async()=>{
+  const status=document.querySelector('#pronote-snapshot-status'),list=document.querySelector('#pronote-snapshot-events');
+  pronoteSnapshotRefresh.disabled=true;status.textContent='Reading the authenticated account snapshot…';list.replaceChildren();
+  try{
+    const session=await jxEnsureSession().catch(()=>null);
+    if(!session)throw new Error('Sign in to JARVIS-X first.');
+    const query='?select=schema_version,generated_at,received_at,snapshot_hash,event_count,snapshot&limit=1';
+    const response=await fetch(JX_SUPABASE_URL+'/rest/v1/pronote_ipad_snapshots'+query,{
+      method:'GET',cache:'no-store',headers:{apikey:JX_SUPABASE_KEY,Authorization:'Bearer '+session.access_token,Accept:'application/json'}
+    });
+    const rows=await response.json().catch(()=>[]);
+    if(!response.ok)throw new Error('Snapshot read returned HTTP '+response.status+'. Verify migration and RLS.');
+    if(!Array.isArray(rows)||!rows.length){status.textContent='No PRONOTE snapshot has been received for this account yet.';return;}
+    const row=rows[0],snap=row.snapshot;
+    if(!snap||snap.schemaVersion!=='pronote.snapshot.v1'||!Array.isArray(snap.events))throw new Error('Stored snapshot failed schema validation.');
+    const age=Date.now()-Date.parse(row.generated_at),freshness=!Number.isFinite(age)||age<0?'unknown':age<=86400000?'fresh':'stale';
+    status.textContent='Snapshot '+freshness.toUpperCase()+' · '+row.event_count+' events · generated '+row.generated_at+' · received '+row.received_at+'. Only this signed-in account can read these records.';
+    for(const event of snap.events.slice(0,50)){
+      const item=document.createElement('div');item.className='rowitem';
+      const title=document.createElement('strong');title.textContent=String(event.summary||'Untitled event').slice(0,180);
+      const detail=document.createElement('p');detail.textContent=String(event.kind||'other')+' · '+String(event.start||'')+' → '+String(event.end||'');
+      item.append(title,detail);list.append(item);
+    }
+    if(snap.events.length>50){const note=document.createElement('p');note.textContent='Showing 50 of '+snap.events.length+' events.';list.append(note);}
+  }catch(error){status.textContent='Snapshot unavailable: '+String(error.message||error)+'.';}
+  finally{pronoteSnapshotRefresh.disabled=false;}
+});
+
 if(document.querySelector('#chat-auth-send'))jxHandleAuthCallback().then(()=>{if(jxSession)checkChatGateway();}).catch(()=>{});if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').then(registration=>registration.update()).catch(()=>{});render();
