@@ -24,13 +24,13 @@ test('v29 spatial audio persists mode, enablement and volume', async () => {
 
 test('v29 Service Worker uses its own cache and precaches the new module', async () => {
   const sw = await read('../hq/sw.js');
-  assert.match(sw, /jarvis-x-hq-shell-v55/);
+  assert.match(sw, /jarvis-x-hq-shell-v56/);
   assert.match(sw, /observatory-v29\.js/);
   assert.match(sw, /clients\.claim/);
 });
 
 test('v29 browser scripts parse without syntax errors', async () => {
-  for (const path of ['hq/observatory.js','hq/observatory-v29.js','hq/spatial-mode.js','hq/sw.js']) {
+  for (const path of ['hq/observatory.js','hq/observatory-v29.js','hq/spatial-mode.js','hq/audio-full-duplex.js','hq/audio-session.mjs','hq/sw.js']) {
     const result = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
     assert.equal(result.status, 0, path + ': ' + result.stderr);
   }
