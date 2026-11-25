@@ -83,18 +83,18 @@ test("P4.3 extracts text from a valid PDF locally for the oral coach", async ({ 
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    "<< /Length " + Buffer.byteLength(stream) + " >>\\nstream\\n" + stream + "\\nendstream"
+    "<< /Length " + Buffer.byteLength(stream) + " >>\nstream\n" + stream + "\nendstream"
   ];
-  let source = "%PDF-1.4\\n";
+  let source = "%PDF-1.4\n";
   const offsets = [0];
   objects.forEach((object, index) => {
     offsets.push(Buffer.byteLength(source));
-    source += (index + 1) + " 0 obj\\n" + object + "\\nendobj\\n";
+    source += (index + 1) + " 0 obj\n" + object + "\nendobj\n";
   });
   const xrefOffset = Buffer.byteLength(source);
-  source += "xref\\n0 6\\n0000000000 65535 f \\n";
-  for (const offset of offsets.slice(1)) source += String(offset).padStart(10, "0") + " 00000 n \\n";
-  source += "trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n" + xrefOffset + "\\n%%EOF";
+  source += "xref\n0 6\n0000000000 65535 f \n";
+  for (const offset of offsets.slice(1)) source += String(offset).padStart(10, "0") + " 00000 n \n";
+  source += "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF";
   await page.locator("#p4-file").setInputFiles({
     name: "lesson.pdf",
     mimeType: "application/pdf",
