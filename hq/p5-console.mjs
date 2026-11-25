@@ -73,6 +73,38 @@ $("#p5-enqueue")?.addEventListener("click", async () => {
     message(`Not queued: ${error.message}`, "error");
   }
 });
+$("#p5-xmemo-sync")?.addEventListener("click", async () => {
+  const consent = $("#p5-xmemo-consent");
+  if (!consent?.checked) return message("XMemo sync blocked: explicit consent is required.", "error");
+  if (typeof window.jxP5StoreXMemo !== "function") return message("Authenticated HQ-to-XMemo transport is unavailable.", "error");
+  if (!queue) return refresh();
+  const pending = (await queue.list()).filter((item) => item.status === "pending");
+  if (!pending.length) return message("No pending records to send.", "info");
+  if (!confirm(`Send ${pending.length} pending record(s) to your linked XMemo account? This sends their contents outside this device.`)) return;
+  const button = $("#p5-xmemo-sync");
+  button.disabled = true;
+  try {
+    const result = await queue.flush({
+      limit: 10,
+      send: async (item) => {
+        const content = JSON.stringify({
+          source: "JARVIS-X P5 encrypted outbox",
+          idempotency_key: item.idempotencyKey,
+          mutation_type: item.type,
+          payload: item.payload
+        });
+        if (content.length > 11_500) throw new Error("XMEMO_RECORD_TOO_LARGE");
+        return await window.jxP5StoreXMemo(content);
+      }
+    });
+    message(`XMemo handoff result: ${result.sent} stored, ${result.failed} failed. Check XMemo before retrying any ambiguous delivery.`, result.failed ? "error" : "success");
+    await refresh();
+  } catch (error) {
+    message(`XMemo handoff stopped: ${error.message}`, "error");
+  } finally {
+    button.disabled = false;
+  }
+});
 $("#p5-refresh")?.addEventListener("click", refresh);
 $("#p5-recover")?.addEventListener("click", async () => {
   if (!queue) return refresh();
