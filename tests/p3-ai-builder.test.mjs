@@ -40,7 +40,7 @@ test("L3 approval is bound to exact artifact and permission contract", () => {
 test("L3 approval rejects unbound or missing human confirmation", () => {
   const artifact = createToolArtifact({ id: "add", source, tests, contract });
   assert.throws(() => createLocalApprovalFixture(artifact, { approved: true, digest: "0".repeat(64), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
-  assert.throws(() => sealHumanApproval(artifact, { approved: false, digest: computeApprovalDigest(artifact), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
+  assert.throws(() => createLocalApprovalFixture(artifact, { approved: false, digest: computeApprovalDigest(artifact), actor: "x", confirmedAt: new Date().toISOString() }), /approval_invalid/);
 });
 
 test("AI Builder requires Saboteur pass and successful sandbox controls", async () => {
