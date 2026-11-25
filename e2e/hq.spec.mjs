@@ -630,7 +630,7 @@ test("P1.2 touch targets and Neural Pill shortcuts meet the 44px accessibility f
   await page.setViewportSize({ width: 390, height: 844 });
   await enterHQ(page);
   const dockTargets = page.locator("#jx-control-dock button, #jx-control-dock a");
-  const pillTargets = page.locator("#jx-neural-pill button[data-signal]");
+  const pillTargets = page.locator("#jx-neural-pill button[data-signal-wrap]");
   await expect(dockTargets).toHaveCount(5);
   await expect(pillTargets).toHaveCount(4);
   for (const targets of [dockTargets, pillTargets]) {
