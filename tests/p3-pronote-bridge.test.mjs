@@ -39,7 +39,7 @@ test("official-style iCalendar events are parsed into normalized PRONOTE events"
   const ics = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
     "UID:school-ics-001", "DTSTART:20261126T090000Z", "DTEND:20261126T100000Z",
-    "SUMMARY:Math class", "DESCRIPTION:Chapter 4", "END:VEVENT", "END:VCALENDAR"
+    "SUMMARY:Cours de mathématiques", "DESCRIPTION:Chapter 4", "END:VEVENT", "END:VCALENDAR"
   ].join("\r\n");
   const events = parseICalendar(ics, "pronote", { rangeStart: "2026-11-01T00:00:00Z", rangeEnd: "2027-01-01T00:00:00Z" });
   assert.equal(events.length, 1);
