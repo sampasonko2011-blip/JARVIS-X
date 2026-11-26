@@ -89,6 +89,7 @@ test("XMemo handoff requires consent and uses the authenticated HQ endpoint", as
   await page.getByRole("button", { name: /Offline & evolution/i }).click();
   await page.context().setOffline(true);
   await page.locator("#p5-payload").fill('{"title":"XMemo handoff fixture","body":"synthetic non-sensitive data"}');
+  await page.locator("#p5-idempotency").fill("jx-sha256-" + "a".repeat(64));
   await page.locator("#p5-enqueue").click();
   await expect(page.locator("#p5-pending-count")).toHaveText("1");
   await expect.poll(() => received).toBeUndefined();
