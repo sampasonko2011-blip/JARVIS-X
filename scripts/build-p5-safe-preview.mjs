@@ -38,7 +38,7 @@ for (const name of allowlist) cpSync(path.join(source, name), path.join(output, 
 
 // Strip the production Supabase project identifier and publishable key from every
 // staged text asset. CSP is the primary network boundary; redaction is defense in depth.
-for (const name of allowlist.filter((file) => /\\.(?:html|js|mjs|css|json|webmanifest)$/.test(file))) {
+for (const name of allowlist.filter((file) => [".html", ".js", ".mjs", ".css", ".json", ".webmanifest"].some((ext) => file.endsWith(ext)))) {
   const target = path.join(output, name);
   let content = readFileSync(target, "utf8");
   content = content.replaceAll("https://xfewajxkqntflfntisut.supabase.co", "https://preview-network-disabled.invalid");
