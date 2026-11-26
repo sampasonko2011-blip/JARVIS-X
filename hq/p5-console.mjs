@@ -98,7 +98,7 @@ $("#p5-xmemo-sync")?.addEventListener("click", async () => {
           mutation_type: item.type,
           payload: item.payload
         });
-        if (content.length > 11_500) throw new Error("XMEMO_RECORD_TOO_LARGE");
+        if (new TextEncoder().encode(content).byteLength > 11_500) throw new Error("XMEMO_RECORD_TOO_LARGE");
         return await window.jxP5StoreXMemo(content);
       }
     });
