@@ -61,7 +61,14 @@ async function refresh() {
     render(records);
   } catch (error) {
     state.ready = false;
-    render([]);
+    $("#p5-pending-count").textContent = "—";
+    $("#p5-synced-count").textContent = "—";
+    $("#p5-db-status").textContent = "UNAVAILABLE · DATA PRESERVED";
+    const root = $("#p5-outbox");
+    root.replaceChildren();
+    const warning = document.createElement("p");
+    warning.textContent = "Outbox state unavailable. Stored records were not deleted. Do not reset browser storage or the encryption key.";
+    root.append(warning);
     message(`Local outbox unavailable: ${error.message}`, "error");
   }
 }
