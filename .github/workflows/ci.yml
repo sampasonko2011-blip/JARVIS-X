@@ -18,6 +18,15 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      # Static, branch-scoped HQ preview artifact only; this does not publish or deploy a site.
+      - name: Upload P5 HQ static preview bundle
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/p5-offline-sync-evolution'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hq-p5-preview
+          path: hq/
+          if-no-files-found: error
+          retention-days: 7
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
