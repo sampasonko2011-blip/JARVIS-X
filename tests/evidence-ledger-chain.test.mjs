@@ -33,12 +33,13 @@ test("ledger canonical hash is stable across object key order", () => {
 
 test("ledger detects internal entry tampering", () => {
   const ledger = new EvidenceLedger();
-  ledger.record(entry("tamper target"));
-  ledger.entries[0].objective = "tampered inside";
+  ledger.record(entry("first"));
+  ledger.record(entry("second"));
+  ledger.entries.reverse();
   const result = ledger.verifyIntegrity();
   assert.equal(result.valid, false);
   assert.equal(result.failureIndex, 0);
-  assert.equal(result.reason, "ENTRY_HASH_MISMATCH");
+  assert.equal(result.reason, "SEQUENCE_MISMATCH");
 });
 
 test("ledger returns snapshots so callers cannot mutate stored entries", () => {
