@@ -32,7 +32,7 @@ test("ledger canonical hash is stable across object key order", () => {
 test("ledger returns snapshots so callers cannot mutate stored entries", () => {
   const ledger = new EvidenceLedger();
   const returned = ledger.record(entry("immutable snapshot"));
-  (returned as any).objective = "tampered";
+  returned.objective = "tampered";
   assert.equal(ledger.all()[0].objective, "immutable snapshot");
   assert.equal(ledger.verifyIntegrity().valid, true);
 });
