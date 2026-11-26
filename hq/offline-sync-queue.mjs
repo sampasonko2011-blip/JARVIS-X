@@ -94,7 +94,7 @@ export class OfflineSyncQueue {
           // Never silently replace a missing key while encrypted records still exist.
           const hasCiphertext = records.some((record) => record?.payloadCiphertext && record?.payloadIv);
           if (hasCiphertext) {
-            try { tx.abort(); } catch {}
+            await done;
             throw new Error("QUEUE_KEY_LOST");
           }
           selected = await this.crypto.subtle.generateKey(
