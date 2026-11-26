@@ -41,7 +41,7 @@ for (const name of allowlist) cpSync(path.join(source, name), path.join(output, 
 for (const name of allowlist.filter((file) => /\\.(?:html|js|mjs|css|json|webmanifest)$/.test(file))) {
   const target = path.join(output, name);
   let content = readFileSync(target, "utf8");
-  content = content.replace(/https:\\/\\/xfewajxkqntflfntisut\\.supabase\\.co/gi, "https://preview-network-disabled.invalid");
+  content = content.replaceAll("https://xfewajxkqntflfntisut.supabase.co", "https://preview-network-disabled.invalid");
   content = content.replace(/sb_publishable_[A-Za-z0-9_-]+/g, "PREVIEW_SUPABASE_DISABLED");
   writeFileSync(target, content);
 }
