@@ -1,4 +1,4 @@
-import { OfflineSyncQueue } from "./offline-sync-queue.mjs";
+import { OfflineSyncQueue, createDeterministicIdempotencyKey } from "./offline-sync-queue.mjs";
 import { LwwElementSet } from "./crdt-lww-set.mjs";
 
 const $ = (selector) => document.querySelector(selector);
@@ -99,7 +99,7 @@ $("#p5-xmemo-sync")?.addEventListener("click", async () => {
           payload: item.payload
         });
         if (new TextEncoder().encode(content).byteLength > 11_500) throw new Error("XMEMO_RECORD_TOO_LARGE");
-        return await window.jxP5StoreXMemo(content);
+        return await window.jxP5StoreXMemo(content, item.idempotencyKey);
       }
     });
     message(`XMemo handoff result: ${result.sent} stored, ${result.failed} failed. Check XMemo before retrying any ambiguous delivery.`, result.failed ? "error" : "success");
@@ -148,7 +148,10 @@ window.addEventListener("jx:memory-mutation", async (event) => {
     const crdt = new LwwElementSet({ actor: "hq-browser", state: previous?.payload?.crdt });
     const record = { id: note.id, title: note.title.slice(0, 240), body: note.body.slice(0, 12000), time: String(note.time ?? "") };
     crdt.add(record);
-    await queue.enqueue({ type: "memory.note.crdt", idempotencyKey: `memory:${note.id}`, metadata: { source: "hq-local-memory", queuedAt: Date.now() }, payload: { record, crdt: crdt.export() } });
+    const payload = { record, crdt: crdt.export() };
+    const causalClock = payload.crdt.history.at(-1)?.clock ?? null;
+    const idempotencyKey = await createDeterministicIdempotencyKey({ type: "memory.note.crdt", payload, causalClock });
+    await queue.enqueue({ type: "memory.note.crdt", idempotencyKey, metadata: { source: "hq-local-memory", queuedAt: Date.now(), causalClock }, payload });
     message("HQ memory change encrypted and queued locally. No XMemo write or remote sync was performed.", "success");
     await refresh();
   } catch (error) { message(`Memory queue failed: ${error.message}`, "error"); }
@@ -169,11 +172,14 @@ window.addEventListener("jx:pronote-snapshot", async (event) => {
     }));
     for (const item of normalized) crdt.add(item);
     const hash = String(detail.snapshot_hash ?? `local-${detail.generated_at ?? Date.now()}`).replace(/[^a-zA-Z0-9._:-]/g, "").slice(0, 120);
+    const payload = { schema_version: detail.schema_version, snapshot_hash: hash, events: normalized, crdt: crdt.export() };
+    const causalClock = payload.crdt.history.at(-1)?.clock ?? null;
+    const idempotencyKey = await createDeterministicIdempotencyKey({ type: "pronote.snapshot.crdt", payload, causalClock });
     await queue.enqueue({
       type: "pronote.snapshot.crdt",
-      idempotencyKey: `pronote:${hash || Date.now()}`,
-      metadata: { schema_version: detail.schema_version, generated_at: detail.generated_at ?? null, source: "authenticated-pronote-read" },
-      payload: { schema_version: detail.schema_version, snapshot_hash: hash, events: normalized, crdt: crdt.export() }
+      idempotencyKey,
+      metadata: { schema_version: detail.schema_version, generated_at: detail.generated_at ?? null, source: "authenticated-pronote-read", causalClock },
+      payload
     });
     message("Authenticated PRONOTE snapshot encrypted and queued locally. No remote write or sync was performed.", "success");
     await refresh();
