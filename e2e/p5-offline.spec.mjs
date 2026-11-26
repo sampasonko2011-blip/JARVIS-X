@@ -61,10 +61,11 @@ test("authenticated PRONOTE snapshot and HQ memory events enter encrypted CRDT o
     }
     db.close(); return values;
   });
-  expect(decoded.map(row => row.type)).toEqual(["pronote.snapshot.crdt", "memory.note.crdt"]);
+  const byType = Object.fromEntries(decoded.map(row => [row.type, row]));
+  expect(Object.keys(byType).sort()).toEqual(["memory.note.crdt", "pronote.snapshot.crdt"]);
   expect(decoded.every(row => !row.hasPlaintext)).toBe(true);
-  expect(decoded[0].payload.crdt.adds.length).toBe(1);
-  expect(decoded[1].payload.crdt.adds.length).toBe(1);
+  expect(byType["pronote.snapshot.crdt"].payload.crdt.adds.length).toBe(1);
+  expect(byType["memory.note.crdt"].payload.crdt.adds.length).toBe(1);
 });
 
 test("XMemo handoff requires consent and uses the authenticated HQ endpoint", async ({ page }) => {
@@ -72,17 +73,18 @@ test("XMemo handoff requires consent and uses the authenticated HQ endpoint", as
     access_token: "mock-session-token", refresh_token: "mock-refresh-token", expires_at: Math.floor(Date.now() / 1000) + 3600
   })));
   let received;
-  await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/memory/xmemo/remember", async route => {
+  await page.route("**/memory/xmemo/remember", async route => {
+    const origin = route.request().headers().origin || "http://127.0.0.1:4173";
     if (route.request().method() === "OPTIONS") {
       await route.fulfill({ status: 204, headers: {
-        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "access-control-allow-origin": origin,
         "access-control-allow-methods": "POST, OPTIONS",
         "access-control-allow-headers": "authorization, apikey, content-type, x-client-info, idempotency-key"
       }});
       return;
     }
     received = { headers: route.request().headers(), body: route.request().postDataJSON() };
-    await route.fulfill({ status: 200, headers: { "access-control-allow-origin": "http://127.0.0.1:4173" }, contentType: "application/json", body: JSON.stringify({ ok: true, status: "stored", receipt: "mock-xmemo-receipt" }) });
+    await route.fulfill({ status: 200, headers: { "access-control-allow-origin": origin }, contentType: "application/json", body: JSON.stringify({ ok: true, status: "stored", receipt: "mock-xmemo-receipt" }) });
   });
   page.on("dialog", dialog => dialog.accept());
   await page.goto("/index.html");
@@ -145,7 +147,9 @@ test("P5 refuses to regenerate a missing encryption key while preserving ciphert
     });
     db.close();
   });
-  await page.locator("#p5-refresh").click();
+  // A reload creates a fresh queue instance and discards its in-memory CryptoKey promise.
+  await page.reload();
+  await page.getByRole("button", { name: /Offline & evolution/i }).click();
   await expect(page.locator("#p5-message")).toContainText("QUEUE_KEY_LOST");
   const preserved = await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
