@@ -13,7 +13,6 @@ test("ledger appends a SHA-256 linked chain and verifies it", () => {
   const ledger = new EvidenceLedger();
   const first = ledger.record(entry("first"));
   const second = ledger.record(entry("second"));
-  const canonical = JSON.stringify({ sequence: 0, previousHash: "0".repeat(64), entry: entry("first") }, Object.keys({ sequence: 0, previousHash: "", entry: {} }).sort());
   assert.match(first.hash, /^[a-f0-9]{64}$/);
   assert.equal(first.hash.length, 64);
   assert.equal(first.sequence, 0);
