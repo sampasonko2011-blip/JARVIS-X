@@ -1,0 +1,47 @@
+name: Build isolated P5 safe preview
+
+on:
+  push:
+    branches:
+      - preview/p5-safe-artifact
+    paths:
+      - "scripts/build-p5-safe-preview.mjs"
+      - ".github/workflows/build-p5-safe-preview.yml"
+      - "hq/**"
+      - "package.json"
+      - "tsconfig.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-x-p5-safe-preview
+  cancel-in-progress: true
+
+jobs:
+  build-safe-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated preview branch
+        uses: actions/checkout@v4
+        with:
+          ref: preview/p5-safe-artifact
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install declared dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build browser bundles
+        run: npm run build
+      - name: Build and validate the static allowlist
+        run: node scripts/build-p5-safe-preview.mjs
+      - name: Upload isolated preview artifact (no deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hq-p5-safe-preview
+          path: dist/hq-p5-safe-preview/
+          if-no-files-found: error
+          retention-days: 7
