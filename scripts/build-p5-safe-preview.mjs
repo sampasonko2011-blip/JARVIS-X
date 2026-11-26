@@ -36,6 +36,16 @@ if (missing.length) throw new Error("PREVIEW_ALLOWLIST_MISSING: " + missing.join
 
 for (const name of allowlist) cpSync(path.join(source, name), path.join(output, name));
 
+// Strip the production Supabase project identifier and publishable key from every
+// staged text asset. CSP is the primary network boundary; redaction is defense in depth.
+for (const name of allowlist.filter((file) => /\\.(?:html|js|mjs|css|json|webmanifest)$/.test(file))) {
+  const target = path.join(output, name);
+  let content = readFileSync(target, "utf8");
+  content = content.replace(/https:\\/\\/xfewajxkqntflfntisut\\.supabase\\.co/gi, "https://preview-network-disabled.invalid");
+  content = content.replace(/sb_publishable_[A-Za-z0-9_-]+/g, "PREVIEW_SUPABASE_DISABLED");
+  writeFileSync(target, content);
+}
+
 const strictCsp = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; manifest-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'";
 const htmlFiles = allowlist.filter((name) => name.endsWith(".html"));
 for (const name of htmlFiles) {
