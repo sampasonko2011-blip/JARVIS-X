@@ -229,6 +229,7 @@ export const OFFLINE_QUEUE_CONTRACT = Object.freeze({
   threatBoundary: "protects database exports at rest; not same-origin script compromise",
   automaticRemoteSync: false,
   transport: "injected explicitly by caller",
-  idempotency: "stable idempotencyKey passed unchanged to transport",
+  idempotency: "stable local idempotencyKey passed to transport; remote dedupe is not guaranteed",
+  remoteDeliverySemantics: "manual at-least-once; ambiguous deliveries are quarantined as delivery_unknown",
   maxPayloadBytes: MAX_PAYLOAD_BYTES,
 });
