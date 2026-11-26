@@ -91,6 +91,7 @@ test("XMemo handoff requires consent and uses the authenticated HQ endpoint", as
   await page.locator("#p5-xmemo-sync").click();
   await expect(page.locator("#p5-synced-count")).toHaveText("1");
   expect(received.headers.authorization).toBe("Bearer mock-session-token");
+  expect(received.headers["idempotency-key"]).toMatch(/^jx-sha256-[a-f0-9]{64}$/);
   expect(received.body.consent).toBe(true);
   expect(received.body.content).toContain("idempotency_key");
 });
@@ -111,4 +112,48 @@ test("P5 CRDT merges two concurrent local replicas deterministically in the brow
   expect(result.ipad).toHaveLength(1);
   expect(result.ipadHistory).toBe(2);
   expect(result.webHistory).toBe(2);
+});
+
+
+test("P5 refuses to regenerate a missing encryption key while preserving ciphertext", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.getByRole("button", { name: /Offline & evolution/i }).click();
+  await page.locator("#p5-payload").fill('{"title":"preserve encrypted data","body":"do not discard"}');
+  await page.locator("#p5-enqueue").click();
+  await expect(page.locator("#p5-pending-count")).toHaveText("1");
+  await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open("jarvis-x-p5", 3);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("crypto_keys", "readwrite");
+      tx.objectStore("crypto_keys").delete("payload-aes-gcm-v1");
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    db.close();
+  });
+  await page.locator("#p5-refresh").click();
+  await expect(page.locator("#p5-message")).toContainText("QUEUE_KEY_LOST");
+  const preserved = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open("jarvis-x-p5", 3);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const rows = await new Promise((resolve, reject) => {
+      const tx = db.transaction("outbox", "readonly");
+      const req = tx.objectStore("outbox").getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return rows;
+  });
+  expect(preserved).toHaveLength(1);
+  expect(preserved[0]).toHaveProperty("payloadCiphertext");
+  expect(preserved[0]).not.toHaveProperty("payload");
 });
