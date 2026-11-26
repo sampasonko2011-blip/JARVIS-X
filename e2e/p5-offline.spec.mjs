@@ -73,8 +73,16 @@ test("XMemo handoff requires consent and uses the authenticated HQ endpoint", as
   })));
   let received;
   await page.route("https://xfewajxkqntflfntisut.supabase.co/functions/v1/hq-gateway-v12/memory/xmemo/remember", async route => {
+    if (route.request().method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers: {
+        "access-control-allow-origin": "http://127.0.0.1:4173",
+        "access-control-allow-methods": "POST, OPTIONS",
+        "access-control-allow-headers": "authorization, apikey, content-type, x-client-info, idempotency-key"
+      }});
+      return;
+    }
     received = { headers: route.request().headers(), body: route.request().postDataJSON() };
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, status: "stored", receipt: "mock-xmemo-receipt" }) });
+    await route.fulfill({ status: 200, headers: { "access-control-allow-origin": "http://127.0.0.1:4173" }, contentType: "application/json", body: JSON.stringify({ ok: true, status: "stored", receipt: "mock-xmemo-receipt" }) });
   });
   page.on("dialog", dialog => dialog.accept());
   await page.goto("/index.html");
