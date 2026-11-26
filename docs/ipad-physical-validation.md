@@ -56,3 +56,26 @@ Record: date/time, iPadOS version, Safari version, build/commit, network state, 
 - [ ] Server acknowledgements and resulting world state are independently observed.
 
 **Current initial status:** all physical checks NOT RUN. This checklist is a plan, not evidence of device behavior.
+
+
+## Zero-cost local Safari preview (no production deployment)
+
+The CI workflow uploads a short-lived `hq-p5-preview` artifact for pull requests from
+`feat/p5-offline-sync-evolution`. It is a static build artifact, not a public preview URL.
+It contains no service-role key or provider secret. Live cloud actions remain consent-gated
+and must not be used during offline validation.
+
+1. On the iPad, open the PR's latest successful **CI** run in GitHub Actions, download
+   `hq-p5-preview`, and extract it in Files.
+2. Open a local terminal app that provides Python 3 (for example, a-Shell), navigate to
+   the extracted `hq` directory, and run:
+   `python3 -m http.server 8080 --bind 127.0.0.1`
+3. In Safari on the same iPad, open `http://localhost:8080`. Keep the terminal session
+   running while testing. Stop the server with Ctrl-C when finished.
+
+If the terminal app cannot access the extracted folder or does not provide Python 3,
+do not enable GitHub Pages or another hosted deployment as a workaround; use a trusted
+local file-serving method or request an isolated preview review first.
+
+This local preview is for synthetic data and device testing only. Do not import real
+PRONOTE records or send XMemo content during the initial offline/security checks.
