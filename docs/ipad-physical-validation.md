@@ -20,13 +20,21 @@ Record: date/time, iPadOS version, Safari version, build/commit, network state, 
 ## P5 local durability
 
 - [ ] Enqueue a non-sensitive test mutation while online; verify it appears as PENDING in the local outbox.
+- [ ] Inspect IndexedDB metadata and confirm payload fields are ciphertext + IV (no plaintext payload property).
+- [ ] Verify the AES-GCM CryptoKey is non-extractable and survives Safari close/reopen on the same origin.
+- [ ] Verify raw IndexedDB export does not reveal the synthetic test payload; do not attempt to bypass device security.
 - [ ] Switch to Airplane Mode; enqueue another test mutation and confirm it remains local.
 - [ ] Close Safari completely and reopen; verify both records remain in IndexedDB.
 - [ ] Restart HQ; verify records are still pending and no remote send is claimed.
+- [ ] Verify network restoration does not trigger an automatic XMemo send.
+- [ ] Sign in and link XMemo; test the explicit consent checkbox + confirmation with synthetic content only.
+- [ ] Confirm XMemo receives the test record; verify status changes to STORED only after the server response.
+- [ ] Simulate interrupted/ambiguous delivery; verify status becomes DELIVERY_UNKNOWN and retry is blocked until manual XMemo inspection.
 - [ ] Export or inspect local queue state without exposing sensitive payloads.
 - [ ] Verify payload-size rejection and malformed-payload rejection.
 - [ ] Verify duplicate idempotency keys do not create duplicate records.
-- [ ] Verify an interrupted send recovers to PENDING.
+- [ ] Verify an interrupted send recovers to DELIVERY_UNKNOWN, not PENDING.
+- [ ] After manually confirming the record is absent from XMemo, explicitly return it to PENDING and retry.
 
 ## P5 conflict and evolution gates
 
@@ -41,6 +49,7 @@ Record: date/time, iPadOS version, Safari version, build/commit, network state, 
 ## Sync is not validated until
 
 - [ ] A reviewed authenticated transport is configured with least privilege.
+- [ ] Remote idempotency is guaranteed server-side before claiming exactly-once delivery.
 - [ ] Two separately authorized devices complete an idempotent round-trip.
 - [ ] Server-side authorization and cross-account isolation are tested.
 - [ ] Offline edits, concurrent edits, retries, duplicate delivery, revocation, and recovery are tested.
