@@ -45,7 +45,7 @@ function jsonResponse(body: unknown, status = 200, origin = "") {
   });
   if (ALLOWED_ORIGINS.has(origin)) {
     headers.set("Access-Control-Allow-Origin", origin);
-    headers.set("Access-Control-Allow-Headers", "authorization, apikey, content-type, x-client-info");
+    headers.set("Access-Control-Allow-Headers", "authorization, apikey, content-type, x-client-info, idempotency-key");
     headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   }
   return new Response(status === 204 ? null : JSON.stringify(body), { status, headers });
