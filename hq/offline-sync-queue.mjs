@@ -38,8 +38,12 @@ export async function encryptQueuePayload(payload, key, crypto = cryptoApi()) {
 }
 export async function decryptQueuePayload(record, key, crypto = cryptoApi()) {
   if (!record?.payloadCiphertext || !record?.payloadIv) throw new Error("QUEUE_CIPHERTEXT_MISSING");
-  const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.payloadIv) }, key, record.payloadCiphertext);
-  return JSON.parse(new TextDecoder().decode(plaintext));
+  try {
+    const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.payloadIv) }, key, record.payloadCiphertext);
+    return JSON.parse(new TextDecoder().decode(plaintext));
+  } catch (error) {
+    throw new Error("QUEUE_KEY_CORRUPTED_OR_CIPHERTEXT_TAMPERED", { cause: error });
+  }
 }
 
 export class OfflineSyncQueue {
@@ -76,23 +80,40 @@ export class OfflineSyncQueue {
   async #key() {
     if (!this.keyPromise) {
       this.keyPromise = (async () => {
-        const candidate = await this.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
         const db = await this.open();
-        const tx = db.transaction(KEY_STORE, "readwrite");
+        const tx = db.transaction([KEY_STORE, STORE], "readwrite");
         const done = transactionDone(tx);
-        const store = tx.objectStore(KEY_STORE);
-        const request = store.get(KEY_ID);
-        let selected;
-        request.onsuccess = () => {
-          const existing = request.result?.key;
-          selected = existing || candidate;
-          if (!existing) store.add({ id: KEY_ID, key: candidate, algorithm: "AES-GCM", extractable: false, createdAt: this.clock() });
-        };
+        const keyStore = tx.objectStore(KEY_STORE);
+        const outboxStore = tx.objectStore(STORE);
+        const [keyRow, records] = await Promise.all([
+          requestResult(keyStore.get(KEY_ID)),
+          requestResult(outboxStore.getAll())
+        ]);
+        let selected = keyRow?.key;
+        if (!selected) {
+          // Never silently replace a missing key while encrypted records still exist.
+          const hasCiphertext = records.some((record) => record?.payloadCiphertext && record?.payloadIv);
+          if (hasCiphertext) {
+            try { tx.abort(); } catch {}
+            throw new Error("QUEUE_KEY_LOST");
+          }
+          selected = await this.crypto.subtle.generateKey(
+            { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+          );
+          keyStore.add({ id: KEY_ID, key: selected, algorithm: "AES-GCM", extractable: false, createdAt: this.clock() });
+        }
         await done;
-        if (!selected) throw new Error("QUEUE_KEY_UNAVAILABLE");
-        if (selected.extractable !== false) throw new Error("QUEUE_KEY_MUST_BE_NON_EXTRACTABLE");
+        if (!selected || selected.type !== "secret" || selected.algorithm?.name !== "AES-GCM" ||
+            selected.algorithm?.length !== 256 || selected.extractable !== false ||
+            !selected.usages?.includes("encrypt") || !selected.usages?.includes("decrypt")) {
+          throw new Error("QUEUE_KEY_CORRUPTED");
+        }
         return selected;
-      })().catch((error) => { this.keyPromise = null; throw error; });
+      })().catch((error) => {
+        this.keyPromise = null;
+        if (/QUEUE_KEY_(LOST|CORRUPTED|UNAVAILABLE)/.test(String(error?.message))) throw error;
+        throw new Error("QUEUE_KEY_UNAVAILABLE", { cause: error });
+      });
     }
     return this.keyPromise;
   }
