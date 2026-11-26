@@ -60,15 +60,16 @@ let gatewayReady=false;
 function jxReadSession(){try{const s=JSON.parse(sessionStorage.getItem('jx-auth-session')||'null');if(s&&typeof s.access_token==='string'&&typeof s.refresh_token==='string'&&Number(s.expires_at)>Math.floor(Date.now()/1000))return s;}catch{}return null;}
 function jxSaveSession(s){jxSession=s;try{if(s)sessionStorage.setItem('jx-auth-session',JSON.stringify(s));else sessionStorage.removeItem('jx-auth-session');}catch{}document.querySelector('#chat-auth-signout').disabled=!s;const xmemoButton=document.querySelector('#chat-xmemo-connect');if(xmemoButton)xmemoButton.disabled=!s;document.querySelector('#chat-auth-status').textContent=s?'Signed in for this browser tab. Session tokens are kept in sessionStorage, not in the URL.':'Not signed in. Chat remains disabled.';}
 async function jxEnsureSession(){if(!jxSession)jxSession=jxReadSession();if(!jxSession)return null;if(Number(jxSession.expires_at)>Math.floor(Date.now()/1000)+60)return jxSession;const r=await fetch(JX_SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:JX_SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:jxSession.refresh_token})});if(!r.ok){jxSaveSession(null);try{sessionStorage.removeItem('jx-auth-session')}catch{}return null;}const d=await r.json();if(!d.access_token||!d.refresh_token){jxSaveSession(null);return null;}jxSaveSession({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Number(d.expires_at)||Math.floor(Date.now()/1000)+Number(d.expires_in||3600)});return jxSession;}
-window.jxP5StoreXMemo = async (content) => {
+window.jxP5StoreXMemo = async (content, idempotencyKey) => {
   if (typeof content !== "string" || !content.trim() || new TextEncoder().encode(content).byteLength > 12_000) throw new Error("XMEMO_CONTENT_INVALID");
+  if (typeof idempotencyKey !== "string" || !/^jx-sha256-[a-f0-9]{64}$/.test(idempotencyKey)) throw new Error("XMEMO_IDEMPOTENCY_KEY_INVALID");
   const session = await jxEnsureSession();
   if (!session?.access_token) throw new Error("HQ_SIGN_IN_REQUIRED");
   let response;
   try {
     response = await fetch(JX_GATEWAY + "/memory/xmemo/remember", {
       method: "POST", cache: "no-store",
-      headers: { apikey: JX_SUPABASE_KEY, Authorization: "Bearer " + session.access_token, "Content-Type": "application/json", Accept: "application/json" },
+      headers: { apikey: JX_SUPABASE_KEY, Authorization: "Bearer " + session.access_token, "Content-Type": "application/json", Accept: "application/json", "Idempotency-Key": idempotencyKey },
       body: JSON.stringify({ consent: true, content })
     });
   } catch (error) {
