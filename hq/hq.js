@@ -81,7 +81,7 @@ window.jxP5StoreXMemo = async (content) => {
     error.deliveryUnknown = response.status >= 500;
     throw error;
   }
-  if (result.status !== "stored") throw new Error("XMEMO_STORE_NOT_CONFIRMED");
+  if (result.status !== "stored") { const error = new Error("XMEMO_STORE_NOT_CONFIRMED"); error.deliveryUnknown = true; throw error; }
   return result;
 };
 async function jxHandleAuthCallback(){const hash=new URLSearchParams(location.hash.slice(1));const access=hash.get('access_token'),refresh=hash.get('refresh_token');if(access&&refresh){jxSaveSession({access_token:access,refresh_token:refresh,expires_at:Number(hash.get('expires_at'))||Math.floor(Date.now()/1000)+Number(hash.get('expires_in')||3600)});history.replaceState(null,'',location.pathname+location.search);document.querySelector('#chat-auth-status').textContent='Email sign-in verified. Checking gateway…';}else{jxSession=jxReadSession();document.querySelector('#chat-auth-signout').disabled=!jxSession;const xmemoButton=document.querySelector('#chat-xmemo-connect');if(xmemoButton)xmemoButton.disabled=!jxSession;document.querySelector('#chat-auth-status').textContent=jxSession?'Signed in for this browser tab.':'Not signed in. Request a sign-in link to enable chat.';}}
