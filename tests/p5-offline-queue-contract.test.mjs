@@ -7,6 +7,7 @@ test("queue is IndexedDB-backed, AES-GCM encrypted at rest, and not remotely syn
   assert.equal(OFFLINE_QUEUE_CONTRACT.encryptedAtRest,true);
   assert.equal(OFFLINE_QUEUE_CONTRACT.encryption,"AES-GCM-256");
   assert.equal(OFFLINE_QUEUE_CONTRACT.automaticRemoteSync,false);
+  assert.match(OFFLINE_QUEUE_CONTRACT.remoteDeliverySemantics,/delivery_unknown/);
   assert.equal(OFFLINE_QUEUE_CONTRACT.automaticRemoteSync,false);
   assert.equal(OFFLINE_QUEUE_CONTRACT.transport,"injected explicitly by caller");
 });
