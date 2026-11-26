@@ -46,6 +46,21 @@ export async function decryptQueuePayload(record, key, crypto = cryptoApi()) {
   }
 }
 
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+export async function createDeterministicIdempotencyKey({ type, payload, causalClock = null, crypto = cryptoApi() }) {
+  if (typeof type !== "string" || !type) throw new TypeError("IDEMPOTENCY_TYPE_REQUIRED");
+  const canonical = stableJson({ type, payload, causalClock });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
+  const hex = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `jx-sha256-${hex}`;
+}
+
 export class OfflineSyncQueue {
   constructor({ indexedDB = globalThis.indexedDB, isOnline = () => globalThis.navigator?.onLine !== false, clock = now, crypto = cryptoApi() } = {}) {
     if (!indexedDB) throw new Error("INDEXEDDB_UNAVAILABLE");
