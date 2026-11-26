@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { OfflineSyncQueue, OFFLINE_QUEUE_CONTRACT, encryptQueuePayload, decryptQueuePayload } from "../hq/offline-sync-queue.mjs";
+import { OfflineSyncQueue, OFFLINE_QUEUE_CONTRACT, encryptQueuePayload, decryptQueuePayload, createDeterministicIdempotencyKey } from "../hq/offline-sync-queue.mjs";
 
 test("queue is IndexedDB-backed, AES-GCM encrypted at rest, and not remotely synced by default", () => {
   assert.equal(OFFLINE_QUEUE_CONTRACT.storage,"IndexedDB");
@@ -32,4 +32,15 @@ test("AES-GCM queue payloads are ciphertext at rest and decrypt only with the no
   assert.deepEqual(await decryptQueuePayload(sealed, key), payload);
   const otherKey = await globalThis.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
   await assert.rejects(() => decryptQueuePayload(sealed, otherKey));
+});
+
+test("deterministic idempotency key binds canonical mutation content and causal HLC", async () => {
+  const payload = { z: 2, a: { y: true, x: 1 } };
+  const causalClock = { wall: 1234, logical: 2, actor: "ipad" };
+  const first = await createDeterministicIdempotencyKey({ type: "memory.note.crdt", payload, causalClock });
+  const reordered = await createDeterministicIdempotencyKey({ type: "memory.note.crdt", payload: { a: { x: 1, y: true }, z: 2 }, causalClock });
+  const changedClock = await createDeterministicIdempotencyKey({ type: "memory.note.crdt", payload, causalClock: { ...causalClock, logical: 3 } });
+  assert.match(first, /^jx-sha256-[a-f0-9]{64}$/);
+  assert.equal(first, reordered);
+  assert.notEqual(first, changedClock);
 });
