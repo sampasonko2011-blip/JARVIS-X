@@ -95,6 +95,10 @@ export class OfflineSyncQueue {
   async #key() {
     if (!this.keyPromise) {
       this.keyPromise = (async () => {
+        // Generate before opening the transaction: WebCrypto awaits can let IDB transactions auto-commit.
+        const candidate = await this.crypto.subtle.generateKey(
+          { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+        );
         const db = await this.open();
         const tx = db.transaction([KEY_STORE, STORE], "readwrite");
         const done = transactionDone(tx);
@@ -112,9 +116,7 @@ export class OfflineSyncQueue {
             await done;
             throw new Error("QUEUE_KEY_LOST");
           }
-          selected = await this.crypto.subtle.generateKey(
-            { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
-          );
+          selected = candidate;
           keyStore.add({ id: KEY_ID, key: selected, algorithm: "AES-GCM", extractable: false, createdAt: this.clock() });
         }
         await done;
