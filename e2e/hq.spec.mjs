@@ -846,7 +846,7 @@ test("LOCK IN isolates the active HQ drawer and STOP restores NORMAL", async ({ 
   await expect(page.locator("#jx-lock-status")).toContainText("LOCKED");
   await expect(page.locator("#view-chat")).toBeVisible();
   await expect(page.locator("#chat-compose")).toBeVisible();
-  await expect(page.locator("#view-chat")).toBeHidden();
+  await expect(page.locator("#view-overview")).toBeHidden();
   await page.locator("#jx-stop").click();
   await expect(page.locator(".shell")).not.toHaveClass(/jx-lock-in/);
   await expect(page.locator("#jx-lock-status")).toContainText("NORMAL");
