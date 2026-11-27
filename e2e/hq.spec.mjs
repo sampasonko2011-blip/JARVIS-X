@@ -180,7 +180,6 @@ test("service worker installs, claims the page and precaches the HQ shell", asyn
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
   expect(cached.artifactSandboxResponse).toBe(true);
-  expect(cached.artifactSandboxResponse).toBe(true);
   expect(cached.cssResponse).toBe(true);
   expect(cached.jsResponse).toBe(true);
 });
