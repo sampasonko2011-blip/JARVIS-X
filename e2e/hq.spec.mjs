@@ -719,11 +719,11 @@ test("combined PRONOTE and football imports emit a workload snapshot and adapt c
     window.addEventListener("jx:workload-snapshot", event => window.__jxWorkloadEvents.push(event.detail));
   });
   const now = Date.now();
-  const stamp = value => new Date(value).toISOString().replace(/[-:]/g, "").replace(/\\.\\d{3}Z$/, "Z");
+  const stamp = value => new Date(value).toISOString().slice(0, 19).replace(/[-:]/g, "") + "Z";
   const schoolStart = stamp(now + 60 * 60 * 1000), schoolEnd = stamp(now + 2 * 60 * 60 * 1000);
   const footballStart = stamp(now + 3 * 60 * 60 * 1000), footballEnd = stamp(now + 5 * 60 * 60 * 1000);
-  const school = "BEGIN:VCALENDAR\\nVERSION:2.0\\nBEGIN:VEVENT\\nUID:next-assessment\\nDTSTART:" + schoolStart + "\\nDTEND:" + schoolEnd + "\\nSUMMARY:Contrôle de mathématiques\\nEND:VEVENT\\nEND:VCALENDAR";
-  const football = "BEGIN:VCALENDAR\\nVERSION:2.0\\nBEGIN:VEVENT\\nUID:next-training\\nDTSTART:" + footballStart + "\\nDTEND:" + footballEnd + "\\nSUMMARY:Entraînement football\\nEND:VEVENT\\nEND:VCALENDAR";
+  const school = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:next-assessment", "DTSTART:" + schoolStart, "DTEND:" + schoolEnd, "SUMMARY:Contrôle de mathématiques", "END:VEVENT", "END:VCALENDAR"].join("\n");
+  const football = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:next-training", "DTSTART:" + footballStart, "DTEND:" + footballEnd, "SUMMARY:Entraînement football", "END:VEVENT", "END:VCALENDAR"].join("\n");
   await page.locator("#school-ics").setInputFiles({ name: "school-next.ics", mimeType: "text/calendar", buffer: Buffer.from(school) });
   expect(await page.evaluate(() => window.__jxWorkloadEvents.length)).toBe(0);
   await page.locator("#football-ics").setInputFiles({ name: "football-next.ics", mimeType: "text/calendar", buffer: Buffer.from(football) });
