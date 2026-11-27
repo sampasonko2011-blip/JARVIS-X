@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, module, css, engine, hq] = await Promise.all([
+const [html, module, css, engine, hq, sandbox] = await Promise.all([
   readFile(new URL("../hq/local-chat.html", import.meta.url), "utf8"),
   readFile(new URL("../hq/rich-chat-studio.mjs", import.meta.url), "utf8"),
   readFile(new URL("../hq/rich-chat-studio.css", import.meta.url), "utf8"),
   readFile(new URL("../hq/local-chat-engine.js", import.meta.url), "utf8"),
-  readFile(new URL("../hq/hq.js", import.meta.url), "utf8")
+  readFile(new URL("../hq/hq.js", import.meta.url), "utf8"),
+  readFile(new URL("../hq/artifact-sandbox.html", import.meta.url), "utf8")
 ]);
 
 test("Rich Chat Studio is mounted in the local chat workspace", () => {
@@ -54,7 +55,10 @@ test("generated artifacts run only in an opaque-origin sandbox with network CSP 
   assert.ok(module.includes("event.source !== frame.contentWindow"));
   assert.ok(!module.includes("allow-same-origin"));
   assert.ok(module.includes("default-src 'none'"));
-  assert.ok(module.includes("connect-src 'none'"));
+  assert.ok(sandbox.includes("default-src 'none'"));
+  assert.ok(sandbox.includes("connect-src 'none'"));
+  assert.ok(sandbox.includes("worker-src 'none'"));
+  assert.ok(!sandbox.includes("allow-same-origin"));
   assert.ok(module.includes("new TextEncoder().encode(artifact.html).byteLength > 150_000"));
   assert.ok(module.includes("requiresL3: true"));
   assert.ok(module.includes("persistance non confirmée"));

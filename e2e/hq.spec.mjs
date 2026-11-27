@@ -172,12 +172,14 @@ test("service worker installs, claims the page and precaches the HQ shell", asyn
       cacheName: shellCacheName,
       shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
       artifactSandboxResponse: Boolean(await cache.match(new URL("./artifact-sandbox.html", location.href).href)),
+      artifactSandboxResponse: Boolean(await cache.match(new URL("./artifact-sandbox.html", location.href).href)),
       cssResponse: Boolean(await cache.match(new URL("./hq.css", location.href).href)),
       jsResponse: Boolean(await cache.match(new URL("./hq.js", location.href).href)),
     };
   });
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
+  expect(cached.artifactSandboxResponse).toBe(true);
   expect(cached.artifactSandboxResponse).toBe(true);
   expect(cached.cssResponse).toBe(true);
   expect(cached.jsResponse).toBe(true);
