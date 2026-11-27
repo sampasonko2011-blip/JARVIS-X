@@ -657,11 +657,11 @@ test("P1.2 contextual accents follow the active workspace and Sampa.co remains a
   await expect(page.locator('.hq-mission-link[href="/JARVIS-X/career/"]')).toHaveAttribute("data-jx-accent", "amber");
 });
 
-test("P1.2 all 15 views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
+test("P1.2 all 16 views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
   test.setTimeout(180000);
   await enterHQ(page);
   const views = await page.locator(".side .nav [data-view]").evaluateAll(nodes => nodes.map(node => node.dataset.view));
-  expect(views).toHaveLength(15);
+  expect(views).toHaveLength(16);
   const viewports = [
     { width: 390, height: 844, label: "mobile-portrait" },
     { width: 600, height: 900, label: "ipad-split-portrait" },
