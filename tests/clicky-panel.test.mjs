@@ -35,6 +35,16 @@ test('Clicky scales canvas markers and keeps the original canvas separate', () =
   assert.ok(module.includes('canvasSnapshotPng'));
 });
 
+test('Clicky has autonomous marker sequencing and pointer-assisted step mode without intercepting input', () => {
+  assert.ok(module.includes('pointerType !== "mouse" && event.pointerType !== "pen"'));
+  assert.ok(module.includes('this.pointerMode = "autonomous"'));
+  assert.ok(module.includes('this.pointerMode = "assisted"'));
+  assert.ok(module.includes('setInterval(() =>'));
+  assert.ok(module.includes('this.stepIndex = Math.min(this.stepIndex + 1'));
+  assert.ok(module.includes('this.ctx.lineTo(x - 15, y + 25)'));
+  assert.ok(css.includes('pointer-events:none'));
+});
+
 test('Clicky voice controls use browser speech APIs with explicit stop control', () => {
   assert.ok(module.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
   assert.ok(module.includes('SpeechSynthesisUtterance'));
