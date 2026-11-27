@@ -56,4 +56,5 @@ document.querySelector("#future-propose")?.addEventListener("click", () => {
   scenarioResult.textContent = "PROPOSED · scénario local enregistré dans l’interface uniquement. Pas de simulation probabiliste, pas de branche Git créée, aucun agenda ni entraînement modifié. Toute future écriture exige une approbation L3 distincte.";
 });
 window.addEventListener("jx:pronote-snapshot", event => { latestPronoteSnapshot = event.detail?.snapshot || null; refresh(); });
+window.addEventListener("jx:calendar-updated", refresh);
 refresh();
