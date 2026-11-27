@@ -32,7 +32,7 @@ function setMode(next) {
   shell?.classList.toggle("jx-lock-in", active);
   lockButton?.setAttribute("aria-pressed", String(active));
   if (lockButton) lockButton.textContent = active ? "⚡ LOCKED IN" : "⚡ LOCK IN";
-  if (status) status.textContent = active ? "FOCUS_40HZ · " + (activeView || "VIEW_UNKNOWN") : "NORMAL";
+  if (status) status.textContent = active ? "LOCKED · VIEW ISOLATION · " + (activeView || "VIEW_UNKNOWN") : "NORMAL";
 }
 lockButton?.addEventListener("click", () => setMode(!active));
 stopButton?.addEventListener("click", () => {
