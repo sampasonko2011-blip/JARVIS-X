@@ -214,5 +214,6 @@ test("service worker precaches the behavioral adaptation controller offline", as
   listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
   await installPromise;
   assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./behavioral-adaptation.mjs"));
-  assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v60/);
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./behavioral-engine.mjs"));
+  assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v61/);
 });
