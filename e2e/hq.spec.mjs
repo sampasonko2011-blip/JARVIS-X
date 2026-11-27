@@ -707,3 +707,16 @@ test("P2 Workspace imports local PRONOTE and football ICS files and displays con
   await expect(page.locator("#calendar-events")).toContainText("Entraînement football");
   await expect(page.locator("#calendar-conflicts")).toContainText("Évaluation/devoir le lendemain");
 });
+
+
+test("Clicky companion activates a non-interactive overlay beside the live Perception canvas", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="clicky"]').click();
+  await expect(page.locator("#view-clicky")).toBeVisible();
+  await expect(page.locator("#clicky-canvas-host .p4-panel")).toBeAttached();
+  await page.locator("#clicky-enable").click();
+  const overlay = page.locator("canvas.clicky-overlay");
+  await expect(overlay).toHaveClass(/is-active/);
+  await expect.poll(() => overlay.evaluate(node => getComputedStyle(node).pointerEvents)).toBe("none");
+  await expect(page.locator("#clicky-live-consent")).not.toBeChecked();
+});
