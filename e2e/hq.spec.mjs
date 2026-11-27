@@ -733,3 +733,31 @@ test("LOCK IN isolates the active HQ drawer and STOP restores NORMAL", async ({ 
   await expect(page.locator(".shell")).not.toHaveClass(/jx-lock-in/);
   await expect(page.locator("#jx-lock-status")).toContainText("NORMAL");
 });
+
+
+test("Git du Futur reports imported calendar evidence and abstains from uncalibrated probabilities", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="workspace"]').click();
+  const school = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:school-future\nDTSTART:20261202T080000Z\nDTEND:20261202T090000Z\nSUMMARY:Contrôle de mathématiques\nEND:VEVENT\nEND:VCALENDAR";
+  const football = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:football-future\nDTSTART:20261201T180000Z\nDTEND:20261201T200000Z\nSUMMARY:Entraînement football\nEND:VEVENT\nEND:VCALENDAR";
+  await page.locator("#school-ics").setInputFiles({name:"pronote-future.ics",mimeType:"text/calendar",buffer:Buffer.from(school)});
+  await page.locator("#football-ics").setInputFiles({name:"football-future.ics",mimeType:"text/calendar",buffer:Buffer.from(football)});
+  await page.locator('.side .nav [data-view="future"]').click();
+  await expect(page.locator("#future-evidence")).toContainText("PRONOTE / academic events: 1");
+  await expect(page.locator("#future-evidence")).toContainText("Football calendar events: 1");
+  await expect(page.locator("#future-calibration-status")).toContainText("Aucune probabilité causale");
+});
+
+test("WebScout fails closed without search capability and Smart Handoff only prepares a local payload", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="webscout"]').click();
+  await page.locator("#webscout-check").click();
+  await expect(page.locator("#webscout-status-tag")).toContainText("NO SEARCH TOOL");
+  await page.locator("#webscout-query").fill("Compare les sources primaires sur le sujet X.");
+  await page.locator("#webscout-prepare").click();
+  await expect(page.locator("#webscout-brief")).toContainText("No search was executed");
+  await page.locator("#handoff-task").fill("Préparer une scène cinématique originale.");
+  await page.locator("#handoff-prepare").click();
+  await expect(page.locator("#handoff-payload")).toContainText("No external tool was opened");
+  await expect(page.locator("#handoff-open-higgsfield")).toHaveAttribute("target", "_blank");
+});
