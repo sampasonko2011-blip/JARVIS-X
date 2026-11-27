@@ -342,5 +342,6 @@ document.querySelector("#clicky-open-canvas")?.addEventListener("click", () => {
   document.querySelector("#p4-canvas")?.scrollIntoView({ behavior: "smooth", block: "center" });
   status.textContent = "Canvas intégré au workspace. Le calque Clicky suit sa taille et reste non interactif.";
 });
+window.addEventListener("jx:stop", () => { voice.stop(); window.speechSynthesis?.cancel(); panel.stopGuidance(); });
 window.addEventListener("resize", () => panel.resizeOverlay());
 window.addEventListener("scroll", () => panel.resizeOverlay(), true);
