@@ -193,3 +193,7 @@
 .shell.jx-lock-in .main{overscroll-behavior:none}
 .shell.jx-lock-in .main input:not([type=checkbox]):not([type=radio]),.shell.jx-lock-in .main textarea,.shell.jx-lock-in .main select{width:100%;min-height:48px;max-width:100%;box-sizing:border-box}
 @media(max-width:760px){.shell.jx-lock-in .main>.view:not(.hide){height:calc(100dvh - 190px)}}
+
+@keyframes clicky-overlay-pulse{0%,100%{opacity:.78}50%{opacity:1}}
+.clicky-overlay.is-active{animation:clicky-overlay-pulse 1.35s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.clicky-overlay.is-active{animation:none}}
