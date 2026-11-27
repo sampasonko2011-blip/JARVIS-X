@@ -32,6 +32,11 @@ root.innerHTML = `
     <button type="button" data-action="storyboard">Créer storyboard</button>
   </div>
   <div class="rcs-storyboard" id="rcs-storyboard" aria-label="Storyboard visuel" hidden></div>
+  <section class="rcs-artifact" id="rcs-artifact" aria-label="Interface générée" hidden>
+    <div class="rcs-artifact-head"><strong id="rcs-artifact-title">Mini-app générée</strong><span>IFRAME SANDBOX · SANS RÉSEAU</span></div>
+    <iframe id="rcs-artifact-frame" title="Mini-application générée en environnement isolé" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+    <div class="rcs-artifact-foot"><span id="rcs-artifact-status" role="status" aria-live="polite">Non sauvegardé · validation L3 requise</span><button type="button" id="rcs-artifact-save" disabled>Demander sauvegarde L3</button></div>
+  </section>
   <p class="rcs-note" id="rcs-note">${localHeader ? "Inférence locale WebLLM uniquement. Le Gateway mémoire n’est pas un moteur de réponse Cloud." : "Le statut Cloud est issu des événements réels de la session HQ. Une vérification de santé ne prouve pas à elle seule une génération."} Aucune recherche Web, génération d’image ou analyse PNG n’est lancée depuis ce studio.</p>
 `;
 if (localHeader) {
@@ -59,6 +64,34 @@ function setEngine(detail = {}) {
     ? "LOCAL WEBLLM · ACTIVE · " + state.model
     : "LOCAL WEBLLM · " + state.engine;
 }
+function renderArtifact(artifact) {
+  if (!artifact || typeof artifact !== "object" || typeof artifact.html !== "string") {
+    throw new TypeError("Artifact must contain an HTML string.");
+  }
+  if (artifact.html.length > 150_000) throw new RangeError("Artifact exceeds the 150 KB sandbox limit.");
+  const title = typeof artifact.title === "string" ? artifact.title.slice(0, 80) : "Mini-app générée";
+  const frame = $("rcs-artifact-frame");
+  const panel = $("rcs-artifact");
+  const titleNode = $("rcs-artifact-title");
+  const status = $("rcs-artifact-status");
+  const save = $("rcs-artifact-save");
+  if (!frame || !panel || !titleNode || !status || !save) return false;
+  const csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+  const safeDocument = "<!doctype html><html lang='fr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='Content-Security-Policy' content=\"" + csp + "\"><style>html,body{margin:0;min-height:100%;font:16px system-ui;color:#e5edf7;background:#0b1220}body{padding:12px;box-sizing:border-box;overflow-wrap:anywhere}button,input,textarea,select{max-width:100%;font:inherit}button,input,textarea,select{min-height:44px}</style></head><body>" + artifact.html + "</body></html>";
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("referrerpolicy", "no-referrer");
+  frame.srcdoc = safeDocument;
+  titleNode.textContent = title;
+  status.textContent = "Aperçu isolé actif · non sauvegardé · validation L3 requise";
+  save.disabled = false;
+  save.onclick = () => {
+    window.dispatchEvent(new CustomEvent("jx:artifact-save-request", { detail: { title, html: artifact.html, requiresL3: true } }));
+    status.textContent = "Demande de sauvegarde L3 émise · persistance non confirmée";
+  };
+  panel.hidden = false;
+  return true;
+}
+
 function personaPrompt() {
   const prompts = {
     architect: "Persona de présentation : architecte visuel. Structure la réponse avec étapes, relations et exemples concrets, sans prétendre générer des visuels.",
@@ -139,5 +172,5 @@ window.addEventListener("jx:assistant-request-failed", () => {
   setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · REQUEST FAILED", modelId: "UNKNOWN" });
   setStage("Échec de la requête · vérifier le reçu avant toute relance");
 });
-window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));
-window.JXRichChatStudio = Object.freeze({ personaPrompt, getState: () => ({ ...state }) });
+window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));\nwindow.addEventListener("jx:artifact-render", (event) => { try { renderArtifact(event.detail); } catch (error) { setStage("Artefact refusé : " + error.message); } });
+window.JXRichChatStudio = Object.freeze({ personaPrompt, renderArtifact, getState: () => ({ ...state }) });
