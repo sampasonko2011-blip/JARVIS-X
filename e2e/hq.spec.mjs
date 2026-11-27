@@ -171,12 +171,14 @@ test("service worker installs, claims the page and precaches the HQ shell", asyn
     return {
       cacheName: shellCacheName,
       shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
+      artifactSandboxResponse: Boolean(await cache.match(new URL("./artifact-sandbox.html", location.href).href)),
       cssResponse: Boolean(await cache.match(new URL("./hq.css", location.href).href)),
       jsResponse: Boolean(await cache.match(new URL("./hq.js", location.href).href)),
     };
   });
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
+  expect(cached.artifactSandboxResponse).toBe(true);
   expect(cached.cssResponse).toBe(true);
   expect(cached.jsResponse).toBe(true);
 });
@@ -796,16 +798,17 @@ test("artifact save requires explicit L3 approval and writes AES-GCM payload plu
       request.onerror = () => reject(request.error);
     });
     const tx = db.transaction(["outbox", "crypto_keys"], "readonly");
-    const records = await new Promise((resolve, reject) => {
+    const recordsPromise = new Promise((resolve, reject) => {
       const request = tx.objectStore("outbox").getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
-    const keys = await new Promise((resolve, reject) => {
+    const keysPromise = new Promise((resolve, reject) => {
       const request = tx.objectStore("crypto_keys").getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+    const [records, keys] = await Promise.all([recordsPromise, keysPromise]);
     return {
       count: records.length,
       ciphertextPresent: Boolean(records[0]?.payloadCiphertext && records[0]?.payloadIv),

@@ -82,9 +82,9 @@ test("artifact save controller uses the L3 gate, AES-GCM queue and CRDT with exp
   assert.ok(controller.includes("approveEvolutionProposal"));
   assert.ok(controller.includes("activateApprovedProposal"));
   assert.ok(controller.includes("new OfflineSyncQueue()"));
+  assert.ok(controller.includes("connect-src"));
   assert.ok(controller.includes("new LwwElementSet"));
   assert.ok(controller.includes('type: "artifact.save"'));
   assert.ok(controller.includes('idempotencyKey: "artifact:" + sha256'));
   assert.ok(controller.includes('checkbox.type = "checkbox"'));
-  assert.ok(controller.includes('connect-src') === false);
 });
