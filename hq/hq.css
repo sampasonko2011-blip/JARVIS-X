@@ -197,3 +197,16 @@
 @keyframes clicky-overlay-pulse{0%,100%{opacity:.78}50%{opacity:1}}
 .clicky-overlay.is-active{animation:clicky-overlay-pulse 1.35s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.clicky-overlay.is-active{animation:none}}
+
+/* Behavioral adaptation: explicit user state + observable, non-biometric signals. */
+.jx-behavior-panel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 12px;border:1px solid var(--line);border-radius:12px;background:rgba(15,23,42,.58)}
+.jx-behavior-panel>strong{font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.jx-behavior-choices{display:flex;gap:6px;flex-wrap:wrap}
+.jx-behavior-choices button{min-height:40px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--text);font:inherit}
+.jx-behavior-choices button[aria-pressed="true"]{border-color:#38bdf8;background:rgba(56,189,248,.14);color:#bae6fd}
+#jx-behavior-status{font-size:11px;color:var(--muted)}
+.shell.jx-behavior-calm-stepwise .main>.view:not(.hide) .section-intro{max-width:68ch;line-height:1.75}
+.shell.jx-behavior-calm-stepwise .main>.view:not(.hide) .card{scroll-margin-block:16px}
+.shell.jx-behavior-focused .main>.view:not(.hide){scroll-behavior:smooth}
+@media(max-width:760px){.jx-behavior-panel{align-items:flex-start;flex-direction:column}.jx-behavior-choices{width:100%}.jx-behavior-choices button{flex:1;min-width:0}}
+@media(prefers-reduced-motion:reduce){.shell.jx-behavior-focused .main>.view:not(.hide){scroll-behavior:auto}}

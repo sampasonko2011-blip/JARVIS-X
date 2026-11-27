@@ -44,6 +44,16 @@
 </aside>
 <main class="main">
 <header class="top"><div><div class="eyebrow">HUMAN × AI PERFORMANCE OS</div><h1 id="page-title" tabindex="-1">Command overview</h1><div class="sub" id="page-sub">A calm, evidence-first operating surface. No fake green lights.</div></div><div class="statusrow"><button id="jx-lock-in" class="pill jx-lock-in-toggle" type="button" aria-pressed="false">⚡ LOCK IN</button><button id="jx-stop" class="pill jx-stop-toggle" type="button">STOP</button><span id="jx-lock-status" class="pill" role="status" aria-live="polite">NORMAL</span><button id="jx-global-focus" class="pill jx-global-focus-toggle" type="button" aria-pressed="false">FOCUS MODE</button><span class="pill"><b id="net-status" role="status" aria-live="polite">● ONLINE</b> · network</span><span class="pill" aria-live="polite">LOCAL DATA · <span id="data-count">0</span> records</span><span class="pill">RUNTIME · <span id="runtime-status">SHELL ONLY</span></span></div></header>
+ <section class="jx-behavior-panel" aria-label="Adaptation comportementale">
+   <strong>ADAPTATION</strong>
+   <div class="jx-behavior-choices" role="group" aria-label="Choisir explicitement mon état">
+     <button type="button" data-jx-user-state="normal" aria-pressed="true">Normal</button>
+     <button type="button" data-jx-user-state="focus" aria-pressed="false">Focus</button>
+     <button type="button" data-jx-user-state="tired" aria-pressed="false">Fatigué</button>
+     <button type="button" data-jx-user-state="stressed" aria-pressed="false">Sous pression</button>
+   </div>
+   <span id="jx-behavior-status" role="status" aria-live="polite">NORMAL · aucun signal comportemental établi</span>
+ </section>
 <section class="jx-neural-pill" id="jx-neural-pill" aria-label="Live interface telemetry"><div class="jx-neural-pill__identity"><span class="jx-neural-pill__orb" aria-hidden="true"></span><div><strong>JARVIS-X / NEURAL PILL</strong><small>OBSERVED INTERFACE STATE</small></div></div><button class="jx-neural-pill__signal" type="button" data-signal-wrap="network" data-view="settings"><small>Network</small><strong data-signal="network">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="records" data-view="memory"><small>Local records</small><strong data-signal="records">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="runtime" data-view="chat"><small>Runtime</small><strong data-signal="runtime">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="gateway" data-view="gateway"><small>Gateway</small><strong data-signal="gateway">UNKNOWN</strong></button></section>
 <div id="storage-warning" role="alert" class="card hide csp-inline-3"></div><section id="view-overview" class="view">
 <section class="jx-core-stage" aria-label="JARVIS-X animated executive core">
@@ -249,6 +259,7 @@
 <script src="./hq.js"></script>
 <script type="module" src="./rich-chat-studio.mjs"></script>
 <script type="module" src="./lock-in.mjs"></script>
+<script type="module" src="./behavioral-adaptation.mjs"></script>
 <script src="./pronote-ipad-bridge.js" defer></script>
 <script src="./conversation-experience.js" defer></script>
 <script type="module" src="./audio-full-duplex.js"></script>
