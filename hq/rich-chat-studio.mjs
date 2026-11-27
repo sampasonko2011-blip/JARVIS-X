@@ -160,6 +160,7 @@ window.addEventListener("jx:assistant-request-start", (event) => {
   }
 });
 window.addEventListener("jx:assistant-response", (event) => {
+  if (event.detail?.artifact) { try { renderArtifact(event.detail.artifact); } catch (error) { setStage("Artefact refusé : " + error.message); } }
   if (event.detail?.mode === "mock") {
     setEngine({ backend: "CLOUD_GATEWAY", status: "MOCK FIXTURE · NOT AI", modelId: "0 MODEL CALLS" });
     setStage("Fixture reçu · aucune inférence");
