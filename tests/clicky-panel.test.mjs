@@ -45,6 +45,12 @@ test('Clicky has autonomous marker sequencing and pointer-assisted step mode wit
   assert.ok(css.includes('pointer-events:none'));
 });
 
+test('Clicky does not silently discard PNG captures when the Gateway lacks vision support', () => {
+  assert.ok(html.includes('id="clicky-attach-snapshot" type="checkbox" disabled'));
+  assert.ok(module.includes('if (imagePng) throw new Error'));
+  assert.ok(module.includes('canvasSnapshotPng: null'));
+});
+
 test('Clicky voice controls use browser speech APIs with explicit stop control', () => {
   assert.ok(module.includes('window.SpeechRecognition || window.webkitSpeechRecognition'));
   assert.ok(module.includes('SpeechSynthesisUtterance'));
