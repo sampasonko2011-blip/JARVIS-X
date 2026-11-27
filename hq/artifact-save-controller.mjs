@@ -123,7 +123,9 @@ window.addEventListener("jx:artifact-save-request", async event => {
     ];
     if (cases.some(item => item.status !== "PASS")) throw new Error("ARTIFACT_POLICY_CHECK_FAILED");
     const sha256 = await digest(artifact.html);
-    const baselineId = await digest("JX_ARTIFACT_SANDBOX_POLICY_V1\n" + sandboxHtml.match(/Content-Security-Policy" content="([^"]+)"/)?.[1]);
+    const cspMatch = sandboxHtml.match(/Content-Security-Policy" content="([^"]+)"/);
+    if (!cspMatch) throw new Error("SANDBOX_CSP_NOT_FOUND");
+    const baselineId = await digest("JX_ARTIFACT_SANDBOX_POLICY_V1\n" + cspMatch[1]);
     const proposal = createEvolutionProposal({
       id: "artifact-" + sha256.slice(0, 24),
       title: String(artifact.title || "Generated artifact").slice(0, 80),
