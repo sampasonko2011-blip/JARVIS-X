@@ -557,3 +557,24 @@ test("Tap & Ask prepares a prompt from selected transcript text without auto-sen
   await expect(page.locator("#message")).toHaveValue(/Explique ce passage simplement/);
   await expect(page.locator("#send-message")).toBeDisabled();
 });
+
+test("Rich Chat Studio renders generated HTML only inside an opaque-origin no-network sandbox", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Mini-app de démonstration",
+    html: "<main id='demo'>Sandbox prêt</main><script>document.querySelector('#demo').textContent='JavaScript isolé actif';</script>"
+  }})));
+  await expect(page.locator("#rcs-artifact")).toBeVisible();
+  const frame = page.locator("#rcs-artifact-frame");
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
+  await expect(frame.contentFrame().locator("#demo")).toHaveText("JavaScript isolé actif");
+  const isolated = await page.evaluate(() => {
+    const frame = document.querySelector("#rcs-artifact-frame");
+    return frame.sandbox.contains("allow-same-origin") === false && frame.contentDocument === null;
+  });
+  expect(isolated).toBeTruthy();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("non sauvegardé");
+  await page.locator("#rcs-artifact-save").click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("persistance non confirmée");
+});
