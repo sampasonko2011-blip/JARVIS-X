@@ -742,6 +742,8 @@ test("combined PRONOTE and football imports emit a workload snapshot and adapt c
   });
   await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
   await page.locator('.side .nav [data-view="chat"]').click();
+  await page.locator('[data-jx-user-state="stressed"]').click();
+  await expect.poll(() => page.evaluate(() => window.JXRichChatStudio?.getPromptContext?.().mode)).toBe("calm-stepwise");
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-compose").fill("Explique-moi ce point.");
