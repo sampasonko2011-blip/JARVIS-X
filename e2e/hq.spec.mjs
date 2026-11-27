@@ -865,7 +865,7 @@ test("Git du Futur reports imported calendar evidence and abstains from uncalibr
   await expect(page.locator("#future-calibration-status")).toContainText("Aucune probabilité causale");
 });
 
-test("WebScout fails closed without search capability and Smart Handoff only prepares a local payload", async ({ page }) => {
+test("WebScout fails closed and Smart Handoff routes a provider-neutral brief by intent", async ({ page }) => {
   await enterHQ(page);
   await page.locator('.side .nav [data-view="webscout"]').click();
   await page.locator("#webscout-check").click();
@@ -873,8 +873,11 @@ test("WebScout fails closed without search capability and Smart Handoff only pre
   await page.locator("#webscout-query").fill("Compare les sources primaires sur le sujet X.");
   await page.locator("#webscout-prepare").click();
   await expect(page.locator("#webscout-brief")).toHaveValue(/No search was executed/);
-  await page.locator("#handoff-task").fill("Préparer une scène cinématique originale.");
+  await expect(page.locator("#handoff-intent")).toHaveValue("auto");
+  await page.locator("#handoff-task").fill("Créer une vidéo cinématique originale.");
   await page.locator("#handoff-prepare").click();
-  await expect(page.locator("#handoff-payload")).toHaveValue(/No external tool was opened/);
-  await expect(page.locator("#handoff-open-higgsfield")).toHaveAttribute("target", "_blank");
+  await expect(page.locator("#handoff-payload")).toHaveValue(/Intent: video/);
+  await expect(page.locator("#handoff-payload")).toHaveValue(/video-generation capability/);
+  await expect(page.locator("#handoff-payload")).toHaveValue(/No provider is registered/);
+  await expect(page.locator("#handoff-open-higgsfield")).toHaveCount(0);
 });
