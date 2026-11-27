@@ -3,20 +3,21 @@
  * It never claims hidden reasoning, remote inference, or external tool execution.
  */
 const $ = (id) => document.getElementById(id);
-const header = document.querySelector("main.local-chat-shell .brand");
-const transcript = $("transcript");
-const message = $("message");
-if (!header || !transcript || !message) throw new Error("RichChatStudio requires the local chat shell.");
+const localHeader = document.querySelector("main.local-chat-shell .brand");
+const chatMain = document.querySelector(".jx-chat-main");
+const transcript = $("transcript") || $("chat-thread");
+const message = $("message") || $("chat-compose");
+if ((!localHeader && !chatMain) || !transcript || !message) throw new Error("RichChatStudio requires a supported HQ chat surface.");
 
-const state = { fontTheme: "editorial", persona: "architect", engine: "LOCAL ENGINE · NOT LOADED", model: "UNKNOWN", stage: "IDLE" };
+const state = { fontTheme: "editorial", persona: "architect", engine: "LOCAL WEBLLM · NOT LOADED", model: "UNKNOWN", backend: localHeader ? "LOCAL_WEBLLM" : "CLOUD_GATEWAY", stage: "IDLE" };
 const root = document.createElement("section");
 root.id = "rich-chat-studio";
 root.className = "rcs-studio editorial";
 root.setAttribute("aria-label", "Rich Chat Studio");
 root.innerHTML = `
   <div class="rcs-topline">
-    <span class="rcs-engine" id="rcs-engine" role="status" aria-live="polite">LOCAL ENGINE · NOT LOADED</span>
-    <span class="rcs-cloud" id="rcs-cloud">CLOUD INFERENCE · NOT CONFIGURED</span>
+    <span class="rcs-engine" id="rcs-engine" role="status" aria-live="polite">${localHeader ? "LOCAL WEBLLM · NOT LOADED" : "CLOUD GATEWAY · NOT VERIFIED"}</span>
+    <span class="rcs-cloud" id="rcs-cloud">${localHeader ? "CLOUD INFERENCE · NOT CONFIGURED IN LOCAL CHAT" : "CLOUD GATEWAY · SIGN-IN REQUIRED"}</span>
     <span class="rcs-stage" id="rcs-stage">IDLE</span>
   </div>
   <div class="rcs-controls">
@@ -31,9 +32,9 @@ root.innerHTML = `
     <button type="button" data-action="storyboard">Créer storyboard</button>
   </div>
   <div class="rcs-storyboard" id="rcs-storyboard" aria-label="Storyboard visuel" hidden></div>
-  <p class="rcs-note">Inférence locale WebLLM uniquement. Le Gateway mémoire n’est pas un moteur de réponse Cloud. Aucune recherche Web, génération d’image ou analyse PNG n’est lancée depuis ce studio.</p>
+  <p class="rcs-note" id="rcs-note">${localHeader ? "Inférence locale WebLLM uniquement. Le Gateway mémoire n’est pas un moteur de réponse Cloud." : "Le statut Cloud est issu des événements réels de la session HQ. Une vérification de santé ne prouve pas à elle seule une génération."} Aucune recherche Web, génération d’image ou analyse PNG n’est lancée depuis ce studio.</p>
 `;
-header.insertAdjacentElement("afterend", root);
+if (localHeader) localHeader.insertAdjacentElement("afterend", root);\nelse chatMain.insertBefore(root, transcript);
 
 function setStage(stage) {
   state.stage = String(stage || "IDLE");
@@ -99,5 +100,37 @@ root.querySelectorAll("[data-action]").forEach((button) => button.addEventListen
   message.focus();
 }));
 window.addEventListener("jx:chat-engine", (event) => setEngine(event.detail || {}));
+window.addEventListener("jx:gateway-state", (event) => {
+  const detail = event.detail || {};
+  const cloud = $("rcs-cloud");
+  if (cloud) cloud.textContent = detail.ready
+    ? detail.mode === "mock" ? "MOCK ROUTE READY · 0 MODEL CALLS" : "LIVE ROUTE READY · NO MODEL CALL YET"
+    : "CLOUD GATEWAY · " + (detail.reason || "NOT VERIFIED");
+  if (detail.ready && detail.mode === "live") setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · AUTHENTICATED · LIVE ROUTE READY", modelId: detail.model || "MODEL NOT REPORTED" });
+  if (!detail.ready) setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · NOT VERIFIED", modelId: "UNKNOWN" });
+});
+window.addEventListener("jx:assistant-request-start", (event) => {
+  const mode = event.detail?.mode;
+  if (mode === "mock") {
+    setEngine({ backend: "CLOUD_GATEWAY", status: "MOCK FIXTURE · NOT AI", modelId: "0 MODEL CALLS" });
+    setStage("Exécution du fixture de test · aucun modèle");
+  } else {
+    setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · REQUEST IN FLIGHT", modelId: "WAITING FOR SERVER RECEIPT" });
+    setStage("Requête authentifiée envoyée au Gateway");
+  }
+});
+window.addEventListener("jx:assistant-response", (event) => {
+  if (event.detail?.mode === "mock") {
+    setEngine({ backend: "CLOUD_GATEWAY", status: "MOCK FIXTURE · NOT AI", modelId: "0 MODEL CALLS" });
+    setStage("Fixture reçu · aucune inférence");
+  } else {
+    setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · RESPONSE RECEIVED", modelId: event.detail?.model || "MODEL NOT REPORTED" });
+    setStage("Réponse Cloud reçue");
+  }
+});
+window.addEventListener("jx:assistant-request-failed", () => {
+  setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · REQUEST FAILED", modelId: "UNKNOWN" });
+  setStage("Échec de la requête · vérifier le reçu avant toute relance");
+});
 window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));
 window.JXRichChatStudio = Object.freeze({ personaPrompt, getState: () => ({ ...state }) });
