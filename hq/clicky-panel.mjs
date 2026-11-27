@@ -69,6 +69,8 @@ export class ClickyCompanionPanel {
     ).slice(0, 24) : [];
     const width = this.overlayCanvas.clientWidth;
     const height = this.overlayCanvas.clientHeight;
+    const scaleX = width / 1000;
+    const scaleY = height / 440;
     this.ctx.clearRect(0, 0, width, height);
     this.ctx.save();
     this.ctx.strokeStyle = "#38bdf8";
@@ -79,17 +81,18 @@ export class ClickyCompanionPanel {
     for (const m of this.markers) {
       this.ctx.beginPath();
       if (m.type === "circle") {
-        this.ctx.arc(m.x, m.y, Math.max(4, Math.min(120, m.r || 28)), 0, Math.PI * 2);
+        this.ctx.arc(m.x * scaleX, m.y * scaleY, Math.max(4, Math.min(120, (m.r || 28) * Math.min(scaleX, scaleY))), 0, Math.PI * 2);
         this.ctx.stroke();
       } else {
-        this.ctx.moveTo(m.fromX, m.fromY);
-        this.ctx.lineTo(m.toX, m.toY);
+        this.ctx.moveTo(m.fromX * scaleX, m.fromY * scaleY);
+        this.ctx.lineTo(m.toX * scaleX, m.toY * scaleY);
         this.ctx.stroke();
+        const toX = m.toX * scaleX, toY = m.toY * scaleY;
         const angle = Math.atan2(m.toY - m.fromY, m.toX - m.fromX);
         this.ctx.beginPath();
-        this.ctx.moveTo(m.toX, m.toY);
-        this.ctx.lineTo(m.toX - 12 * Math.cos(angle - Math.PI / 6), m.toY - 12 * Math.sin(angle - Math.PI / 6));
-        this.ctx.lineTo(m.toX - 12 * Math.cos(angle + Math.PI / 6), m.toY - 12 * Math.sin(angle + Math.PI / 6));
+        this.ctx.moveTo(toX, toY);
+        this.ctx.lineTo(toX - 12 * Math.cos(angle - Math.PI / 6), toY - 12 * Math.sin(angle - Math.PI / 6));
+        this.ctx.lineTo(toX - 12 * Math.cos(angle + Math.PI / 6), toY - 12 * Math.sin(angle + Math.PI / 6));
         this.ctx.closePath();
         this.ctx.fill();
       }
@@ -189,7 +192,7 @@ const panel = new ClickyCompanionPanel({
     const send = document.querySelector("#chat-send");
     if (!input || !send) throw new Error("Le chat HQ n'est pas disponible.");
     if (send.disabled) throw new Error("La passerelle de chat HQ n'est pas prête ou la session n'est pas authentifiée.");
-    const request = "Réponds en français à la demande suivante. Si un guidage sur le canvas est pertinent, ajoute à la fin un bloc JSON strict au format {\\"markers\\":[{\\"type\\":\\"circle\\",\\"x\\":100,\\"y\\":100,\\"r\\":28}]} avec coordonnées relatives au canvas (1000 × 440). Sinon réponds sans bloc. Demande : " + prompt;
+    const request = "Réponds en français à la demande suivante. Si un guidage visuel est pertinent, termine par un bloc JSON strict {\"markers\":[{\"type\":\"circle\",\"x\":100,\"y\":100,\"r\":28}]} avec coordonnées relatives à un canvas de référence 1000 × 440. Le canvas n’est pas transmis au moteur : base les coordonnées uniquement sur la description fournie et annonce cette limite. Sinon réponds sans bloc. Demande : " + prompt;
     return new Promise((resolve, reject) => {
       let settled = false;
       const cleanup = () => {
@@ -201,7 +204,7 @@ const panel = new ClickyCompanionPanel({
       const onResponse = event => {
         const raw = String(event.detail?.text || "");
         let markers = [];
-        const match = raw.match(/\\{\\s*"markers"\\s*:[\\s\\S]*?\\}\\s*$/);
+        const match = raw.match(/\{\s*"markers"\s*:[\s\S]*?\}\s*$/);
         let explanation = raw;
         if (match) {
           try { const parsed = JSON.parse(match[0]); markers = Array.isArray(parsed.markers) ? parsed.markers : []; explanation = raw.slice(0, match.index).trim(); } catch {}
