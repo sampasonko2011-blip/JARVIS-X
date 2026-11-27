@@ -17,7 +17,7 @@ test('WebScout reports the actual registered capability set and fails closed wit
 
 test('Smart Handoff infers intent and prepares a provider-neutral local payload', () => {
   assert.ok(module.includes('préparé localement'));
-  assert.ok(module.includes('No external tool was opened, invoked or executed'));
+  assert.ok(module.includes('No provider is registered, opened, invoked or executed'));
   assert.ok(html.includes('id="handoff-intent"'));
   assert.ok(!html.includes('handoff-open-higgsfield'));
   assert.ok(module.includes("inferHandoffIntent"));
