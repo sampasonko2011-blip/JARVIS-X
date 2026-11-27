@@ -16,7 +16,7 @@ test('WebScout reports the actual registered capability set and fails closed wit
 });
 
 test('Smart Handoff only prepares and copies local payload; external opening is user initiated', () => {
-  assert.ok(module.includes('Prepared locally'));
+  assert.ok(module.includes('préparé localement'));
   assert.ok(module.includes('No external tool was opened, invoked or executed'));
   assert.ok(html.includes('id="handoff-open-higgsfield"'));
   assert.ok(html.includes('target="_blank" rel="noopener noreferrer"'));
