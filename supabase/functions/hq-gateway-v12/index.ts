@@ -558,7 +558,7 @@ Deno.serve(async (req: Request) => {
     audit: "Presentation mode: rigorous auditor. Separate observed facts, validated results, assumptions, unknowns, risks and required tests.",
     coach: "Presentation mode: field coach. Give clear, progressive and age-appropriate coaching instructions."
   };
-  const executionObjective = task + "\\n\\n" + (personaInstructions[personaId] ?? personaInstructions.architect);
+  const executionObjective = task + "\n\n" + (personaInstructions[personaId] ?? personaInstructions.architect);
   const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
   const routeResult = resolveRucheRoute(body.executive_identity, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);

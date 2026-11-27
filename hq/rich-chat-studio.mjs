@@ -79,13 +79,13 @@ function renderArtifact(artifact) {
   const csp = "default-src 'none'; script-src blob:; style-src blob:; img-src data: blob:; font-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'";
   const blobUrls = [];
   let markup = artifact.html;
-  markup = markup.replace(/<style\\b[^>]*>([\\s\\S]*?)<\\/style\\s*>/gi, (_tag, cssText) => {
+  markup = markup.replace(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi, (_tag, cssText) => {
     const url = URL.createObjectURL(new Blob([cssText], { type: "text/css" }));
     blobUrls.push(url);
     return '<link rel="stylesheet" href="' + url + '">';
   });
-  markup = markup.replace(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi, (_tag, attributes, code) => {
-    if (/\\bsrc\\s*=|\\btype\\s*=\\s*["']module["']/i.test(attributes)) {
+  markup = markup.replace(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi, (_tag, attributes, code) => {
+    if (/\bsrc\s*=|\btype\s*=\s*["']module["']/i.test(attributes)) {
       throw new TypeError("External and module scripts are not allowed in generated artifacts.");
     }
     const url = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
