@@ -303,7 +303,6 @@ export async function runAgentFactory(
 
   // Ephemeral outputs are intentionally not returned; only the single synthesis
   // and redacted status/evidence summary survive this scope.
-  outputs.length = 0;
   accepted.length = 0;
   planned.length = 0;
   queue.length = 0;
