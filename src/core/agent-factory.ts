@@ -42,7 +42,7 @@ export interface AgentFactoryOptions {
   ledger?: EvidenceLedger;
   decompose(task: FactoryTask): Promise<FactoryTask[]> | FactoryTask[];
   execute(input: FactoryExecution): Promise<FactoryAgentOutput>;
-  saboteur(task: FactoryTask, output: FactoryAgentOutput): Promise<SaboteurFinding> | SaboteurFinding;
+  saboteur(task: FactoryTask, output: FactoryAgentOutput, signal: AbortSignal): Promise<SaboteurFinding> | SaboteurFinding;
   synthesize(task: FactoryTask, accepted: FactoryAgentOutput[]): Promise<string> | string;
   timeoutMs?: number;
   maxConcurrency?: number;
@@ -225,7 +225,7 @@ export async function runAgentFactory(
             throw new Error("factory_agent_output_invalid");
           }
           const critique = await withTimeout(
-            () => Promise.resolve(options.saboteur(structuredClone(task), structuredClone(output))),
+            branchSignal => Promise.resolve(options.saboteur(structuredClone(task), structuredClone(output), branchSignal)),
             timeoutMs, signal
           );
           if (!critique || typeof critique.passed !== "boolean" || !Array.isArray(critique.findings)) {
