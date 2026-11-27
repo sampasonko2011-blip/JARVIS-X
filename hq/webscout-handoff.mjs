@@ -17,7 +17,7 @@ document.querySelector("#webscout-prepare")?.addEventListener("click", () => {
   const q = query?.value.trim();
   if (!q) { status.textContent = "Ajoute une question avant de préparer le brief."; return; }
   brief.value = [
-    "JARVIS-X / WEBS COUT RESEARCH BRIEF",
+    "JARVIS-X / WEBSCOUT RESEARCH BRIEF",
     "Question: " + q,
     "Requirements: cite primary sources where possible; include publication dates; separate observed facts, inference and unknowns; cross-check key claims; report search scope and limitations.",
     "Output: concise synthesis, source title + URL + date + supporting claim, contradictions, confidence and unresolved gaps.",
