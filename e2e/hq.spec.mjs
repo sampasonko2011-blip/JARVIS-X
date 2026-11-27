@@ -753,6 +753,24 @@ test("combined PRONOTE and football imports emit a workload snapshot and adapt c
   expect(request.response_style).toContain("calm, concise, step-by-step");
 });
 
+test("generated artifact JavaScript executes in the dedicated opaque-origin offline sandbox", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await expect(page.locator("#rich-chat-studio")).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Sandbox execution proof",
+    html: "<main><p id='artifact-result'>pending</p></main><script>document.getElementById('artifact-result').textContent='isolated-active';</script>"
+  }})));
+  const frame = page.frameLocator("#rcs-artifact-frame");
+  await expect(frame.locator("#artifact-result")).toHaveText("isolated-active");
+  await expect(page.locator("#rcs-artifact-status")).toContainText("JavaScript isolé actif");
+  const sandbox = await page.locator("#rcs-artifact-frame").evaluate(node => ({ sandbox: node.getAttribute("sandbox"), src: node.getAttribute("src") }));
+  expect(sandbox.sandbox).toBe("allow-scripts");
+  expect(sandbox.src).toBe("./artifact-sandbox.html");
+  await page.locator("#rcs-artifact-reset").click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("Sandbox réinitialisée");
+});
+
 test("Clicky companion activates a non-interactive overlay beside the live Perception canvas", async ({ page }) => {
   await enterHQ(page);
   await page.locator('.side .nav [data-view="clicky"]').click();

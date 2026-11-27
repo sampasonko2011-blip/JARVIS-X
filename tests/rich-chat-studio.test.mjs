@@ -50,10 +50,12 @@ test("cloud status is explicitly unavailable rather than inferred from memory co
 
 test("generated artifacts run only in an opaque-origin sandbox with network CSP and L3-gated save request", () => {
   assert.ok(module.includes('frame.setAttribute("sandbox", "allow-scripts")'));
+  assert.ok(module.includes('frame.src = "./artifact-sandbox.html"'));
+  assert.ok(module.includes("event.source !== frame.contentWindow"));
   assert.ok(!module.includes("allow-same-origin"));
   assert.ok(module.includes("default-src 'none'"));
   assert.ok(module.includes("connect-src 'none'"));
-  assert.ok(module.includes("artifact.html.length > 150_000"));
+  assert.ok(module.includes("new TextEncoder().encode(artifact.html).byteLength > 150_000"));
   assert.ok(module.includes("requiresL3: true"));
   assert.ok(module.includes("persistance non confirmée"));
 });
