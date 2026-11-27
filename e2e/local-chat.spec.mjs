@@ -525,3 +525,35 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   expect(await sw.text()).toContain("jarvis-x-hq-shell-v59");
   expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
 });
+
+test("Rich Chat Studio reports actual local engine state and supports style/persona controls", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const studio = page.locator("#rich-chat-studio");
+  await expect(studio).toBeVisible();
+  await expect(page.locator("#rcs-engine")).toContainText("NOT LOADED");
+  await expect(page.locator("#rcs-cloud")).toContainText("NOT CONFIGURED");
+  await page.locator("#rcs-style").selectOption("hud-mono");
+  await expect(studio).toHaveClass(/hud-mono/);
+  await page.locator("#rcs-persona").selectOption("audit");
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent("jx:chat-engine", { detail: { status: "READY", modelId: "test-model", backend: "WebGPU" } }));
+    window.dispatchEvent(new CustomEvent("jx:chat-stage", { detail: { stage: "Génération WebLLM sur cet appareil" } }));
+  });
+  await expect(page.locator("#rcs-engine")).toContainText("test-model");
+  await expect(page.locator("#rcs-stage")).toContainText("GÉNÉRATION WEBLLM");
+});
+
+test("Tap & Ask prepares a prompt from selected transcript text without auto-sending", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => {
+    const target = document.querySelector("#transcript .log small");
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await page.locator('[data-action="simplify"]').click();
+  await expect(page.locator("#message")).toHaveValue(/Explique ce passage simplement/);
+  await expect(page.locator("#send-message")).toBeDisabled();
+});
