@@ -34,7 +34,13 @@ root.innerHTML = `
   <div class="rcs-storyboard" id="rcs-storyboard" aria-label="Storyboard visuel" hidden></div>
   <p class="rcs-note" id="rcs-note">${localHeader ? "Inférence locale WebLLM uniquement. Le Gateway mémoire n’est pas un moteur de réponse Cloud." : "Le statut Cloud est issu des événements réels de la session HQ. Une vérification de santé ne prouve pas à elle seule une génération."} Aucune recherche Web, génération d’image ou analyse PNG n’est lancée depuis ce studio.</p>
 `;
-if (localHeader) localHeader.insertAdjacentElement("afterend", root);\nelse chatMain.insertBefore(root, transcript);
+if (localHeader) {
+  const localStage = document.querySelector(".jx-chat-stage");
+  if (!localStage) throw new Error("RichChatStudio could not find the local conversation stage.");
+  localStage.insertBefore(root, transcript);
+} else {
+  chatMain.insertBefore(root, transcript);
+}
 
 function setStage(stage) {
   state.stage = String(stage || "IDLE");
@@ -47,8 +53,9 @@ function setStage(stage) {
 function setEngine(detail = {}) {
   if (typeof detail.status === "string") state.engine = detail.status;
   if (typeof detail.modelId === "string") state.model = detail.modelId;
+  if (typeof detail.backend === "string") state.backend = detail.backend;
   const badge = $("rcs-engine");
-  if (badge) badge.textContent = state.engine === "READY"
+  if (badge) badge.textContent = state.backend === "CLOUD_GATEWAY" ? state.engine : state.engine === "READY"
     ? "LOCAL WEBLLM · ACTIVE · " + state.model
     : "LOCAL WEBLLM · " + state.engine;
 }
