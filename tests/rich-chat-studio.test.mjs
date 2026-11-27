@@ -46,3 +46,13 @@ test("cloud status is explicitly unavailable rather than inferred from memory co
   assert.ok(module.includes("CLOUD INFERENCE · NOT CONFIGURED"));
   assert.ok(module.includes("Le Gateway mémoire n’est pas un moteur de réponse Cloud"));
 });
+
+test("generated artifacts run only in an opaque-origin sandbox with network CSP and L3-gated save request", () => {
+  assert.ok(module.includes('frame.setAttribute("sandbox", "allow-scripts")'));
+  assert.ok(!module.includes("allow-same-origin"));
+  assert.ok(module.includes("default-src 'none'"));
+  assert.ok(module.includes("connect-src 'none'"));
+  assert.ok(module.includes("artifact.html.length > 150_000"));
+  assert.ok(module.includes("requiresL3: true"));
+  assert.ok(module.includes("persistance non confirmée"));
+});

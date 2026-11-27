@@ -256,7 +256,7 @@ attachmentInput?.addEventListener("change", async () => {
         });
       }
     }
-    pendingAttachmentContext = textParts.join("\\n\\n") + (imageDataUrl
+    pendingAttachmentContext = textParts.join("\n\n") + (imageDataUrl
       ? "\\n[IMAGE JOINTE] L'image est affichée en aperçu. L'analyse visuelle nécessite une capacité cloud explicitement autorisée ; aucune transmission n'a été effectuée."
       : "");
     if (imageDataUrl) {
