@@ -30,18 +30,37 @@ document.querySelector("#webscout-copy")?.addEventListener("click", async () => 
   try { await navigator.clipboard.writeText(brief.value); status.textContent = "Brief copié. Aucune recherche externe exécutée."; }
   catch { brief.focus(); brief.select(); status.textContent = "Presse-papiers indisponible ; brief sélectionné pour copie manuelle."; }
 });
+function inferHandoffIntent(task) {
+  const value = task.toLocaleLowerCase("fr");
+  if (/vidéo|video|clip|animation|storyboard|montage/.test(value)) return "video";
+  if (/image|illustration|affiche|logo|visuel|dessin/.test(value)) return "image";
+  if (/audio|voix|musique|son|narration/.test(value)) return "audio";
+  if (/recherche|sources|étude|comparatif|actualité|documentation/.test(value)) return "research";
+  if (/code|application|prototype|site web|bug|programmation/.test(value)) return "code";
+  return "general";
+}
+const HANDOFF_CATEGORIES = Object.freeze({
+  video: "video-generation capability",
+  image: "image-generation or editing capability",
+  audio: "audio-generation or speech capability",
+  research: "web research or source-verification capability",
+  code: "coding or prototyping capability",
+  general: "general-purpose external capability"
+});
 document.querySelector("#handoff-prepare")?.addEventListener("click", () => {
   const task = document.querySelector("#handoff-task")?.value.trim();
   if (!task) { handoffStatus.textContent = "Décris le résultat attendu avant de préparer le handoff."; return; }
-  const target = document.querySelector("#handoff-target")?.value || "generic";
+  const selected = document.querySelector("#handoff-intent")?.value || "auto";
+  const intent = selected === "auto" ? inferHandoffIntent(task) : selected;
   payload.value = [
     "JARVIS-X SMART HANDOFF",
-    "Target: " + (target === "higgsfield" ? "Higgsfield" : "External tool chosen by the user"),
+    "Intent: " + intent,
+    "Target capability category: " + (HANDOFF_CATEGORIES[intent] || HANDOFF_CATEGORIES.general),
     "Objective: " + task,
-    "Constraints: preserve user-supplied references; do not invent facts or claim unavailable assets; return the deliverable and execution receipt; disclose any cost before submission.",
-    "Provenance: payload prepared locally by HQ. No external tool was opened, invoked or executed."
+    "Requirements: choose a compatible provider only after inspecting its real capability, input limits, privacy policy and cost; preserve user-supplied references; return the deliverable and an execution receipt.",
+    "Provenance: payload prepared locally by HQ. No provider is registered, opened, invoked or executed."
   ].join("\n");
-  handoffStatus.textContent = "Payload préparé localement. Prêt à copier vers l’outil externe ; aucune action externe n’a été lancée.";
+  handoffStatus.textContent = "Brief généraliste préparé localement (" + intent + "). Aucun fournisseur n’est enregistré ; aucune action externe n’a été lancée.";
 });
 document.querySelector("#handoff-copy")?.addEventListener("click", async () => {
   if (!payload?.value) { handoffStatus.textContent = "Prépare d’abord le payload."; return; }

@@ -15,9 +15,12 @@ test('WebScout reports the actual registered capability set and fails closed wit
   assert.ok(html.includes('id="webscout-status-tag"'));
 });
 
-test('Smart Handoff only prepares and copies local payload; external opening is user initiated', () => {
+test('Smart Handoff infers intent and prepares a provider-neutral local payload', () => {
   assert.ok(module.includes('préparé localement'));
   assert.ok(module.includes('No external tool was opened, invoked or executed'));
-  assert.ok(html.includes('id="handoff-open-higgsfield"'));
-  assert.ok(html.includes('target="_blank" rel="noopener noreferrer"'));
+  assert.ok(html.includes('id="handoff-intent"'));
+  assert.ok(!html.includes('handoff-open-higgsfield'));
+  assert.ok(module.includes("inferHandoffIntent"));
+  for (const intent of ["video", "image", "audio", "research", "code"]) assert.ok(module.includes(intent + ":"));
+  assert.ok(!module.includes("Higgsfield"));
 });
