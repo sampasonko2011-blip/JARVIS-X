@@ -9,7 +9,7 @@ const transcript = $("transcript") || $("chat-thread");
 const message = $("message") || $("chat-compose");
 if ((!localHeader && !chatMain) || !transcript || !message) throw new Error("RichChatStudio requires a supported HQ chat surface.");
 
-const state = { fontTheme: "editorial", persona: "architect", engine: "LOCAL WEBLLM · NOT LOADED", model: "UNKNOWN", backend: localHeader ? "LOCAL_WEBLLM" : "CLOUD_GATEWAY", stage: "IDLE" };
+const state = { fontTheme: "editorial", persona: "architect", behavior: { mode: "normal", reasons: [] }, engine: "LOCAL WEBLLM · NOT LOADED", model: "UNKNOWN", backend: localHeader ? "LOCAL_WEBLLM" : "CLOUD_GATEWAY", stage: "IDLE" };
 const root = document.createElement("section");
 root.id = "rich-chat-studio";
 root.className = "rcs-studio editorial";
@@ -124,6 +124,20 @@ function processAssistantText(text) {
   }
 }
 
+function behaviorPrompt() {
+  const mode = state.behavior.mode;
+  if (mode === "calm-stepwise") return "Response adaptation: use a calm, concise, step-by-step explanation. Offer one action at a time; avoid pressure and unnecessary verbosity. Do not infer or mention a health condition.";
+  if (mode === "focused") return "Response adaptation: be focused, structured and concise; prioritize the next concrete action.";
+  return "";
+}
+window.addEventListener("jx:behavior-adaptation", (event) => {
+  const detail = event.detail || {};
+  const allowed = new Set(["normal", "focused", "calm-stepwise"]);
+  state.behavior = {
+    mode: allowed.has(detail.mode) ? detail.mode : "normal",
+    reasons: Array.isArray(detail.reasons) ? detail.reasons.filter(x => typeof x === "string").slice(0, 5) : []
+  };
+});
 function personaPrompt() {
   const prompts = {
     architect: "Persona de présentation : architecte visuel. Structure la réponse avec étapes, relations et exemples concrets, sans prétendre générer des visuels.",
@@ -209,4 +223,4 @@ window.addEventListener("jx:assistant-request-failed", () => {
 });
 window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));
 window.addEventListener("jx:artifact-render", (event) => { try { renderArtifact(event.detail); } catch (error) { setStage("Artefact refusé : " + error.message); } });
-window.JXRichChatStudio = Object.freeze({ personaPrompt, renderArtifact, processAssistantText, getState: () => ({ ...state }) });
+window.JXRichChatStudio = Object.freeze({ personaPrompt, behaviorPrompt, getPromptContext: () => ({ mode: state.behavior.mode, instruction: behaviorPrompt() }), renderArtifact, processAssistantText, getState: () => ({ ...state, behavior: { ...state.behavior } }) });
