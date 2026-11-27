@@ -27,7 +27,7 @@ test('Future scenario refuses fabricated calibrated probabilities and intervals'
 });
 
 test('Future scenario exposes no mutation route and keeps L3 as a prerequisite', () => {
-  assert.ok(module.includes('Pas de branche Git créée'));
+  assert.ok(module.includes('pas de branche Git créée'));
   assert.ok(module.includes('approbation L3'));
   assert.ok(!module.includes('fetch('));
 });
