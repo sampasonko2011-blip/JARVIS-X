@@ -720,3 +720,16 @@ test("Clicky companion activates a non-interactive overlay beside the live Perce
   await expect.poll(() => overlay.evaluate(node => getComputedStyle(node).pointerEvents)).toBe("none");
   await expect(page.locator("#clicky-live-consent")).not.toBeChecked();
 });
+
+
+test("LOCK IN isolates the active HQ drawer and STOP restores NORMAL", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator("#jx-lock-in").click();
+  await expect(page.locator(".shell")).toHaveClass(/jx-lock-in/);
+  await expect(page.locator("#jx-lock-status")).toContainText("LOCKED");
+  await expect(page.locator("#view-overview")).toBeVisible();
+  await expect(page.locator("#view-chat")).toBeHidden();
+  await page.locator("#jx-stop").click();
+  await expect(page.locator(".shell")).not.toHaveClass(/jx-lock-in/);
+  await expect(page.locator("#jx-lock-status")).toContainText("NORMAL");
+});
