@@ -22,7 +22,7 @@ test('Future scenario refuses fabricated calibrated probabilities and intervals'
   assert.ok(html.includes('Probability:</strong> NOT ESTIMATED'));
   assert.ok(html.includes('Uncertainty interval:</strong> NOT ESTIMABLE'));
   assert.ok(module.includes('Aucune probabilité causale n’est publiée'));
-  assert.ok(module.includes('held-out'));
+  assert.ok(html.includes('held-out'));
   assert.ok(module.includes('UNKNOWN'));
 });
 
