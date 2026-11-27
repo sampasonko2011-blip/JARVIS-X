@@ -76,10 +76,28 @@ function renderArtifact(artifact) {
   const status = $("rcs-artifact-status");
   const save = $("rcs-artifact-save");
   if (!frame || !panel || !titleNode || !status || !save) return false;
-  const csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'";
-  const safeDocument = "<!doctype html><html lang='fr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='Content-Security-Policy' content=\"" + csp + "\"><style>html,body{margin:0;min-height:100%;font:16px system-ui;color:#e5edf7;background:#0b1220}body{padding:12px;box-sizing:border-box;overflow-wrap:anywhere}button,input,textarea,select{max-width:100%;font:inherit}button,input,textarea,select{min-height:44px}</style></head><body>" + artifact.html + "</body></html>";
+  const csp = "default-src 'none'; script-src blob:; style-src blob:; img-src data: blob:; font-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'";
+  const blobUrls = [];
+  let markup = artifact.html;
+  markup = markup.replace(/<style\\b[^>]*>([\\s\\S]*?)<\\/style\\s*>/gi, (_tag, cssText) => {
+    const url = URL.createObjectURL(new Blob([cssText], { type: "text/css" }));
+    blobUrls.push(url);
+    return '<link rel="stylesheet" href="' + url + '">';
+  });
+  markup = markup.replace(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script\\s*>/gi, (_tag, attributes, code) => {
+    if (/\\bsrc\\s*=|\\btype\\s*=\\s*["']module["']/i.test(attributes)) {
+      throw new TypeError("External and module scripts are not allowed in generated artifacts.");
+    }
+    const url = URL.createObjectURL(new Blob([code], { type: "text/javascript" }));
+    blobUrls.push(url);
+    return '<script src="' + url + '"></script>';
+  });
+  const safeDocument = "<!doctype html><html lang='fr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='Content-Security-Policy' content=\"" + csp + "\"></head><body>" + markup + "</body></html>";
   frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("referrerpolicy", "no-referrer");
+  frame.addEventListener("load", () => {
+    for (const url of blobUrls) URL.revokeObjectURL(url);
+  }, { once: true });
   frame.srcdoc = safeDocument;
   titleNode.textContent = title;
   status.textContent = "Aperçu isolé actif · non sauvegardé · validation L3 requise";
@@ -112,7 +130,7 @@ function personaPrompt() {
     audit: "Persona de présentation : audit chirurgical. Sépare faits observés, validations, hypothèses, inconnues, risques et tests nécessaires.",
     coach: "Persona de présentation : coach terrain. Donne des consignes pédagogiques, progressives et sûres, adaptées à un adolescent."
   };
-  const artifactContract = "Quand une mini-app, une simulation, un schéma ou un outil interactif est explicitement demandé, ajoute un bloc jx-artifact contenant du JSON valide avec title et html. Le HTML/CSS/JS doit être autonome, sans réseau, sans ressource externe ni accès au parent, et rester sous 150 Ko. N’émets ce bloc que si un artefact interactif est demandé.";
+  const artifactContract = "Quand une mini-app, une simulation, un schéma ou un outil interactif est explicitement demandé, ajoute un bloc jx-artifact contenant du JSON valide avec title et html. Le HTML/CSS/JS doit être autonome, sans réseau, sans ressource externe, sans import module, sans attribut style ni gestionnaire onclick inline, sans accès au parent, et rester sous 150 Ko. N’émets ce bloc que si un artefact interactif est demandé.";
   return prompts[state.persona] + "\n\n" + artifactContract;
 }
 function addStoryboardCard(title, content) {

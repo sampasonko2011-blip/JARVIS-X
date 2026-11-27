@@ -158,6 +158,7 @@ test("Rich Chat Studio is mounted in HQ and distinguishes the zero-model mock ro
   await page.locator('.side .nav [data-view="chat"]').click();
   await expect(page.locator("#rich-chat-studio")).toBeVisible();
   await expect(page.locator("#rcs-cloud")).toContainText("SIGN-IN REQUIRED");
+  await page.locator(".jx-advanced-drawer summary").click();
   await page.locator("#chat-execution-mode").selectOption("mock");
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#rcs-cloud")).toContainText("MOCK ROUTE READY · 0 MODEL CALLS");

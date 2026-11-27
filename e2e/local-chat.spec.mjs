@@ -208,7 +208,7 @@ test("v45 composer uses a responsive two-row grid on iPad and mobile viewports",
       };
     });
     expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.dockWidth - 20);
-    expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
+    expect(layout.messageMinHeight).toBeGreaterThanOrEqual(48);
     expect(layout.controlsVisible).toBe(true);
     expect(layout.messageGridColumn).toBe("1 / -1");
     expect(layout.documentOverflow).toBeLessThanOrEqual(1);

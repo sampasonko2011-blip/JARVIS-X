@@ -552,6 +552,13 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
   }
   const task = isImageRoute ? "Image generation request" : (body.task as string).trim();
+  const personaId = typeof body.presentation_persona === "string" ? body.presentation_persona : "architect";
+  const personaInstructions: Record<string, string> = {
+    architect: "Presentation mode: visual architect. Organize the answer with clear steps, relationships and concrete examples.",
+    audit: "Presentation mode: rigorous auditor. Separate observed facts, validated results, assumptions, unknowns, risks and required tests.",
+    coach: "Presentation mode: field coach. Give clear, progressive and age-appropriate coaching instructions."
+  };
+  const executionObjective = task + "\\n\\n" + (personaInstructions[personaId] ?? personaInstructions.architect);
   const modeAlias = typeof body.mode === "string" && ["support", "master_control", "epaulement", "domination"].includes(body.mode) ? body.mode : undefined;
   const routeResult = resolveRucheRoute(body.executive_identity, body.orchestration_mode ?? modeAlias ?? body.mode);
   if (!routeResult.ok) return jsonResponse({ error: routeResult.error, allowed: routeResult.allowed }, 400, origin);
@@ -771,7 +778,7 @@ Deno.serve(async (req: Request) => {
             enabled: Deno.env.get("JX_ENABLE_LOCAL_TOOL_CALLS") === "true",
           });
           return executeCognitiveKernel({
-            objective: task,
+            objective: executionObjective,
             memoryContext: memory.context,
             mode: orchestrationMode,
             availableCapabilities: registry.describe(),
