@@ -92,6 +92,10 @@ function renderArtifact(artifact) {
   panel.hidden = false;
   return true;
 }
+window.addEventListener("jx:artifact-save-result", (event) => {
+  const status = $("rcs-artifact-status");
+  if (status && event.detail?.encrypted === true) status.textContent = "Sauvegardé localement · AES-GCM · " + String(event.detail.status || "ENCRYPTED_OUTBOX");
+});
 window.addEventListener("message", (event) => {
   const frame = $("rcs-artifact-frame");
   if (!frame || event.source !== frame.contentWindow || event.data?.type !== "jx-artifact-sandbox-status") return;
