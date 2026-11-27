@@ -139,3 +139,47 @@ test("direct chat refuses incomplete health schemas", async ({ page }) => {
   await expect(page.locator("#chat-gateway-status")).toContainText("schema validation");
   await expect(page.locator("#chat-send")).toBeDisabled();
 });
+
+test("Rich Chat Studio is mounted in HQ and distinguishes the zero-model mock route from Cloud inference", async ({ page }) => {
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: {
+      ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel",
+      executiveIdentity: "JARVIS-X", executiveModel: "mock-fixture",
+      executiveRuntimeConfigured: false, mockModeEnabled: true,
+      budgetGuard: { enabled: false, killSwitchEnabled: true },
+      chatEnabled: false, auth: "verified-supabase-session"
+    } },
+    chat: { status: 200, body: { mock: true, model_calls: 0, executive_identity: "JARVIS-X", output: "Fixture reply" } }
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
+    access_token: "fixture-access-token", refresh_token: "fixture-refresh-token",
+    expires_at: Math.floor(Date.now()/1000)+3600
+  })));
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await expect(page.locator("#rich-chat-studio")).toBeVisible();
+  await expect(page.locator("#rcs-cloud")).toContainText("SIGN-IN REQUIRED");
+  await page.locator("#chat-execution-mode").selectOption("mock");
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#rcs-cloud")).toContainText("MOCK ROUTE READY · 0 MODEL CALLS");
+  await expect(page.locator("#rcs-engine")).toContainText("MOCK FIXTURE · NOT AI");
+  await page.locator("#chat-compose").fill("Test de fixture sans inférence.");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Fixture reply");
+  await expect(page.locator("#rcs-stage")).toContainText("FIXTURE REÇU");
+  await expect(page.locator("#rcs-engine")).toContainText("0 MODEL CALLS");
+});
+
+test("HQ Tap & Ask prepares a prompt from selected conversation text without sending it", async ({ page }) => {
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.evaluate(() => {
+    const target = document.querySelector("#chat-thread .jx-chat-welcome p");
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await page.locator('#rich-chat-studio [data-action="simplify"]').click();
+  await expect(page.locator("#chat-compose")).toHaveValue(/Explique ce passage simplement/);
+  await expect(page.locator("#chat-send")).toBeDisabled();
+});
