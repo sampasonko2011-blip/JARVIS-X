@@ -743,7 +743,7 @@ test("Git du Futur reports imported calendar evidence and abstains from uncalibr
   await page.locator("#school-ics").setInputFiles({name:"pronote-future.ics",mimeType:"text/calendar",buffer:Buffer.from(school)});
   await page.locator("#football-ics").setInputFiles({name:"football-future.ics",mimeType:"text/calendar",buffer:Buffer.from(football)});
   await page.locator('.side .nav [data-view="future"]').click();
-  await expect(page.locator("#future-evidence")).toContainText("PRONOTE / academic events: 1");
+  await expect(page.locator("#future-evidence")).toContainText("PRONOTE iCalendar events: 1");
   await expect(page.locator("#future-evidence")).toContainText("Football calendar events: 1");
   await expect(page.locator("#future-calibration-status")).toContainText("Aucune probabilité causale");
 });
