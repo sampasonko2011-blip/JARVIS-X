@@ -709,6 +709,48 @@ test("P2 Workspace imports local PRONOTE and football ICS files and displays con
 });
 
 
+test("combined PRONOTE and football imports emit a workload snapshot and adapt chat prompts", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="workspace"]').click();
+  await page.evaluate(() => {
+    window.__jxWorkloadEvents = [];
+    window.addEventListener("jx:workload-snapshot", event => window.__jxWorkloadEvents.push(event.detail));
+  });
+  const now = Date.now();
+  const stamp = value => new Date(value).toISOString().replace(/[-:]/g, "").replace(/\\.\\d{3}Z$/, "Z");
+  const schoolStart = stamp(now + 60 * 60 * 1000), schoolEnd = stamp(now + 2 * 60 * 60 * 1000);
+  const footballStart = stamp(now + 3 * 60 * 60 * 1000), footballEnd = stamp(now + 5 * 60 * 60 * 1000);
+  const school = "BEGIN:VCALENDAR\\nVERSION:2.0\\nBEGIN:VEVENT\\nUID:next-assessment\\nDTSTART:" + schoolStart + "\\nDTEND:" + schoolEnd + "\\nSUMMARY:Contrôle de mathématiques\\nEND:VEVENT\\nEND:VCALENDAR";
+  const football = "BEGIN:VCALENDAR\\nVERSION:2.0\\nBEGIN:VEVENT\\nUID:next-training\\nDTSTART:" + footballStart + "\\nDTEND:" + footballEnd + "\\nSUMMARY:Entraînement football\\nEND:VEVENT\\nEND:VCALENDAR";
+  await page.locator("#school-ics").setInputFiles({ name: "school-next.ics", mimeType: "text/calendar", buffer: Buffer.from(school) });
+  expect(await page.evaluate(() => window.__jxWorkloadEvents.length)).toBe(0);
+  await page.locator("#football-ics").setInputFiles({ name: "football-next.ics", mimeType: "text/calendar", buffer: Buffer.from(football) });
+  await expect.poll(() => page.evaluate(() => window.__jxWorkloadEvents.length)).toBe(1);
+  const snapshot = await page.evaluate(() => window.__jxWorkloadEvents[0]);
+  expect(snapshot.source).toBe("pronote+football-import");
+  expect(snapshot.academicDeadlinesNext24h).toBe(1);
+  expect(snapshot.trainingSessionsNext24h).toBe(1);
+  expect(snapshot.evidence.pronoteEvents).toBe(1);
+  expect(snapshot.evidence.footballEvents).toBe(1);
+
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.locator('[data-jx-user-state="stressed"]').click();
+  await expect.poll(() => page.evaluate(() => window.JXRichChatStudio?.getPromptContext?.().mode)).toBe("calm-stepwise");
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Adapted gateway reply", executive_identity: "JARVIS-X", executive_runtime: { model: "fixture-model" }, model_calls: 1 } }
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-compose").fill("Explique-moi ce point.");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Adapted gateway reply");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.response_style).toContain("calm, concise, step-by-step");
+});
+
 test("Clicky companion activates a non-interactive overlay beside the live Perception canvas", async ({ page }) => {
   await enterHQ(page);
   await page.locator('.side .nav [data-view="clicky"]').click();
