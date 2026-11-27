@@ -17,6 +17,10 @@ export class ClickyCompanionPanel {
     this.resizeObserver = typeof ResizeObserver === "function"
       ? new ResizeObserver(() => this.resizeOverlay()) : null;
     const target = document.querySelector("#p4-canvas");
+    const canvasHost = document.querySelector("#clicky-canvas-host");
+    if (target && canvasHost && target.parentElement?.classList.contains("p4-panel")) {
+      canvasHost.replaceChildren(target.parentElement);
+    }
     if (target && overlayCanvas) {
       const host = target.parentElement;
       if (getComputedStyle(host).position === "static") host.style.position = "relative";
@@ -245,8 +249,8 @@ document.querySelector("#clicky-voice")?.addEventListener("click", () => {
 });
 document.querySelector("#clicky-stop-voice")?.addEventListener("click", () => voice.stop());
 document.querySelector("#clicky-open-canvas")?.addEventListener("click", () => {
-  document.querySelector('[data-view="perception"]')?.click();
-  status.textContent = "Canvas Perception ouvert. Le calque Clicky suit le canvas intégré.";
+  document.querySelector("#p4-canvas")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  status.textContent = "Canvas intégré au workspace. Le calque Clicky suit sa taille et reste non interactif.";
 });
 window.addEventListener("resize", () => panel.resizeOverlay());
 window.addEventListener("scroll", () => panel.resizeOverlay(), true);
