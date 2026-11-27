@@ -31,7 +31,7 @@ test('Live gateway calls require explicit opt-in and reject mock fixtures as AI 
 test('Clicky scales canvas markers and keeps the original canvas separate', () => {
   assert.ok(module.includes('const scaleX = width / 1000'));
   assert.ok(module.includes('const scaleY = height / 440'));
-  assert.ok(module.includes('pointer-events'));
+  assert.ok(css.includes('pointer-events:none'));
   assert.ok(module.includes('canvasSnapshotPng'));
 });
 
