@@ -145,7 +145,7 @@ function personaPrompt() {
     coach: "Persona de présentation : coach terrain. Donne des consignes pédagogiques, progressives et sûres, adaptées à un adolescent."
   };
   const artifactContract = "Quand une mini-app, une simulation, un schéma ou un outil interactif est explicitement demandé, ajoute un bloc jx-artifact contenant du JSON valide avec title et html. Le HTML/CSS/JS doit être autonome, sans réseau, sans ressource externe, sans import module, sans attribut style ni gestionnaire onclick inline, sans accès au parent, et rester sous 150 Ko. N’émets ce bloc que si un artefact interactif est demandé.";
-  return prompts[state.persona] + "\n\n" + artifactContract;
+  return prompts[state.persona] + "\n\n" + behaviorPrompt() + "\n\n" + artifactContract;
 }
 function addStoryboardCard(title, content) {
   const board = $("rcs-storyboard");

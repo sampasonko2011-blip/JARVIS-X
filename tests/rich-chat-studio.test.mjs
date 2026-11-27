@@ -2,11 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, module, css, engine] = await Promise.all([
+const [html, module, css, engine, hq] = await Promise.all([
   readFile(new URL("../hq/local-chat.html", import.meta.url), "utf8"),
   readFile(new URL("../hq/rich-chat-studio.mjs", import.meta.url), "utf8"),
   readFile(new URL("../hq/rich-chat-studio.css", import.meta.url), "utf8"),
-  readFile(new URL("../hq/local-chat-engine.js", import.meta.url), "utf8")
+  readFile(new URL("../hq/local-chat-engine.js", import.meta.url), "utf8"),
+  readFile(new URL("../hq/hq.js", import.meta.url), "utf8")
 ]);
 
 test("Rich Chat Studio is mounted in the local chat workspace", () => {
@@ -64,4 +65,11 @@ test("assistant output contract connects model text to the sandbox renderer", ()
   assert.ok(module.includes("navigate-to 'none'"));
   assert.ok(engine.includes("processAssistantText?.(answer)"));
   assert.ok(engine.includes("max_tokens: /mini-app"));
+});
+
+test("behavioral adaptation reaches local and authenticated Cloud chat prompts", () => {
+  assert.ok(module.includes('addEventListener("jx:behavior-adaptation"'));
+  assert.ok(module.includes('return prompts[state.persona] + "\\n\\n" + behaviorPrompt()'));
+  assert.ok(module.includes('getPromptContext: () => ({ mode: state.behavior.mode, instruction: behaviorPrompt() })'));
+  assert.ok(hq.includes('response_style:window.JXRichChatStudio?.getPromptContext?.().instruction'));
 });
