@@ -755,9 +755,9 @@ test("WebScout fails closed without search capability and Smart Handoff only pre
   await expect(page.locator("#webscout-status-tag")).toContainText("NO SEARCH TOOL");
   await page.locator("#webscout-query").fill("Compare les sources primaires sur le sujet X.");
   await page.locator("#webscout-prepare").click();
-  await expect(page.locator("#webscout-brief")).toContainText("No search was executed");
+  await expect(page.locator("#webscout-brief")).toHaveValue(/No search was executed/);
   await page.locator("#handoff-task").fill("Préparer une scène cinématique originale.");
   await page.locator("#handoff-prepare").click();
-  await expect(page.locator("#handoff-payload")).toContainText("No external tool was opened");
+  await expect(page.locator("#handoff-payload")).toHaveValue(/No external tool was opened/);
   await expect(page.locator("#handoff-open-higgsfield")).toHaveAttribute("target", "_blank");
 });
