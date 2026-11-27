@@ -184,3 +184,12 @@
 
 .clicky-live-consent{align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px}
 .clicky-live-consent input{margin-top:4px}
+
+.jx-lock-in-toggle{border-color:rgba(56,189,248,.65);color:#7dd3fc;min-height:44px}
+.jx-stop-toggle{border-color:rgba(248,113,113,.75);color:#fca5a5;background:rgba(127,29,29,.22);min-height:44px;font-weight:800}
+.shell.jx-lock-in .main{height:100dvh;min-height:0;overflow:hidden}
+.shell.jx-lock-in .main>.view:not(.hide){display:block;height:calc(100dvh - 150px);min-height:0;overflow:auto;overscroll-behavior:contain;contain:layout paint}
+.shell.jx-lock-in .main>.view.hide{display:none!important}
+.shell.jx-lock-in .main{overscroll-behavior:none}
+.shell.jx-lock-in .main input:not([type=checkbox]):not([type=radio]),.shell.jx-lock-in .main textarea,.shell.jx-lock-in .main select{width:100%;min-height:48px;max-width:100%;box-sizing:border-box}
+@media(max-width:760px){.shell.jx-lock-in .main>.view:not(.hide){height:calc(100dvh - 190px)}}
