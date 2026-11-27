@@ -176,3 +176,8 @@
 .clicky-overlay.is-active{display:block}
 #p4-canvas{display:block;position:relative;z-index:1}
 @media(max-width:760px){.clicky-layout{grid-template-columns:minmax(0,1fr)}.clicky-log{max-height:260px}}
+
+.clicky-canvas-host{min-width:0;margin-top:12px}
+.clicky-canvas-host>.p4-panel{width:100%;box-sizing:border-box;padding:0;border:0;background:transparent}
+.clicky-canvas-host #p4-canvas{width:100%;height:auto;max-width:100%;touch-action:none}
+.clicky-canvas-host .p4-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
