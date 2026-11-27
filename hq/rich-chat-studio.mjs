@@ -76,7 +76,7 @@ function renderArtifact(artifact) {
   const status = $("rcs-artifact-status");
   const save = $("rcs-artifact-save");
   if (!frame || !panel || !titleNode || !status || !save) return false;
-  const csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+  const csp = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'";
   const safeDocument = "<!doctype html><html lang='fr'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='Content-Security-Policy' content=\"" + csp + "\"><style>html,body{margin:0;min-height:100%;font:16px system-ui;color:#e5edf7;background:#0b1220}body{padding:12px;box-sizing:border-box;overflow-wrap:anywhere}button,input,textarea,select{max-width:100%;font:inherit}button,input,textarea,select{min-height:44px}</style></head><body>" + artifact.html + "</body></html>";
   frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("referrerpolicy", "no-referrer");
@@ -92,13 +92,28 @@ function renderArtifact(artifact) {
   return true;
 }
 
+function processAssistantText(text) {
+  const source = String(text ?? "");
+  const fence = new RegExp("\\x60{3}jx-artifact\\s*([\\s\\S]*?)\\x60{3}", "i");
+  const match = source.match(fence);
+  if (!match) return source;
+  try {
+    renderArtifact(JSON.parse(match[1].trim()));
+    return source.replace(match[0], "\\n[Interface interactive affichée dans le Studio ci-dessous.]").trim();
+  } catch (error) {
+    setStage("Bloc artefact refusé : " + String(error?.message || "format invalide"));
+    return source;
+  }
+}
+
 function personaPrompt() {
   const prompts = {
     architect: "Persona de présentation : architecte visuel. Structure la réponse avec étapes, relations et exemples concrets, sans prétendre générer des visuels.",
     audit: "Persona de présentation : audit chirurgical. Sépare faits observés, validations, hypothèses, inconnues, risques et tests nécessaires.",
     coach: "Persona de présentation : coach terrain. Donne des consignes pédagogiques, progressives et sûres, adaptées à un adolescent."
   };
-  return prompts[state.persona];
+  const artifactContract = "Quand une mini-app, une simulation, un schéma ou un outil interactif est explicitement demandé, ajoute un bloc jx-artifact contenant du JSON valide avec title et html. Le HTML/CSS/JS doit être autonome, sans réseau, sans ressource externe ni accès au parent, et rester sous 150 Ko. N’émets ce bloc que si un artefact interactif est demandé.";
+  return prompts[state.persona] + "\n\n" + artifactContract;
 }
 function addStoryboardCard(title, content) {
   const board = $("rcs-storyboard");
@@ -161,6 +176,7 @@ window.addEventListener("jx:assistant-request-start", (event) => {
 });
 window.addEventListener("jx:assistant-response", (event) => {
   if (event.detail?.artifact) { try { renderArtifact(event.detail.artifact); } catch (error) { setStage("Artefact refusé : " + error.message); } }
+  else if (typeof event.detail?.text === "string") processAssistantText(event.detail.text);
   if (event.detail?.mode === "mock") {
     setEngine({ backend: "CLOUD_GATEWAY", status: "MOCK FIXTURE · NOT AI", modelId: "0 MODEL CALLS" });
     setStage("Fixture reçu · aucune inférence");
@@ -173,5 +189,6 @@ window.addEventListener("jx:assistant-request-failed", () => {
   setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · REQUEST FAILED", modelId: "UNKNOWN" });
   setStage("Échec de la requête · vérifier le reçu avant toute relance");
 });
-window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));\nwindow.addEventListener("jx:artifact-render", (event) => { try { renderArtifact(event.detail); } catch (error) { setStage("Artefact refusé : " + error.message); } });
-window.JXRichChatStudio = Object.freeze({ personaPrompt, renderArtifact, getState: () => ({ ...state }) });
+window.addEventListener("jx:chat-stage", (event) => setStage(event.detail?.stage || "IDLE"));
+window.addEventListener("jx:artifact-render", (event) => { try { renderArtifact(event.detail); } catch (error) { setStage("Artefact refusé : " + error.message); } });
+window.JXRichChatStudio = Object.freeze({ personaPrompt, renderArtifact, processAssistantText, getState: () => ({ ...state }) });

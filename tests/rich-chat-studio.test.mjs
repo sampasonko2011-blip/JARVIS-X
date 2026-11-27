@@ -56,3 +56,12 @@ test("generated artifacts run only in an opaque-origin sandbox with network CSP 
   assert.ok(module.includes("requiresL3: true"));
   assert.ok(module.includes("persistance non confirmée"));
 });
+
+test("assistant output contract connects model text to the sandbox renderer", () => {
+  assert.ok(module.includes("function processAssistantText(text)"));
+  assert.ok(module.includes("jx-artifact"));
+  assert.ok(module.includes("processAssistantText"));
+  assert.ok(module.includes("navigate-to 'none'"));
+  assert.ok(engine.includes("processAssistantText?.(answer)"));
+  assert.ok(engine.includes("max_tokens: /mini-app"));
+});
