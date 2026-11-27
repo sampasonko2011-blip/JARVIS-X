@@ -195,6 +195,8 @@ const panel = new ClickyCompanionPanel({
     const input = document.querySelector("#chat-compose");
     const send = document.querySelector("#chat-send");
     if (!input || !send) throw new Error("Le chat HQ n'est pas disponible.");
+    if (!document.querySelector("#clicky-live-consent")?.checked) throw new Error("Autorise d’abord explicitement la requête live HQ. Aucun appel n’a été envoyé.");
+    if (document.querySelector("#chat-execution-mode")?.value !== "live") throw new Error("Le mode mock n’est pas une réponse IA. Sélectionne live après avoir vérifié le budget.");
     if (send.disabled) throw new Error("La passerelle de chat HQ n'est pas prête ou la session n'est pas authentifiée.");
     const request = "Réponds en français à la demande suivante. Si un guidage visuel est pertinent, termine par un bloc JSON strict {\"markers\":[{\"type\":\"circle\",\"x\":100,\"y\":100,\"r\":28}]} avec coordonnées relatives à un canvas de référence 1000 × 440. Le canvas n’est pas transmis au moteur : base les coordonnées uniquement sur la description fournie et annonce cette limite. Sinon réponds sans bloc. Demande : " + prompt;
     return new Promise((resolve, reject) => {
@@ -237,7 +239,7 @@ document.querySelector("#clicky-send")?.addEventListener("click", async () => {
   if (snapshotCanvas && snapshotCanvas.width && snapshotCanvas.height) {
     try { snapshot = snapshotCanvas.toDataURL("image/png"); } catch {}
   }
-  await panel.askClicky({ text: input.value, canvasSnapshotPng: snapshot });
+  await panel.askClicky({ text: input.value, canvasSnapshotPng: snapshot, speak: document.querySelector("#clicky-speak-reply")?.checked === true });
   input.value = "";
 });
 document.querySelector("#clicky-input")?.addEventListener("keydown", event => {
