@@ -13,6 +13,9 @@ test('Future scenario view reads only imported local calendar evidence', () => {
   assert.ok(html.includes('id="view-future"'));
   assert.ok(calendar.includes('window.jxReadCalendarEvents'));
   assert.ok(module.includes('window.jxReadCalendarEvents()'));
+  assert.ok(module.includes('latestPronoteSnapshot'));
+  assert.ok(module.includes('jx:pronote-snapshot'));
+  assert.ok(module.includes('Actual training load / RPE / recovery history'));
 });
 
 test('Future scenario refuses fabricated calibrated probabilities and intervals', () => {
