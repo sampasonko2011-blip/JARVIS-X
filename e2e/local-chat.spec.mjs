@@ -569,6 +569,9 @@ test("Rich Chat Studio renders generated HTML only inside an opaque-origin no-ne
   await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
   await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
   await expect(frame.contentFrame().locator("#demo")).toHaveText("JavaScript isolé actif");
+  const csp = await frame.contentFrame().locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
+  expect(csp).toContain("default-src 'none'");
+  expect(csp).toContain("connect-src 'none'");
   const isolated = await page.evaluate(() => {
     const frame = document.querySelector("#rcs-artifact-frame");
     return frame.sandbox.contains("allow-same-origin") === false && frame.contentDocument === null;
