@@ -283,7 +283,8 @@ const panel = new ClickyCompanionPanel({
   voiceController: voice,
   input: document.querySelector("#clicky-input"),
   status,
-  askBrain: async ({ prompt }) => {
+  askBrain: async ({ prompt, imagePng }) => {
+    if (imagePng) throw new Error("Le Gateway actuel ne prend pas en charge les entrées image/vision. Le PNG n’a pas été transmis ; décris le canvas dans le chat.");
     const input = document.querySelector("#chat-compose");
     const send = document.querySelector("#chat-send");
     if (!input || !send) throw new Error("Le chat HQ n'est pas disponible.");
@@ -326,12 +327,7 @@ document.querySelector("#clicky-enable")?.addEventListener("click", () => {
 document.querySelector("#clicky-clear")?.addEventListener("click", () => panel.clearHighlights());
 document.querySelector("#clicky-send")?.addEventListener("click", async () => {
   const input = document.querySelector("#clicky-input");
-  const snapshotCanvas = document.querySelector("#p4-canvas");
-  let snapshot = null;
-  if (snapshotCanvas && snapshotCanvas.width && snapshotCanvas.height) {
-    try { snapshot = snapshotCanvas.toDataURL("image/png"); } catch {}
-  }
-  await panel.askClicky({ text: input.value, canvasSnapshotPng: snapshot, speak: document.querySelector("#clicky-speak-reply")?.checked === true });
+  await panel.askClicky({ text: input.value, canvasSnapshotPng: null, speak: document.querySelector("#clicky-speak-reply")?.checked === true });
   input.value = "";
 });
 document.querySelector("#clicky-input")?.addEventListener("keydown", event => {
