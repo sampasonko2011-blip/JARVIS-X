@@ -188,7 +188,8 @@ window.addEventListener("jx:gateway-state", (event) => {
   if (cloud) cloud.textContent = detail.ready
     ? detail.mode === "mock" ? "MOCK ROUTE READY · 0 MODEL CALLS" : "LIVE ROUTE READY · NO MODEL CALL YET"
     : "CLOUD GATEWAY · " + (detail.reason || "NOT VERIFIED");
-  if (detail.ready && detail.mode === "live") setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · AUTHENTICATED · LIVE ROUTE READY", modelId: detail.model || "MODEL NOT REPORTED" });
+  if (detail.ready && detail.mode === "mock") setEngine({ backend: "CLOUD_GATEWAY", status: "MOCK FIXTURE · NOT AI", modelId: "0 MODEL CALLS" });
+  else if (detail.ready && detail.mode === "live") setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · AUTHENTICATED · LIVE ROUTE READY", modelId: detail.model || "MODEL NOT REPORTED" });
   if (!detail.ready) setEngine({ backend: "CLOUD_GATEWAY", status: "CLOUD GATEWAY · NOT VERIFIED", modelId: "UNKNOWN" });
 });
 window.addEventListener("jx:assistant-request-start", (event) => {
