@@ -37,7 +37,7 @@
 <aside class="side">
 <div class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>HQ / FIELD SYSTEM</small></div></div>
 <div class="csp-inline-1"><div class="navlabel">COMMAND</div><nav class="nav" aria-label="Main navigation">
-<button class="active" data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="perception"><span class="ico">◌</span>Perception & oral coach</button><button data-view="p5"><span class="ico">⇅</span>Offline & evolution</button><button data-view="chat"><span class="ico">◉</span>Chat</button><a href="./local-chat.html">Local model chat</a><button data-view="console"><span class="ico">✳</span>Prompt workbench</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="forge"><span class="ico">⚒</span>Capability Forge</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
+<button class="active" data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="perception"><span class="ico">◌</span>Perception & oral coach</button><button data-view="clicky"><span class="ico">✦</span>Clicky companion</button><button data-view="p5"><span class="ico">⇅</span>Offline & evolution</button><button data-view="chat"><span class="ico">◉</span>Chat</button><a href="./local-chat.html">Local model chat</a><button data-view="console"><span class="ico">✳</span>Prompt workbench</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="forge"><span class="ico">⚒</span>Capability Forge</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
 </nav><a class="hq-mission-link" href="/JARVIS-X/career/" data-jx-accent="amber" aria-label="Open separate Sampa.co football career workspace"><span class="ico">⚽</span> Football mission · Sampa.co <span class="tag">SEPARATE</span></a><a class="hq-mission-link" href="./mission-control.html"><span class="ico">◈</span>Mission Control <span class="tag green">NEW</span></a></div>
 <div class="sidefoot"><span class="led"></span><strong class="csp-inline-2">LOCAL SHELL READY</strong><br>Private-by-default workspace<br>Direct chat requires verified Supabase sign-in.</div>
 </aside>
@@ -214,13 +214,39 @@
   <div class="p4-panel"><h2>4 · Qwen raw vs JARVIS-X pipeline</h2><p>The CI benchmark invokes the repository AgentFactory and BehavioralEngine on deterministic fixtures. For a real local Qwen comparison, first load a Qwen model in Local Chat, then run its opt-in benchmark; it makes two local WebGPU generations and no cloud inference. Model downloads remain a separate explicit setup action. Lexical overlap is not a correctness score. <a href="./local-chat.html#p4-local-benchmark">Open local Qwen benchmark ↗</a></p><label class="fieldlabel" for="p4-reference">Reference answer</label><textarea id="p4-reference"></textarea><label class="fieldlabel" for="p4-raw">Qwen raw output</label><textarea id="p4-raw"></textarea><label class="fieldlabel" for="p4-pipeline">Saboteur + BehavioralEngine pipeline output</label><textarea id="p4-pipeline"></textarea><select id="p4-benchmark-mode"><option value="manual-unverified">Manual comparison · unverified user-supplied outputs</option><option value="fixture-simulated">Fixture simulation · not real model output</option></select><button id="p4-benchmark" type="button">Score lexical comparison</button><pre id="p4-benchmark-result"></pre></div>
  </div>
  </section>
+<section id="view-clicky" class="view hide">
+ <h2 class="section-title">Clicky · Companion panel</h2>
+ <p class="section-intro">Un panneau compagnon dédié : mini-chat, mode vocal et guidage visuel sur le canvas intégré de Perception. Le calque est indépendant et ne bloque jamais le stylet ni le toucher.</p>
+ <div class="clicky-layout">
+  <section class="card clicky-workspace">
+   <div class="cardhead"><h2>Surface de travail</h2><span class="tag">CANVAS HQ</span></div>
+   <p>Le guidage visuel suit le canvas Apple Pencil de Perception. Ouvre-le pour dessiner ou annoter ; Clicky ne modifie jamais les traits originaux.</p>
+   <button class="btn primary" id="clicky-open-canvas" type="button">Ouvrir le canvas Perception</button>
+   <div class="clicky-capabilities"><span>Overlay indépendant</span><span>Pointer-events désactivés</span><span>Pas de dessin destructif</span></div>
+  </section>
+  <section class="card clicky-panel" aria-label="Clicky chat panel">
+   <div class="cardhead"><h2>Clicky / JARVIS-X</h2><span class="tag amber">GATEWAY HQ</span></div>
+   <button class="btn primary clicky-enable" id="clicky-enable" type="button">Activer Clicky</button>
+   <div id="clicky-log" class="clicky-log" role="log" aria-live="polite"><p class="empty">Active Clicky, puis pose une question ou dicte-la.</p></div>
+   <label class="fieldlabel" for="clicky-input">Message</label>
+   <textarea id="clicky-input" rows="3" maxlength="12000" placeholder="Colle ton énoncé ou demande où regarder…"></textarea>
+   <div class="actions">
+    <button class="btn primary" id="clicky-send" type="button">Envoyer</button>
+    <button class="btn ghost" id="clicky-voice" type="button">Mode vocal</button>
+    <button class="btn ghost" id="clicky-stop-voice" type="button">Arrêter micro</button>
+    <button class="btn ghost" id="clicky-clear" type="button">Effacer guidage</button>
+   </div>
+   <p id="clicky-status" class="footnote" role="status" aria-live="polite">Inactif. La réponse passe par le chat HQ authentifié ; aucun modèle local ou externe n'est simulé.</p>
+  </section>
+ </div>
+</section>
 <footer class="footnote csp-inline-16">JARVIS-X HQ · FOUNDATION PROTOTYPE · Local UI and browser storage only. No account security, remote sync, model calls, or backend execution is implied.</footer>
 </main><nav class="jx-control-dock" id="jx-control-dock" aria-label="Spatial controls"><button type="button" class="jx-dock-undo" data-jx-undo disabled><span aria-hidden="true">↶</span><span data-jx-undo-label>UNDO · NONE</span></button><a class="jx-dock-observatory" href="./observatory.html">◈ OBSERVATORY</a><button type="button" data-view="overview">OVERVIEW</button><button type="button" data-view="chat">CHAT</button><button type="button" data-view="audit">EVIDENCE</button></nav></div>
 <script src="./hq.js"></script>
 <script src="./pronote-ipad-bridge.js" defer></script>
 <script src="./conversation-experience.js" defer></script>
 <script type="module" src="./audio-full-duplex.js"></script>
-<script type="module" src="./p4-perception.bundle.mjs"></script>\n<script type="module" src="./p5-console.mjs"></script>
+<script type="module" src="./p4-perception.bundle.mjs"></script>\n<script type="module" src="./p5-console.mjs"></script>\n<script type="module" src="./clicky-panel.mjs"></script>
 <script src="./arrival-experience.js" defer></script>
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>
