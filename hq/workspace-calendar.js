@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const events=[];const approvedProposals=new Set();const $=id=>document.getElementById(id);const status=$("calendar-status"),list=$("calendar-events"),conflicts=$("calendar-conflicts");
+const events=[];const approvedProposals=new Set();const $=id=>document.getElementById(id);window.jxReadCalendarEvents=()=>events.map(e=>({uid:e.uid,summary:e.summary,description:e.description,kind:e.kind,source:e.source,start:e.start.toISOString(),end:e.end.toISOString(),allDay:e.allDay}));const status=$("calendar-status"),list=$("calendar-events"),conflicts=$("calendar-conflicts");
 const unescapeText=s=>s.replace(/\\n/gi," ").replace(/\\,/g,",").replace(/\\;/g,";").replace(/\\\\/g,"\\");
 function unfold(s){return s.replace(/\r\n[ \t]/g,"").replace(/\n[ \t]/g,"").split(/\r?\n/);}
 function parseProp(line){const i=line.indexOf(":");if(i<1)return null;const bits=line.slice(0,i).split(";"),key=bits.shift().toUpperCase(),params={};for(const b of bits){const n=b.indexOf("=");if(n>0)params[b.slice(0,n).toUpperCase()]=b.slice(n+1).replace(/^"|"$/g,"");}return[key,{value:line.slice(i+1),params}];}
