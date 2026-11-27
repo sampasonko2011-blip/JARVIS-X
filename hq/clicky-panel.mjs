@@ -14,6 +14,26 @@ export class ClickyCompanionPanel {
     this.active = false;
     this.busy = false;
     this.markers = [];
+    this.stepIndex = 0;
+    this.pointerMode = "autonomous";
+    this.activePointer = null;
+    this.guidanceTimer = null;
+    this.onCanvasPointerMove = event => {
+      if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+      const rect = this.resizeTarget?.getBoundingClientRect();
+      if (!rect) return;
+      this.pointerMode = "assisted";
+      this.activePointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      this.renderGuidanceStep();
+    };
+    this.onCanvasPointerDown = event => {
+      if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+      this.pointerMode = "assisted";
+      if (this.markers.length) {
+        this.stepIndex = Math.min(this.stepIndex + 1, this.markers.length - 1);
+        this.renderGuidanceStep();
+      }
+    };
     this.resizeObserver = typeof ResizeObserver === "function"
       ? new ResizeObserver(() => this.resizeOverlay()) : null;
     const target = document.querySelector("#p4-canvas");
@@ -27,6 +47,8 @@ export class ClickyCompanionPanel {
       host.appendChild(overlayCanvas);
       this.resizeObserver?.observe(target);
       this.resizeTarget = target;
+      target.addEventListener("pointermove", this.onCanvasPointerMove, { passive: true });
+      target.addEventListener("pointerdown", this.onCanvasPointerDown, { passive: true });
       this.resizeOverlay();
     }
   }
@@ -104,6 +126,69 @@ export class ClickyCompanionPanel {
     this.ctx.restore();
   }
 
+  stopGuidance() {
+    if (this.guidanceTimer !== null) clearInterval(this.guidanceTimer);
+    this.guidanceTimer = null;
+  }
+
+  renderGuidanceStep() {
+    if (!this.active || !this.ctx || !this.overlayCanvas || !this.markers.length) return;
+    const current = this.markers[this.stepIndex];
+    this.renderVisualPointers([current]);
+    const width = this.overlayCanvas.clientWidth;
+    const height = this.overlayCanvas.clientHeight;
+    const scaleX = width / 1000, scaleY = height / 440;
+    let x, y;
+    if (this.pointerMode === "assisted" && this.activePointer) {
+      x = this.activePointer.x + 24;
+      y = this.activePointer.y + 24;
+    } else {
+      x = current.type === "circle" ? current.x * scaleX : current.toX * scaleX;
+      y = current.type === "circle" ? current.y * scaleY : current.toY * scaleY;
+    }
+    x = Math.max(14, Math.min(width - 14, x));
+    y = Math.max(14, Math.min(height - 14, y));
+    this.ctx.save();
+    this.ctx.fillStyle = "#f8fafc";
+    this.ctx.strokeStyle = "#38bdf8";
+    this.ctx.lineWidth = 2;
+    this.ctx.shadowColor = "rgba(56,189,248,.95)";
+    this.ctx.shadowBlur = 16;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y);
+    this.ctx.lineTo(x - 15, y + 25);
+    this.ctx.lineTo(x - 4, y + 22);
+    this.ctx.lineTo(x + 2, y + 32);
+    this.ctx.lineTo(x + 8, y + 28);
+    this.ctx.lineTo(x + 2, y + 18);
+    this.ctx.lineTo(x + 12, y + 15);
+    this.ctx.closePath();
+    this.ctx.fill();
+    this.ctx.stroke();
+    this.ctx.restore();
+    if (this.status) this.status.textContent = (this.pointerMode === "assisted" ? "Mode pas-à-pas — " : "Mode autonome — ") + "étape " + (this.stepIndex + 1) + "/" + this.markers.length;
+  }
+
+  startGuidance(markers) {
+    this.stopGuidance();
+    this.markers = Array.isArray(markers) ? markers.filter(m =>
+      m && ["circle", "arrow"].includes(m.type) &&
+      [m.x, m.y, m.r, m.fromX, m.fromY, m.toX, m.toY]
+        .filter(v => v !== undefined).every(Number.isFinite)
+    ).slice(0, 24) : [];
+    this.stepIndex = 0;
+    if (!this.markers.length) { this.clearHighlights(); return; }
+    this.renderGuidanceStep();
+    if (this.pointerMode === "autonomous" && this.markers.length > 1) {
+      this.guidanceTimer = setInterval(() => {
+        if (this.pointerMode !== "autonomous") { this.stopGuidance(); return; }
+        if (this.stepIndex >= this.markers.length - 1) { this.stopGuidance(); return; }
+        this.stepIndex += 1;
+        this.renderGuidanceStep();
+      }, 2400);
+    }
+  }
+
   append(role, message) {
     if (!this.chatLog) return;
     const item = document.createElement("div");
@@ -129,7 +214,7 @@ export class ClickyCompanionPanel {
     if (this.status) this.status.textContent = "Demande envoyée au moteur HQ…";
     try {
       const reply = await this.askBrain({ prompt: text, imagePng: canvasSnapshotPng });
-      if (Array.isArray(reply?.markers)) this.renderVisualPointers(reply.markers);
+      if (Array.isArray(reply?.markers)) this.startGuidance(reply.markers);
       const explanation = String(reply?.explanation || reply?.output || "Aucune explication exploitable reçue.");
       this.append("CLICKY / JARVIS-X", explanation);
       if (speak && this.voiceController) await this.voiceController.speak(explanation);
@@ -146,7 +231,10 @@ export class ClickyCompanionPanel {
   }
 
   destroy() {
+    this.stopGuidance();
     this.resizeObserver?.disconnect();
+    this.resizeTarget?.removeEventListener("pointermove", this.onCanvasPointerMove);
+    this.resizeTarget?.removeEventListener("pointerdown", this.onCanvasPointerDown);
     this.clearHighlights();
     this.overlayCanvas?.remove();
   }
