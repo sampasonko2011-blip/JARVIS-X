@@ -39,3 +39,5 @@ The Swift implementation is a separate package surface under `exocortex/`, with 
 - `ExocortexDeviceProbe`: bounded device capability and local GGUF benchmark entry points.
 
 See [EXOCORTEX validation matrix](docs/exocortex-validation.md) for the exact distinction between CI compilation/tests, real-model inference, and physical-device verification. A green CI run is not evidence of inference or GPU offload. The physical iPad Air 5 M1 benchmark remains unverified until a report is produced by that device.
+
+<!-- PR #143 CI synchronization marker — no runtime behavior change. -->
