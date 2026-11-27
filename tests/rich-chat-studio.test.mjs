@@ -75,3 +75,16 @@ test("behavioral adaptation reaches local and authenticated Cloud chat prompts",
   assert.ok(module.includes('getPromptContext: () => ({ mode: state.behavior.mode, instruction: behaviorPrompt() })'));
   assert.ok(hq.includes('response_style:window.JXRichChatStudio?.getPromptContext?.().instruction'));
 });
+
+test("artifact save controller uses the L3 gate, AES-GCM queue and CRDT with explicit user confirmation", async () => {
+  const controller = await readFile(new URL("../hq/artifact-save-controller.mjs", import.meta.url), "utf8");
+  assert.ok(controller.includes("createEvolutionProposal"));
+  assert.ok(controller.includes("approveEvolutionProposal"));
+  assert.ok(controller.includes("activateApprovedProposal"));
+  assert.ok(controller.includes("new OfflineSyncQueue()"));
+  assert.ok(controller.includes("new LwwElementSet"));
+  assert.ok(controller.includes('type: "artifact.save"'));
+  assert.ok(controller.includes('idempotencyKey: "artifact:" + sha256'));
+  assert.ok(controller.includes('checkbox.type = "checkbox"'));
+  assert.ok(controller.includes('connect-src') === false);
+});

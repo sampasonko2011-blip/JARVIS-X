@@ -771,6 +771,58 @@ test("generated artifact JavaScript executes in the dedicated opaque-origin offl
   await expect(page.locator("#rcs-artifact-status")).toContainText("Sandbox réinitialisée");
 });
 
+test("artifact save requires explicit L3 approval and writes AES-GCM payload plus CRDT state to offline outbox", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Offline tool proof",
+    html: "<main><h1>Local artifact</h1><p>Saved only after approval.</p></main>"
+  }})));
+  await page.locator("#rcs-artifact-save").click();
+  const dialog = page.getByRole("dialog", { name: /Approbation L3/ });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator("#jx-artifact-approve")).not.toBeChecked();
+  await expect(dialog.getByRole("button", { name: "Approuver et enregistrer" })).toBeDisabled();
+  await dialog.locator("#jx-artifact-approve").check();
+  await dialog.getByRole("button", { name: "Approuver et enregistrer" }).click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("Artefact enregistré dans la file locale AES-GCM");
+  const saved = await page.evaluate(async () => {
+    const module = await import("./offline-sync-queue.mjs");
+    const queue = new module.OfflineSyncQueue();
+    const items = await queue.list();
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("jarvis-x-p5", 3);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const tx = db.transaction(["outbox", "crypto_keys"], "readonly");
+    const records = await new Promise((resolve, reject) => {
+      const request = tx.objectStore("outbox").getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const keys = await new Promise((resolve, reject) => {
+      const request = tx.objectStore("crypto_keys").getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    return {
+      count: records.length,
+      ciphertextPresent: Boolean(records[0]?.payloadCiphertext && records[0]?.payloadIv),
+      plaintextAbsent: !Object.hasOwn(records[0] || {}, "payload"),
+      nonExtractableKey: keys[0]?.key?.extractable === false,
+      decrypted: items[0]?.payload?.title,
+      crdtAdds: items[0]?.payload?.crdtState?.adds?.length
+    };
+  });
+  expect(saved.count).toBe(1);
+  expect(saved.ciphertextPresent).toBe(true);
+  expect(saved.plaintextAbsent).toBe(true);
+  expect(saved.nonExtractableKey).toBe(true);
+  expect(saved.decrypted).toBe("Offline tool proof");
+  expect(saved.crdtAdds).toBe(1);
+});
+
 test("Clicky companion activates a non-interactive overlay beside the live Perception canvas", async ({ page }) => {
   await enterHQ(page);
   await page.locator('.side .nav [data-view="clicky"]').click();
