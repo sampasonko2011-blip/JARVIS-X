@@ -14,6 +14,7 @@ export class ClickyCompanionPanel {
     this.active = false;
     this.busy = false;
     this.markers = [];
+    this.guidanceMarkers = [];
     this.stepIndex = 0;
     this.pointerMode = "autonomous";
     this.activePointer = null;
@@ -30,7 +31,7 @@ export class ClickyCompanionPanel {
       if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
       this.pointerMode = "assisted";
       if (this.markers.length) {
-        this.stepIndex = Math.min(this.stepIndex + 1, this.markers.length - 1);
+        this.stepIndex = Math.min(this.stepIndex + 1, this.guidanceMarkers.length - 1);
         this.renderGuidanceStep();
       }
     };
@@ -67,7 +68,8 @@ export class ClickyCompanionPanel {
     this.overlayCanvas.width = Math.round(rect.width * ratio);
     this.overlayCanvas.height = Math.round(rect.height * ratio);
     this.ctx?.setTransform(ratio, 0, 0, ratio, 0, 0);
-    this.renderVisualPointers(this.markers);
+    if (this.guidanceMarkers.length) this.renderGuidanceStep();
+    else this.renderVisualPointers(this.markers);
   }
 
   toggle(state = !this.active) {
@@ -84,11 +86,13 @@ export class ClickyCompanionPanel {
     if (!this.ctx || !this.overlayCanvas) return;
     this.ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
     this.markers = [];
+    this.guidanceMarkers = [];
+    this.stopGuidance();
   }
 
   renderVisualPointers(markers = []) {
     if (!this.active || !this.ctx || !this.overlayCanvas) return;
-    this.markers = Array.isArray(markers) ? markers.filter(m =>
+    this.guidanceMarkers = Array.isArray(markers) ? markers.filter(m =>
       m && ["circle", "arrow"].includes(m.type) &&
       [m.x, m.y, m.r, m.fromX, m.fromY, m.toX, m.toY]
         .filter(v => v !== undefined).every(Number.isFinite)
@@ -132,8 +136,8 @@ export class ClickyCompanionPanel {
   }
 
   renderGuidanceStep() {
-    if (!this.active || !this.ctx || !this.overlayCanvas || !this.markers.length) return;
-    const current = this.markers[this.stepIndex];
+    if (!this.active || !this.ctx || !this.overlayCanvas || !this.guidanceMarkers.length) return;
+    const current = this.guidanceMarkers[this.stepIndex];
     this.renderVisualPointers([current]);
     const width = this.overlayCanvas.clientWidth;
     const height = this.overlayCanvas.clientHeight;
@@ -166,7 +170,7 @@ export class ClickyCompanionPanel {
     this.ctx.fill();
     this.ctx.stroke();
     this.ctx.restore();
-    if (this.status) this.status.textContent = (this.pointerMode === "assisted" ? "Mode pas-à-pas — " : "Mode autonome — ") + "étape " + (this.stepIndex + 1) + "/" + this.markers.length;
+    if (this.status) this.status.textContent = (this.pointerMode === "assisted" ? "Mode pas-à-pas — " : "Mode autonome — ") + "étape " + (this.stepIndex + 1) + "/" + this.guidanceMarkers.length;
   }
 
   startGuidance(markers) {
@@ -177,12 +181,12 @@ export class ClickyCompanionPanel {
         .filter(v => v !== undefined).every(Number.isFinite)
     ).slice(0, 24) : [];
     this.stepIndex = 0;
-    if (!this.markers.length) { this.clearHighlights(); return; }
+    if (!this.guidanceMarkers.length) { this.clearHighlights(); return; }
     this.renderGuidanceStep();
-    if (this.pointerMode === "autonomous" && this.markers.length > 1) {
+    if (this.pointerMode === "autonomous" && this.guidanceMarkers.length > 1) {
       this.guidanceTimer = setInterval(() => {
         if (this.pointerMode !== "autonomous") { this.stopGuidance(); return; }
-        if (this.stepIndex >= this.markers.length - 1) { this.stopGuidance(); return; }
+        if (this.stepIndex >= this.guidanceMarkers.length - 1) { this.stopGuidance(); return; }
         this.stepIndex += 1;
         this.renderGuidanceStep();
       }, 2400);
