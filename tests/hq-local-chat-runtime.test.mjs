@@ -207,7 +207,7 @@ test("v40 adds explicit-only memory capture, generic disclaimer cleanup, and a t
   assert.match(brain, /sanitizeResponse/);
   assert.match(brain, /retiens/);
   assert.match(engine, /MAX_HISTORY_MESSAGES = 8/);
-  assert.match(engine, /max_tokens: 384/);
+  assert.match(engine, /max_tokens: \/mini-app\|interface interactive\|simulation interactive\|schéma interactif\|outil interactif\/i\.test\(text\) \? 1024 : 384/);
   assert.match(engine, /memoryBridge\.remember/);
   assert.match(engine, /explicitMemoryNote/);
 });
