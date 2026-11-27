@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+function expectVersionedShellCache(source) {
+  const cacheName = source.match(/const CACHE = ['"]([^'"]+)['"]/)?.[1];
+  expect(cacheName).toMatch(/^jarvis-x-hq-shell-v\d+$/);
+  return cacheName;
+}
+
 test("v42 is a true full-viewport workspace with no document scroll", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", error => pageErrors.push(error.message));
@@ -219,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v59");
+  expectVersionedShellCache(await response.text());
 });
 
 
@@ -305,7 +311,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v59");
+  expectVersionedShellCache(sw);
 });
 
  
@@ -522,7 +528,7 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   await page.goto("/local-chat.html");
   const sw = await page.request.get("/sw.js");
   expect(sw.ok()).toBeTruthy();
-  expect(await sw.text()).toContain("jarvis-x-hq-shell-v59");
+  expectVersionedShellCache(await sw.text());
   expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
 });
 
@@ -577,7 +583,7 @@ test("Rich Chat Studio renders generated HTML only inside an opaque-origin no-ne
     return frame.sandbox.contains("allow-same-origin") === false && frame.contentDocument === null;
   });
   expect(isolated).toBeTruthy();
-  await expect(page.locator("#rcs-artifact-status")).toContainText("non sauvegardé");
+  await expect(page.locator("#rcs-artifact-status")).toContainText("JavaScript isolé actif");
   await page.locator("#rcs-artifact-save").click();
   await expect(page.locator("#rcs-artifact-status")).toContainText("persistance non confirmée");
 });

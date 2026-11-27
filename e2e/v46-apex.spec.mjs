@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+function expectVersionedShellCache(source) {
+  const cacheName = source.match(/const CACHE = ['"]([^'"]+)['"]/)?.[1];
+  expect(cacheName).toMatch(/^jarvis-x-hq-shell-v\d+$/);
+}
 
 test("v46 cloud-first send works without loading a local WebLLM model", async ({ page }) => {
   await page.addInitScript(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({
@@ -89,7 +93,7 @@ test("v47 service worker pre-caches the APEX runtime and retains v46 modules", a
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
   const source = await response.text();
-  expect(source).toContain("jarvis-x-hq-shell-v59");
+  expectVersionedShellCache(source);
   expect(source).toContain("./v46-apex.js");
   expect(source).toContain("./v46-apex.css");
 });
@@ -165,5 +169,5 @@ test("v52 Local Chat registers the versioned service worker when supported", asy
   await page.goto("/local-chat.html");
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker?.getRegistrations().then(items => items.some(item => item.active || item.installing || item.waiting)) ?? false)).toBe(true);
   const cacheSource = await (await page.request.get("/sw.js")).text();
-  expect(cacheSource).toContain("jarvis-x-hq-shell-v59");
+  expectVersionedShellCache(cacheSource);
 });

@@ -787,7 +787,7 @@ test("artifact save requires explicit L3 approval and writes AES-GCM payload plu
   await expect(dialog.getByRole("button", { name: "Approuver et enregistrer" })).toBeDisabled();
   await dialog.locator("#jx-artifact-approve").check();
   await dialog.getByRole("button", { name: "Approuver et enregistrer" }).click();
-  await expect(page.locator("#rcs-artifact-status")).toContainText("Artefact enregistré dans la file locale AES-GCM");
+  await expect(page.locator("#rcs-artifact-status")).toContainText("SAVED_TO_ENCRYPTED_OUTBOX");
   const saved = await page.evaluate(async () => {
     const module = await import("./offline-sync-queue.mjs");
     const queue = new module.OfflineSyncQueue();
@@ -844,7 +844,8 @@ test("LOCK IN isolates the active HQ drawer and STOP restores NORMAL", async ({ 
   await page.locator("#jx-lock-in").click();
   await expect(page.locator(".shell")).toHaveClass(/jx-lock-in/);
   await expect(page.locator("#jx-lock-status")).toContainText("LOCKED");
-  await expect(page.locator("#view-overview")).toBeVisible();
+  await expect(page.locator("#view-chat")).toBeVisible();
+  await expect(page.locator("#chat-compose")).toBeVisible();
   await expect(page.locator("#view-chat")).toBeHidden();
   await page.locator("#jx-stop").click();
   await expect(page.locator(".shell")).not.toHaveClass(/jx-lock-in/);

@@ -1,4 +1,4 @@
-import { assessBehavioralAdaptation } from "../dist/core/behavioral-engine.js";
+import { assessBehavioralAdaptation } from "./behavioral-engine.mjs";
 
 const root = document.querySelector(".shell");
 const status = document.querySelector("#jx-behavior-status");

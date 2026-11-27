@@ -113,7 +113,7 @@ test("HQ includes keyboard focus indicators and accessible live status", async (
 
 test("HQ service worker restricts caching and only replaces shell navigation offline", async () => {
   const sw = await read("hq/sw.js");
-  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v60'"));
+  assert.ok(sw.includes("const CACHE = 'jarvis-x-hq-shell-v61'"));
   assert.ok(sw.includes("'./mission-control.js'"));
   assert.ok(sw.includes("'./p4-perception.bundle.mjs'"), "offline shell must cache the bundled PDF.js perception engine");
   assert.ok(sw.includes("'./pdf.worker.bundle.mjs'"), "offline shell must cache the local PDF.js worker");
