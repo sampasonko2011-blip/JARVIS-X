@@ -5,22 +5,23 @@ import { readFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
-test("v49 health advertises chat when OpenAI OR an explicitly enabled cascade provider is configured", async () => {
+test("v49 health advertises chat only when an explicitly enabled allowlisted provider is configured", async () => {
   const gateway = await read("supabase/functions/hq-gateway-v12/index.ts");
   const cascade = await read("supabase/functions/hq-gateway-v12/provider-cascade.mjs");
-  assert.match(gateway, /const configuredCascadeProviders = providerEnvironment\.JX_ENABLE_PROVIDER_CASCADE === "true"[\s\S]*?listProviderConfiguration\(providerEnvironment\)/);
-  assert.match(gateway, /const openAIConfigured = Boolean\(Deno\.env\.get\(EXECUTIVE_CONFIG\.secret\) && EXECUTIVE_CONFIG\.model\)/);
-  assert.match(gateway, /const executiveRuntimeConfigured = openAIConfigured \|\| configuredCascadeProviders\.length > 0/);
-  assert.match(gateway, /const chatEnabled = lockReasons\.length === 0/); assert.match(gateway, /global_request_reservation_missing/);
+  assert.match(gateway, /const configuredCascadeProviders = providerEnvironment\\.JX_ENABLE_PROVIDER_CASCADE === "true"[\\s\\S]*?listProviderConfiguration\\(providerEnvironment\\)/);
+  assert.match(gateway, /const executiveRuntimeConfigured = configuredCascadeProviders.length > 0/);
+  assert.doesNotMatch(gateway, /OPENAI_API_KEY|OPENAI_MODEL|openAIConfigured/);
+  assert.match(gateway, /const chatEnabled = lockReasons.length === 0/);
+  assert.match(gateway, /global_request_reservation_missing/);
   assert.match(gateway, /configuredInferenceProviders/);
   assert.match(cascade, /JX_ENABLE_PROVIDER_CASCADE/);
-  assert.doesNotMatch(cascade, /OPENROUTER|openrouter/);
-  for (const provider of ["GEMINI", "GROQ", "CEREBRAS", "NVIDIA", "SAMBANOVA", "MISTRAL", "GITHUB_MODELS"]) {
+  assert.doesNotMatch(cascade, /OPENROUTER|openrouter|CEREBRAS|NVIDIA|SAMBANOVA|MISTRAL|GITHUB_MODELS/);
+  for (const provider of ["GEMINI", "GROQ"]) {
     assert.ok(cascade.includes("JX_PROVIDER_" + provider + "_ENABLED"), "missing explicit enable flag for " + provider);
   }
-  assert.match(gateway, /authenticatedUser\(/);
+  assert.match(gateway, /authenticatedUser\\(/);
   assert.match(gateway, /JX_ALLOWED_EMAILS/);
-  assert.match(gateway, /reserveGlobalBudget\(/);
+  assert.match(gateway, /reserveGlobalBudget\\(/);
 });
 
 test("v49 frontend removes the misleading V46 title and aligns the Gemma model ID", async () => {
