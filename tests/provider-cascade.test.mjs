@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { invokeProviderCascade, listProviderConfiguration, PROVIDER_IDS } from "../supabase/functions/hq-gateway-v12/provider-cascade.mjs";
 
 const allEnv = {
@@ -155,4 +156,20 @@ test("unlisted provider secrets and flags are ignored", () => {
   const env = { ...allEnv, JX_PROVIDER_OPENAI_ENABLED: "true", OPENAI_API_KEY: "test-openai", JX_PROVIDER_OPENROUTER_ENABLED: "true", OPENROUTER_API_KEY: "test-openrouter" };
   assert.deepEqual(listProviderConfiguration(env).map((item) => item.id), ["gemini", "groq"]);
   assert.deepEqual(PROVIDER_IDS, ["gemini", "groq"]);
+});
+
+
+test("gateway source has no OpenAI fallback or paid image-generation route", async () => {
+  const source = await readFile(new URL("../supabase/functions/hq-gateway-v12/index.ts", import.meta.url), "utf8");
+  assert.match(source, /provider_cascade_disabled/);
+  assert.match(source, /if \(isImageRoute\) return jsonResponse\(\{ error: "image_generation_disabled", model_calls: 0 \}, 403, origin\)/);
+  assert.doesNotMatch(source, /createNanoBananaImageGenerator|NANO_BANANA_MODEL|JX_ENABLE_IMAGE_GENERATION|OPENAI_API_KEY|OPENAI_MODEL|invokeOpenAIResponses/);
+});
+
+test("provider response model must exactly match its allowlisted model ID", async () => {
+  await assert.rejects(() => invokeProviderCascade({
+    input: "hello",
+    env: allEnv,
+    fetchImpl: async () => ok("gemini-2.5-pro"),
+  }), /provider_model_not_allowlisted_gemini/);
 });
