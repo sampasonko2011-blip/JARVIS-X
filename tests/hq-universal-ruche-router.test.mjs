@@ -13,8 +13,8 @@ test("Vegeto route exposes exactly one executive identity and rejects alternate 
   assert.match(router, /provider: null/);
   assert.doesNotMatch(router, /deepseek|anthropic|claude|grok|gemini|mistral|llama/);
   assert.match(gateway, /PRIMARY_PROVIDER = "jarvis-x-cognitive-kernel"/);
-  assert.match(gateway, /EXECUTIVE_CONFIG/);
-  assert.match(gateway, /EXECUTIVE_CONFIG/);
+  assert.match(gateway, /invokeAllowlistedProvider/);
+  assert.doesNotMatch(gateway, /OPENAI_API_KEY|OPENAI_MODEL|invokeOpenAIResponses/);
 });
 
 test("one executive cognitive kernel owns reasoning, challenge, and synthesis passes", () => {
@@ -27,14 +27,13 @@ test("one executive cognitive kernel owns reasoning, challenge, and synthesis pa
   assert.doesNotMatch(gateway, /executeFiveProviderCouncil/);
 });
 
-test("image generation is a separate capability and never a reasoning route", () => {
-  assert.match(gateway, /createNanoBananaImageGenerator/);
-  assert.match(gateway, /if \(isImageRoute\)/);
-  assert.match(gateway, /reserveImageBudget\(user\.id\)/);
-  assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
-  assert.match(gateway, /user_confirmed !== true/);
+test("paid image generation is disabled and fails closed before provider invocation", () => {
+  assert.match(gateway, /image_generation_disabled/);
+  assert.match(gateway, /imageGenerationEnabled: false/);
+  assert.doesNotMatch(gateway, /createNanoBananaImageGenerator|reserveImageBudget|JX_ENABLE_IMAGE_GENERATION/);
   assert.match(router, /type RucheSelection = "jarvis-x"/);
 });
+
 
 test("mock mode clearly states that no inference occurred", () => {
   assert.match(mock, /no real AI inference was performed/);
