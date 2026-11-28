@@ -144,3 +144,69 @@
     box-sizing: border-box;
   }
 }
+
+/* P5 local outbox console */
+.jx-p5-panel .p5-status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+.jx-p5-panel .p5-status-grid>div{padding:14px;border:1px solid var(--line,#29344b);border-radius:12px;background:rgba(10,18,34,.55);min-width:0}
+.jx-p5-panel .p5-status-grid small,.jx-p5-panel .p5-status-grid strong{display:block}
+.jx-p5-panel .p5-status-grid small{opacity:.7;margin-bottom:6px}
+.jx-p5-panel .p5-status-grid strong{overflow-wrap:anywhere}
+.p5-compose{display:grid;gap:9px;max-width:900px}
+.p5-compose textarea{min-height:110px}
+.p5-outbox{display:grid;gap:8px;margin-top:14px}
+.p5-outbox-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line,#29344b);border-radius:10px}
+.p5-outbox-item small{opacity:.7}
+@media(max-width:700px){.jx-p5-panel .p5-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.p5-outbox-item{align-items:flex-start;flex-direction:column}}
+
+
+/* Clicky dedicated companion workspace */
+.clicky-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.82fr);gap:16px;align-items:start}
+.clicky-workspace,.clicky-panel{min-width:0}
+.clicky-panel{display:flex;flex-direction:column;gap:10px}
+.clicky-enable{width:100%;min-height:48px}
+#clicky-input{width:100%;min-height:96px;box-sizing:border-box;resize:vertical}
+#clicky-send,#clicky-voice,#clicky-stop-voice,#clicky-clear{min-height:48px}
+.clicky-log{display:flex;flex-direction:column;gap:8px;min-height:150px;max-height:360px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(5,12,24,.58)}
+.clicky-message{padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(17,31,50,.7);overflow-wrap:anywhere}
+.clicky-message strong{font-size:10px;letter-spacing:.08em;color:#8bdfff}
+.clicky-message p{margin:6px 0 0;white-space:pre-wrap;line-height:1.5}
+.clicky-capabilities{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.clicky-capabilities span{padding:8px 10px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--muted)}
+.clicky-overlay{display:none;pointer-events:none;z-index:20;touch-action:none}
+.clicky-overlay.is-active{display:block}
+#p4-canvas{display:block;position:relative;z-index:1}
+@media(max-width:760px){.clicky-layout{grid-template-columns:minmax(0,1fr)}.clicky-log{max-height:260px}}
+
+.clicky-canvas-host{min-width:0;margin-top:12px}
+.clicky-canvas-host>.p4-panel{width:100%;box-sizing:border-box;padding:0;border:0;background:transparent}
+.clicky-canvas-host #p4-canvas{width:100%;height:auto;max-width:100%;touch-action:none}
+.clicky-canvas-host .p4-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+.clicky-live-consent{align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px}
+.clicky-live-consent input{margin-top:4px}
+
+.jx-lock-in-toggle{border-color:rgba(56,189,248,.65);color:#7dd3fc;min-height:44px}
+.jx-stop-toggle{border-color:rgba(248,113,113,.75);color:#fca5a5;background:rgba(127,29,29,.22);min-height:44px;font-weight:800}
+.shell.jx-lock-in .main{height:100dvh;min-height:0;overflow:hidden}
+.shell.jx-lock-in .main>.view:not(.hide){display:block;height:calc(100dvh - 150px);min-height:0;overflow:auto;overscroll-behavior:contain;contain:layout paint}
+.shell.jx-lock-in .main>.view.hide{display:none!important}
+.shell.jx-lock-in .main{overscroll-behavior:none}
+.shell.jx-lock-in .main input:not([type=checkbox]):not([type=radio]),.shell.jx-lock-in .main textarea,.shell.jx-lock-in .main select{width:100%;min-height:48px;max-width:100%;box-sizing:border-box}
+@media(max-width:760px){.shell.jx-lock-in .main>.view:not(.hide){height:calc(100dvh - 190px)}}
+
+@keyframes clicky-overlay-pulse{0%,100%{opacity:.78}50%{opacity:1}}
+.clicky-overlay.is-active{animation:clicky-overlay-pulse 1.35s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.clicky-overlay.is-active{animation:none}}
+
+/* Behavioral adaptation: explicit user state + observable, non-biometric signals. */
+.jx-behavior-panel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 12px;border:1px solid var(--line);border-radius:12px;background:rgba(15,23,42,.58)}
+.jx-behavior-panel>strong{font-size:10px;letter-spacing:.12em;color:var(--muted)}
+.jx-behavior-choices{display:flex;gap:6px;flex-wrap:wrap}
+.jx-behavior-choices button{min-height:40px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--text);font:inherit}
+.jx-behavior-choices button[aria-pressed="true"]{border-color:#38bdf8;background:rgba(56,189,248,.14);color:#bae6fd}
+#jx-behavior-status{font-size:11px;color:var(--muted)}
+.shell.jx-behavior-calm-stepwise .main>.view:not(.hide) .section-intro{max-width:68ch;line-height:1.75}
+.shell.jx-behavior-calm-stepwise .main>.view:not(.hide) .card{scroll-margin-block:16px}
+.shell.jx-behavior-focused .main>.view:not(.hide){scroll-behavior:smooth}
+@media(max-width:760px){.jx-behavior-panel{align-items:flex-start;flex-direction:column}.jx-behavior-choices{width:100%}.jx-behavior-choices button{flex:1;min-width:0}}
+@media(prefers-reduced-motion:reduce){.shell.jx-behavior-focused .main>.view:not(.hide){scroll-behavior:auto}}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://xfewajxkqntflfntisut.supabase.co https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://*.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' blob:; img-src 'self' data: blob:; font-src 'self' data: blob:; media-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://xfewajxkqntflfntisut.supabase.co https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cas-bridge.xethub.hf.co https://*.xethub.hf.co https://*.hf.co https://raw.githubusercontent.com; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#090d18">
 <title>JARVIS-X · Local chat</title>
@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="./local-chat-v35.css">
 <link rel="stylesheet" href="./local-chat-v38.css">
 <link rel="stylesheet" href="./local-chat-v42.css">
+<link rel="stylesheet" href="./rich-chat-studio.css">
 <link rel="stylesheet" href="./v46-apex.css?v=53">
 <script src="./spatial-mode.js" defer></script>
 <script src="./interstellar-v30.js" defer></script>
@@ -161,6 +162,7 @@
 <button id="jx-return-to-chat" type="button" hidden aria-hidden="true" aria-controls="jx-inspector-drawer">↑ RETOUR AU CHAT</button>
 <script src="./jarvis-brain-v36.js"></script>
 <script src="./local-chat-engine.bundle.js?v=53"></script>
+<script type="module" src="./rich-chat-studio.mjs"></script>
 <script src="./v46-apex.js?v=53"></script>
 <script src="./kardashev-engine.js" defer></script>
 </body>

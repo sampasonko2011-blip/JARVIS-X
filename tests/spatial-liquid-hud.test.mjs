@@ -11,7 +11,8 @@ const [hq, observatory, css, behavior] = await Promise.all([
 
 test('HQ shell keeps its existing views plus the new perception workspace and loads the shared Spatial Liquid HUD', () => {
   const views = [...hq.matchAll(/<section id="view-([a-z-]+)"/g)].map((match) => match[1]);
-  assert.equal(views.length, 14);
+  assert.equal(views.length, 17);
+  assert.ok(views.includes('clicky'));
   assert.ok(views.includes('perception'));
   assert.ok(hq.includes('./spatial-liquid-hud.css'));
   assert.ok(hq.includes('./spatial-liquid-hud.js'));

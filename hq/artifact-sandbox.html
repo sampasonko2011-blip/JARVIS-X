@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; child-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; navigate-to 'none'">
+<meta name="referrer" content="no-referrer">
+<title>JX Artifact Sandbox</title>
+</head>
+<body>
+<script>
+(() => {
+  "use strict";
+  const MAX_BYTES = 150000;
+  const report = (status, extra = {}) => parent.postMessage({ type: "jx-artifact-sandbox-status", status, ...extra }, "*");
+  let scriptError = false;
+  window.addEventListener("error", () => { scriptError = true; report("SCRIPT_ERROR"); });
+  window.addEventListener("unhandledrejection", () => { scriptError = true; report("SCRIPT_ERROR"); });
+  function safeAttribute(element, name, value) {
+    const key = name.toLowerCase(), tag = element.tagName.toLowerCase();
+    if (["src", "poster"].includes(key)) return ["img", "audio", "video", "source"].includes(tag) && /^(data:|blob:)/i.test(value);
+    if (key === "href" || key === "xlink:href") return tag === "a" && value.startsWith("#");
+    if (["action", "formaction"].includes(key)) return false;
+    return true;
+  }
+  window.addEventListener("message", event => {
+    if (event.source !== parent || event.data?.type !== "jx-artifact-render") return;
+    const { html, title } = event.data;
+    if (typeof html !== "string" || new TextEncoder().encode(html).byteLength > MAX_BYTES) { report("REJECTED", { reason: "payload_invalid_or_too_large" }); return; }
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const scripts = [...parsed.querySelectorAll("script")];
+    if (scripts.some(script => script.hasAttribute("src") || script.type === "module")) { report("REJECTED", { reason: "external_or_module_script" }); return; }
+    parsed.querySelectorAll("iframe,frame,frameset,object,embed,form,base,meta[http-equiv],link[rel=import]").forEach(node => node.remove());
+    parsed.querySelectorAll("*").forEach(element => {
+      for (const attribute of [...element.attributes]) if (!safeAttribute(element, attribute.name, attribute.value)) element.removeAttribute(attribute.name);
+    });
+    scripts.forEach(script => script.remove());
+    document.title = typeof title === "string" ? title.slice(0, 80) : "JX Artifact";
+    document.head.querySelectorAll("[data-jx-artifact-style]").forEach(node => node.remove());
+    for (const style of parsed.querySelectorAll("style")) {
+      const copy = document.createElement("style"); copy.dataset.jxArtifactStyle = "true"; copy.textContent = style.textContent; document.head.append(copy);
+    }
+    document.body.replaceChildren(...[...parsed.body.childNodes].map(node => document.importNode(node, true)));
+    let executed = 0;
+    for (const original of scripts) { const script = document.createElement("script"); script.textContent = original.textContent; document.body.append(script); executed++; }
+    report(scriptError ? "SCRIPT_ERROR" : "SCRIPT_EXECUTED", { scriptCount: executed });
+  });
+  report("READY");
+})();
+</script>
+</body>
+</html>

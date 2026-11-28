@@ -207,3 +207,13 @@ test("offline Local Chat navigation never falls back to the HQ homepage", async 
   const response = await responsePromise;
   assert.equal(response.type, "error");
 });
+
+test("service worker precaches the behavioral adaptation controller offline", async () => {
+  const { listeners, lifecycleCalls } = await loadWorker();
+  let installPromise;
+  listeners.get("install")({ waitUntil(promise) { installPromise = promise; } });
+  await installPromise;
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./behavioral-adaptation.mjs"));
+  assert.ok(lifecycleCalls.some((call) => call[0] === "add" && call[1] === "./behavioral-engine.mjs"));
+  assert.match(await readFile(path.join(root, "hq/sw.js"), "utf8"), /jarvis-x-hq-shell-v61/);
+});

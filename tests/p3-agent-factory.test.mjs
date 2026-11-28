@@ -31,7 +31,7 @@ test("factory decomposes into scoped ephemeral agents and returns one synthesis"
     saboteur: (_task, output) => ({ passed: true, findings: ["checked:" + output.agentId] }),
     synthesize: (_task, accepted) => accepted.map(item => item.content).join(" | ")
   });
-  assert.deepEqual(calls, ["school", "football"]);
+  assert.deepEqual(calls.sort(), ["football", "school"]);
   assert.equal(result.status, "VALIDATED");
   assert.equal(result.output, "result:school | result:football");
   assert.equal(result.estimatedSpendEUR, 0);
@@ -104,4 +104,49 @@ test("agent timeout is rejected and reported rather than accepted", async () => 
   });
   assert.equal(result.status, "REJECTED");
   assert.match(result.findings.join(" "), /timeout/);
+});
+
+test("independent branches execute concurrently but never exceed the configured cap", async () => {
+  let active = 0;
+  let peak = 0;
+  const children = [
+    child("school", "school"), child("football", "football"),
+    child("code", "code"), child("research", "research")
+  ];
+  const result = await runAgentFactory(root, {
+    maxConcurrency: 2,
+    decompose: task => task.depth === 0 ? children : [],
+    execute: async ({ task }) => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise(resolve => setTimeout(resolve, 25));
+      active -= 1;
+      return { agentId: task.id, content: task.id, evidence: [] };
+    },
+    saboteur: () => ({ passed: true, findings: [] }),
+    synthesize: (_task, accepted) => accepted.map(x => x.content).join(",")
+  });
+  assert.equal(peak, 2);
+  assert.equal(result.status, "VALIDATED");
+  assert.equal(result.plannedTasks, 5);
+  assert.equal(result.acceptedAgents.length, 4);
+});
+
+test("external AbortSignal cancels the factory before synthesis", async () => {
+  const controller = new AbortController();
+  let started = 0;
+  const pending = runAgentFactory(root, {
+    signal: controller.signal,
+    decompose: task => task.depth === 0 ? [child("school", "school"), child("football", "football")] : [],
+    execute: async ({ signal }) => new Promise((resolve, reject) => {
+      started += 1;
+      signal.addEventListener("abort", () => reject(new Error("branch aborted")), { once: true });
+    }),
+    saboteur: () => ({ passed: true, findings: [] }),
+    synthesize: () => "must not run"
+  });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  controller.abort();
+  await assert.rejects(pending, /factory_aborted/);
+  assert.ok(started > 0);
 });

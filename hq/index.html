@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://xfewajxkqntflfntisut.supabase.co; font-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob:; style-src 'self' blob:; img-src 'self' data: blob:; font-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://xfewajxkqntflfntisut.supabase.co; font-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#090d18"><meta name="description" content="JARVIS-X HQ — a privacy-first command workspace with offline-ready notes and evidence-led operations.">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="JARVIS-X">
 <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>JARVIS-X HQ</title>
 <link rel="stylesheet" href="./hq.css">
+<link rel="stylesheet" href="./rich-chat-studio.css">
 <link rel="stylesheet" href="./p4-perception.css">
 <link rel="stylesheet" href="./neural-observatory.css">
 <link rel="stylesheet" href="./conversation-experience.css">
@@ -37,14 +38,24 @@
 <aside class="side">
 <div class="brand"><div class="mark">JX</div><div><strong>JARVIS-X</strong><small>HQ / FIELD SYSTEM</small></div></div>
 <div class="csp-inline-1"><div class="navlabel">COMMAND</div><nav class="nav" aria-label="Main navigation">
-<button class="active" data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="perception"><span class="ico">◌</span>Perception & oral coach</button><button data-view="chat"><span class="ico">◉</span>Chat</button><a href="./local-chat.html">Local model chat</a><button data-view="console"><span class="ico">✳</span>Prompt workbench</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="forge"><span class="ico">⚒</span>Capability Forge</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
+<button data-view="overview"><span class="ico">⌂</span>Overview</button><button data-view="workspace"><span class="ico">⌘</span>Task workspace</button><button data-view="future"><span class="ico">⤴</span>Git du Futur</button><button data-view="webscout"><span class="ico">⌕</span>WebScout & Handoff</button><button data-view="perception"><span class="ico">◌</span>Perception & oral coach</button><button data-view="clicky"><span class="ico">✦</span>Clicky companion</button><button data-view="p5"><span class="ico">⇅</span>Offline & evolution</button><button class="active" data-view="chat"><span class="ico">◉</span>Chat</button><a href="./local-chat.html">Local model chat</a><button data-view="console"><span class="ico">✳</span>Prompt workbench</button><button data-view="images"><span class="ico">▧</span>Image studio</button><button data-view="integrations"><span class="ico">⇄</span>Integrations</button><button data-view="sync"><span class="ico">⌁</span>Secure vault</button><button data-view="upgrades"><span class="ico">↻</span>Upgrade center</button><button data-view="forge"><span class="ico">⚒</span>Capability Forge</button><button data-view="memory"><span class="ico">▤</span>Memory vault</button><button data-view="audit"><span class="ico">◎</span>Evidence ledger</button><button data-view="settings"><span class="ico">⚙</span>System settings</button><button data-view="gateway"><span class="ico">⛨</span>Security Gateway <span id="gateway-nav-state" class="tag amber">UNAVAILABLE</span></button>
 </nav><a class="hq-mission-link" href="/JARVIS-X/career/" data-jx-accent="amber" aria-label="Open separate Sampa.co football career workspace"><span class="ico">⚽</span> Football mission · Sampa.co <span class="tag">SEPARATE</span></a><a class="hq-mission-link" href="./mission-control.html"><span class="ico">◈</span>Mission Control <span class="tag green">NEW</span></a></div>
 <div class="sidefoot"><span class="led"></span><strong class="csp-inline-2">LOCAL SHELL READY</strong><br>Private-by-default workspace<br>Direct chat requires verified Supabase sign-in.</div>
 </aside>
 <main class="main">
-<header class="top"><div><div class="eyebrow">HUMAN × AI PERFORMANCE OS</div><h1 id="page-title" tabindex="-1">Command overview</h1><div class="sub" id="page-sub">A calm, evidence-first operating surface. No fake green lights.</div></div><div class="statusrow"><button id="jx-global-focus" class="pill jx-global-focus-toggle" type="button" aria-pressed="false">FOCUS MODE</button><span class="pill"><b id="net-status" role="status" aria-live="polite">● ONLINE</b> · network</span><span class="pill" aria-live="polite">LOCAL DATA · <span id="data-count">0</span> records</span><span class="pill">RUNTIME · <span id="runtime-status">SHELL ONLY</span></span></div></header>
+<header class="top"><div><div class="eyebrow">HUMAN × AI PERFORMANCE OS</div><h1 id="page-title" tabindex="-1">Conversation nexus</h1><div class="sub" id="page-sub">Focused command channel · runtime and live inference are verified before sending.</div></div><div class="statusrow"><button id="jx-lock-in" class="pill jx-lock-in-toggle" type="button" aria-pressed="false">⚡ LOCK IN</button><button id="jx-stop" class="pill jx-stop-toggle" type="button">STOP</button><span id="jx-lock-status" class="pill" role="status" aria-live="polite">NORMAL</span><button id="jx-global-focus" class="pill jx-global-focus-toggle" type="button" aria-pressed="false">FOCUS MODE</button><span class="pill"><b id="net-status" role="status" aria-live="polite">● ONLINE</b> · network</span><span class="pill" aria-live="polite">LOCAL DATA · <span id="data-count">0</span> records</span><span class="pill">RUNTIME · <span id="runtime-status">SHELL ONLY</span></span></div></header>
+ <section class="jx-behavior-panel" aria-label="Adaptation comportementale">
+   <strong>ADAPTATION</strong>
+   <div class="jx-behavior-choices" role="group" aria-label="Choisir explicitement mon état">
+     <button type="button" data-jx-user-state="normal" aria-pressed="true">Normal</button>
+     <button type="button" data-jx-user-state="focus" aria-pressed="false">Focus</button>
+     <button type="button" data-jx-user-state="tired" aria-pressed="false">Fatigué</button>
+     <button type="button" data-jx-user-state="stressed" aria-pressed="false">Sous pression</button>
+   </div>
+   <span id="jx-behavior-status" role="status" aria-live="polite">NORMAL · aucun signal comportemental établi</span>
+ </section>
 <section class="jx-neural-pill" id="jx-neural-pill" aria-label="Live interface telemetry"><div class="jx-neural-pill__identity"><span class="jx-neural-pill__orb" aria-hidden="true"></span><div><strong>JARVIS-X / NEURAL PILL</strong><small>OBSERVED INTERFACE STATE</small></div></div><button class="jx-neural-pill__signal" type="button" data-signal-wrap="network" data-view="settings"><small>Network</small><strong data-signal="network">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="records" data-view="memory"><small>Local records</small><strong data-signal="records">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="runtime" data-view="chat"><small>Runtime</small><strong data-signal="runtime">UNKNOWN</strong></button><button class="jx-neural-pill__signal" type="button" data-signal-wrap="gateway" data-view="gateway"><small>Gateway</small><strong data-signal="gateway">UNKNOWN</strong></button></section>
-<div id="storage-warning" role="alert" class="card hide csp-inline-3"></div><section id="view-overview" class="view">
+<div id="storage-warning" role="alert" class="card hide csp-inline-3"></div><section id="view-overview" class="view hide">
 <section class="jx-core-stage" aria-label="JARVIS-X animated executive core">
   <div class="jx-core-head"><div><span class="jx-kicker">VEGITO EXECUTIVE CORE</span><h2>One Mind. Infinite Possibilities.</h2><p>One integrated intelligence. Evidence before claims.</p></div><span class="jx-live"><i></i> HQ INTERFACE</span></div>
   <div class="jx-core-layout">
@@ -86,7 +97,7 @@
 <div id="pronote-snapshot-status" role="status" aria-live="polite">Aucune lecture du snapshot distant effectuée.</div>
 <div id="pronote-snapshot-events" aria-live="polite"></div>
 </div></div><div class="card span5"><div class="cardhead"><h2>Recent briefs</h2><span class="tag">THIS DEVICE</span></div><div id="task-list" class="loglist"><p class="empty">No briefs saved yet. Start with one specific outcome.</p></div></div></div></section>
-<section id="view-chat" class="view jx-chat-view hide">
+<section id="view-chat" class="view jx-chat-view">
   <div class="jx-chat-heading">
     <div><div class="eyebrow">NEURAL INTERFACE / 02</div><h2 class="section-title">Conversation nexus</h2><p class="section-intro">A focused command channel for one JARVIS-X identity. Live responses, memory access and execution remain governed by the verified gateway and explicit permissions.</p></div>
     <div class="jx-chat-heading-state"><span class="jx-state-orb" id="jx-chat-orb" aria-hidden="true"></span><span><strong id="jx-chat-presence">STANDING BY</strong><small id="jx-chat-presence-detail">Interface ready · runtime not presumed</small></span></div>
@@ -104,7 +115,7 @@
         <div class="jx-composer-context"><span id="jx-draft-state">INPUT CHANNEL · IDLE</span><span id="chat-draft-count">0 / 12000</span></div>
         <div class="jx-composer">
           <textarea id="chat-compose" rows="3" maxlength="12000" placeholder="Transmit an objective, question or instruction…" aria-label="Message to JARVIS-X"></textarea>
-          <div class="jx-composer-bottom"><div class="jx-composer-tools"><span class="jx-compose-hint">↵ Send · ⇧↵ New line</span><label class="jx-memory-chip" for="chat-memory-consent"><input id="chat-memory-consent" type="checkbox"><span class="jx-memory-chip-dot"></span><span>Memory for this turn</span><span class="jx-memory-note">Off by default · does not enable automatic device sync</span></label></div><button class="jx-send-button" id="chat-send" type="button" disabled><span>TRANSMIT</span><b aria-hidden="true">↗</b></button></div>
+          <div class="jx-composer-bottom"><div class="jx-composer-tools"><span class="jx-compose-hint">↵ Send · ⇧↵ New line</span><label class="jx-memory-chip" for="chat-memory-consent"><input id="chat-memory-consent" type="checkbox"><span class="jx-memory-chip-dot"></span><span>Memory for this turn</span><span class="jx-memory-note">Off by default · does not enable automatic device sync</span></label><label class="jx-memory-chip" for="chat-live-consent"><input id="chat-live-consent" type="checkbox"><span class="jx-memory-chip-dot"></span><span>Authorize Cloud for this turn</span><span class="jx-memory-note">Off by default · may use provider quota or incur cost</span></label></div><button class="jx-send-button" id="chat-send" type="button" disabled><span>TRANSMIT</span><b aria-hidden="true">↗</b></button></div>
         </div>
         <div class="jx-chat-actions"><button class="btn ghost" id="chat-check-gateway" type="button">Test secure connection</button><span id="chat-gateway-status" class="footnote" role="status" aria-live="polite">Not connected. No message will be sent until an authenticated gateway is verified.</span></div>
         <section class="jx-audio-controls" aria-label="Contrôles vocaux JARVIS-X">
@@ -182,7 +193,28 @@
 <div class="card span12"><div class="cardhead"><h2>Last diagnostic report</h2><span class="tag">NO SECRETS</span></div><div id="gateway-report" class="gateway-report">No check performed. Select “Test gateway connection” to perform a real same-origin request.</div></div>
 </div>
 </section>
-<section id="view-perception" class="view hide"><div id="p4-perception" class="card span12">
+<section id="view-p5" class="view hide">
+ <div class="card span12 jx-p5-panel">
+  <div class="cardhead"><h2>P5 · Offline-first & controlled evolution</h2><span class="tag">LOCAL ONLY · NO REMOTE SYNC</span></div>
+  <p>Mutations added here are stored in this browser's IndexedDB. They are encrypted at rest with AES-GCM using a non-extractable origin key. They are not sent anywhere unless a separately reviewed authenticated transport is explicitly configured. A remote transport must be separately reviewed and explicitly injected; none is configured.</p>
+  <div class="p5-status-grid"><div><small>IndexedDB</small><strong id="p5-db-status">CHECKING</strong></div><div><small>Network</small><strong id="p5-network-status">UNKNOWN</strong></div><div><small>Pending</small><strong id="p5-pending-count">0</strong></div><div><small>Synced</small><strong id="p5-synced-count">0</strong></div></div>
+  <div class="p5-compose"><label class="fieldlabel" for="p5-mutation-type">Mutation type</label><select id="p5-mutation-type"><option value="memory.note">Local memory note</option><option value="pronote.snapshot">PRONOTE snapshot</option><option value="action.pending">Pending action</option></select>
+   <label class="fieldlabel" for="p5-payload">JSON payload (do not include secrets or credentials)</label><textarea id="p5-payload" maxlength="262144" placeholder='{"title":"Offline test note","body":"Non-sensitive test data"}'></textarea>
+   <label class="fieldlabel" for="p5-idempotency">Idempotency key (optional; generated if empty)</label><input id="p5-idempotency" maxlength="160" placeholder="e.g. ipad-note-2026-11-25-001">
+   <div class="p4-actions"><button id="p5-enqueue" type="button">Save to local outbox</button><button id="p5-refresh" type="button">Refresh status</button><button id="p5-recover" type="button">Recover interrupted sends</button><button id="p5-export" type="button">Export outbox JSON</button></div>
+   <p id="p5-message" role="status" aria-live="polite">Checking local storage…</p><div id="p5-outbox" class="p5-outbox"></div>
+  </div>
+  <div class="p5-xmemo-handoff">
+   <h3>Authenticated XMemo handoff · manual only</h3>
+   <p>Connect XMemo first from the Chat / Memory controls, then send queued records only after sign-in, explicit consent, and confirmation. This uses the existing authenticated HQ memory endpoint. Remote duplicate suppression is not yet validated; do not retry an ambiguous delivery without checking XMemo first.</p>
+   <label><input id="p5-xmemo-consent" type="checkbox"> I consent to send the pending local records to my linked XMemo account now.</label>
+   <button id="p5-xmemo-sync" type="button">Send pending records to XMemo</button>
+  </div>
+ </div>
+ <div class="card span6"><div class="cardhead"><h2>CRDT · observed-remove set</h2><span class="tag">DETERMINISTIC MODULE</span></div><p>Hybrid logical clock, tagged adds, observed tombstones, deterministic merge and compensating undo are implemented as a reusable data structure. Not yet wired to cross-device replication.</p><p><a href="../docs/p5-offline-sync-evolution.md">Read P5 technical contract ↗</a></p></div>
+ <div class="card span6"><div class="cardhead"><h2>L3 · controlled evolution</h2><span class="tag">HUMAN GATE</span></div><p>Candidate proposals require a non-empty passing regression suite, named human approval, exact evidence-suite match, and a separate activation confirmation. No silent prompt or rule mutation.</p><p><a href="../docs/ipad-physical-validation.md">Open iPad Air 5 validation checklist ↗</a></p></div>
+</section>
+<section id="view-future" class="view hide"><h2 class="section-title">Git du Futur · Scenario Lab</h2><p class="section-intro">Read-only scenario analysis. No causal probability is shown until comparable historical outcomes and a held-out calibration set are available.</p><div class="grid"><div class="card span7"><div class="cardhead"><h2>Evidence inputs</h2><span class="tag amber">LOCAL · READ ONLY</span></div><div id="future-evidence" class="loglist"><p class="empty">Reading locally imported evidence…</p></div><div class="actions"><button class="btn primary" id="future-refresh" type="button">Refresh evidence</button></div></div><div class="card span5"><div class="cardhead"><h2>Forecast validity</h2><span id="future-calibration-tag" class="tag amber">UNAVAILABLE</span></div><p id="future-calibration-status">No calibrated probability is available.</p><p><strong>Probability:</strong> NOT ESTIMATED</p><p><strong>Uncertainty interval:</strong> NOT ESTIMABLE</p><p class="footnote">Calibration requires a defined outcome, a representative labeled history, a time-separated held-out set, calibration error measurement, and uncertainty bounds. Missing evidence is not treated as zero.</p></div><div class="card span12"><div class="cardhead"><h2>Counterfactual branch proposal</h2><span class="tag">PROPOSED · NO WRITES</span></div><label class="fieldlabel" for="future-scenario">Scenario to evaluate</label><textarea id="future-scenario" placeholder="Describe a possible change or scenario. This creates a local read-only proposal only."></textarea><div class="actions"><button class="btn ghost" id="future-propose" type="button">Create read-only scenario</button></div><div id="future-scenario-result" role="status" aria-live="polite">No scenario evaluated.</div><p class="footnote">No branch, calendar, training plan, or academic record can be modified here. Any future write path must use the existing L3 human approval contract before activation.</p></div></div></section><section id="view-perception" class="view hide"><div id="p4-perception" class="card span12">
  <div class="cardhead"><h2>P4.3 · Perception & oral coach</h2><span class="tag">LOCAL-FIRST</span></div>
  <p>Imports are processed on this device. Supported: TXT, Markdown, CSV, JSON, PDF, PNG, JPEG, WebP · maximum 8 MiB. PDF text is extracted locally with a bundled PDF.js engine (maximum 8 MiB, 80 pages, 120,000 characters, 15-second limit). Scanned PDFs without a text layer require manual text input; no remote OCR is used.</p>
  <p id="p4-status" role="status" aria-live="polite">Ready · no file selected · no microphone active.</p>
@@ -193,13 +225,48 @@
   <div class="p4-panel"><h2>4 · Qwen raw vs JARVIS-X pipeline</h2><p>The CI benchmark invokes the repository AgentFactory and BehavioralEngine on deterministic fixtures. For a real local Qwen comparison, first load a Qwen model in Local Chat, then run its opt-in benchmark; it makes two local WebGPU generations and no cloud inference. Model downloads remain a separate explicit setup action. Lexical overlap is not a correctness score. <a href="./local-chat.html#p4-local-benchmark">Open local Qwen benchmark ↗</a></p><label class="fieldlabel" for="p4-reference">Reference answer</label><textarea id="p4-reference"></textarea><label class="fieldlabel" for="p4-raw">Qwen raw output</label><textarea id="p4-raw"></textarea><label class="fieldlabel" for="p4-pipeline">Saboteur + BehavioralEngine pipeline output</label><textarea id="p4-pipeline"></textarea><select id="p4-benchmark-mode"><option value="manual-unverified">Manual comparison · unverified user-supplied outputs</option><option value="fixture-simulated">Fixture simulation · not real model output</option></select><button id="p4-benchmark" type="button">Score lexical comparison</button><pre id="p4-benchmark-result"></pre></div>
  </div>
  </section>
+<section id="view-webscout" class="view hide"><h2 class="section-title">WebScout & Smart Handoff</h2><p class="section-intro">Source-aware research routing and controlled prompt handoff. External search is not claimed unless a verified browsing capability is actually available.</p><div class="grid"><div class="card span6"><div class="cardhead"><h2>WebScout</h2><span id="webscout-status-tag" class="tag amber">CAPABILITY NOT EXPOSED</span></div><label class="fieldlabel" for="webscout-query">Research question</label><textarea id="webscout-query" placeholder="What should be researched? Include scope, date range and source requirements."></textarea><div class="actions"><button class="btn primary" id="webscout-check" type="button">Inspect registered capabilities</button><button class="btn ghost" id="webscout-prepare" type="button">Prepare sourced-search brief</button></div><p id="webscout-status" role="status" aria-live="polite">Gateway chat is not proof of a web-search tool. This panel will fail closed if no search capability is declared.</p><textarea id="webscout-brief" readonly placeholder="A research brief will be prepared locally."></textarea><button class="btn ghost" id="webscout-copy" type="button">Copy research brief</button></div><div class="card span6"><div class="cardhead"><h2>Smart Handoff</h2><span class="tag">LOCAL PREPARATION</span></div><label class="fieldlabel" for="handoff-intent">Intention du handoff</label><select id="handoff-intent"><option value="auto">Détection automatique</option><option value="video">Vidéo / animation</option><option value="image">Image / illustration</option><option value="audio">Audio / voix</option><option value="research">Recherche sourcée</option><option value="code">Code / prototype</option></select><label class="fieldlabel" for="handoff-task">Desired outcome</label><textarea id="handoff-task" placeholder="Describe exactly what the external tool should create or do."></textarea><div class="actions"><button class="btn primary" id="handoff-prepare" type="button">Prepare handoff payload</button><button class="btn ghost" id="handoff-copy" type="button">Copy payload</button><span class="footnote">Aucun fournisseur externe n’est connecté au registre de capacités. Le brief reste local jusqu’à une sélection explicite.</span></div><textarea id="handoff-payload" readonly placeholder="Prepared payload appears here."></textarea><p id="handoff-status" role="status" aria-live="polite">No external tool has been opened or invoked.</p></div></div></section><section id="view-clicky" class="view hide">
+ <h2 class="section-title">Clicky · Companion panel</h2>
+ <p class="section-intro">Un panneau compagnon dédié : mini-chat, mode vocal et guidage visuel sur le canvas intégré de Perception. Le calque est indépendant et ne bloque jamais le stylet ni le toucher.</p>
+ <div class="clicky-layout">
+  <section class="card clicky-workspace">
+   <div class="cardhead"><h2>Surface de travail</h2><span class="tag">CANVAS HQ</span></div>
+   <p>Le vrai canvas Apple Pencil est intégré ici, à côté du compagnon. Les outils de dessin et d’export existants sont conservés.</p>
+   <div id="clicky-canvas-host" class="clicky-canvas-host"><p class="empty">Chargement du canvas Perception…</p></div>
+   <div class="clicky-capabilities"><span>Overlay indépendant</span><span>Pointer-events désactivés</span><span>Pas de dessin destructif</span></div>
+  </section>
+  <section class="card clicky-panel" aria-label="Clicky chat panel">
+   <div class="cardhead"><h2>Clicky / JARVIS-X</h2><span class="tag amber">GATEWAY HQ</span></div>
+   <button class="btn primary clicky-enable" id="clicky-enable" type="button">Activer Clicky</button>
+   <div id="clicky-log" class="clicky-log" role="log" aria-live="polite"><p class="empty">Active Clicky, puis pose une question ou dicte-la.</p></div>
+   <label class="checkrow clicky-live-consent"><input id="clicky-live-consent" type="checkbox"><span><strong>Autoriser une requête live HQ</strong><small>Non coché par défaut. Le mode live peut utiliser un service externe ; vérifie le budget et le statut du gateway avant d’activer.</small></span></label>
+   <label class="checkrow"><input id="clicky-attach-snapshot" type="checkbox" disabled><span><strong>Joindre une capture PNG du canvas</strong><small>En attente du support image/vision dans le Gateway ; aucune capture n’est envoyée actuellement.</small></span></label>
+   <label class="checkrow"><input id="clicky-speak-reply" type="checkbox"><span><strong>Lire les réponses à voix haute</strong><small>Utilise la synthèse vocale du navigateur.</small></span></label>
+   <label class="fieldlabel" for="clicky-input">Message</label>
+   <textarea id="clicky-input" rows="3" maxlength="12000" placeholder="Colle ton énoncé ou demande où regarder…"></textarea>
+   <div class="actions">
+    <button class="btn primary" id="clicky-send" type="button">Envoyer</button>
+    <button class="btn ghost" id="clicky-voice" type="button">Mode vocal</button>
+    <button class="btn ghost" id="clicky-stop-voice" type="button">Arrêter micro</button>
+    <button class="btn ghost" id="clicky-clear" type="button">Effacer guidage</button>
+   </div>
+   <p id="clicky-status" class="footnote" role="status" aria-live="polite">Inactif. La réponse passe par le chat HQ authentifié ; aucun modèle local ou externe n'est simulé.</p>
+  </section>
+ </div>
+</section>
 <footer class="footnote csp-inline-16">JARVIS-X HQ · FOUNDATION PROTOTYPE · Local UI and browser storage only. No account security, remote sync, model calls, or backend execution is implied.</footer>
 </main><nav class="jx-control-dock" id="jx-control-dock" aria-label="Spatial controls"><button type="button" class="jx-dock-undo" data-jx-undo disabled><span aria-hidden="true">↶</span><span data-jx-undo-label>UNDO · NONE</span></button><a class="jx-dock-observatory" href="./observatory.html">◈ OBSERVATORY</a><button type="button" data-view="overview">OVERVIEW</button><button type="button" data-view="chat">CHAT</button><button type="button" data-view="audit">EVIDENCE</button></nav></div>
 <script src="./hq.js"></script>
+<script type="module" src="./rich-chat-studio.mjs"></script>
+<script type="module" src="./artifact-save-controller.mjs"></script>
+<script type="module" src="./lock-in.mjs"></script>
+<script type="module" src="./behavioral-adaptation.mjs"></script>
 <script src="./pronote-ipad-bridge.js" defer></script>
 <script src="./conversation-experience.js" defer></script>
 <script type="module" src="./audio-full-duplex.js"></script>
 <script type="module" src="./p4-perception.bundle.mjs"></script>
+<script type="module" src="./p5-console.mjs"></script>
+<script type="module" src="./clicky-panel.mjs"></script><script type="module" src="./future-scenario.mjs"></script><script type="module" src="./webscout-handoff.mjs"></script>
 <script src="./arrival-experience.js" defer></script>
 <script type="module" src="./forge.js"></script>
 <script src="./neural-observatory.js" defer></script>

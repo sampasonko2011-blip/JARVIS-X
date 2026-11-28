@@ -111,11 +111,11 @@ test("v56 Observatory registers its service worker and caches v54 assets", async
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)), { timeout: 10000 }).toBe(true);
   const result = await page.evaluate(async () => {
     const keys = await caches.keys();
-    const key = keys.find(value => value === "jarvis-x-hq-shell-v58");
+    const key = keys.find(value => /^jarvis-x-hq-shell-v\d+$/.test(value));
     const cache = key ? await caches.open(key) : null;
     return { key, core: Boolean(await cache?.match(new URL("./v54-harmony-core.js", location.href).href)), css: Boolean(await cache?.match(new URL("./v54-harmony.css", location.href).href)) };
   });
-  expect(result.key).toBe("jarvis-x-hq-shell-v58");
+  expect(result.key).toMatch(/^jarvis-x-hq-shell-v\d+$/);
   expect(result.core).toBe(true);
   expect(result.css).toBe(true);
 });

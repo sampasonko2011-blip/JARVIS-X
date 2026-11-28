@@ -42,9 +42,11 @@ export interface AgentFactoryOptions {
   ledger?: EvidenceLedger;
   decompose(task: FactoryTask): Promise<FactoryTask[]> | FactoryTask[];
   execute(input: FactoryExecution): Promise<FactoryAgentOutput>;
-  saboteur(task: FactoryTask, output: FactoryAgentOutput): Promise<SaboteurFinding> | SaboteurFinding;
+  saboteur(task: FactoryTask, output: FactoryAgentOutput, signal: AbortSignal): Promise<SaboteurFinding> | SaboteurFinding;
   synthesize(task: FactoryTask, accepted: FactoryAgentOutput[]): Promise<string> | string;
   timeoutMs?: number;
+  maxConcurrency?: number;
+  signal?: AbortSignal;
 }
 
 export interface AgentFactoryResult {
@@ -111,21 +113,29 @@ function normalizeBudget(input: Partial<FactoryBudget> = {}): FactoryBudget {
   return budget;
 }
 
-async function withTimeout<T>(operation: (signal: AbortSignal) => Promise<T>, timeoutMs: number): Promise<T> {
+async function withTimeout<T>(operation: (signal: AbortSignal) => Promise<T>, timeoutMs: number, parentSignal: AbortSignal): Promise<T> {
+  if (parentSignal.aborted) throw new Error("factory_aborted");
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  const aborted = new Promise<T>((_, reject) => {
+    onAbort = () => { controller.abort(); reject(new Error("factory_aborted")); };
+    parentSignal.addEventListener("abort", onAbort, { once: true });
+  });
   try {
     return await Promise.race([
       operation(controller.signal),
+      aborted,
       new Promise<T>((_, reject) => {
         timer = setTimeout(() => {
-          reject(new Error("factory_agent_timeout"));
           controller.abort();
+          reject(new Error("factory_agent_timeout"));
         }, timeoutMs);
       })
     ]);
   } finally {
     if (timer) clearTimeout(timer);
+    if (onAbort) parentSignal.removeEventListener("abort", onAbort);
     controller.abort();
   }
 }
@@ -148,81 +158,124 @@ export async function runAgentFactory(
   }
 
   const ledger = options.ledger ?? new EvidenceLedger();
+  const maxConcurrency = options.maxConcurrency ?? 3;
+  if (!Number.isInteger(maxConcurrency) || maxConcurrency < 1 || maxConcurrency > 8) {
+    throw new RangeError("factory_concurrency_invalid");
+  }
+  const globalController = new AbortController();
+  const parentSignal = options.signal;
+  const abortFromParent = () => globalController.abort();
+  if (parentSignal?.aborted) globalController.abort();
+  else parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  const signal = globalController.signal;
+
   const ids = new Set<string>([root.id]);
   const planned: FactoryTask[] = [root];
   const queue: FactoryTask[] = [root];
   const findings: string[] = [];
-  const outputs: FactoryAgentOutput[] = [];
   const accepted: FactoryAgentOutput[] = [];
   const invoked: string[] = [];
   const rejected: string[] = [];
 
-  while (queue.length) {
-    const current = queue.shift()!;
-    if (current.depth >= budget.maxDepth) continue;
-    const children = await options.decompose(structuredClone(current));
-    if (!Array.isArray(children) || children.length > budget.maxChildrenPerTask) {
-      throw new Error("factory_decomposition_limit_exceeded");
-    }
-    for (const child of children) {
-      validateTask(child);
-      if (child.depth !== current.depth + 1 || child.parentId !== current.id) {
-        throw new Error("factory_child_hierarchy_invalid");
+  try {
+    while (queue.length) {
+      if (signal.aborted) throw new Error("factory_aborted");
+      const current = queue.shift()!;
+      if (current.depth >= budget.maxDepth) continue;
+      const children = await options.decompose(structuredClone(current));
+      if (signal.aborted) throw new Error("factory_aborted");
+      if (!Array.isArray(children) || children.length > budget.maxChildrenPerTask) {
+        throw new Error("factory_decomposition_limit_exceeded");
       }
-      if (ids.has(child.id)) throw new Error("factory_duplicate_task_id");
-      ids.add(child.id);
-      planned.push(structuredClone(child));
-      queue.push(structuredClone(child));
-      if (planned.length > budget.maxInvocations) throw new Error("factory_invocation_budget_exceeded");
+      for (const child of children) {
+        validateTask(child);
+        if (child.depth !== current.depth + 1 || child.parentId !== current.id) {
+          throw new Error("factory_child_hierarchy_invalid");
+        }
+        if (ids.has(child.id)) throw new Error("factory_duplicate_task_id");
+        ids.add(child.id);
+        planned.push(structuredClone(child));
+        queue.push(structuredClone(child));
+        if (planned.length > budget.maxInvocations) throw new Error("factory_invocation_budget_exceeded");
+      }
     }
-  }
 
-  const leaves = planned.filter(task => !planned.some(candidate => candidate.parentId === task.id));
-  for (const task of leaves) {
-    if (invoked.length >= budget.maxInvocations) throw new Error("factory_invocation_budget_exceeded");
-    const agentId = DOMAIN_AGENT[task.domain];
-    invoked.push(agentId + ":" + task.id);
-    const base: LedgerEntry = {
-      objective: task.objective,
-      constraints: [...task.constraints, "estimated_spend=0 EUR", "ephemeral_agent=true"],
-      capabilitiesAvailable: Object.values(DOMAIN_AGENT),
-      capabilitiesInvoked: [agentId],
-      capabilitiesExecuted: [],
-      verification: "UNPROVEN",
-      errors: [],
-      decision: "UNPROVEN"
+    const leaves = planned.filter(task => !planned.some(candidate => candidate.parentId === task.id));
+    if (leaves.length > budget.maxInvocations) throw new Error("factory_invocation_budget_exceeded");
+    const branchResults: Array<{
+      task: FactoryTask; agentId: string; output?: FactoryAgentOutput;
+      passed: boolean; findings: string[]; error?: string;
+    } | undefined> = new Array(leaves.length);
+    let cursor = 0;
+
+    const worker = async () => {
+      while (!signal.aborted) {
+        const index = cursor++;
+        if (index >= leaves.length) return;
+        const task = leaves[index];
+        const agentId = DOMAIN_AGENT[task.domain];
+        invoked.push(agentId + ":" + task.id);
+        try {
+          const output = await withTimeout(
+            branchSignal => options.execute({ task: structuredClone(task), signal: branchSignal }),
+            timeoutMs, signal
+          );
+          if (!output || typeof output.agentId !== "string" || typeof output.content !== "string" ||
+              output.content.length > budget.maxOutputChars || !Array.isArray(output.evidence)) {
+            throw new Error("factory_agent_output_invalid");
+          }
+          const critique = await withTimeout(
+            branchSignal => Promise.resolve(options.saboteur(structuredClone(task), structuredClone(output), branchSignal)),
+            timeoutMs, signal
+          );
+          if (!critique || typeof critique.passed !== "boolean" || !Array.isArray(critique.findings)) {
+            throw new Error("factory_saboteur_output_invalid");
+          }
+          branchResults[index] = {
+            task, agentId, output, passed: critique.passed,
+            findings: critique.findings.map(item => String(item).slice(0, 500))
+          };
+        } catch (error) {
+          branchResults[index] = {
+            task, agentId, passed: false, findings: [],
+            error: error instanceof Error ? error.message : String(error)
+          };
+        }
+      }
     };
 
-    try {
-      const output = await withTimeout(signal => options.execute({ task: structuredClone(task), signal }), timeoutMs);
-      if (!output || typeof output.agentId !== "string" || typeof output.content !== "string" ||
-          output.content.length > budget.maxOutputChars || !Array.isArray(output.evidence)) {
-        throw new Error("factory_agent_output_invalid");
-      }
-      const critique = await withTimeout(
-        () => Promise.resolve(options.saboteur(structuredClone(task), structuredClone(output))),
-        timeoutMs
-      );
-      if (!critique || typeof critique.passed !== "boolean" || !Array.isArray(critique.findings)) {
-        throw new Error("factory_saboteur_output_invalid");
-      }
-      findings.push(...critique.findings.map(item => String(item).slice(0, 500)));
-      outputs.push(output);
-      if (critique.passed) {
-        accepted.push(output);
-        ledger.record({ ...base, capabilitiesExecuted: [output.agentId], verification: "VALIDATED",
-          errors: [], decision: "VALIDATED", outcome: "SaboteurAgent accepted bounded output" });
-      } else {
-        rejected.push(output.agentId);
-        ledger.record({ ...base, capabilitiesExecuted: [output.agentId], verification: "REJECTED",
-          errors: critique.findings.map(item => String(item).slice(0, 500)), decision: "REJECTED" });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      findings.push(task.id + ": " + message);
-      rejected.push(agentId);
-      ledger.record({ ...base, verification: "REJECTED", errors: [message], decision: "REJECTED" });
+    const workerCount = Math.min(maxConcurrency, leaves.length);
+    const settled = await Promise.allSettled(Array.from({ length: workerCount }, () => worker()));
+    if (settled.some(item => item.status === "rejected")) {
+      globalController.abort();
+      throw new Error("factory_worker_failed");
     }
+    if (signal.aborted) throw new Error("factory_aborted");
+
+    // Commit evidence in deterministic task order after all parallel branches settle.
+    for (let index = 0; index < branchResults.length; index += 1) {
+      const result = branchResults[index];
+      if (!result) continue;
+      const base: LedgerEntry = {
+        objective: result.task.objective,
+        constraints: [...result.task.constraints, "estimated_spend=0 EUR", "ephemeral_agent=true"],
+        capabilitiesAvailable: Object.values(DOMAIN_AGENT),
+        capabilitiesInvoked: [result.agentId],
+        capabilitiesExecuted: result.output ? [result.output.agentId] : [],
+        verification: result.passed ? "VALIDATED" : "REJECTED",
+        errors: result.error ? [result.error] : result.findings,
+        decision: result.passed ? "VALIDATED" : "REJECTED",
+        ...(result.passed ? { outcome: "SaboteurAgent accepted bounded output" } : {})
+      };
+      ledger.record(base);
+      findings.push(...result.findings);
+      if (result.error) findings.push(result.task.id + ": " + result.error);
+      if (result.passed && result.output) accepted.push(result.output);
+      else rejected.push(result.output?.agentId ?? result.agentId);
+    }
+  } finally {
+    parentSignal?.removeEventListener("abort", abortFromParent);
+    globalController.abort();
   }
 
   let output = "";
@@ -250,7 +303,6 @@ export async function runAgentFactory(
 
   // Ephemeral outputs are intentionally not returned; only the single synthesis
   // and redacted status/evidence summary survive this scope.
-  outputs.length = 0;
   accepted.length = 0;
   planned.length = 0;
   queue.length = 0;

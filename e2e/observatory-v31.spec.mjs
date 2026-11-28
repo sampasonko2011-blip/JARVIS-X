@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+function expectVersionedShellCache(source) {
+ const cacheName = source.match(/const CACHE = ['"]([^'"]+)['"]/)?.[1];
+ expect(cacheName).toMatch(/^jarvis-x-hq-shell-v\d+$/);
+}
 test("v31 dock opens modules and persists touch-friendly move and resize", async ({ page }) => {
  await page.goto("/observatory.html", { waitUntil: "domcontentloaded", timeout: 5000 });
  await page.evaluate(()=>localStorage.clear());
@@ -32,7 +36,7 @@ test("v31 service worker and clean shell are wired", async ({ page }) => {
  expect(shell).not.toContain("SYNAPTIC TELEMETRY");
  expect(await page.locator('link[href="./interstellar-v31.css"]').count()).toBe(1);
  expect(await page.locator('script[src="./observatory-v31.js"]').count()).toBe(1);
- const sw=await page.request.get("/sw.js"); expect(await sw.text()).toContain("jarvis-x-hq-shell-v58");
+ const sw=await page.request.get("/sw.js"); expectVersionedShellCache(await sw.text());
 });
 test("every bottom dock control is interactive and opens its matching module", async ({ page }) => {
  await page.setViewportSize({width:820,height:1180});

@@ -30,7 +30,11 @@ test("v41 server provider endpoints are fixed constants and routing remains doub
  const provider=await read("../supabase/functions/hq-gateway-v12/provider-cascade.mjs");
  const gateway=await read("../supabase/functions/hq-gateway-v12/index.ts");
  assert.match(provider,/JX_ENABLE_PROVIDER_CASCADE/);
- for(const flag of ["JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED","JX_PROVIDER_CEREBRAS_ENABLED","JX_PROVIDER_NVIDIA_ENABLED","JX_PROVIDER_SAMBANOVA_ENABLED","JX_PROVIDER_MISTRAL_ENABLED","JX_PROVIDER_GITHUB_MODELS_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ for(const flag of ["JX_PROVIDER_GEMINI_ENABLED","JX_PROVIDER_GROQ_ENABLED"]) assert.ok(provider.includes(flag),flag);
+ assert.doesNotMatch(provider,/JX_PROVIDER_(CEREBRAS|NVIDIA|SAMBANOVA|MISTRAL|GITHUB_MODELS)_ENABLED/);
+ assert.match(provider,/gemini-2.5-flash/);
+ assert.match(provider,/llama-3.3-70b-versatile/);
+ assert.match(provider,/returnedModel !== configuredModel/);
  assert.doesNotMatch(provider,/OPENROUTER|openrouter/);
  assert.match(provider,/new Set\(\[402, 429\]\)/);
  assert.match(provider,/AbortSignal\.timeout/);

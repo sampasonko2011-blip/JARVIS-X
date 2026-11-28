@@ -171,12 +171,14 @@ test("service worker installs, claims the page and precaches the HQ shell", asyn
     return {
       cacheName: shellCacheName,
       shellResponse: Boolean(await cache.match(new URL("./index.html", location.href).href)),
+      artifactSandboxResponse: Boolean(await cache.match(new URL("./artifact-sandbox.html", location.href).href)),
       cssResponse: Boolean(await cache.match(new URL("./hq.css", location.href).href)),
       jsResponse: Boolean(await cache.match(new URL("./hq.js", location.href).href)),
     };
   });
   expect(cached.cacheName).toBeTruthy();
   expect(cached.shellResponse).toBe(true);
+  expect(cached.artifactSandboxResponse).toBe(true);
   expect(cached.cssResponse).toBe(true);
   expect(cached.jsResponse).toBe(true);
 });
@@ -421,6 +423,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").uncheck();
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Hello JARVIS-X");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
@@ -465,6 +468,7 @@ test("cross-platform memory is sent only when explicitly enabled for the message
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Remember this approved context");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Consent-enabled reply");
@@ -486,6 +490,7 @@ test("cross-platform memory preference persists across messages and can be disab
   await page.locator("#chat-memory-consent").check();
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
 
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("First message with memory enabled");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Reply");
@@ -493,6 +498,7 @@ test("cross-platform memory preference persists across messages and can be disab
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
   expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("true");
 
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Second message with saved preference");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Second message with saved preference");
@@ -500,6 +506,7 @@ test("cross-platform memory preference persists across messages and can be disab
 
   await page.locator("#chat-memory-consent").uncheck();
   expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("false");
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Third message without memory");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Third message without memory");
@@ -657,11 +664,11 @@ test("P1.2 contextual accents follow the active workspace and Sampa.co remains a
   await expect(page.locator('.hq-mission-link[href="/JARVIS-X/career/"]')).toHaveAttribute("data-jx-accent", "amber");
 });
 
-test("P1.2 all 14 views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
+test("P1.2 all 18 navigation views stay within mobile and iPad portrait/landscape layouts without dock overlap", async ({ page }) => {
   test.setTimeout(180000);
   await enterHQ(page);
   const views = await page.locator(".side .nav [data-view]").evaluateAll(nodes => nodes.map(node => node.dataset.view));
-  expect(views).toHaveLength(14);
+  expect(views).toHaveLength(18);
   const viewports = [
     { width: 390, height: 844, label: "mobile-portrait" },
     { width: 600, height: 900, label: "ipad-split-portrait" },
@@ -706,4 +713,178 @@ test("P2 Workspace imports local PRONOTE and football ICS files and displays con
   await expect(page.locator("#calendar-events")).toContainText("Contrôle de mathématiques");
   await expect(page.locator("#calendar-events")).toContainText("Entraînement football");
   await expect(page.locator("#calendar-conflicts")).toContainText("Évaluation/devoir le lendemain");
+});
+
+
+test("combined PRONOTE and football imports emit a workload snapshot and adapt chat prompts", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="workspace"]').click();
+  await page.evaluate(() => {
+    window.__jxWorkloadEvents = [];
+    window.addEventListener("jx:workload-snapshot", event => window.__jxWorkloadEvents.push(event.detail));
+  });
+  const now = Date.now();
+  const stamp = value => new Date(value).toISOString().slice(0, 19).replace(/[-:]/g, "") + "Z";
+  const schoolStart = stamp(now + 60 * 60 * 1000), schoolEnd = stamp(now + 2 * 60 * 60 * 1000);
+  const footballStart = stamp(now + 3 * 60 * 60 * 1000), footballEnd = stamp(now + 5 * 60 * 60 * 1000);
+  const school = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:next-assessment", "DTSTART:" + schoolStart, "DTEND:" + schoolEnd, "SUMMARY:Contrôle de mathématiques", "END:VEVENT", "END:VCALENDAR"].join("\n");
+  const football = ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:next-training", "DTSTART:" + footballStart, "DTEND:" + footballEnd, "SUMMARY:Entraînement football", "END:VEVENT", "END:VCALENDAR"].join("\n");
+  await page.locator("#school-ics").setInputFiles({ name: "school-next.ics", mimeType: "text/calendar", buffer: Buffer.from(school) });
+  expect(await page.evaluate(() => window.__jxWorkloadEvents.length)).toBe(0);
+  await page.locator("#football-ics").setInputFiles({ name: "football-next.ics", mimeType: "text/calendar", buffer: Buffer.from(football) });
+  await expect.poll(() => page.evaluate(() => window.__jxWorkloadEvents.length)).toBe(1);
+  const snapshot = await page.evaluate(() => window.__jxWorkloadEvents[0]);
+  expect(snapshot.source).toBe("pronote+football-import");
+  expect(snapshot.academicDeadlinesNext24h).toBe(1);
+  expect(snapshot.trainingSessionsNext24h).toBe(1);
+  expect(snapshot.evidence.pronoteEvents).toBe(1);
+  expect(snapshot.evidence.footballEvents).toBe(1);
+
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.locator('[data-jx-user-state="stressed"]').click();
+  await expect.poll(() => page.evaluate(() => window.JXRichChatStudio?.getPromptContext?.().mode)).toBe("calm-stepwise");
+  await installGatewayFetchMock(page, {
+    health: { status: 200, body: { ok: true, service: "jarvis-x-gateway", mode: "single-core-cognitive-kernel", executiveIdentity: "JARVIS-X", executiveModel: "single-executive-core", executiveRuntimeConfigured: true, budgetGuard: { enabled: true, killSwitchEnabled: false, requestReservationConfigured: true, dailyLimitUsd: 10 }, chatEnabled: true, auth: "verified-supabase-session", rateLimits: "database-backed" } },
+    chat: { status: 200, body: { output: "Adapted gateway reply", executive_identity: "JARVIS-X", executive_runtime: { model: "fixture-model" }, model_calls: 1 } }
+  });
+  await page.evaluate(() => sessionStorage.setItem("jx-auth-session", JSON.stringify({ access_token: "fixture-access-token", refresh_token: "fixture-refresh-token", expires_at: Math.floor(Date.now()/1000)+3600 })));
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.locator('[data-jx-user-state="stressed"]').click();
+  await expect.poll(() => page.evaluate(() => window.JXRichChatStudio?.getPromptContext?.().mode)).toBe("calm-stepwise");
+  await page.locator("#chat-check-gateway").click();
+  await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-live-consent").check();
+  await page.locator("#chat-compose").fill("Explique-moi ce point.");
+  await page.locator("#chat-send").click();
+  await expect(page.locator("#chat-thread")).toContainText("Adapted gateway reply");
+  const request = await page.evaluate(() => window.__jxLastGatewayChatRequest);
+  expect(request.response_style).toContain("calm, concise, step-by-step");
+});
+
+test("generated artifact JavaScript executes in the dedicated opaque-origin offline sandbox", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await expect(page.locator("#rich-chat-studio")).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Sandbox execution proof",
+    html: "<main><p id='artifact-result'>pending</p></main><script>document.getElementById('artifact-result').textContent='isolated-active';</script>"
+  }})));
+  const frame = page.frameLocator("#rcs-artifact-frame");
+  await expect(frame.locator("#artifact-result")).toHaveText("isolated-active");
+  await expect(page.locator("#rcs-artifact-status")).toContainText("JavaScript isolé actif");
+  const sandbox = await page.locator("#rcs-artifact-frame").evaluate(node => ({ sandbox: node.getAttribute("sandbox"), src: node.getAttribute("src") }));
+  expect(sandbox.sandbox).toBe("allow-scripts");
+  expect(sandbox.src).toBe("./artifact-sandbox.html");
+  await page.locator("#rcs-artifact-reset").click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("Sandbox réinitialisée");
+});
+
+test("artifact save requires explicit L3 approval and writes AES-GCM payload plus CRDT state to offline outbox", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="chat"]').click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Offline tool proof",
+    html: "<main><h1>Local artifact</h1><p>Saved only after approval.</p></main>"
+  }})));
+  await page.locator("#rcs-artifact-save").click();
+  const dialog = page.getByRole("dialog", { name: /Approbation L3/ });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator("#jx-artifact-approve")).not.toBeChecked();
+  await expect(dialog.getByRole("button", { name: "Approuver et enregistrer" })).toBeDisabled();
+  await dialog.locator("#jx-artifact-approve").check();
+  await dialog.getByRole("button", { name: "Approuver et enregistrer" }).click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("SAVED_TO_ENCRYPTED_OUTBOX");
+  const saved = await page.evaluate(async () => {
+    const module = await import("./offline-sync-queue.mjs");
+    const queue = new module.OfflineSyncQueue();
+    const items = await queue.list();
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("jarvis-x-p5", 3);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const tx = db.transaction(["outbox", "crypto_keys"], "readonly");
+    const recordsPromise = new Promise((resolve, reject) => {
+      const request = tx.objectStore("outbox").getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const keysPromise = new Promise((resolve, reject) => {
+      const request = tx.objectStore("crypto_keys").getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const [records, keys] = await Promise.all([recordsPromise, keysPromise]);
+    return {
+      count: records.length,
+      ciphertextPresent: Boolean(records[0]?.payloadCiphertext && records[0]?.payloadIv),
+      plaintextAbsent: !Object.hasOwn(records[0] || {}, "payload"),
+      nonExtractableKey: keys[0]?.key?.extractable === false,
+      decrypted: items[0]?.payload?.title,
+      crdtAdds: items[0]?.payload?.crdtState?.adds?.length
+    };
+  });
+  expect(saved.count).toBe(1);
+  expect(saved.ciphertextPresent).toBe(true);
+  expect(saved.plaintextAbsent).toBe(true);
+  expect(saved.nonExtractableKey).toBe(true);
+  expect(saved.decrypted).toBe("Offline tool proof");
+  expect(saved.crdtAdds).toBe(1);
+});
+
+test("Clicky companion activates a non-interactive overlay beside the live Perception canvas", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="clicky"]').click();
+  await expect(page.locator("#view-clicky")).toBeVisible();
+  await expect(page.locator("#clicky-canvas-host .p4-panel")).toBeAttached();
+  await page.locator("#clicky-enable").click();
+  const overlay = page.locator("canvas.clicky-overlay");
+  await expect(overlay).toHaveClass(/is-active/);
+  await expect.poll(() => overlay.evaluate(node => getComputedStyle(node).pointerEvents)).toBe("none");
+  await expect(page.locator("#clicky-live-consent")).not.toBeChecked();
+});
+
+
+test("LOCK IN isolates the active HQ drawer and STOP restores NORMAL", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator("#jx-lock-in").click();
+  await expect(page.locator(".shell")).toHaveClass(/jx-lock-in/);
+  await expect(page.locator("#jx-lock-status")).toContainText("LOCKED");
+  await expect(page.locator("#view-chat")).toBeVisible();
+  await expect(page.locator("#chat-compose")).toBeVisible();
+  await expect(page.locator("#view-overview")).toBeHidden();
+  await page.locator("#jx-stop").click();
+  await expect(page.locator(".shell")).not.toHaveClass(/jx-lock-in/);
+  await expect(page.locator("#jx-lock-status")).toContainText("NORMAL");
+});
+
+
+test("Git du Futur reports imported calendar evidence and abstains from uncalibrated probabilities", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="workspace"]').click();
+  const school = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:school-future\nDTSTART:20261202T080000Z\nDTEND:20261202T090000Z\nSUMMARY:Contrôle de mathématiques\nEND:VEVENT\nEND:VCALENDAR";
+  const football = "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:football-future\nDTSTART:20261201T180000Z\nDTEND:20261201T200000Z\nSUMMARY:Entraînement football\nEND:VEVENT\nEND:VCALENDAR";
+  await page.locator("#school-ics").setInputFiles({name:"pronote-future.ics",mimeType:"text/calendar",buffer:Buffer.from(school)});
+  await page.locator("#football-ics").setInputFiles({name:"football-future.ics",mimeType:"text/calendar",buffer:Buffer.from(football)});
+  await page.locator('.side .nav [data-view="future"]').click();
+  await expect(page.locator("#future-evidence")).toContainText("PRONOTE iCalendar events: 1");
+  await expect(page.locator("#future-evidence")).toContainText("Football calendar events: 1");
+  await expect(page.locator("#future-calibration-status")).toContainText("Aucune probabilité causale");
+});
+
+test("WebScout fails closed and Smart Handoff routes a provider-neutral brief by intent", async ({ page }) => {
+  await enterHQ(page);
+  await page.locator('.side .nav [data-view="webscout"]').click();
+  await page.locator("#webscout-check").click();
+  await expect(page.locator("#webscout-status-tag")).toContainText("NO SEARCH TOOL");
+  await page.locator("#webscout-query").fill("Compare les sources primaires sur le sujet X.");
+  await page.locator("#webscout-prepare").click();
+  await expect(page.locator("#webscout-brief")).toHaveValue(/No search was executed/);
+  await expect(page.locator("#handoff-intent")).toHaveValue("auto");
+  await page.locator("#handoff-task").fill("Créer une vidéo cinématique originale.");
+  await page.locator("#handoff-prepare").click();
+  await expect(page.locator("#handoff-payload")).toHaveValue(/Intent: video/);
+  await expect(page.locator("#handoff-payload")).toHaveValue(/video-generation capability/);
+  await expect(page.locator("#handoff-payload")).toHaveValue(/No provider is registered/);
+  await expect(page.locator("#handoff-open-higgsfield")).toHaveCount(0);
 });

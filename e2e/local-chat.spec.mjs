@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+function expectVersionedShellCache(source) {
+  const cacheName = source.match(/const CACHE = ['"]([^'"]+)['"]/)?.[1];
+  expect(cacheName).toMatch(/^jarvis-x-hq-shell-v\d+$/);
+  return cacheName;
+}
+
 test("v42 is a true full-viewport workspace with no document scroll", async ({ page }) => {
   const pageErrors = [];
   page.on("pageerror", error => pageErrors.push(error.message));
@@ -208,7 +214,7 @@ test("v45 composer uses a responsive two-row grid on iPad and mobile viewports",
       };
     });
     expect(layout.composerWidth).toBeGreaterThanOrEqual(layout.dockWidth - 20);
-    expect(layout.messageMinHeight).toBeLessThanOrEqual(46);
+    expect(layout.messageMinHeight).toBeGreaterThanOrEqual(48);
     expect(layout.controlsVisible).toBe(true);
     expect(layout.messageGridColumn).toBe("1 / -1");
     expect(layout.documentOverflow).toBeLessThanOrEqual(1);
@@ -219,7 +225,7 @@ test("v47 service worker uses a new shell cache namespace", async ({ page }) => 
   await page.goto("/local-chat.html");
   const response = await page.request.get("/sw.js");
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("jarvis-x-hq-shell-v58");
+  expectVersionedShellCache(await response.text());
 });
 
 
@@ -305,7 +311,7 @@ test("v47 removes the arbitrary input cap and exposes a native iPad file picker"
 test("v47 service worker cache is versioned", async ({ page }) => {
   await page.goto("/local-chat.html");
   const sw = await page.evaluate(async () => (await fetch("./sw.js")).text());
-  expect(sw).toContain("jarvis-x-hq-shell-v58");
+  expectVersionedShellCache(sw);
 });
 
  
@@ -522,6 +528,62 @@ test("v53 service worker uses the v53 shell cache namespace", async ({ page }) =
   await page.goto("/local-chat.html");
   const sw = await page.request.get("/sw.js");
   expect(sw.ok()).toBeTruthy();
-  expect(await sw.text()).toContain("jarvis-x-hq-shell-v58");
+  expectVersionedShellCache(await sw.text());
   expect(await sw.text()).not.toContain("jarvis-x-hq-shell-v52");
+});
+
+test("Rich Chat Studio reports actual local engine state and supports style/persona controls", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  const studio = page.locator("#rich-chat-studio");
+  await expect(studio).toBeVisible();
+  await expect(page.locator("#rcs-engine")).toContainText("NOT LOADED");
+  await expect(page.locator("#rcs-cloud")).toContainText("NOT CONFIGURED");
+  await page.locator("#rcs-style").selectOption("hud-mono");
+  await expect(studio).toHaveClass(/hud-mono/);
+  await page.locator("#rcs-persona").selectOption("audit");
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent("jx:chat-engine", { detail: { status: "READY", modelId: "test-model", backend: "WebGPU" } }));
+    window.dispatchEvent(new CustomEvent("jx:chat-stage", { detail: { stage: "Génération WebLLM sur cet appareil" } }));
+  });
+  await expect(page.locator("#rcs-engine")).toContainText("test-model");
+  await expect(page.locator("#rcs-stage")).toContainText("GÉNÉRATION WEBLLM");
+});
+
+test("Tap & Ask prepares a prompt from selected transcript text without auto-sending", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => {
+    const target = document.querySelector("#transcript .log small");
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await page.locator('[data-action="simplify"]').click();
+  await expect(page.locator("#message")).toHaveValue(/Explique ce passage simplement/);
+  await expect(page.locator("#send-message")).toBeDisabled();
+});
+
+test("Rich Chat Studio renders generated HTML only inside an opaque-origin no-network sandbox", async ({ page }) => {
+  await page.goto("/local-chat.html");
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("jx:artifact-render", { detail: {
+    title: "Mini-app de démonstration",
+    html: "<main id='demo'>Sandbox prêt</main><script>document.querySelector('#demo').textContent='JavaScript isolé actif';</script>"
+  }})));
+  await expect(page.locator("#rcs-artifact")).toBeVisible();
+  const frame = page.locator("#rcs-artifact-frame");
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+  await expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
+  await expect(frame.contentFrame().locator("#demo")).toHaveText("JavaScript isolé actif");
+  const csp = await frame.contentFrame().locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
+  expect(csp).toContain("default-src 'none'");
+  expect(csp).toContain("connect-src 'none'");
+  const isolated = await page.evaluate(() => {
+    const frame = document.querySelector("#rcs-artifact-frame");
+    return frame.sandbox.contains("allow-same-origin") === false && frame.contentDocument === null;
+  });
+  expect(isolated).toBeTruthy();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("JavaScript isolé actif");
+  await page.locator("#rcs-artifact-save").click();
+  await expect(page.locator("#rcs-artifact-status")).toContainText("persistance non confirmée");
 });
