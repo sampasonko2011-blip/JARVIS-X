@@ -673,7 +673,7 @@ Deno.serve(async (req: Request) => {
     const executionMode = result.executionMode ?? "single-core-cognitive-kernel";
     const independence = result.independence ?? "one-executive-core-with-deterministic-governance";
     const reportedProvider = result.providersUsed[0]?.provider ?? PRIMARY_PROVIDER;
-    const reportedModel = result.providersUsed[0]?.model ?? EXECUTIVE_CONFIG.model;
+    const reportedModel = result.providersUsed[0]?.model ?? (configuredCascadeProviders[0]?.model ?? "no-allowlisted-provider");
     const behaviorDomain = resolveBehaviorDomain({ context: task });
     const behaviorReview = reviewResponse(result.answer, behaviorDomain);
     if (!behaviorReview.accepted) {
