@@ -118,7 +118,7 @@ test("provider errors never return credential values", async () => {
   });
 });
 
-test("Gemini accepts the JARVIS_X secret alias only when Gemini is explicitly enabled", async () => {
+test("Gemini rejects the legacy JARVIS_X secret alias", async () => {
   const env = { JX_ENABLE_PROVIDER_CASCADE: "true", JX_PROVIDER_GEMINI_ENABLED: "true", JARVIS_X_GEMINI_API_KEY: "fixture-alias" };
   let authorization = "";
   assert.deepEqual(listProviderConfiguration(env), []);
@@ -127,17 +127,27 @@ test("Gemini accepts the JARVIS_X secret alias only when Gemini is explicitly en
 });
 
 
-test("only exact source-controlled free-tier model IDs can be configured or invoked", async () => {
+test("model overrides outside the source-controlled allowlist are never invoked", async () => {
   const invalidGemini = { ...allEnv, JX_GEMINI_MODEL: "gemini-2.5-pro" };
   assert.deepEqual(listProviderConfiguration(invalidGemini).map((item) => item.id), ["groq"]);
   const invalidGroq = { ...allEnv, JX_GROQ_MODEL: "llama-3.3-70b-paid" };
   assert.deepEqual(listProviderConfiguration(invalidGroq).map((item) => item.id), ["gemini"]);
   let calls = 0;
-  await assert.rejects(() => invokeProviderCascade({
+  const result = await invokeProviderCascade({
     input: "hello",
     env: invalidGemini,
-    fetchImpl: async (_url, init) => { calls++; assert.equal(JSON.parse(init.body).model, "llama-3.3-70b-versatile"); return ok("llama-3.3-70b-versatile"); },
-  }), /provider_cascade_exhausted/);
+    fetchImpl: async (url, init) => {
+      calls++;
+      assert.match(url, /api\\.groq\\.com/);
+      assert.equal(JSON.parse(init.body).model, "llama-3.3-70b-versatile");
+      return ok("llama-3.3-70b-versatile");
+    },
+  });
+  assert.equal(result.provider, "groq");
+  assert.equal(calls, 1);
+  const invalidBoth = { ...invalidGemini, JX_GROQ_MODEL: "llama-3.3-70b-paid" };
+  assert.deepEqual(listProviderConfiguration(invalidBoth), []);
+  await assert.rejects(() => invokeProviderCascade({ input: "hello", env: invalidBoth, fetchImpl: async () => { calls++; } }), /provider_cascade_not_configured/);
   assert.equal(calls, 1);
 });
 
