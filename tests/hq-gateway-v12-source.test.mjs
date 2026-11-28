@@ -48,7 +48,7 @@ test("v12 wires a bounded Responses tool loop behind a default-off server flag",
   assert.match(gateway, /invokeAllowlistedProvider/);
   assert.match(gateway, /JX_ENABLE_LOCAL_TOOL_CALLS/);
   assert.match(gateway, /createDefaultCapabilityRegistry/);
-  assert.match(gateway, /parallel_tool_calls: false/);
+  assert.match(provider, /parallel_tool_calls: false/);
 });
 
 test("v12 preserves authentication, allowlisting, rate limits, and fail-closed budget guard", () => {
