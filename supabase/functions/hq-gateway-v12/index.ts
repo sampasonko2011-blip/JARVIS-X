@@ -482,6 +482,7 @@ Deno.serve(async (req: Request) => {
       error instanceof Error && error.message === "request_body_too_large" ? 413 : 400, origin);
   }
   const isImageRoute = url.pathname.endsWith("/image");
+  if (isImageRoute) return jsonResponse({ error: "image_generation_disabled", model_calls: 0 }, 403, origin);
   if (!isImageRoute && (typeof body.task !== "string" || !body.task.trim() || body.task.length > MAX_TASK_CHARS)) {
     return jsonResponse({ error: "task_must_be_1_to_12000_characters" }, 400, origin);
   }
@@ -521,9 +522,6 @@ Deno.serve(async (req: Request) => {
       retry_after_seconds: retryAfter,
     }, 429, origin);
   }
-
-  // Paid image generation is intentionally unavailable in the zero-spend build.
-  if (isImageRoute) return jsonResponse({ error: "image_generation_disabled", model_calls: 0 }, 403, origin);
 
   // Explicit mock mode is opt-in, authenticated, allowlisted, and rate-limited.
   // It never reads provider keys, reserves budget, or calls external model APIs.
@@ -580,14 +578,13 @@ Deno.serve(async (req: Request) => {
   const configuredCascadeProviders = providerEnvironment.JX_ENABLE_PROVIDER_CASCADE === "true"
     ? listProviderConfiguration(providerEnvironment)
     : [];
-  const openAIConfigured = Boolean(Deno.env.get(EXECUTIVE_CONFIG.secret) && EXECUTIVE_CONFIG.model);
   const missingProviderConfig: string[] = [];
-  if (configuredCascadeProviders.length === 0 && !Deno.env.get(EXECUTIVE_CONFIG.secret)) missingProviderConfig.push(EXECUTIVE_CONFIG.secret);
-  if (configuredCascadeProviders.length === 0 && !EXECUTIVE_CONFIG.model) missingProviderConfig.push("OPENAI_MODEL");
-  if (configuredCascadeProviders.length === 0 && !openAIConfigured && missingProviderConfig.length === 0) missingProviderConfig.push("EXECUTIVE_PROVIDER_CONFIGURATION");
+  if (configuredCascadeProviders.length === 0) {
+    missingProviderConfig.push("JX_ENABLE_PROVIDER_CASCADE=true plus an explicitly enabled GEMINI_API_KEY or GROQ_API_KEY provider");
+  }
   if (missingProviderConfig.length > 0) {
     const requestedIdentity = "JARVIS-X";
-    const requestedModel = EXECUTIVE_CONFIG.model;
+    const requestedModel = configuredCascadeProviders[0]?.model ?? "no-allowlisted-provider";
     const requestedMode = "single-core-cognitive-kernel";
     try {
       await writeRun(user.id, {
