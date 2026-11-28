@@ -45,10 +45,10 @@ test("provider order is deterministic and a successful first provider stops the 
   assert.equal(result.response.model, "gemini/gemini-2.5-flash");
 });
 
-test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async () => {
+test("HTTP 402 and 429 can retry only the two explicitly allowlisted providers", async () => {
   const statuses = [402, 429];
   const urls = [];
-  const result = await invokeProviderCascade({
+  await assert.rejects(() => invokeProviderCascade({
     input: "hello",
     env: allEnv,
     fetchImpl: async (url) => {
@@ -56,13 +56,10 @@ test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async
       const status = statuses.shift();
       return { ok: false, status, json: async () => ({}) };
     },
-  });
-  assert.equal(urls.length, 3);
-  assert.match(urls[0], /generativelanguage\.googleapis\.com/);
-  assert.match(urls[1], /api\.groq\.com/);
-  assert.match(urls[2], /api\.cerebras\.ai/);
-  assert.equal(result.provider, "cerebras");
-  assert.deepEqual(result.attempts, ["gemini:402", "groq:429", "cerebras:200"]);
+  }), /provider_cascade_exhausted_gemini:402,groq:429/);
+  assert.equal(urls.length, 2);
+  assert.match(urls[0], /generativelanguage\\.googleapis\\.com/);
+  assert.match(urls[1], /api\\.groq\\.com/);
 });
 
 test("transport errors and server errors do not silently fan out to additional providers", async () => {
@@ -94,7 +91,7 @@ test("Responses function tools and tool outputs are translated for chat-completi
     env: allEnv,
     fetchImpl: async (_url, init) => {
       request = JSON.parse(init.body);
-      return ok("gemini-model", {
+      return ok("gemini-2.5-flash", {
         role: "assistant",
         content: null,
         tool_calls: [{ id: "call-2", type: "function", function: { name: "lookup", arguments: JSON.stringify({ q: "y" }) } }],
