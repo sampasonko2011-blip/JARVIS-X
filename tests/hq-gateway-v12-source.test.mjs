@@ -6,7 +6,6 @@ const gateway = await readFile(new URL("../supabase/functions/hq-gateway-v12/ind
 const kernel = await readFile(new URL("../supabase/functions/hq-gateway-v12/cognitive-kernel.mjs", import.meta.url), "utf8");
 const router = await readFile(new URL("../supabase/functions/hq-gateway-v12/ruche-router.ts", import.meta.url), "utf8");
 const provider = await readFile(new URL("../supabase/functions/hq-gateway-v12/provider-cascade.mjs", import.meta.url), "utf8");
-const provider = await readFile(new URL("../supabase/functions/hq-gateway-v12/provider-cascade.mjs", import.meta.url), "utf8");
 const mock = await readFile(new URL("../supabase/functions/hq-gateway-v12/mock-execution.mjs", import.meta.url), "utf8");
 const xmemo = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-memory.mjs", import.meta.url), "utf8");
 const xmemoMcp = await readFile(new URL("../supabase/functions/hq-gateway-v12/xmemo-mcp-transport.mjs", import.meta.url), "utf8");
