@@ -8,19 +8,9 @@ const allEnv = {
   GEMINI_API_KEY: "test-gemini",
   JX_PROVIDER_GROQ_ENABLED: "true",
   GROQ_API_KEY: "test-groq",
-  JX_PROVIDER_CEREBRAS_ENABLED: "true",
-  CEREBRAS_API_KEY: "test-cerebras",
-  JX_PROVIDER_NVIDIA_ENABLED: "true",
-  NVIDIA_API_KEY: "test-nvidia",
-  JX_PROVIDER_SAMBANOVA_ENABLED: "true",
-  SAMBANOVA_API_KEY: "test-sambanova",
-  JX_PROVIDER_MISTRAL_ENABLED: "true",
-  MISTRAL_API_KEY: "test-mistral",
-  JX_PROVIDER_GITHUB_MODELS_ENABLED: "true",
-  GITHUB_TOKEN: "test-github",
 };
 
-const ok = (model = "fixture-model", message = { role: "assistant", content: "Verified fixture response" }) => ({
+const ok = (model = "gemini-2.5-flash", message = { role: "assistant", content: "Verified fixture response" }) => ({
   ok: true,
   status: 200,
   json: async () => ({ id: "fixture", model, choices: [{ message }] }),
@@ -30,8 +20,8 @@ test("provider cascade is opt-in globally and per provider; keys alone do not ac
   assert.deepEqual(listProviderConfiguration({ ...allEnv, JX_ENABLE_PROVIDER_CASCADE: "false" }), []);
   const keysOnly = Object.fromEntries(Object.entries(allEnv).filter(([key]) => key.endsWith("_API_KEY") || key === "GITHUB_TOKEN"));
   assert.deepEqual(listProviderConfiguration(keysOnly), []);
-  assert.equal(listProviderConfiguration(allEnv).length, 7);
-  assert.deepEqual(PROVIDER_IDS, ["gemini", "groq", "cerebras", "nvidia", "sambanova", "mistral", "github-models"]);
+  assert.equal(listProviderConfiguration(allEnv).length, 2);
+  assert.deepEqual(PROVIDER_IDS, ["gemini", "groq"]);
   assert.equal(PROVIDER_IDS.includes("openrouter"), false);
 });
 
@@ -52,11 +42,11 @@ test("provider order is deterministic and a successful first provider stops the 
   assert.equal(result.provider, "gemini");
   assert.equal(result.response.status, "completed");
   assert.equal(result.response.output_text, "Verified fixture response");
-  assert.equal(result.response.model, "gemini/fixture-model");
+  assert.equal(result.response.model, "gemini/gemini-2.5-flash");
 });
 
 test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async () => {
-  const statuses = [402, 429, 200];
+  const statuses = [402, 429];
   const urls = [];
   const result = await invokeProviderCascade({
     input: "hello",
@@ -64,7 +54,7 @@ test("HTTP 402 and 429 fail over to the next explicitly enabled provider", async
     fetchImpl: async (url) => {
       urls.push(url);
       const status = statuses.shift();
-      return status === 200 ? ok("cerebras-fixture") : { ok: false, status, json: async () => ({}) };
+      return { ok: false, status, json: async () => ({}) };
     },
   });
   assert.equal(urls.length, 3);
@@ -134,8 +124,28 @@ test("provider errors never return credential values", async () => {
 test("Gemini accepts the JARVIS_X secret alias only when Gemini is explicitly enabled", async () => {
   const env = { JX_ENABLE_PROVIDER_CASCADE: "true", JX_PROVIDER_GEMINI_ENABLED: "true", JARVIS_X_GEMINI_API_KEY: "fixture-alias" };
   let authorization = "";
-  const result = await invokeProviderCascade({ input: "hello", env, fetchImpl: async (_url, init) => { authorization = init.headers.Authorization; return ok(); } });
-  assert.equal(authorization, "Bearer fixture-alias");
-  assert.equal(result.provider, "gemini");
+  assert.deepEqual(listProviderConfiguration(env), []);
+  await assert.rejects(() => invokeProviderCascade({ input: "hello", env, fetchImpl: async () => { throw new Error("must not be called"); } }), /provider_cascade_not_configured/);
   assert.deepEqual(listProviderConfiguration({ ...env, JX_ENABLE_PROVIDER_CASCADE: "false" }), []);
+});
+
+
+test("only exact source-controlled free-tier model IDs can be configured or invoked", async () => {
+  const invalidGemini = { ...allEnv, JX_GEMINI_MODEL: "gemini-2.5-pro" };
+  assert.deepEqual(listProviderConfiguration(invalidGemini).map((item) => item.id), ["groq"]);
+  const invalidGroq = { ...allEnv, JX_GROQ_MODEL: "llama-3.3-70b-paid" };
+  assert.deepEqual(listProviderConfiguration(invalidGroq).map((item) => item.id), ["gemini"]);
+  let calls = 0;
+  await assert.rejects(() => invokeProviderCascade({
+    input: "hello",
+    env: invalidGemini,
+    fetchImpl: async (_url, init) => { calls++; assert.equal(JSON.parse(init.body).model, "llama-3.3-70b-versatile"); return ok("llama-3.3-70b-versatile"); },
+  }), /provider_cascade_exhausted/);
+  assert.equal(calls, 1);
+});
+
+test("unlisted provider secrets and flags are ignored", () => {
+  const env = { ...allEnv, JX_PROVIDER_OPENAI_ENABLED: "true", OPENAI_API_KEY: "test-openai", JX_PROVIDER_OPENROUTER_ENABLED: "true", OPENROUTER_API_KEY: "test-openrouter" };
+  assert.deepEqual(listProviderConfiguration(env).map((item) => item.id), ["gemini", "groq"]);
+  assert.deepEqual(PROVIDER_IDS, ["gemini", "groq"]);
 });
