@@ -63,9 +63,9 @@ test("local chat explains download, local-only session scope, model limits, and 
   assert.match(apex, /GATEWAY \+ "\/image"/);
   assert.match(apex, /user_confirmed: true/);
   assert.match(apex, /Aucun fallback externe n'a été utilisé/);
-  assert.match(gateway, /JX_ENABLE_IMAGE_GENERATION/);
-  assert.match(gateway, /JARVIS_X_GEMINI_API_KEY/);
-  assert.match(gateway, /reserveImageBudget\(user\.id\)/);
+  assert.match(gateway, /image_generation_disabled/);
+  assert.match(gateway, /imageGenerationEnabled: false/);
+  assert.doesNotMatch(gateway, /JX_ENABLE_IMAGE_GENERATION|JARVIS_X_GEMINI_API_KEY|reserveImageBudget/);
   assert.match(engine, /clearButton\.addEventListener\("click"/);
   assert.match(engine, /Local conversation cleared/);
   assert.doesNotMatch(engine, /localStorage|sessionStorage|indexedDB/i);
