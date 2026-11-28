@@ -59,8 +59,8 @@ test("HTTP 402 and 429 can retry only the two explicitly allowlisted providers",
     },
   }), /provider_cascade_exhausted_gemini:402,groq:429/);
   assert.equal(urls.length, 2);
-  assert.match(urls[0], /generativelanguage\\.googleapis\\.com/);
-  assert.match(urls[1], /api\\.groq\\.com/);
+  assert.ok(urls[0].includes("generativelanguage.googleapis.com"));
+  assert.ok(urls[1].includes("api.groq.com"));
 });
 
 test("transport errors and server errors do not silently fan out to additional providers", async () => {
@@ -139,7 +139,7 @@ test("model overrides outside the source-controlled allowlist are never invoked"
     env: invalidGemini,
     fetchImpl: async (url, init) => {
       calls++;
-      assert.match(url, /api\\.groq\\.com/);
+      assert.ok(url.includes("api.groq.com"));
       assert.equal(JSON.parse(init.body).model, "llama-3.3-70b-versatile");
       return ok("llama-3.3-70b-versatile");
     },
