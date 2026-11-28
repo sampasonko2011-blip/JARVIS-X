@@ -8,20 +8,21 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 test("v49 health advertises chat only when an explicitly enabled allowlisted provider is configured", async () => {
   const gateway = await read("supabase/functions/hq-gateway-v12/index.ts");
   const cascade = await read("supabase/functions/hq-gateway-v12/provider-cascade.mjs");
-  assert.match(gateway, /const configuredCascadeProviders = providerEnvironment\\.JX_ENABLE_PROVIDER_CASCADE === "true"[\\s\\S]*?listProviderConfiguration\\(providerEnvironment\\)/);
-  assert.match(gateway, /const executiveRuntimeConfigured = configuredCascadeProviders.length > 0/);
+  assert.ok(gateway.includes('const configuredCascadeProviders = providerEnvironment.JX_ENABLE_PROVIDER_CASCADE === "true"'));
+  assert.ok(gateway.includes("listProviderConfiguration(providerEnvironment)"));
+  assert.ok(gateway.includes("const executiveRuntimeConfigured = configuredCascadeProviders.length > 0"));
   assert.doesNotMatch(gateway, /OPENAI_API_KEY|OPENAI_MODEL|openAIConfigured/);
-  assert.match(gateway, /const chatEnabled = lockReasons.length === 0/);
-  assert.match(gateway, /global_request_reservation_missing/);
-  assert.match(gateway, /configuredInferenceProviders/);
-  assert.match(cascade, /JX_ENABLE_PROVIDER_CASCADE/);
+  assert.ok(gateway.includes("const chatEnabled = lockReasons.length === 0"));
+  assert.ok(gateway.includes("global_request_reservation_missing"));
+  assert.ok(gateway.includes("configuredInferenceProviders"));
+  assert.ok(cascade.includes("JX_ENABLE_PROVIDER_CASCADE"));
   assert.doesNotMatch(cascade, /OPENROUTER|openrouter|CEREBRAS|NVIDIA|SAMBANOVA|MISTRAL|GITHUB_MODELS/);
   for (const provider of ["GEMINI", "GROQ"]) {
     assert.ok(cascade.includes("JX_PROVIDER_" + provider + "_ENABLED"), "missing explicit enable flag for " + provider);
   }
-  assert.match(gateway, /authenticatedUser\\(/);
-  assert.match(gateway, /JX_ALLOWED_EMAILS/);
-  assert.match(gateway, /reserveGlobalBudget\\(/);
+  assert.ok(gateway.includes("authenticatedUser("));
+  assert.ok(gateway.includes("JX_ALLOWED_EMAILS"));
+  assert.ok(gateway.includes("reserveGlobalBudget("));
 });
 
 test("v49 frontend removes the misleading V46 title and aligns the Gemma model ID", async () => {
