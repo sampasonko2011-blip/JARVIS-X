@@ -1,12 +1,14 @@
+// Closed source-controlled provider/model allowlist. Provider account billing tier is
+// external state and cannot be proven by this adapter; live inference remains separately
+// fail-closed behind LIVE_INFERENCE_ENABLED, consent, auth, rate-limit and budget gates.
 const PROVIDERS = Object.freeze([
   {
     id: "gemini",
     secret: "GEMINI_API_KEY",
-    secretFallbacks: ["JARVIS_X_GEMINI_API_KEY"],
     enabled: "JX_PROVIDER_GEMINI_ENABLED",
     model: "JX_GEMINI_MODEL",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-    defaultModel: "gemini-2.5-flash",
+    allowedModel: "gemini-2.5-flash",
   },
   {
     id: "groq",
@@ -14,49 +16,13 @@ const PROVIDERS = Object.freeze([
     enabled: "JX_PROVIDER_GROQ_ENABLED",
     model: "JX_GROQ_MODEL",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
-    defaultModel: "llama-3.3-70b-versatile",
-  },
-  {
-    id: "cerebras",
-    secret: "CEREBRAS_API_KEY",
-    enabled: "JX_PROVIDER_CEREBRAS_ENABLED",
-    model: "JX_CEREBRAS_MODEL",
-    endpoint: "https://api.cerebras.ai/v1/chat/completions",
-    defaultModel: "llama-3.3-70b",
-  },
-  {
-    id: "nvidia",
-    secret: "NVIDIA_API_KEY",
-    enabled: "JX_PROVIDER_NVIDIA_ENABLED",
-    model: "JX_NVIDIA_MODEL",
-    endpoint: "https://integrate.api.nvidia.com/v1/chat/completions",
-    defaultModel: "deepseek-ai/deepseek-v3.2",
-  },
-  {
-    id: "sambanova",
-    secret: "SAMBANOVA_API_KEY",
-    enabled: "JX_PROVIDER_SAMBANOVA_ENABLED",
-    model: "JX_SAMBANOVA_MODEL",
-    endpoint: "https://api.sambanova.ai/v1/chat/completions",
-    defaultModel: "Meta-Llama-3.3-70B-Instruct",
-  },
-  {
-    id: "mistral",
-    secret: "MISTRAL_API_KEY",
-    enabled: "JX_PROVIDER_MISTRAL_ENABLED",
-    model: "JX_MISTRAL_MODEL",
-    endpoint: "https://api.mistral.ai/v1/chat/completions",
-    defaultModel: "codestral-latest",
-  },
-  {
-    id: "github-models",
-    secret: "GITHUB_TOKEN",
-    enabled: "JX_PROVIDER_GITHUB_MODELS_ENABLED",
-    model: "JX_GITHUB_MODELS_MODEL",
-    endpoint: "https://models.github.ai/inference/chat/completions",
-    defaultModel: "openai/gpt-4o",
+    allowedModel: "llama-3.3-70b-versatile",
   },
 ]);
+const ALLOWED_MODELS = Object.freeze({
+  gemini: "gemini-2.5-flash",
+  groq: "llama-3.3-70b-versatile",
+});
 
 const MAX_MESSAGES = 64;
 const MAX_INPUT_CHARS = 64_000;
@@ -165,6 +131,9 @@ function normalizeResponse(data, providerId, configuredModel) {
     fail("provider_empty_output_" + providerId);
   }
   const returnedModel = typeof data.model === "string" && data.model.trim() ? data.model : configuredModel;
+  if (returnedModel !== configuredModel || ALLOWED_MODELS[providerId] !== configuredModel) {
+    fail("provider_model_not_allowlisted_" + providerId);
+  }
   return {
     id: typeof data.id === "string" ? data.id : "provider-response",
     status: "completed",
@@ -178,14 +147,14 @@ function configuredProviders(env) {
   if (env.JX_ENABLE_PROVIDER_CASCADE !== "true") return [];
   return PROVIDERS.filter((provider) => {
     const enabled = env[provider.enabled] === "true";
-    const secretNames = [provider.secret, ...(provider.secretFallbacks ?? [])];
-    return enabled && secretNames.some((name) => typeof env[name] === "string" && env[name].trim().length > 0);
+    const apiKey = env[provider.secret];
+    const configuredModel = env[provider.model];
+    const modelAllowed = configuredModel === undefined || configuredModel === provider.allowedModel;
+    return enabled && modelAllowed && typeof apiKey === "string" && apiKey.trim().length > 0;
   }).map((provider) => ({
     ...provider,
-    apiKey: [provider.secret, ...(provider.secretFallbacks ?? [])].map((name) => env[name]).find((value) => typeof value === "string" && value.trim().length > 0),
-    modelId: typeof env[provider.model] === "string" && env[provider.model].trim()
-      ? env[provider.model].trim()
-      : provider.defaultModel,
+    apiKey: env[provider.secret],
+    modelId: provider.allowedModel,
   }));
 }
 
@@ -255,3 +224,4 @@ export function listProviderConfiguration(env = {}) {
 }
 
 export const PROVIDER_IDS = Object.freeze(PROVIDERS.map((provider) => provider.id));
+export const PROVIDER_MODEL_ALLOWLIST = ALLOWED_MODELS;
