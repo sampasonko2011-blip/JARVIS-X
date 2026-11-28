@@ -423,6 +423,7 @@ test("direct chat sends a message and displays a reply only after a verified gat
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").uncheck();
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Hello JARVIS-X");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Hello JARVIS-X");
@@ -467,6 +468,7 @@ test("cross-platform memory is sent only when explicitly enabled for the message
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
   await page.locator("#chat-memory-consent").check();
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Remember this approved context");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Consent-enabled reply");
@@ -488,6 +490,7 @@ test("cross-platform memory preference persists across messages and can be disab
   await page.locator("#chat-memory-consent").check();
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
 
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("First message with memory enabled");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Reply");
@@ -495,6 +498,7 @@ test("cross-platform memory preference persists across messages and can be disab
   await expect(page.locator("#chat-memory-consent")).toBeChecked();
   expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("true");
 
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Second message with saved preference");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Second message with saved preference");
@@ -502,6 +506,7 @@ test("cross-platform memory preference persists across messages and can be disab
 
   await page.locator("#chat-memory-consent").uncheck();
   expect(await page.evaluate(() => localStorage.getItem("jarvis-x-hq-cross-platform-memory-v1"))).toBe("false");
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Third message without memory");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Third message without memory");
@@ -748,6 +753,7 @@ test("combined PRONOTE and football imports emit a workload snapshot and adapt c
   await expect.poll(() => page.evaluate(() => window.JXRichChatStudio?.getPromptContext?.().mode)).toBe("calm-stepwise");
   await page.locator("#chat-check-gateway").click();
   await expect(page.locator("#chat-send")).toBeEnabled();
+  await page.locator("#chat-live-consent").check();
   await page.locator("#chat-compose").fill("Explique-moi ce point.");
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Adapted gateway reply");
