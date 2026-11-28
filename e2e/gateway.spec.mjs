@@ -194,7 +194,8 @@ test("Rich Chat Studio is mounted in HQ and distinguishes the zero-model mock ro
   await page.locator("#chat-send").click();
   await expect(page.locator("#chat-thread")).toContainText("Fixture reply");
   await expect(page.locator("#rcs-stage")).toContainText("FIXTURE REÇU");
-  await expect(page.locator("#rcs-engine")).toContainText("0 MODEL CALLS");
+  await expect(page.locator("#rcs-engine")).toContainText("MOCK FIXTURE · NOT AI");
+  await expect(page.locator("#rcs-cloud")).toContainText("MOCK ROUTE READY · 0 MODEL CALLS");
 });
 
 test("HQ Tap & Ask prepares a prompt from selected conversation text without sending it", async ({ page }) => {
